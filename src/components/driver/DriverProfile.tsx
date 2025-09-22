@@ -1,0 +1,223 @@
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
+import { Edit, User, Star, Car, CreditCard, Shield } from "lucide-react";
+import { useLanguage } from "../LanguageContext";
+import { User as UserType } from "../../App";
+import { Battery } from "lucide-react";
+
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  vin: string;
+  batteryModel: string;
+}
+
+interface DriverProfileProps {
+  user: UserType;
+  profileName: string;
+  profileEmail: string;
+  profilePhone: string;
+  vehicles: Vehicle[];
+  onNameChange: (name: string) => void;
+  onEmailChange: (email: string) => void;
+  onPhoneChange: (phone: string) => void;
+}
+
+export function DriverProfile({
+  user,
+  profileName,
+  profileEmail,
+  profilePhone,
+  vehicles,
+  onNameChange,
+  onEmailChange,
+  onPhoneChange,
+}: DriverProfileProps) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-6">
+      {/* Profile Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <User className="w-5 h-5" />
+            <span>{t("driver.personalInformation")}</span>
+          </CardTitle>
+          <CardDescription>
+            {t("driver.personalInformationDesc")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <Avatar className="w-16 h-16">
+              <AvatarFallback className="text-lg">
+                {user.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium">{user.name}</h3>
+              <p className="text-sm text-gray-500">
+                {t("driver.driverSince")} January 2024
+              </p>
+              <Badge className="mt-1">{t("driver.verifiedDriver")}</Badge>
+            </div>
+          </div>
+          <Separator />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">{t("driver.fullName")}</Label>
+              <Input
+                id="name"
+                value={profileName}
+                onChange={(e) => onNameChange(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">{t("driver.emailAddress")}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profileEmail}
+                onChange={(e) => onEmailChange(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">{t("driver.phoneNumber")}</Label>
+              <Input
+                id="phone"
+                value={profilePhone}
+                onChange={(e) => onPhoneChange(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>{t("driver.membershipStatus")}</Label>
+              <div className="flex items-center space-x-2 mt-2">
+                <Badge className="bg-green-100 text-green-800">
+                  {t("driver.active")}
+                </Badge>
+                <span className="text-sm text-gray-500">
+                  {t("driver.monthlyUnlimited")}
+                </span>
+              </div>
+            </div>
+          </div>
+          <Button className="w-full">
+            <Edit className="w-4 h-4 mr-2" /> {t("driver.updateProfile")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Vehicle Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Car className="w-5 h-5" />
+            <span>{t("driver.vehicleInformation")}</span>
+          </CardTitle>
+          <CardDescription>
+            {t("driver.vehicleInformationDesc")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {vehicles.map((vehicle) => (
+              <div
+                key={vehicle.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <Car className="w-8 h-8 text-blue-500" />
+                  <div>
+                    <p className="font-medium">
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {t("driver.battery")} {vehicle.batteryModel}
+                    </p>
+                    <p className="text-xs text-gray-400">VIN: {vehicle.vin}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary">{t("driver.primary")}</Badge>
+                  <Button size="sm" variant="outline">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full">
+              {t("driver.addVehicle")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Driver Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Battery className="w-8 h-8 text-green-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold">127</p>
+            <p className="text-sm text-gray-500">{t("driver.totalSwaps")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold">4.9</p>
+            <p className="text-sm text-gray-500">{t("driver.averageRating")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold">$1,847</p>
+            <p className="text-sm text-gray-500">{t("driver.totalSavings")}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Payment Methods */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="w-5 h-5" />
+            <span>{t("driver.paymentMethods")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <CreditCard className="w-6 h-6 text-blue-500" />
+                <div>
+                  <p className="font-medium">•••• •••• •••• 4232</p>
+                  <p className="text-sm text-gray-500">Expires 12/26</p>
+                </div>
+              </div>
+              <Badge>{t("driver.primary")}</Badge>
+            </div>
+            <Button variant="outline" className="w-full">
+              {t("driver.addPaymentMethod")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
