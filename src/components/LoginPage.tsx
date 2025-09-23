@@ -78,10 +78,10 @@ export function LoginPage({
         <div className="w-full max-w-md mb-0">
           {/* Logo and Branding */}
           <div className="text-center mb-0px">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mb-4">
+            <div className="inline-flex mb-[4px] items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mb-4">
               <Zap className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl text-gray-900 mb-2">EVSwap</h1>
+            <h1 className="text-3xl text-gray-900 mb-[4px]">EVSwap</h1>
             <p className="text-gray-600">{t("login.batterySwapManagement")}</p>
           </div>
 
@@ -90,9 +90,11 @@ export function LoginPage({
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>{t("login.title")}</CardTitle>
-              <CardDescription>{t("login.subtitle")}</CardDescription>
+            <CardHeader className="pt-[14px]">
+              <CardTitle className="text-2xl text-center">
+                {" "}
+                {t("login.title")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
@@ -105,14 +107,8 @@ export function LoginPage({
 
                 <TabsContent value="login" className="space-y-4 ">
                   {/* Social Login Options */}
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-center">
-                      <Chrome className="w-4 h-4 mr-2" />
-                      {t("login.continueWithGoogle")}
-                    </Button>
-                  </div>
 
-                  <div className="relative">
+                  {/* <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <Separator className="w-full" />
                     </div>
@@ -121,7 +117,7 @@ export function LoginPage({
                         {t("login.orContinueWithEmail")}
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <Label htmlFor="email">{t("login.email")}</Label>
@@ -166,11 +162,17 @@ export function LoginPage({
                   </div>
 
                   <Button
-                    className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                    className="w-full mb-[6px] bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
                     onClick={() => handleDemoLogin("driver")}
                   >
                     {t("login.signIn")}
                   </Button>
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-center">
+                      <Chrome className="w-4 h-4 mr-2" />
+                      {t("login.continueWithGoogle")}
+                    </Button>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="demo" className="space-y-4">
@@ -211,7 +213,7 @@ export function LoginPage({
             </CardContent>
           </Card>
 
-          <div className="text-center mt-6 text-sm text-gray-500">
+          <div className="text-center mt-6 text-sm text-gray-500 mt-[12px]">
             {t("login.dontHaveAccount")}{" "}
             <button
               onClick={onRegister}

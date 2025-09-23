@@ -148,7 +148,7 @@ const translations = {
     "footer.termsOfService": "Terms of Service",
 
     // Login
-    "login.title": "Welcome Back",
+    "login.title": "LOG IN",
     "login.subtitle": "Sign in to access your EVSwap account",
     "login.email": "Email",
     "login.password": "Password",
@@ -659,7 +659,7 @@ const translations = {
     "footer.termsOfService": "Điều Khoản Dịch Vụ",
 
     // Login
-    "login.title": "Chào Mừng Trở Lại",
+    "login.title": "ĐĂNG NHẬP",
     "login.subtitle": "Đăng nhập để truy cập tài khoản EVSwap của bạn",
     "login.email": "Email",
     "login.password": "Mật Khẩu",
