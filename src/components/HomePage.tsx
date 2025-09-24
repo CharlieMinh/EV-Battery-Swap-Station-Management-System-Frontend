@@ -130,7 +130,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-screen bg-white">
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -438,35 +438,6 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-green-500 to-blue-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl text-white mb-4">
-            {t("cta.title")}
-          </h2>
-          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
-            {t("cta.subtitle")}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={onGetStarted}
-              className="bg-white text-green-600 hover:bg-gray-100"
-            >
-              {t("cta.signUpNow")}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-green-600"
-            >
-              {t("cta.contactSales")}
-            </Button>
           </div>
         </div>
       </section>
