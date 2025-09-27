@@ -136,10 +136,13 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg mr-3">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl text-gray-900">EVSwap</span>
+              {/* Thay thế logo cũ bằng logo mới */}
+              <img
+                src="src/assets/logoEV.png"
+                alt="FPTFAST Logo"
+                className="w-18 h-16 mr-3"
+              />
+              <span className="text-xl text-gray-900"></span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -164,7 +167,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
               </Button>
               <Button
                 onClick={onGetStarted}
-                className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                className="bg-gradient-to-r from-orange-500 to-white-500 hover:from-green-600 hover:to-blue-600"
               >
                 {t("nav.getStarted")}
               </Button>
@@ -451,14 +454,14 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                 <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg mr-3">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl">EVSwap</span>
+                <span className="text-xl">EV Battery Swap Station</span>
               </div>
               <p className="text-gray-400 mb-4">{t("footer.description")}</p>
-              <div className="flex space-x-4">
+              {/* <div className="flex space-x-4">
                 <Facebook className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
                 <Twitter className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
                 <Instagram className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-              </div>
+              </div> */}
             </div>
 
             <div>
@@ -518,11 +521,11 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
               <div className="space-y-2 text-gray-400">
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-2" />
-                  <span>1-800-EVSWAP</span>
+                  <span>038626028</span>
                 </div>
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-2" />
-                  <span>support@evswap.com</span>
+                  <span>FPTFAST@fpt.edu.vn</span>
                 </div>
               </div>
             </div>
