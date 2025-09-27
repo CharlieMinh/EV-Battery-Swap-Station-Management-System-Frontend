@@ -12,11 +12,13 @@ import { useLanguage, type Language } from "./LanguageContext";
 interface LanguageSwitcherProps {
   variant?: "default" | "ghost" | "outline";
   size?: "default" | "sm" | "lg";
+  className?: string;
 }
 
 export function LanguageSwitcher({
   variant = "ghost",
   size = "sm",
+  className = "",
 }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage();
 
@@ -33,7 +35,7 @@ export function LanguageSwitcher({
         <Button
           variant={variant}
           size={size}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 ${className}"
         >
           <Globe className="w-4 h-4" />
           <span className="hidden sm:inline">

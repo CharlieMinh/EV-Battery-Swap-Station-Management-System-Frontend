@@ -24,7 +24,7 @@ export function useLanguage() {
 const translations = {
   en: {
     // Navigation
-    "nav.signIn": "Sign In",
+    "nav.signIn": "sIGN IN",
     "nav.getStarted": "Get Started",
     "nav.features": "Features",
     "nav.pricing": "Pricing",

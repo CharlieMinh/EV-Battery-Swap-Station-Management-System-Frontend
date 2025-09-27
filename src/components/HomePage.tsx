@@ -39,22 +39,22 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
   const { t } = useLanguage();
   const features = [
     {
-      icon: <Clock className="w-8 h-8 text-green-500" />,
+      icon: <Clock className="w-8 h-8 text-orange-500" />,
       title: t("features.ultraFast.title"),
       description: t("features.ultraFast.desc"),
     },
     {
-      icon: <Battery className="w-8 h-8 text-blue-500" />,
+      icon: <Battery className="w-8 h-8 text-orange-500" />,
       title: t("features.alwaysCharged.title"),
       description: t("features.alwaysCharged.desc"),
     },
     {
-      icon: <MapPin className="w-8 h-8 text-purple-500" />,
+      icon: <MapPin className="w-8 h-8 text-orange-500" />,
       title: t("features.nationwide.title"),
       description: t("features.nationwide.desc"),
     },
     {
-      icon: <Shield className="w-8 h-8 text-red-500" />,
+      icon: <Shield className="w-8 h-8 text-orange-500" />,
       title: t("features.safeReliable.title"),
       description: t("features.safeReliable.desc"),
     },
@@ -132,42 +132,55 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
   return (
     <div className="h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-orange-500 border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               {/* Thay thế logo cũ bằng logo mới */}
               <img
-                src="src/assets/logoEV.png"
+                src="src/assets/logoEV2.png "
                 alt="FPTFAST Logo"
                 className="w-18 h-16 mr-3"
               />
-              <span className="text-xl text-gray-900"></span>
+              <span className="text-3xl font-bold text-white">
+                F P T F A S T
+              </span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900">
+              <a
+                href="#features"
+                className="text-white hover:text-yellow-300 transition duration-300"
+              >
                 {t("nav.features")}
               </a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900">
+              <a
+                href="#pricing"
+                className="text-white hover:text-yellow-300 transition duration-300"
+              >
                 {t("nav.pricing")}
               </a>
-              <a href="#stations" className="text-gray-600 hover:text-gray-900">
+              <a
+                href="#stations"
+                className="text-white hover:text-yellow-300 transition duration-300"
+              >
                 {t("nav.stations")}
               </a>
-              <a href="#contact" className="text-gray-600 hover:text-gray-900">
+              <a
+                href="#contact"
+                className="text-white hover:text-yellow-300 transition duration-300"
+              >
                 {t("nav.contact")}
               </a>
             </div>
-
             <div className="flex items-center space-x-4">
               <LanguageSwitcher />
-              <Button variant="ghost" onClick={onLogin}>
+              <Button variant="outline" onClick={onLogin}>
                 {t("nav.signIn")}
               </Button>
               <Button
                 onClick={onGetStarted}
-                className="bg-gradient-to-r from-orange-500 to-white-500 hover:from-green-600 hover:to-blue-600"
+                className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
               >
                 {t("nav.getStarted")}
               </Button>
@@ -177,17 +190,17 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-50 to-blue-50 py-20">
+      <section className="bg-gradient-to-br from-orange-100 to-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <Badge className="mb-4 bg-green-100 text-green-800">
+              <Badge className="mb-4 bg-orange-100 text-orange-800">
                 {t("home.hero.badge")}
               </Badge>
-              <h1 className="text-4xl md:text-6xl text-gray-900 mb-6">
+              <h1 className="text-4xl md:text-6xl text-orange-900 mb-6">
                 {t("home.hero.title")}
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-xl text-orange-800 mb-8">
                 {t("home.hero.subtitle")}
               </p>
 
@@ -195,7 +208,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                 <Button
                   size="lg"
                   onClick={onGetStarted}
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
                   {t("home.hero.findStation")}
                   <MapPin className="w-4 h-4 ml-2" />
@@ -208,7 +221,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
               <div className="grid grid-cols-2 gap-6 text-center">
                 <div>
-                  <div className="text-2xl text-gray-900">
+                  <div className="text-2xl text-orange-900">
                     {t("home.hero.avgSwapTime")}
                   </div>
                   <div className="text-sm text-gray-500">
@@ -216,7 +229,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl text-gray-900">
+                  <div className="text-2xl text-orange-900">
                     {t("home.hero.availability")}
                   </div>
                   <div className="text-sm text-gray-500">
@@ -234,7 +247,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
               />
               <div className="absolute -bottom-4 -left-4 bg-white p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
                   <span className="text-sm text-gray-600">
                     12 {t("home.hero.batteriesAvailable")}
                   </span>
@@ -262,7 +275,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
+      <section id="features" className="py-15 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
@@ -290,7 +303,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
       </section>
 
       {/* Map Preview Section */}
-      <section id="stations" className="py-20 bg-white">
+      <section id="stations" className="py-15 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
@@ -301,9 +314,9 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
           <Card>
             <CardContent className="p-8">
-              <div className="bg-green-50 rounded-lg h-96 flex items-center justify-center mb-6">
+              <div className="bg-orange-50 rounded-lg h-96 flex items-center justify-center mb-6">
                 <div className="text-center">
-                  <MapPin className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                  <MapPin className="w-16 h-16 text-orange-500 mx-auto mb-4" />
                   <h3 className="text-xl text-gray-900 mb-2">
                     {t("stations.mapTitle")}
                   </h3>
@@ -317,7 +330,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                  <CheckCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
                   <h4 className="text-gray-900 mb-1">
                     {t("stations.downtownHub")}
                   </h4>
@@ -326,7 +339,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                   </p>
                 </div>
                 <div className="text-center">
-                  <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                  <CheckCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
                   <h4 className="text-gray-900 mb-1">
                     {t("stations.mallStation")}
                   </h4>
@@ -350,7 +363,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gray-50">
+      <section id="pricing" className="py-15 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
@@ -364,12 +377,12 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
               <Card
                 key={index}
                 className={`relative ${
-                  plan.popular ? "border-green-500 border-2" : ""
+                  plan.popular ? "border-orange-500 border-2" : ""
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-green-500 text-white">
+                    <Badge className="bg-orange-500 text-white">
                       {t("pricing.mostPopular")}
                     </Badge>
                   </div>
@@ -386,7 +399,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                   <ul className="space-y-3">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        <CheckCircle className="w-4 h-4 text-orange-500 mr-2" />
                         <span className="text-gray-600">{feature}</span>
                       </li>
                     ))}
@@ -394,7 +407,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                   <Button
                     className={`w-full ${
                       plan.popular
-                        ? "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                         : ""
                     }`}
                     variant={plan.popular ? "default" : "outline"}
@@ -410,7 +423,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-white">
+      <section className="py-15 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
@@ -445,18 +458,47 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
         </div>
       </section>
 
+      {/* CTA Section
+      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-30 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl text-white mb-4">
+            {t("cta.title")}
+          </h2>
+          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
+            {t("cta.subtitle")}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              size="lg"
+              onClick={onGetStarted}
+              className="bg-white text-green-600 hover:bg-gray-100"
+            >
+              {t("cta.signUpNow")}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-green-600"
+            >
+              {t("cta.contactSales")}
+            </Button>
+          </div>
+        </div>
+      </section> */}
+
       {/* Footer */}
-      <footer id="contact" className="bg-gray-900 text-white py-16">
+      <footer id="contact" className="bg-orange-500 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg mr-3">
+                <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg mr-3">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xl">EV Battery Swap Station</span>
               </div>
-              <p className="text-gray-400 mb-4">{t("footer.description")}</p>
+              <p className="text-white-400 mb-4">{t("footer.description")}</p>
               {/* <div className="flex space-x-4">
                 <Facebook className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
                 <Twitter className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
@@ -466,7 +508,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
             <div>
               <h4 className="text-lg mb-4">{t("footer.services")}</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-white-400">
                 <li>
                   <a href="#" className="hover:text-white">
                     {t("footer.batterySwap")}
@@ -492,7 +534,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
             <div>
               <h4 className="text-lg mb-4">{t("footer.support")}</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-white-400">
                 <li>
                   <a href="#" className="hover:text-white">
                     {t("footer.helpCenter")}
@@ -518,7 +560,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
 
             <div>
               <h4 className="text-lg mb-4">{t("footer.contact")}</h4>
-              <div className="space-y-2 text-gray-400">
+              <div className="space-y-2 text-white-400">
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-2" />
                   <span>038626028</span>
@@ -532,12 +574,12 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400">{t("footer.copyright")}</p>
+            <p className="text-white">{t("footer.copyright")}</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-white-400 hover:text-white">
                 {t("footer.privacyPolicy")}
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-white-400 hover:text-white">
                 {t("footer.termsOfService")}
               </a>
             </div>
