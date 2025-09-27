@@ -70,7 +70,7 @@ export function LoginPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-orange-50 flex flex-col">
       <div
         className="flex items-center justify-center p-4"
         style={{ minHeight: "calc(100vh - 80px)" }}
@@ -78,10 +78,14 @@ export function LoginPage({
         <div className="w-full max-w-md mb-0">
           {/* Logo and Branding */}
           <div className="text-center mb-0px">
-            <div className="inline-flex mb-[4px] items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mb-4">
-              <Zap className="w-8 h-8 text-white" />
+            <div className="inline-flex mb-[4px] items-center justify-center w-16 h-16 mb-4">
+              <img
+                src="src/assets/logoEV2.png "
+                alt="FPTFAST Logo"
+                className="w-18 h-15  rounded-full"
+              />
             </div>
-            <h1 className="text-3xl text-gray-900 mb-[4px]">EVSwap</h1>
+            <h1 className="text-3xl font-bold mb-[4px]">F P T F A S T</h1>
             <p className="text-gray-600">{t("login.batterySwapManagement")}</p>
           </div>
 
@@ -156,13 +160,13 @@ export function LoginPage({
                         {t("login.rememberMe")}
                       </span>
                     </label>
-                    <a href="#" className="text-blue-600 hover:underline">
+                    <a href="#" className="text-orange-500 hover:underline">
                       {t("login.forgotPassword")}
                     </a>
                   </div>
 
                   <Button
-                    className="w-full mb-[6px] bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                    className="w-full mb-[6px] bg-orange-500 hover:bg-orange-600"
                     onClick={() => handleDemoLogin("driver")}
                   >
                     {t("login.signIn")}
@@ -217,7 +221,7 @@ export function LoginPage({
             {t("login.dontHaveAccount")}{" "}
             <button
               onClick={onRegister}
-              className="text-blue-600 hover:underline"
+              className="text-orange-500 hover:underline"
             >
               {t("login.signUpHere")}
             </button>
