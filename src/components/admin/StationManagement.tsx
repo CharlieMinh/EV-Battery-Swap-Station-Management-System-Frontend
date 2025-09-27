@@ -26,12 +26,17 @@ export function StationManagement({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("admin.stationManagement")}</h2>
+        <h2 className="text-2xl text-orange-500 font-bold">
+          {t("admin.stationManagement")}
+        </h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
           </Button>
-          <Button size="sm">
+          <Button
+            size="sm"
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
             <Plus className="w-4 h-4 mr-2" /> {t("admin.addStation")}
           </Button>
         </div>
@@ -40,21 +45,25 @@ export function StationManagement({
       <div className="grid gap-4">
         {stationPerformance.map((station, index) => (
           <Card key={index}>
-            <CardContent className="p-6">
+            <CardContent className="p-6 border border-orange-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="text-center">
                     <MapPin className="w-8 h-8 text-blue-500 mx-auto mb-1" />
                     <Badge
-                      variant={
-                        station.status === "active" ? "default" : "destructive"
+                      className={
+                        station.status === "active"
+                          ? "bg-green-400 text-white"
+                          : "bg-red-500 text-white "
                       }
                     >
                       {t(`admin.${station.status}`)}
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium">{station.name}</h3>
+                    <h3 className="text-lg text-orange-500 font-medium">
+                      {station.name}
+                    </h3>
                     <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
                       <div>
                         <span className="text-gray-500">
@@ -98,7 +107,10 @@ export function StationManagement({
                   <span>{t("admin.utilization")}</span>
                   <span>{station.utilization}%</span>
                 </div>
-                <Progress value={station.utilization} className="h-2" />
+                <Progress
+                  value={station.utilization}
+                  className="h-2 bg-orange-100 [&>div]:bg-orange-500 rounded-full"
+                />
               </div>
             </CardContent>
           </Card>

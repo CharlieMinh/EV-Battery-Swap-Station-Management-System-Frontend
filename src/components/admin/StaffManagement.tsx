@@ -37,20 +37,27 @@ export function StaffManagement({ staff }: StaffManagementProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("admin.staffManagement")}</h2>
+        <h2 className="text-2xl font-bold text-orange-600">
+          {t("admin.staffManagement")}
+        </h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
           </Button>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" /> {t("admin.addStaff")}
+          <Button
+            size="sm"
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <Plus className="w-4 h-4" /> {t("admin.addStaff")}
           </Button>
         </div>
       </div>
 
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("admin.staffDirectory")}</CardTitle>
+          <CardTitle className="text-orange-600">
+            {t("admin.staffDirectory")}
+          </CardTitle>
           <CardDescription>{t("admin.staffDirectoryDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -58,7 +65,7 @@ export function StaffManagement({ staff }: StaffManagementProps) {
             {staff.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex items-center justify-between p-4 border rounded-lg border border-orange-200 rounded-lg"
               >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -87,15 +94,20 @@ export function StaffManagement({ staff }: StaffManagementProps) {
                       </p>
                     </div>
                     <Badge
-                      variant={
-                        member.status === "active" ? "default" : "secondary"
+                      className={
+                        member.status === "active"
+                          ? "bg-green-400 text-white"
+                          : "bg-red-500 text-white "
                       }
                     >
                       {t(`admin.${member.status}`)}
                     </Badge>
                   </div>
                   <div className="flex space-x-2">
-                    <Progress value={member.performance} className="w-20 h-2" />
+                    <Progress
+                      value={member.performance}
+                      className="w-20 h-2 bg-orange-100 [&>div]:bg-orange-500"
+                    />
                   </div>
                   <div className="flex space-x-2 mt-2">
                     <Button size="sm" variant="outline">

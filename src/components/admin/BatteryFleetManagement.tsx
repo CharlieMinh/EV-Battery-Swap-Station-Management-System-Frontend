@@ -34,7 +34,7 @@ export function BatteryFleetManagement({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">
+        <h2 className="text-2xl font-bold text-orange-600">
           {t("admin.batteryFleetManagement")}
         </h2>
         <div className="flex space-x-2">
@@ -55,9 +55,11 @@ export function BatteryFleetManagement({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
-            <CardTitle>{t("admin.fleetOverview")}</CardTitle>
+            <CardTitle className="text-orange-600">
+              {t("admin.fleetOverview")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -81,8 +83,8 @@ export function BatteryFleetManagement({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="border border-orange-200 rounded-lg">
+          <CardHeader className="text-orange-600">
             <CardTitle>{t("admin.maintenanceSchedule")}</CardTitle>
           </CardHeader>
           <CardContent>
@@ -124,8 +126,8 @@ export function BatteryFleetManagement({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="border border-orange-200 rounded-lg">
+          <CardHeader className="text-orange-600">
             <CardTitle>{t("admin.batteryAllocation")}</CardTitle>
           </CardHeader>
           <CardContent>
@@ -136,7 +138,7 @@ export function BatteryFleetManagement({
                   <div className="flex items-center space-x-2">
                     <Progress
                       value={station.utilization}
-                      className="w-16 h-2"
+                      className="w-16 h-2 bg-orange-100 [&>div]:bg-orange-500"
                     />
                     <span className="text-sm">
                       {station.current}/{station.total}

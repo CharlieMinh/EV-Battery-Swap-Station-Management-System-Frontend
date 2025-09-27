@@ -73,13 +73,17 @@ export function AIInsights({ demandForecast }: AIInsightsProps) {
     <div className="space-y-6">
       <div className="flex items-center space-x-2 mb-6">
         <Brain className="w-6 h-6 text-blue-500" />
-        <h2 className="text-2xl font-bold">{t("admin.aiPoweredInsights")}</h2>
+        <h2 className="text-2xl font-bold text-orange-600">
+          {t("admin.aiPoweredInsights")}
+        </h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
-            <CardTitle>{t("admin.demandForecast")}</CardTitle>
+            <CardTitle className="text-orange-600">
+              {t("admin.demandForecast")}
+            </CardTitle>
             <CardDescription>{t("admin.demandForecastDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -107,9 +111,11 @@ export function AIInsights({ demandForecast }: AIInsightsProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
-            <CardTitle>{t("admin.intelligentRecommendations")}</CardTitle>
+            <CardTitle className="text-orange-600">
+              {t("admin.intelligentRecommendations")}
+            </CardTitle>
             <CardDescription>
               {t("admin.intelligentRecommendationsDesc")}
             </CardDescription>
@@ -152,9 +158,11 @@ export function AIInsights({ demandForecast }: AIInsightsProps) {
       </div>
 
       {/* AI Model Performance */}
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("admin.modelPerformance")}</CardTitle>
+          <CardTitle className="text-orange-600">
+            {t("admin.modelPerformance")}
+          </CardTitle>
           <CardDescription>{t("admin.modelPerformanceDesc")}</CardDescription>
         </CardHeader>
         <CardContent>

@@ -243,7 +243,7 @@ export function AdminDashboardPage({
       <div className="min-h-screen bg-gray-50 flex w-full">
         <Sidebar>
           <SidebarHeader>
-            <div className="flex items-center p-2">
+            <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
                 <img
                   src="src/assets/logoEV2.png "
@@ -252,8 +252,10 @@ export function AdminDashboardPage({
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold">F P T F A S T</span>
-                <span className="text-sm font-medium text-gray-500">Admin</span>
+                <span className="text-lg text-white font-semibold">
+                  F P T F A S T
+                </span>
+                <span className="text-sm font-medium text-gray-100">Admin</span>
               </div>
             </div>
           </SidebarHeader>
@@ -329,7 +331,7 @@ export function AdminDashboardPage({
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0">
+            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
@@ -351,11 +353,11 @@ export function AdminDashboardPage({
 
         <SidebarInset>
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+          <header className="bg-gray-50 border-b border-gray-200 sticky top-0 z-40">
             <div className="flex justify-between items-center h-16 px-4">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "overview" && t("admin.overview")}
                   {activeSection === "stations" && t("admin.stations")}
                   {activeSection === "batteries" && t("admin.batteries")}
@@ -381,10 +383,10 @@ export function AdminDashboardPage({
           {/* System Overview KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-8">
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 border border-orange-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-orange-600">
                       {t("admin.totalRevenue")}
                     </p>
                     <p className="text-2xl font-bold">
@@ -401,10 +403,10 @@ export function AdminDashboardPage({
             </Card>
 
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 border border-orange-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-orange-600">
                       {t("admin.totalSwaps")}
                     </p>
                     <p className="text-2xl font-bold">
@@ -421,10 +423,10 @@ export function AdminDashboardPage({
             </Card>
 
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 border border-orange-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-orange-600">
                       {t("admin.activeStations")}
                     </p>
                     <p className="text-2xl font-bold">
@@ -443,10 +445,10 @@ export function AdminDashboardPage({
             </Card>
 
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 border border-orange-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-orange-600">
                       {t("admin.customers")}
                     </p>
                     <p className="text-2xl font-bold">

@@ -63,9 +63,11 @@ export function AdminOverview({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
-            <CardTitle>{t("admin.revenueTrends")}</CardTitle>
+            <CardTitle className="text-orange-600">
+              {t("admin.revenueTrends")}
+            </CardTitle>
             <CardDescription>{t("admin.revenueTrendsDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -86,9 +88,11 @@ export function AdminOverview({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
-            <CardTitle>{t("admin.batteryHealthDistribution")}</CardTitle>
+            <CardTitle className="text-orange-600">
+              {t("admin.batteryHealthDistribution")}
+            </CardTitle>
             <CardDescription>
               {t("admin.batteryHealthDistributionDesc")}
             </CardDescription>
@@ -130,21 +134,21 @@ export function AdminOverview({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 text-center border border-orange-200 rounded-lg">
             <Clock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{kpiData.avgSwapTime}min</p>
             <p className="text-sm text-gray-500">{t("admin.avgSwapTime")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 text-center border border-orange-200 rounded-lg">
             <Activity className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{kpiData.systemUptime}%</p>
             <p className="text-sm text-gray-500">{t("admin.systemUptime")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 text-center border border-orange-200 rounded-lg">
             <Users className="w-8 h-8 text-purple-500 mx-auto mb-2" />
             <p className="text-lg font-bold">
               {kpiData.customerSatisfaction}/5
@@ -153,7 +157,7 @@ export function AdminOverview({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 text-center border border-orange-200 rounded-lg">
             <Gauge className="w-8 h-8 text-orange-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{kpiData.batteryEfficiency}%</p>
             <p className="text-sm text-gray-500">

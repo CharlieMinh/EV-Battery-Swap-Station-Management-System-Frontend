@@ -38,7 +38,9 @@ export function CustomerManagement({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("admin.customerManagement")}</h2>
+        <h2 className="text-2xl font-bold text-orange-600">
+          {t("admin.customerManagement")}
+        </h2>
         <div className="flex space-x-2">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
@@ -50,25 +52,27 @@ export function CustomerManagement({
             />
           </div>
           <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
+            <Filter className="w-10 h-4" /> {t("admin.filter")}
           </Button>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" /> {t("admin.addCustomer")}
+          <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+            <Plus className="w-4 h-4" /> {t("admin.addCustomer")}
           </Button>
         </div>
       </div>
 
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("admin.customerDatabase")}</CardTitle>
+          <CardTitle className="text-orange-600">
+            {t("admin.customerDatabase")}
+          </CardTitle>
           <CardDescription>{t("admin.customerDatabaseDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-4 ">
             {customers.map((customer) => (
               <div
                 key={customer.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex items-center justify-between p-4 border rounded-lg border border-orange-200 rounded-lg"
               >
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -79,12 +83,12 @@ export function CustomerManagement({
                   <div>
                     <p className="font-medium">{customer.name}</p>
                     <p className="text-sm text-gray-500">{customer.email}</p>
-                    <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-2 mt-1 ">
                       <Badge
-                        variant={
+                        className={
                           customer.status === "active"
-                            ? "default"
-                            : "destructive"
+                            ? "bg-green-400 text-white"
+                            : "bg-red-500 text-white "
                         }
                       >
                         {t(`admin.${customer.status}`)}

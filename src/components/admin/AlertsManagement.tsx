@@ -75,7 +75,9 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("admin.systemAlerts")}</h2>
+        <h2 className="text-2xl font-bold text-orange-600">
+          {t("admin.systemAlerts")}
+        </h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
@@ -88,28 +90,28 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
 
       {/* Alert Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardContent className="p-4 text-center">
             <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">2</p>
             <p className="text-sm text-gray-500">{t("admin.criticalAlerts")}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardContent className="p-4 text-center">
             <AlertTriangle className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">5</p>
             <p className="text-sm text-gray-500">{t("admin.warningAlerts")}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardContent className="p-4 text-center">
             <CheckCircle className="w-8 h-8 text-blue-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">12</p>
             <p className="text-sm text-gray-500">{t("admin.infoAlerts")}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-orange-200 rounded-lg">
           <CardContent className="p-4 text-center">
             <Bell className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">94.2%</p>
@@ -119,9 +121,11 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
       </div>
 
       {/* Active Alerts */}
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("admin.activeAlerts")}</CardTitle>
+          <CardTitle className="text-orange-600">
+            {t("admin.activeAlerts")}
+          </CardTitle>
           <CardDescription>{t("admin.activeAlertsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -148,7 +152,11 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
                     <Badge variant={getAlertBadgeVariant(alert.type)}>
                       {t(`admin.${alert.type}`)}
                     </Badge>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
                       {t("admin.resolve")}
                     </Button>
                   </div>
@@ -160,9 +168,11 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
       </Card>
 
       {/* Alert Configuration */}
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("admin.alertConfiguration")}</CardTitle>
+          <CardTitle className="text-orange-600">
+            {t("admin.alertConfiguration")}
+          </CardTitle>
           <CardDescription>{t("admin.alertConfigurationDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,7 +228,7 @@ export function AlertsManagement({ alerts }: AlertsManagementProps) {
               </div>
             </div>
           </div>
-          <Button className="w-full mt-6">
+          <Button className="w-full mt-6 bg-orange-600 hover:bg-orange-700">
             <Settings className="w-4 h-4 mr-2" /> {t("admin.configureAlerts")}
           </Button>
         </CardContent>
