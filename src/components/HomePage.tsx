@@ -132,7 +132,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
   return (
     <div className="h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-orange-500 border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-orange-500 border-b border-gray-200 fixed top-0 z-50 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
