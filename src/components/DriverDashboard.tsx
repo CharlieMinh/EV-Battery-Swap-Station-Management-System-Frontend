@@ -187,107 +187,92 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
-        <Sidebar>
-          <SidebarHeader>
-            <div className="flex items-center p-2">
-              <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg mr-3">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-semibold">EVSwap Driver</span>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("map")}
-                      isActive={activeSection === "map"}
-                    >
-                      <MapPin className="w-4 h-4" />
-                      <span>{t("driver.findStations")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("swap")}
-                      isActive={activeSection === "swap"}
-                    >
-                      <Battery className="w-4 h-4" />
-                      <span>{t("driver.swap")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("history")}
-                      isActive={activeSection === "history"}
-                    >
-                      <History className="w-4 h-4" />
-                      <span>{t("driver.history")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("profile")}
-                      isActive={activeSection === "profile"}
-                    >
-                      <UserIcon className="w-4 h-4" />
-                      <span>{t("driver.profile")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("support")}
-                      isActive={activeSection === "support"}
-                    >
-                      <HeadphonesIcon className="w-4 h-4" />
-                      <span>{t("driver.support")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0">
-              <Avatar className="shrink-0">
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0"
-                onClick={onLogout}
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <SidebarInset>
+        {/* Sidebar */}
+        <div className="flex flex-col w-64 h-screen bg-[#CC5200] text-white">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+          <div className="flex items-center p-3">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-white rounded-lg shadow-md mr-3 border-2 border-[#FF6600] overflow-hidden">
+              <img
+                src="src/assets/logoEV.png"
+                alt="FPTFast Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="text-lg font-semibold text-white">FPTFast</span>
+          </div>
+
+          {/* Menu */}
+          <nav className="flex-1 flex flex-col">
+            {[
+              { key: "map", label: t("driver.findStations"), icon: <MapPin className="w-5 h-5 mr-2" /> },
+              { key: "swap", label: t("driver.swap"), icon: <Battery className="w-5 h-5 mr-2" /> },
+              { key: "history", label: t("driver.history"), icon: <History className="w-5 h-5 mr-2" /> },
+              { key: "profile", label: t("driver.profile"), icon: <UserIcon className="w-5 h-5 mr-2" /> },
+              { key: "support", label: t("driver.support"), icon: <HeadphonesIcon className="w-5 h-5 mr-2" /> },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setActiveSection(item.key)}
+                className={`flex items-center justify-start flex-1 px-4 transition-colors
+          ${activeSection === item.key
+                    ? "bg-[#FF6600] text-white"
+                    : "hover:bg-[#FF8533] text-white"}`}
+              >
+                {item.icon}
+                <span className="font-medium">{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div className="flex items-center p-3 border-t border-orange-700">
+            <div className="flex items-center space-x-2 flex-1">
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-[#FF6600] font-bold">
+                {user.name.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-xs text-gray-200 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={onLogout}
+              className="p-2 text-white hover:text-gray-200 transition"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        {/*dưới này là main content*/}
+
+
+        {/* Content bên phải */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <header className="bg-[#FF6600] border-b border-[#e65c00] sticky top-0 z-40">
             <div className="flex justify-between items-center h-16 px-4">
-              <div className="flex items-center space-x-2">
+              {/* Nút mở sidebar */}
+              <div className="flex items-center">
                 <SidebarTrigger />
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {activeSection === "map" && t("driver.findStations")}
-                  {activeSection === "swap" && t("driver.swap")}
-                  {activeSection === "history" && t("driver.history")}
-                  {activeSection === "profile" && t("driver.profile")}
-                  {activeSection === "support" && t("driver.support")}
-                </h1>
               </div>
 
+              {/* Tiêu đề căn giữa */}
+              <h1 className="text-xl font-semibold text-white text-center flex-1">
+                {activeSection === "map" && t("driver.findStations")}
+                {activeSection === "swap" && t("driver.swap")}
+                {activeSection === "history" && t("driver.history")}
+                {activeSection === "profile" && t("driver.profile")}
+                {activeSection === "support" && t("driver.support")}
+              </h1>
+
+              {/* Các nút bên phải */}
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="icon">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-[#ff8533] rounded-full"
+                >
                   <Bell className="w-4 h-4" />
                 </Button>
               </div>
@@ -295,7 +280,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 bg-[#FFE5D0]">
             {activeSection === "map" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -342,7 +327,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
             {activeSection === "support" && <DriverSupport />}
           </main>
-        </SidebarInset>
+        </div>
+
+
       </div>
 
       {/* Dialogs */}
