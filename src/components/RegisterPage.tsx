@@ -142,15 +142,19 @@ export function RegisterPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-green-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-orange-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mb-4 shadow-lg">
-            <Zap className="w-8 h-8 text-white" />
+          <div className="inline-flex mb-[4px] items-center justify-center w-16 h-16 mb-4">
+            <img
+              src="src/assets/logoEV2.png "
+              alt="FPTFAST Logo"
+              className="w-18 h-15  rounded-full"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {t("register.joinEVSwap")}
+          <h1 className="text-3xl text-orange-500 font-bold mb-[4px]">
+            F P T F A S T
           </h1>
           <p className="text-gray-600">{t("register.createAccount")}</p>
         </div>
@@ -161,7 +165,7 @@ export function RegisterPage({
         </div>
 
         <Card className="shadow-xl border-0">
-          <CardHeader className="text-center pb-6">
+          <CardHeader className="text-center">
             <div className="mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600">
                 <User className="w-8 h-8" />
@@ -174,7 +178,7 @@ export function RegisterPage({
               {t("register.personalInfoDesc")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-8 pt-0">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -391,7 +395,7 @@ export function RegisterPage({
                 )}
               </div>
 
-              {/* Success Notice */}
+              {/* Success Notice
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
@@ -404,14 +408,14 @@ export function RegisterPage({
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Submit Button */}
               <div className="pt-4">
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-200 hover:scale-105 shadow-lg disabled:hover:scale-100"
+                  className="w-full h-14 text-lg font-semibold bg-orange-500 hover:bg-orange-600 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-200 hover:scale-105 shadow-lg disabled:hover:scale-100"
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">
@@ -445,7 +449,7 @@ export function RegisterPage({
                 {t("register.alreadyHaveAccount")}{" "}
                 <button
                   onClick={onBackToLogin}
-                  className="text-green-600 hover:text-green-500 font-medium"
+                  className="text-orange-600 hover:text-orange-500 font-medium"
                 >
                   {t("register.signIn")}
                 </button>
@@ -458,11 +462,11 @@ export function RegisterPage({
         <div className="text-center mt-8">
           <p className="text-xs text-gray-500">
             {t("register.termsText")}{" "}
-            <a href="#" className="text-green-600 hover:underline">
+            <a href="#" className="text-orange-600 hover:underline">
               {t("register.termsOfService")}
             </a>{" "}
             {t("register.and")}{" "}
-            <a href="#" className="text-green-600 hover:underline">
+            <a href="#" className="text-orange-600 hover:underline">
               {t("register.privacyPolicy")}
             </a>
           </p>
