@@ -267,6 +267,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("overview")}
                       isActive={activeSection === "overview"}
+                      className="h-[50px]"
                     >
                       <BarChart3 className="w-4 h-4" />
                       <span>{t("admin.overview")}</span>
@@ -276,6 +277,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("stations")}
                       isActive={activeSection === "stations"}
+                      className="h-[50px]"
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("admin.stations")}</span>
@@ -285,6 +287,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("batteries")}
                       isActive={activeSection === "batteries"}
+                      className="h-[50px]"
                     >
                       <Battery className="w-4 h-4" />
                       <span>{t("admin.batteries")}</span>
@@ -294,6 +297,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("customers")}
                       isActive={activeSection === "customers"}
+                      className="h-[50px]"
                     >
                       <Users className="w-4 h-4" />
                       <span>{t("admin.customers")}</span>
@@ -303,6 +307,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("staff")}
                       isActive={activeSection === "staff"}
+                      className="h-[50px]"
                     >
                       <UserCheck className="w-4 h-4" />
                       <span>{t("admin.staff")}</span>
@@ -312,6 +317,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("ai-insights")}
                       isActive={activeSection === "ai-insights"}
+                      className="h-[50px]"
                     >
                       <Brain className="w-4 h-4" />
                       <span>{t("admin.aiInsights")}</span>
@@ -321,6 +327,7 @@ export function AdminDashboardPage({
                     <SidebarMenuButton
                       onClick={() => setActiveSection("alerts")}
                       isActive={activeSection === "alerts"}
+                      className="h-[50px]"
                     >
                       <Bell className="w-4 h-4" />
                       <span>{t("admin.alerts")}</span>
