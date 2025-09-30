@@ -31,27 +31,37 @@ export function TransactionManagement({
   const { t } = useLanguage();
 
   return (
-    <Card>
+    <Card className="border border-orange-200 rounded-lg shadow-lg bg-white">
       <CardHeader>
-        <CardTitle>{t("staff.recentTransactions")}</CardTitle>
-        <CardDescription>{t("staff.recentTransactionsDesc")}</CardDescription>
+        <CardTitle className="text-orange-600 text-2xl font-bold">
+          {t("staff.recentTransactions")}
+        </CardTitle>
+        <CardDescription className="text-gray-600">
+          {t("staff.recentTransactionsDesc")}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-6">
           {recentTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className="flex items-center justify-between p-6 border border-orange-100 rounded-lg bg-gray-50 shadow-sm"
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center" style={{gap: '15px'}}>
                 <div className="text-center">
-                  <p className="font-mono">{transaction.time}</p>
-                  <Badge variant="secondary">
+                  <p className="font-mono text-lg text-orange-600 font-bold">{transaction.time}</p>
+                  <Badge variant="secondary" className={
+                    transaction.paymentMethod === "subscription"
+                      ? "bg-blue-500 text-white"
+                      : transaction.paymentMethod === "card"
+                      ? "bg-green-500 text-white"
+                      : "bg-yellow-500 text-white"
+                  }>
                     {t(`staff.${transaction.paymentMethod}`)}
                   </Badge>
                 </div>
                 <div>
-                  <p className="font-medium">{transaction.customer}</p>
+                  <p className="font-medium text-black">{transaction.customer}</p>
                   <p className="text-sm text-gray-500">{transaction.vehicle}</p>
                   <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
                     <span className="flex items-center">
@@ -66,8 +76,8 @@ export function TransactionManagement({
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-medium">${transaction.amount}</p>
-                <Badge className="bg-green-100 text-green-800">
+                <p className="font-medium text-green-600 text-lg">${transaction.amount}</p>
+                <Badge className="bg-green-100 text-green-800 font-semibold">
                   {t("staff.completed")}
                 </Badge>
               </div>

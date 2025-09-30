@@ -56,28 +56,30 @@ export function BatteryInventory({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t("staff.batteryInventory")}</h2>
+      <div className="flex justify-between items-center border border-orange-200 rounded-lg bg-gray-50 p-4 mb-2">
+        <h2 className="text-2xl font-bold text-orange-600">
+          {t("staff.batteryInventory")}
+        </h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" /> {t("staff.filter")}
           </Button>
-          <Button size="sm" onClick={onNewInspection}>
-            <Plus className="w-4 h-4 mr-2" /> {t("staff.newInspection")}
+          <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg border-none" onClick={onNewInspection}>
+            <Plus className="w-4 h-4 mr-2 text-white" /> {t("staff.newInspection")}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {batteries.map((battery) => (
           <Card
             key={battery.id}
-            className={`cursor-pointer transition-colors ${
+            className={`border border-orange-200 rounded-lg bg-white shadow-sm cursor-pointer transition-colors ${
               selectedBattery === battery.id ? "border-blue-500 bg-blue-50" : ""
             }`}
             onClick={() => onBatterySelect(battery.id)}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-6">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-medium">
@@ -123,7 +125,7 @@ export function BatteryInventory({
               </div>
 
               <div className="mt-3 pt-3 border-t">
-                <Progress value={battery.health} className="h-2 mb-2" />
+                <Progress value={battery.health} className="h-2 mb-2 bg-orange-100 [&>div]:bg-orange-500" />
                 <div className="flex space-x-1">
                   <Button size="sm" variant="outline" className="flex-1">
                     <RefreshCw className="w-3 h-3" />
