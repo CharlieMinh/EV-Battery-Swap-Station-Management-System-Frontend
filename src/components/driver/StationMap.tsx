@@ -32,9 +32,9 @@ export function StationMap({ stations }: StationMapProps) {
   const { t } = useLanguage();
 
   return (
-    <Card className="lg:col-span-1">
+    <Card className="lg:col-span-1 border-2 border-orange-100 rounded-lg">
       <CardHeader>
-        <CardTitle>Nearby Stations</CardTitle>
+        <CardTitle className="text-orange-500 font-bold">Nearby Stations</CardTitle>
         <CardDescription>
           Find and reserve battery swap stations
         </CardDescription>

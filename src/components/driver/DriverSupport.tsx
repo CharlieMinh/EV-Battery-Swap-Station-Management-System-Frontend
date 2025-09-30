@@ -80,9 +80,9 @@ export function DriverSupport() {
   return (
     <div className="space-y-6">
       {/* Contact Support */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-orange-500 font-bold">
             <HeadphonesIcon className="w-5 h-5" />
             <span>{t("driver.contactSupport")}</span>
           </CardTitle>
@@ -115,9 +115,9 @@ export function DriverSupport() {
       </Card>
 
       {/* Recent Support Tickets */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("driver.recentTickets")}</CardTitle>
+          <CardTitle className=" text-orange-500 font-bold">{t("driver.recentTickets")}</CardTitle>
           <CardDescription>{t("driver.recentTicketsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,9 +160,9 @@ export function DriverSupport() {
       </Card>
 
       {/* FAQ Section */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("driver.frequentlyAsked")}</CardTitle>
+          <CardTitle className=" text-orange-500 font-bold">{t("driver.frequentlyAsked")}</CardTitle>
           <CardDescription>{t("driver.frequentlyAskedDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -181,9 +181,9 @@ export function DriverSupport() {
       </Card>
 
       {/* System Status */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle>{t("driver.systemStatus")}</CardTitle>
+          <CardTitle className=" text-orange-500 font-bold">{t("driver.systemStatus")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

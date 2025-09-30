@@ -28,9 +28,9 @@ export function SwapHistory({ recentSwaps }: SwapHistoryProps) {
   const { t } = useLanguage();
 
   return (
-    <Card>
+    <Card className="border  border-orange-500 rounded-lg">
       <CardHeader>
-        <CardTitle>{t("driver.swapHistory")}</CardTitle>
+        <CardTitle className="text-orange-500 font-bold">{t("driver.swapHistory")}</CardTitle>
         <CardDescription>{t("driver.swapHistoryDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -38,7 +38,7 @@ export function SwapHistory({ recentSwaps }: SwapHistoryProps) {
           {recentSwaps.map((swap) => (
             <div
               key={swap.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className="flex items-center justify-between p-4 border  border-orange-300 rounded-lg"
             >
               <div className="flex items-center space-x-4">
                 <Battery className="w-8 h-8 text-green-500" />
@@ -56,7 +56,7 @@ export function SwapHistory({ recentSwaps }: SwapHistoryProps) {
             </div>
           ))}
         </div>
-        <Button variant="outline" className="w-full mt-4">
+        <Button variant="outline" className="w-full mt-4 border-orange-300 rounded-lg">
           {t("driver.viewAllHistory")}
         </Button>
       </CardContent>
