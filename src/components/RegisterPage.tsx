@@ -73,12 +73,17 @@ export function RegisterPage({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
     return emailRegex.test(email);
   };
 
   const validatePassword = (password: string): boolean => {
-    return password.length >= 8;
+    return (
+      password.length >= 6 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password)
+    );
   };
 
   const validateForm = (): boolean => {
@@ -94,10 +99,14 @@ export function RegisterPage({
       newErrors.email = t("register.emailInvalid");
     }
 
-    if (!formData.password) {
-      newErrors.password = t("register.passwordRequired");
-    } else if (!validatePassword(formData.password)) {
-      newErrors.password = t("register.passwordTooShort");
+    if (formData.password.length < 6) {
+      newErrors.password = "Password phải có ít nhất 6 ký tự";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Password phải có ít nhất 1 chữ hoa";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Password phải có ít nhất 1 chữ thường";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Password phải có ít nhất 1 số";
     }
 
     if (!formData.confirmPassword) {
@@ -143,8 +152,16 @@ export function RegisterPage({
       alert("Registration successful! Please log in.");
       navigate("/login");
     } catch (error) {
-      console.error("Registration failed:", error);
-      alert("Registration failed. Please try again.");
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+
+        if (data.error?.code === "EMAIL_EXISTS") {
+          setErrors({ email: data.error.message || "Email already exists." });
+        } else {
+          setErrors({ password: "Registration failed. Please try again." });
+          console.error("Unexpected error:", error);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
