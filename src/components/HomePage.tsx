@@ -29,14 +29,12 @@ import {
   Instagram,
   Play,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-interface HomepageProps {
-  onGetStarted: () => void;
-  onLogin: () => void;
-}
-
-export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
+export function Homepage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
   const features = [
     {
       icon: <Clock className="w-8 h-8 text-orange-500" />,
@@ -175,11 +173,11 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
             </div>
             <div className="flex items-center space-x-4">
               <LanguageSwitcher />
-              <Button variant="outline" onClick={onLogin}>
+              <Button variant="outline" onClick={() => navigate("/login")}>
                 {t("nav.signIn")}
               </Button>
               <Button
-                onClick={onGetStarted}
+                onClick={() => navigate("/register")}
                 className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
               >
                 {t("nav.getStarted")}
@@ -207,7 +205,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button
                   size="lg"
-                  onClick={onGetStarted}
+                  onClick={() => navigate("/stations")}
                   className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
                   {t("home.hero.findStation")}
@@ -321,7 +319,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                     {t("stations.mapTitle")}
                   </h3>
                   <p className="text-gray-600 mb-4">{t("stations.mapDesc")}</p>
-                  <Button onClick={onGetStarted}>
+                  <Button onClick={() => navigate("/stations")}>
                     {t("stations.viewFullMap")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -411,7 +409,7 @@ export function Homepage({ onGetStarted, onLogin }: HomepageProps) {
                         : ""
                     }`}
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={onGetStarted}
+                    onClick={() => navigate("/register")}
                   >
                     {t("pricing.getStarted")}
                   </Button>

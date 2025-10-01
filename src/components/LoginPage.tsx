@@ -26,6 +26,10 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { User as UserType } from "../App";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { on } from "events";
+import { error } from "console";
 
 interface LoginPageProps {
   onLogin: (user: UserType) => void;
@@ -33,40 +37,51 @@ interface LoginPageProps {
   onBackToHome?: () => void;
 }
 
-export function LoginPage({
-  onLogin,
-  onRegister,
-  onBackToHome,
-}: LoginPageProps) {
+export function LoginPage({ onLogin }: LoginPageProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleDemoLogin = (role: "driver" | "staff" | "admin") => {
-    const demoUsers = {
-      driver: {
-        id: "1",
-        name: "Alex Chen",
-        email: "alex.chen@example.com",
-        role: "driver" as const,
-        avatar: "AC",
-      },
-      staff: {
-        id: "2",
-        name: "Sarah Johnson",
-        email: "sarah.johnson@evswap.com",
-        role: "staff" as const,
-        avatar: "SJ",
-      },
-      admin: {
-        id: "3",
-        name: "Michael Rodriguez",
-        email: "michael.rodriguez@evswap.com",
-        role: "admin" as const,
-        avatar: "MR",
-      },
-    };
-    onLogin(demoUsers[role]);
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    console.log("handleLogin called!");
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        "http://localhost:5194/api/v1/Auth/login",
+        {
+          email,
+          password,
+        },
+        { withCredentials: true }
+      );
+
+      onLogin(response.data);
+      console.log(response.data);
+
+      if (response.data.role === "Driver") {
+        navigate("/driver");
+      } else if (response.data.role === "Staff") {
+        navigate("/staff");
+      } else if (response.data.role === "Admin") {
+        navigate("/admin");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", error.message);
+        console.error("Response:", error.response?.data);
+        console.error("Status:", error.response?.status);
+      } else {
+        console.error("Unexpected error:", error);
+        alert("Login failed. Please check your credentials.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,68 +126,51 @@ export function LoginPage({
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="login" className="space-y-4 ">
-                  {/* Social Login Options */}
-
-                  {/* <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator className="w-full" />
+                <TabsContent value="login" className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t("login.email")}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder={t("login.enterEmail")}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        {t("login.orContinueWithEmail")}
-                      </span>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">{t("login.password")}</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder={t("login.enterPassword")}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div> */}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("login.email")}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder={t("login.enterEmail")}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+                    {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t("login.password")}</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder={t("login.enterPassword")}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                      disabled={loading}
+                    >
+                      {loading ? t("login.loading") : t("login.signIn")}
+                    </Button>
+                  </form>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" className="rounded" />
-                      <span className="text-gray-600">
-                        {t("login.rememberMe")}
-                      </span>
-                    </label>
-                    <a href="#" className="text-orange-500 hover:underline">
-                      {t("login.forgotPassword")}
-                    </a>
-                  </div>
-
-                  <Button
-                    className="w-full mb-[6px] bg-orange-500 hover:bg-orange-600"
-                    onClick={() => handleDemoLogin("driver")}
-                  >
-                    {t("login.signIn")}
-                  </Button>
                   <div className="space-y-3">
                     <Button variant="outline" className="w-full justify-center">
                       <Chrome className="w-4 h-4 mr-2" />
@@ -181,7 +179,7 @@ export function LoginPage({
                   </div>
                 </TabsContent>
 
-                <TabsContent value="demo" className="space-y-4">
+                {/* <TabsContent value="demo" className="space-y-4">
                   <div className="text-sm text-gray-600 mb-4">
                     {t("login.tryPlatform")}
                   </div>
@@ -190,7 +188,7 @@ export function LoginPage({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => handleDemoLogin("driver")}
+                      onClick={() => navigate("/driver")}
                     >
                       <User className="w-4 h-4 mr-2" />
                       {t("login.evDriverPortal")}
@@ -199,7 +197,7 @@ export function LoginPage({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => handleDemoLogin("staff")}
+                      onClick={() => navigate("/staff")}
                     >
                       <Battery className="w-4 h-4 mr-2" />
                       {t("login.stationStaffPortal")}
@@ -214,7 +212,7 @@ export function LoginPage({
                       {t("login.adminDashboard")}
                     </Button>
                   </div>
-                </TabsContent>
+                </TabsContent> */}
               </Tabs>
             </CardContent>
           </Card>
@@ -222,25 +220,25 @@ export function LoginPage({
           <div className="text-center mt-6 text-sm text-gray-500 mt-[12px]">
             {t("login.dontHaveAccount")}{" "}
             <button
-              onClick={onRegister}
+              onClick={() => navigate("/register")}
               className="text-orange-500 hover:underline"
             >
               {t("login.signUpHere")}
             </button>
           </div>
 
-          {onBackToHome && (
+          {/* {onBackToHome && (
             <div className="text-center mt-4">
               <Button
                 variant="ghost"
-                onClick={onBackToHome}
+                onClick={() => navigate("/")}
                 className="text-sm text-gray-500 hover:text-gray-700"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {t("login.backToHome")}
               </Button>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

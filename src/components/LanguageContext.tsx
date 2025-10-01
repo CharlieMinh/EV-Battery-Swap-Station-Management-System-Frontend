@@ -24,7 +24,7 @@ export function useLanguage() {
 const translations = {
   en: {
     // Navigation
-    "nav.signIn": "sIGN IN",
+    "nav.signIn": "Sign In",
     "nav.getStarted": "Get Started",
     "nav.features": "Features",
     "nav.pricing": "Pricing",
@@ -172,6 +172,7 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
 
     // Register
+    "register.name": "Name",
     "register.joinEVSwap": "Join EVSwap",
     "register.createAccount": "Create your account to get started",
     "register.personalInfo": "Personal Information",
@@ -223,6 +224,7 @@ const translations = {
     "register.defaultDriverRole": "Starting as EV Driver",
     "register.defaultDriverRoleDesc":
       "You're signing up as an EV Driver. You can request to become a Station Staff later through your profile settings.",
+    "register.namePlaceholder": "Enter your name",
 
     // Driver Portal
     "driver.findStations": "Find Stations",
@@ -683,6 +685,8 @@ const translations = {
     "login.batterySwapManagement": "Quản Lý Trạm Thay Pin",
 
     // Register
+    "register.namePlaceholder": "Hãy nhập tên của bạn",
+    "register.name": "Tên",
     "register.joinEVSwap": "Tham Gia EVSwap",
     "register.createAccount": "Tạo tài khoản của bạn để bắt đầu",
     "register.personalInfo": "Thông Tin Cá Nhân",
