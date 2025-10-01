@@ -37,10 +37,12 @@ interface LoginPageProps {
   onBackToHome?: () => void;
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
+  const [errorEmail, setErrorEmail] = useState("");
+  const [errorPassword, setErrorPassword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,24 +62,31 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         { withCredentials: true }
       );
 
-      onLogin(response.data);
-      console.log(response.data);
+      if (response.data.role) {
+        onLogin(response.data);
+        console.log(response.data);
 
-      if (response.data.role === "Driver") {
-        navigate("/driver");
-      } else if (response.data.role === "Staff") {
-        navigate("/staff");
-      } else if (response.data.role === "Admin") {
-        navigate("/admin");
+        if (response.data.role === "Driver") navigate("/driver");
+        else if (response.data.role === "Staff") navigate("/staff");
+        else if (response.data.role === "Admin") navigate("/admin");
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.message);
-        console.error("Response:", error.response?.data);
-        console.error("Status:", error.response?.status);
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+
+        // Validation lỗi 400
+        if (data.error?.code === "VALIDATION_FAILED") {
+          setErrorEmail(data.error.details?.email?.[0] || "");
+          setErrorPassword(data.error.details?.password?.[0] || "");
+        }
+        // Invalid credentials 401
+        else if (data.error?.code === "INVALID_CREDENTIALS") {
+          setErrorPassword(data.error.message || "Invalid email or password.");
+        }
       } else {
+        // Lỗi không mong muốn
+        setErrorPassword("Login failed. Please try again.");
         console.error("Unexpected error:", error);
-        alert("Login failed. Please check your credentials.");
       }
     } finally {
       setLoading(false);
@@ -142,6 +151,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           required
                         />
                       </div>
+                      {errorEmail && (
+                        <p style={{ color: "red" }}>{errorEmail}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -158,6 +170,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           required
                         />
                       </div>
+                      {errorPassword && (
+                        <p style={{ color: "red" }}>{errorPassword}</p>
+                      )}
                     </div>
 
                     {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
@@ -227,7 +242,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </button>
           </div>
 
-          {/* {onBackToHome && (
+          {onBackToHome && (
             <div className="text-center mt-4">
               <Button
                 variant="ghost"
@@ -238,7 +253,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 {t("login.backToHome")}
               </Button>
             </div>
-          )} */}
+          )}
         </div>
       </div>
     </div>
