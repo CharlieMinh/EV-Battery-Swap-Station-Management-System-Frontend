@@ -30,9 +30,9 @@ export function SubscriptionStatus({
   const { t } = useLanguage();
 
   return (
-    <Card>
+    <Card className="border border-orange-500 rounded-lg">
       <CardHeader>
-        <CardTitle>{t("driver.subscriptionStatus")}</CardTitle>
+        <CardTitle className="text-orange-500 font-bold">{t("driver.subscriptionStatus")}</CardTitle>
         <CardDescription>{t("driver.subscriptionStatusDesc")}</CardDescription>
       </CardHeader>
       <CardContent>

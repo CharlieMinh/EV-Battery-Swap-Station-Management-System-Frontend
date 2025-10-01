@@ -19,13 +19,13 @@ export function SwapStatus({ onQRDialog }: SwapStatusProps) {
   const { t } = useLanguage();
 
   return (
-    <Card>
+    <Card className="border border-orange-500 rounded-lg">
       <CardHeader>
-        <CardTitle>{t("driver.activeReservation")}</CardTitle>
+        <CardTitle className="text-orange-500 font-bold">{t("driver.activeReservation")}</CardTitle>
         <CardDescription>{t("driver.activeReservationDesc")}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="text-center space-y-4">
+      <CardContent >
+        <div className="text-center space-y-4 text-orange-500">
           <Badge className="bg-green-100 text-green-800">
             {t("driver.confirmed")}
           </Badge>

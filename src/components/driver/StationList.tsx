@@ -40,9 +40,9 @@ export function StationList({
   const { t } = useLanguage();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("driver.availableStations")}</CardTitle>
+    <Card className="border-2 border-orange-100 rounded-lg">
+      <CardHeader >
+        <CardTitle className="text-orange-500 font-bold">{t("driver.availableStations")}</CardTitle>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" /> {t("driver.filter")}
@@ -63,17 +63,16 @@ export function StationList({
           {stations.map((station) => (
             <Card
               key={station.id}
-              className={`cursor-pointer transition-colors ${
-                selectedStation === station.id
-                  ? "border-green-500 bg-green-50"
-                  : ""
-              }`}
+              className={`cursor-pointer transition-colors ${selectedStation === station.id
+                ? "border-2 border-orange-500 rounded-lg"
+                : "border border-gray-500 rounded-lg"
+                }`}
               onClick={() => onStationSelect(station.id)}
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="font-medium">{station.name}</h3>
+                    <h3 className="font-medium font-bold text-orange-500">{station.name}</h3>
                     <p className="text-sm text-gray-500">{station.address}</p>
                   </div>
                   <Badge
