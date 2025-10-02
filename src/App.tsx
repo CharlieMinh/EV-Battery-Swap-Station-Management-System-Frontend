@@ -4,11 +4,11 @@ import { Homepage } from "./components/HomePage";
 import { LoginPage } from "./components/LoginPage";
 import { RegisterPage } from "./components/RegisterPage";
 import { DriverPortalPage } from "./components/DriverDashboard";
-import { StaffPortalPage } from "./components/StaffDashboard";
+import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-export type UserRole = "driver" | "staff" | "admin" | null;
-export type AppView = "homepage" | "login" | "register" | "portal";
+export type UserRole = "Driver" | "Staff" | "Admin" | null;
 
 export interface User {
   id: string;
@@ -18,93 +18,86 @@ export interface User {
   avatar?: string;
 }
 
-export default function App() {
+function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<AppView>("homepage");
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
-    setCurrentView("portal");
   };
 
   const handleRegister = (user: User) => {
     setCurrentUser(user);
-    setCurrentView("portal");
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setCurrentView("homepage");
-  };
-
-  const handleGetStarted = () => {
-    setCurrentView("login");
-  };
-
-  const handleShowLogin = () => {
-    setCurrentView("login");
-  };
-
-  const handleShowRegister = () => {
-    setCurrentView("register");
-  };
-
-  const handleBackToHome = () => {
-    setCurrentView("homepage");
-  };
-
-  const handleBackToLogin = () => {
-    setCurrentView("login");
   };
 
   return (
     <LanguageProvider>
-      {/* Show user portal if logged in */}
-      {currentUser && currentView === "portal" ? (
-        (() => {
-          switch (currentUser.role) {
-            case "driver":
-              return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route
+            path="/login"
+            element={
+              <LoginPage
+                onLogin={handleLogin}
+                onRegister={() => {}}
+                onBackToHome={() => {}}
+              />
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <RegisterPage
+                onRegister={handleRegister}
+                onBackToHome={() => {}}
+                onBackToLogin={() => {}}
+              />
+            }
+          />
+          <Route
+            path="/driver"
+            element={
+              currentUser?.role === "Driver" ? (
                 <DriverPortalPage user={currentUser} onLogout={handleLogout} />
-              );
-            case "staff":
-              return (
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/staff"
+            element={
+              currentUser?.role === "Staff" ? (
                 <StaffPortalPage user={currentUser} onLogout={handleLogout} />
-              );
-            case "admin":
-              return (
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              currentUser?.role === "Admin" ? (
                 <AdminDashboardPage
                   user={currentUser}
                   onLogout={handleLogout}
                 />
-              );
-            default:
-              return (
-                <LoginPage
-                  onLogin={handleLogin}
-                  onBackToHome={handleBackToHome}
-                />
-              );
-          }
-        })()
-      ) : currentView === "register" ? (
-        /* Show register screen */
-        <RegisterPage
-          onRegister={handleRegister}
-          onBackToLogin={handleBackToLogin}
-          onBackToHome={handleBackToHome}
-        />
-      ) : currentView === "login" ? (
-        /* Show login screen */
-        <LoginPage
-          onLogin={handleLogin}
-          onRegister={handleShowRegister}
-          onBackToHome={handleBackToHome}
-        />
-      ) : (
-        /* Show homepage by default */
-        <Homepage onGetStarted={handleGetStarted} onLogin={handleShowLogin} />
-      )}
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          // Fallback: Nếu không khớp với bất kỳ route nào, chuyển hướng về
+          trang chủ
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
     </LanguageProvider>
   );
 }
+
+export default App;

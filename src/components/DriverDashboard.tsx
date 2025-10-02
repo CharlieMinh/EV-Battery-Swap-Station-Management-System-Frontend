@@ -198,10 +198,10 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold text-white">F P T F A S T</span>
-                <span className="text-sm font-medium text-white">
-                  Driver
+                <span className="text-lg font-semibold text-white">
+                  F P T F A S T
                 </span>
+                <span className="text-sm font-medium text-white">Driver</span>
               </div>
             </div>
           </SidebarHeader>
@@ -212,62 +212,73 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   <SidebarMenuItem className="flex-1 border-b">
                     <SidebarMenuButton
                       className={`w-full h-full flex items-center justify-center transition-colors
-        ${activeSection === "map"
-                          ? "bg-orange-500 text-white"
-                          : "hover:bg-orange-200 hover:text-white"}`}
+        ${
+          activeSection === "map"
+            ? "bg-orange-500 text-white"
+            : "hover:bg-orange-200 hover:text-white"
+        }`}
                       onClick={() => setActiveSection("map")}
+                      isActive={activeSection === "map"}
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
-                  <SidebarMenuItem className="flex-1 border-b">
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`w-full h-full flex items-center justify-center transition-colors
-        ${activeSection === "swap"
-                          ? "bg-orange-500 text-white"
-                          : "hover:bg-orange-200 hover:text-white"}`}
+        ${
+          activeSection === "swap"
+            ? "bg-orange-500 text-white"
+            : "hover:bg-orange-200 hover:text-white"
+        }`}
                       onClick={() => setActiveSection("swap")}
+                      isActive={activeSection === "swap"}
                     >
                       <Battery className="w-4 h-4" />
                       <span>{t("driver.swap")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
-                  <SidebarMenuItem className="flex-1 border-b">
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`w-full h-full flex items-center justify-center transition-colors
-        ${activeSection === "history"
-                          ? "bg-orange-500 text-white"
-                          : "hover:bg-orange-200 hover:text-white"}`}
+        ${
+          activeSection === "history"
+            ? "bg-orange-500 text-white"
+            : "hover:bg-orange-200 hover:text-white"
+        }`}
                       onClick={() => setActiveSection("history")}
+                      isActive={activeSection === "history"}
                     >
                       <History className="w-4 h-4" />
                       <span>{t("driver.history")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
-                  <SidebarMenuItem className="flex-1 border-b">
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`w-full h-full flex items-center justify-center transition-colors
-        ${activeSection === "profile"
-                          ? "bg-orange-500 text-white"
-                          : "hover:bg-orange-200 hover:text-white"}`}
+        ${
+          activeSection === "profile"
+            ? "bg-orange-500 text-white"
+            : "hover:bg-orange-200 hover:text-white"
+        }`}
                       onClick={() => setActiveSection("profile")}
+                      isActive={activeSection === "profile"}
                     >
                       <UserIcon className="w-4 h-4" />
                       <span>{t("driver.profile")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
-                  <SidebarMenuItem className="flex-1 border-b">
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className={`w-full h-full flex items-center justify-center transition-colors
-        ${activeSection === "support"
-                          ? "bg-orange-500 text-white"
-                          : "hover:bg-orange-200 hover:text-white"}`}
+        ${
+          activeSection === "support"
+            ? "bg-orange-500 text-white"
+            : "hover:bg-orange-200 hover:text-white"
+        }`}
                       onClick={() => setActiveSection("support")}
+                      isActive={activeSection === "support"}
                     >
                       <HeadphonesIcon className="w-4 h-4" />
                       <span>{t("driver.support")}</span>
@@ -277,6 +288,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+
           <SidebarFooter>
             <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100">
               <Avatar className="shrink-0">
