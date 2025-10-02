@@ -26,6 +26,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { User as UserType } from "../App";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 interface RegisterPageProps {
   onRegister: (user: UserType) => void;
@@ -34,8 +36,7 @@ interface RegisterPageProps {
 }
 
 interface FormData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   password: string;
@@ -43,8 +44,7 @@ interface FormData {
 }
 
 interface FormErrors {
-  firstName?: string;
-  lastName?: string;
+  name?: string;
   email?: string;
   phone?: string;
   password?: string;
@@ -57,9 +57,10 @@ export function RegisterPage({
   onBackToHome,
 }: RegisterPageProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<FormData>({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     phone: "",
     password: "",
@@ -83,11 +84,9 @@ export function RegisterPage({
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = t("register.firstNameRequired");
-    if (!formData.lastName.trim())
-      newErrors.lastName = t("register.lastNameRequired");
-    if (!formData.phone.trim()) newErrors.phone = t("register.phoneRequired");
+    if (!formData.name.trim()) {
+      newErrors.name = t("register.nameRequired");
+    }
 
     if (!formData.email.trim()) {
       newErrors.email = t("register.emailRequired");
@@ -127,18 +126,27 @@ export function RegisterPage({
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const newUser: UserType = {
-        id: Date.now().toString(),
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        role: "driver", // Default role is driver, can be upgraded later
-      };
+    try {
+      const response = await axios.post(
+        "http://localhost:5194/api/v1/Auth/register",
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        },
+        { withCredentials: true }
+      );
 
+      onRegister(response.data);
+      alert("Registration successful! Please log in.");
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration failed:", error);
+      alert("Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-      onRegister(newUser);
-    }, 2000);
+    }
   };
 
   return (
@@ -181,64 +189,31 @@ export function RegisterPage({
           <CardContent className="p-8 pt-0">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="firstName"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    {t("register.firstName")}
-                  </Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      handleInputChange("firstName", e.target.value)
-                    }
-                    className={`h-12 bg-white border-2 transition-all duration-200 focus:ring-2 focus:ring-green-200 ${
-                      errors.firstName
-                        ? "border-red-500 focus:ring-red-200"
-                        : "border-gray-300 focus:border-green-500"
-                    }`}
-                    placeholder={t("register.firstNamePlaceholder")}
-                  />
-                  {errors.firstName && (
-                    <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
-                      <AlertCircle className="w-3 h-3" />
-                      <span>{errors.firstName}</span>
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="lastName"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    {t("register.lastName")}
-                  </Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      handleInputChange("lastName", e.target.value)
-                    }
-                    className={`h-12 bg-white border-2 transition-all duration-200 focus:ring-2 focus:ring-green-200 ${
-                      errors.lastName
-                        ? "border-red-500 focus:ring-red-200"
-                        : "border-gray-300 focus:border-green-500"
-                    }`}
-                    placeholder={t("register.lastNamePlaceholder")}
-                  />
-                  {errors.lastName && (
-                    <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
-                      <AlertCircle className="w-3 h-3" />
-                      <span>{errors.lastName}</span>
-                    </p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  {t("register.name")}
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  className={`h-12 bg-white border-2 transition-all duration-200 focus:ring-2 focus:ring-green-200 ${
+                    errors.name
+                      ? "border-red-500 focus:ring-red-200"
+                      : "border-gray-300 focus:border-green-500"
+                  }`}
+                  placeholder={t("register.namePlaceholder")}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.name}</span>
+                  </p>
+                )}
               </div>
 
               {/* Phone Number */}
@@ -429,7 +404,7 @@ export function RegisterPage({
               </div>
 
               {/* Back to Login */}
-              <div className="text-center pt-4">
+              {/* <div className="text-center pt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -439,7 +414,7 @@ export function RegisterPage({
                   <ArrowLeft className="w-4 h-4" />
                   <span>{t("register.backToLogin")}</span>
                 </Button>
-              </div>
+              </div> */}
             </form>
 
             <Separator className="my-6" />
@@ -448,7 +423,7 @@ export function RegisterPage({
               <p className="text-sm text-gray-600">
                 {t("register.alreadyHaveAccount")}{" "}
                 <button
-                  onClick={onBackToLogin}
+                  onClick={() => navigate("/login")}
                   className="text-orange-600 hover:text-orange-500 font-medium"
                 >
                   {t("register.signIn")}

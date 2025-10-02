@@ -306,7 +306,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
           {/* Main Content */}
           <main className="flex-1 p-6">
             {activeSection === "map" && (
-              <div className="space-y-6">
+              <div className="space-y-6 ">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <StationMap stations={stations} />
                   <StationList
