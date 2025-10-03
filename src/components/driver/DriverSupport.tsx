@@ -107,7 +107,7 @@ export function DriverSupport() {
                     </p>
                   </div>
                 </div>
-                <Button>{option.action}</Button>
+                <Button className="bg-orange-500">{option.action}</Button>
               </div>
             ))}
           </div>
@@ -153,7 +153,7 @@ export function DriverSupport() {
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full mt-4">
+          <Button variant="outline" className="w-full mt-4 bg-orange-500 text-white">
             {t("driver.viewAllTickets")}
           </Button>
         </CardContent>
@@ -174,7 +174,7 @@ export function DriverSupport() {
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full mt-4">
+          <Button variant="outline" className="w-full mt-4 bg-orange-500 text-white">
             {t("driver.viewAllFAQ")}
           </Button>
         </CardContent>

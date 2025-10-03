@@ -51,12 +51,12 @@ export function SwapHistory({ recentSwaps }: SwapHistoryProps) {
               </div>
               <div className="text-right">
                 <p className="font-medium">${swap.amount}</p>
-                <Badge variant="secondary">{t(`driver.${swap.status}`)}</Badge>
+                <Badge className="bg-orange-500 text-white" variant="secondary">{t(`driver.${swap.status}`)}</Badge>
               </div>
             </div>
           ))}
         </div>
-        <Button variant="outline" className="w-full mt-4 border-orange-300 rounded-lg">
+        <Button variant="outline" className="w-full mt-4 border-orange-300 rounded-lg bg-orange-500 text-white">
           {t("driver.viewAllHistory")}
         </Button>
       </CardContent>
