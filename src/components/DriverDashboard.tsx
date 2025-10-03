@@ -209,16 +209,11 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             <SidebarGroup className="flex-1">
               <SidebarGroupContent className="h-full">
                 <SidebarMenu className="flex flex-col h-full">
-                  <SidebarMenuItem className="flex-1 border-b">
+                  <SidebarMenuItem>
                     <SidebarMenuButton
-                      className={`w-full h-full flex items-center justify-center transition-colors
-        ${
-          activeSection === "map"
-            ? "bg-orange-500 text-white"
-            : "hover:bg-orange-200 hover:text-white"
-        }`}
                       onClick={() => setActiveSection("map")}
                       isActive={activeSection === "map"}
+                      className="h-[60px]"
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
@@ -226,14 +221,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className={`w-full h-full flex items-center justify-center transition-colors
-        ${
-          activeSection === "swap"
-            ? "bg-orange-500 text-white"
-            : "hover:bg-orange-200 hover:text-white"
-        }`}
                       onClick={() => setActiveSection("swap")}
                       isActive={activeSection === "swap"}
+                      className="h-[60px]"
                     >
                       <Battery className="w-4 h-4" />
                       <span>{t("driver.swap")}</span>
@@ -241,14 +231,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className={`w-full h-full flex items-center justify-center transition-colors
-        ${
-          activeSection === "history"
-            ? "bg-orange-500 text-white"
-            : "hover:bg-orange-200 hover:text-white"
-        }`}
                       onClick={() => setActiveSection("history")}
                       isActive={activeSection === "history"}
+                      className="h-[60px]"
                     >
                       <History className="w-4 h-4" />
                       <span>{t("driver.history")}</span>
@@ -256,14 +241,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className={`w-full h-full flex items-center justify-center transition-colors
-        ${
-          activeSection === "profile"
-            ? "bg-orange-500 text-white"
-            : "hover:bg-orange-200 hover:text-white"
-        }`}
                       onClick={() => setActiveSection("profile")}
                       isActive={activeSection === "profile"}
+                      className="h-[60px]"
                     >
                       <UserIcon className="w-4 h-4" />
                       <span>{t("driver.profile")}</span>
@@ -271,14 +251,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className={`w-full h-full flex items-center justify-center transition-colors
-        ${
-          activeSection === "support"
-            ? "bg-orange-500 text-white"
-            : "hover:bg-orange-200 hover:text-white"
-        }`}
                       onClick={() => setActiveSection("support")}
                       isActive={activeSection === "support"}
+                      className="h-[60px]"
                     >
                       <HeadphonesIcon className="w-4 h-4" />
                       <span>{t("driver.support")}</span>
