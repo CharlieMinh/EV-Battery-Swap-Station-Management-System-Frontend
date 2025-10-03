@@ -40,15 +40,15 @@ export function StationList({
   const { t } = useLanguage();
 
   return (
-    <Card className="border-2 border-orange-100 rounded-lg">
+    <Card className="border border-orange-500 rounded-lg">
       <CardHeader >
         <CardTitle className="text-orange-500 font-bold">{t("driver.availableStations")}</CardTitle>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" /> {t("driver.filter")}
+          <Button variant="outline" size="sm" className="bg-orange-500 text-white">
+            <Filter className="w-4 h-4 mr-2 text-white" /> {t("driver.filter")}
           </Button>
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 " />
             <Input
               placeholder={t("driver.searchStations")}
               className="pl-9"
@@ -65,7 +65,7 @@ export function StationList({
               key={station.id}
               className={`cursor-pointer transition-colors ${selectedStation === station.id
                 ? "border-2 border-orange-500 rounded-lg"
-                : "border border-gray-500 rounded-lg"
+                : "border border-orange-500 rounded-lg"
                 }`}
               onClick={() => onStationSelect(station.id)}
             >
@@ -75,7 +75,7 @@ export function StationList({
                     <h3 className="font-medium font-bold text-orange-500">{station.name}</h3>
                     <p className="text-sm text-gray-500">{station.address}</p>
                   </div>
-                  <Badge
+                  <Badge className="bg-orange-500"
                     variant={
                       station.status === "open" ? "default" : "destructive"
                     }
@@ -106,7 +106,7 @@ export function StationList({
                   <span className="font-medium">
                     ${station.pricePerSwap}/swap
                   </span>
-                  <Button
+                  <Button className="bg-orange-500"
                     size="sm"
                     disabled={station.status !== "open"}
                     onClick={(e) => {

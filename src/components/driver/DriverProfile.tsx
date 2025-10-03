@@ -116,7 +116,7 @@ export function DriverProfile({
               </div>
             </div>
           </div>
-          <Button className="w-full">
+          <Button className="w-full bg-orange-500">
             <Edit className="w-4 h-4 mr-2" /> {t("driver.updateProfile")}
           </Button>
         </CardContent>
@@ -153,14 +153,14 @@ export function DriverProfile({
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="secondary">{t("driver.primary")}</Badge>
-                  <Button size="sm" variant="outline">
+                  <Badge className="bg-orange-500 text-white" variant="secondary">{t("driver.primary")}</Badge>
+                  <Button size="sm" variant="outline" className="bg-orange-500 text-white">
                     <Edit className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-orange-500 text-white">
               {t("driver.addVehicle")}
             </Button>
           </div>
@@ -210,9 +210,9 @@ export function DriverProfile({
                   <p className="text-sm text-gray-500">Expires 12/26</p>
                 </div>
               </div>
-              <Badge>{t("driver.primary")}</Badge>
+              <Badge className="bg-orange-500">{t("driver.primary")}</Badge>
             </div>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-orange-500 text-white">
               {t("driver.addPaymentMethod")}
             </Button>
           </div>

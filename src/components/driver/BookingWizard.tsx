@@ -74,16 +74,15 @@ export function BookingWizard({
             {t('driver.completeReservation')} {4 - bookingStep} {t('driver.moreSteps')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex items-center justify-between mb-6">
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step <= bookingStep ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step <= bookingStep ? 'bg-orange-500 text-white' : 'bg-orange-200 text-white-500'
+                }`}>
                 {step < bookingStep ? <CheckCircle className="w-4 h-4" /> : step}
               </div>
-              {step < 4 && <div className={`w-12 h-1 ${step < bookingStep ? 'bg-green-500' : 'bg-gray-200'}`} />}
+              {step < 4 && <div className={`w-12 h-1 ${step < bookingStep ? 'bg-orange-500' : 'bg-orange-100'}`} />}
             </div>
           ))}
         </div>
@@ -93,11 +92,10 @@ export function BookingWizard({
             <h3 className="text-lg font-medium">{t('driver.selectVehicle')}</h3>
             <div className="grid gap-4">
               {vehicles.map((vehicle) => (
-                <Card 
-                  key={vehicle.id} 
-                  className={`cursor-pointer transition-colors ${
-                    selectedVehicle === vehicle.id ? 'border-green-500 bg-green-50' : ''
-                  }`}
+                <Card
+                  key={vehicle.id}
+                  className={`cursor-pointer transition-colors ${selectedVehicle === vehicle.id ? 'border-orange-500 bg-orange-200' : 'border-orane-300 bg-white-500'
+                    }`}
                   onClick={() => onVehicleSelect(vehicle.id)}
                 >
                   <CardContent className="p-4">
@@ -114,14 +112,14 @@ export function BookingWizard({
                   </CardContent>
                 </Card>
               ))}
-              <Button variant="outline" className="flex items-center justify-center">
+              <Button variant="outline" className="flex items-center justify-center  bg-orange-500 text-white ">
                 <Plus className="w-4 h-4 mr-2" /> {t('driver.addNewVehicle')}
               </Button>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={onClose}>{t('driver.cancel')}</Button>
-              <Button 
-                onClick={() => onStepChange(2)} 
+              <Button className='bg-orange-100 text-black ' variant="outline" onClick={onClose}>{t('driver.cancel')}</Button>
+              <Button className='bg-orange-500 text-white '
+                onClick={() => onStepChange(2)}
                 disabled={!selectedVehicle}
               >
                 {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
@@ -149,8 +147,8 @@ export function BookingWizard({
               <Button variant="outline" onClick={() => onStepChange(1)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
               </Button>
-              <Button 
-                onClick={() => onStepChange(3)} 
+              <Button className='bg-orange-500 text-white '
+                onClick={() => onStepChange(3)}
                 disabled={!selectedTime}
               >
                 {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
@@ -189,7 +187,7 @@ export function BookingWizard({
               <Button variant="outline" onClick={() => onStepChange(2)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
               </Button>
-              <Button onClick={() => onStepChange(4)}>
+              <Button className='bg-orange-500 text-white ' onClick={() => onStepChange(4)}>
                 {t('driver.confirmBooking')} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

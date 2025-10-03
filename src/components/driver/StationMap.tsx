@@ -32,7 +32,7 @@ export function StationMap({ stations }: StationMapProps) {
   const { t } = useLanguage();
 
   return (
-    <Card className="lg:col-span-1 border-2 border-orange-100 rounded-lg">
+    <Card className="lg:col-span-1 border border-orange-500 rounded-lg">
       <CardHeader>
         <CardTitle className="text-orange-500 font-bold">Nearby Stations</CardTitle>
         <CardDescription>
@@ -54,7 +54,7 @@ export function StationMap({ stations }: StationMapProps) {
           <div className="absolute top-12 right-12 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
           <div className="absolute bottom-8 left-16 w-3 h-3 bg-red-500 rounded-full"></div>
         </div>
-        <Button className="w-full">
+        <Button className="w-full bg-orange-500">
           <Navigation className="w-4 h-4 mr-2" />
           {t("driver.useMyLocation")}
         </Button>

@@ -34,14 +34,14 @@ export function SwapStatus({ onQRDialog }: SwapStatusProps) {
             <p className="text-gray-500">{t("driver.today")} at 14:30</p>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg">
-            <QrCode className="w-24 h-24 mx-auto text-gray-400 mb-2" />
+            <QrCode className="w-24 h-24 mx-auto text-gray-400 mb-2 " />
             <p className="font-mono">SW-2024-001</p>
           </div>
           <div className="flex space-x-2">
-            <Button className="flex-1" onClick={onQRDialog}>
+            <Button className="flex-1 bg-orange-500" onClick={onQRDialog}>
               <QrCode className="w-4 h-4 mr-2" /> {t("driver.checkIn")}
             </Button>
-            <Button variant="outline">{t("driver.directions")}</Button>
+            <Button className="bg-orange-500 text-white" variant="outline">{t("driver.directions")}</Button>
           </div>
         </div>
       </CardContent>
