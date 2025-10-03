@@ -210,7 +210,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg text-white font-semibold">F P T F A S T</span>
+                <span className="text-lg text-white font-semibold">
+                  F P T F A S T
+                </span>
                 <span className="text-sm font-medium text-gray-100">Staff</span>
               </div>
             </div>
@@ -302,62 +304,16 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 <LanguageSwitcher />
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-4 h-4" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center rounded-full">3</span>
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center rounded-full">
+                    3
+                  </span>
                 </Button>
               </div>
             </div>
           </header>
 
           {/* Dashboard KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-8">
-            {/* Total Swaps */}
-            <div className="p-6 border border-orange-200 rounded-lg bg-white shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600">{t("staff.totalSwaps")}</p>
-                <p className="text-2xl font-bold">{dailyStats.totalSwaps}</p>
-                <div className="flex items-center mt-1">
-                  <Zap className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+8.3%</span>
-                </div>
-              </div>
-              <Zap className="w-8 h-8 text-blue-500" />
-            </div>
-            {/* Revenue */}
-            <div className="p-6 border border-orange-200 rounded-lg bg-white shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600">{t("staff.revenue")}</p>
-                <p className="text-2xl font-bold">${dailyStats.revenue}</p>
-                <div className="flex items-center mt-1">
-                  <BarChart3 className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+12.5%</span>
-                </div>
-              </div>
-              <BarChart3 className="w-8 h-8 text-purple-500" />
-            </div>
-            {/* Avg Swap Time */}
-            <div className="p-6 border border-orange-200 rounded-lg bg-white shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600">{t("staff.avgSwapTime")}</p>
-                <p className="text-2xl font-bold">{dailyStats.avgSwapTime} min</p>
-                <div className="flex items-center mt-1">
-                  <Clipboard className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">Fast</span>
-                </div>
-              </div>
-              <Clipboard className="w-8 h-8 text-orange-500" />
-            </div>
-            {/* Customer Rating */}
-            <div className="p-6 border border-orange-200 rounded-lg bg-white shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm text-orange-600">{t("staff.customerRating")}</p>
-                <p className="text-2xl font-bold">{dailyStats.customerRating}</p>
-                <div className="flex items-center mt-1">
-                  <span className="text-sm text-green-600">Excellent</span>
-                </div>
-              </div>
-              <Receipt className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
+          <StaffDashboard dailyStats={dailyStats} />
 
           {/* Main Content */}
           <main className="flex-1 p-6">
