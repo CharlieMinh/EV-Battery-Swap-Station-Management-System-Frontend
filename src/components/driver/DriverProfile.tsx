@@ -52,9 +52,9 @@ export function DriverProfile({
   return (
     <div className="space-y-6">
       {/* Profile Information */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-orange-500 fond-bold">
             <User className="w-5 h-5" />
             <span>{t("driver.personalInformation")}</span>
           </CardTitle>
@@ -116,16 +116,16 @@ export function DriverProfile({
               </div>
             </div>
           </div>
-          <Button className="w-full">
+          <Button className="w-full bg-orange-500">
             <Edit className="w-4 h-4 mr-2" /> {t("driver.updateProfile")}
           </Button>
         </CardContent>
       </Card>
 
       {/* Vehicle Information */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-orange-500 fond-bold">
             <Car className="w-5 h-5" />
             <span>{t("driver.vehicleInformation")}</span>
           </CardTitle>
@@ -138,7 +138,7 @@ export function DriverProfile({
             {vehicles.map((vehicle) => (
               <div
                 key={vehicle.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex items-center justify-between p-4 border rounded-lg text-orange-500 fond-bold"
               >
                 <div className="flex items-center space-x-3">
                   <Car className="w-8 h-8 text-blue-500" />
@@ -153,14 +153,14 @@ export function DriverProfile({
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="secondary">{t("driver.primary")}</Badge>
-                  <Button size="sm" variant="outline">
+                  <Badge className="bg-orange-500 text-white" variant="secondary">{t("driver.primary")}</Badge>
+                  <Button size="sm" variant="outline" className="bg-orange-500 text-white">
                     <Edit className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-orange-500 text-white">
               {t("driver.addVehicle")}
             </Button>
           </div>
@@ -169,21 +169,21 @@ export function DriverProfile({
 
       {/* Driver Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border border-orange-500 rounded-lg">
           <CardContent className="p-4 text-center">
             <Battery className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">127</p>
             <p className="text-sm text-gray-500">{t("driver.totalSwaps")}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-orange-500 rounded-lg">
           <CardContent className="p-4 text-center">
             <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">4.9</p>
             <p className="text-sm text-gray-500">{t("driver.averageRating")}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-orange-500 rounded-lg">
           <CardContent className="p-4 text-center">
             <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">$1,847</p>
@@ -193,9 +193,9 @@ export function DriverProfile({
       </div>
 
       {/* Payment Methods */}
-      <Card>
+      <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-orange-500 fond-bold">
             <CreditCard className="w-5 h-5" />
             <span>{t("driver.paymentMethods")}</span>
           </CardTitle>
@@ -210,9 +210,9 @@ export function DriverProfile({
                   <p className="text-sm text-gray-500">Expires 12/26</p>
                 </div>
               </div>
-              <Badge>{t("driver.primary")}</Badge>
+              <Badge className="bg-orange-500">{t("driver.primary")}</Badge>
             </div>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-orange-500 text-white">
               {t("driver.addPaymentMethod")}
             </Button>
           </div>

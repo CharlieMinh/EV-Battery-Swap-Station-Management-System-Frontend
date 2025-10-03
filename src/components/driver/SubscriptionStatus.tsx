@@ -30,16 +30,16 @@ export function SubscriptionStatus({
   const { t } = useLanguage();
 
   return (
-    <Card>
+    <Card className="border border-orange-500 rounded-lg">
       <CardHeader>
-        <CardTitle>{t("driver.subscriptionStatus")}</CardTitle>
+        <CardTitle className="text-orange-500 font-bold">{t("driver.subscriptionStatus")}</CardTitle>
         <CardDescription>{t("driver.subscriptionStatusDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <span className="font-medium">{subscriptionPlan.name}</span>
-            <Badge>{t("driver.active")}</Badge>
+            <Badge className="bg-orange-500">{t("driver.active")}</Badge>
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
@@ -48,13 +48,13 @@ export function SubscriptionStatus({
                 {subscriptionPlan.swapsUsed} / {t("driver.unlimited")}
               </span>
             </div>
-            <Progress value={20} className="h-2" />
+            <Progress value={20} className="h-2 [&>div]:bg-orange-500 bg-orange-100" />
           </div>
           <div className="flex justify-between text-sm">
             <span>{t("driver.nextBilling")}</span>
             <span>{subscriptionPlan.renewDate}</span>
           </div>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full bg-orange-500 text-white">
             <Settings className="w-4 h-4 mr-2" /> {t("driver.managePlan")}
           </Button>
         </div>

@@ -189,7 +189,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       <div className="min-h-screen bg-gray-50 flex w-full">
         <Sidebar>
           <SidebarHeader>
-            <div className="flex items-center p-2">
+            <div className="flex items-center p-2 bg-orange-500 ">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
                 <img
                   src="src/assets/logoEV2.png "
@@ -198,21 +198,22 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold">F P T F A S T</span>
-                <span className="text-sm font-medium text-gray-500">
-                  Driver
+                <span className="text-lg font-semibold text-white">
+                  F P T F A S T
                 </span>
+                <span className="text-sm font-medium text-white">Driver</span>
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
+          <SidebarContent className="flex flex-col flex-1">
+            <SidebarGroup className="flex-1">
+              <SidebarGroupContent className="h-full">
+                <SidebarMenu className="flex flex-col h-full">
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("map")}
                       isActive={activeSection === "map"}
+                      className="h-[60px]"
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
@@ -222,6 +223,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("swap")}
                       isActive={activeSection === "swap"}
+                      className="h-[60px]"
                     >
                       <Battery className="w-4 h-4" />
                       <span>{t("driver.swap")}</span>
@@ -231,6 +233,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("history")}
                       isActive={activeSection === "history"}
+                      className="h-[60px]"
                     >
                       <History className="w-4 h-4" />
                       <span>{t("driver.history")}</span>
@@ -240,6 +243,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("profile")}
                       isActive={activeSection === "profile"}
+                      className="h-[60px]"
                     >
                       <UserIcon className="w-4 h-4" />
                       <span>{t("driver.profile")}</span>
@@ -249,6 +253,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("support")}
                       isActive={activeSection === "support"}
+                      className="h-[60px]"
                     >
                       <HeadphonesIcon className="w-4 h-4" />
                       <span>{t("driver.support")}</span>
@@ -258,8 +263,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+
           <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0">
+            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100">
               <Avatar className="shrink-0">
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
@@ -285,7 +291,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             <div className="flex justify-between items-center h-16 px-4">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "map" && t("driver.findStations")}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
@@ -306,7 +312,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
           {/* Main Content */}
           <main className="flex-1 p-6">
             {activeSection === "map" && (
-              <div className="space-y-6 ">
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <StationMap stations={stations} />
                   <StationList
