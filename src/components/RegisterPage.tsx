@@ -118,6 +118,7 @@ export function RegisterPage({
   };
 
   const handleSubmit = async (
+    //API call
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
