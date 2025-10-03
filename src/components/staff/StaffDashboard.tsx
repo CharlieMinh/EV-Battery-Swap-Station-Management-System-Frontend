@@ -28,46 +28,46 @@ export function StaffDashboard({ dailyStats }: StaffDashboardProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 m-6 mb-8">
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <BarChart3 className="w-8 h-8 text-blue-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">{dailyStats.totalSwaps}</p>
-          <p className="text-sm text-gray-500">{t("staff.todaysSwaps")}</p>
+          <p className="text-sm text-orange-500">{t("staff.todaysSwaps")}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <DollarSign className="w-8 h-8 text-green-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">${dailyStats.revenue}</p>
-          <p className="text-sm text-gray-500">{t("staff.revenue")}</p>
+          <p className="text-sm text-orange-500">{t("staff.revenue")}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <Clock className="w-8 h-8 text-purple-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">{dailyStats.avgSwapTime}m</p>
-          <p className="text-sm text-gray-500">{t("staff.avgTime")}</p>
+          <p className="text-sm text-orange-500">{t("staff.avgTime")}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">{dailyStats.customerRating}</p>
-          <p className="text-sm text-gray-500">{t("staff.rating")}</p>
+          <p className="text-sm text-orange-500">{t("staff.rating")}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <AlertTriangle className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">{dailyStats.lowBatteryAlerts}</p>
-          <p className="text-sm text-gray-500">{t("staff.lowBattery")}</p>
+          <p className="text-sm text-orange-500">{t("staff.lowBattery")}</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <Wrench className="w-8 h-8 text-red-500 mx-auto mb-2" />
           <p className="text-2xl font-bold">{dailyStats.maintenanceNeeded}</p>
-          <p className="text-sm text-gray-500">{t("staff.maintenance")}</p>
+          <p className="text-sm text-orange-500">{t("staff.maintenance")}</p>
         </CardContent>
       </Card>
     </div>

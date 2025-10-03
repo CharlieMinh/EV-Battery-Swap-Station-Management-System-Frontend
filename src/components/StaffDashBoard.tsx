@@ -201,7 +201,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       <div className="min-h-screen bg-gray-50 flex w-full">
         <Sidebar>
           <SidebarHeader>
-            <div className="flex items-center p-2">
+            <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
                 <img
                   src="src/assets/logoEV2.png "
@@ -210,8 +210,10 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold">F P T F A S T</span>
-                <span className="text-sm font-medium text-gray-500">Staff</span>
+                <span className="text-lg text-white font-semibold">
+                  F P T F A S T
+                </span>
+                <span className="text-sm font-medium text-gray-100">Staff</span>
               </div>
             </div>
           </SidebarHeader>
@@ -223,6 +225,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("queue")}
                       isActive={activeSection === "queue"}
+                      className="h-[50px]"
                     >
                       <Clipboard className="w-4 h-4" />
                       <span>{t("staff.queueManagement")}</span>
@@ -232,6 +235,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("inventory")}
                       isActive={activeSection === "inventory"}
+                      className="h-[50px]"
                     >
                       <Package className="w-4 h-4" />
                       <span>{t("staff.inventory")}</span>
@@ -241,6 +245,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("transactions")}
                       isActive={activeSection === "transactions"}
+                      className="h-[50px]"
                     >
                       <Receipt className="w-4 h-4" />
                       <span>{t("staff.transactions")}</span>
@@ -250,6 +255,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("reports")}
                       isActive={activeSection === "reports"}
+                      className="h-[50px]"
                     >
                       <BarChart3 className="w-4 h-4" />
                       <span>{t("staff.reports")}</span>
@@ -260,7 +266,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0">
+            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
@@ -282,11 +288,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
         <SidebarInset>
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+          <header className="bg-gray-50 border-b border-gray-200 sticky top-0 z-40">
             <div className="flex justify-between items-center h-16 px-4">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "queue" && t("staff.queueManagement")}
                   {activeSection === "inventory" && t("staff.inventory")}
                   {activeSection === "transactions" && t("staff.transactions")}
@@ -296,8 +302,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-4 h-4" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center rounded-full">
+                    3
+                  </span>
                 </Button>
               </div>
             </div>

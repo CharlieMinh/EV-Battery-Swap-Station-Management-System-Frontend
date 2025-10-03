@@ -34,37 +34,39 @@ export function SwapProcessDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl border border-orange-200 rounded-lg bg-white shadow-lg">
         <DialogHeader>
-          <DialogTitle>{t("staff.batterySwapProcess")}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-orange-600 text-2xl font-bold">
+            {t("staff.batterySwapProcess")}
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
             {t("staff.batterySwapProcessDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="border border-orange-100 rounded-lg bg-gray-50 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">
+              <CardTitle className="text-lg text-orange-600 font-bold">
                 {t("staff.customerInformation")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{t("staff.name")}</Label>
+                  <Label className="text-orange-600 font-medium">{t("staff.name")}</Label>
                   <p className="font-medium">Alex Chen</p>
                 </div>
                 <div>
-                  <Label>{t("staff.vehicle")}</Label>
+                  <Label className="text-orange-600 font-medium">{t("staff.vehicle")}</Label>
                   <p className="font-medium">Tesla Model 3 2023</p>
                 </div>
                 <div>
-                  <Label>{t("staff.bookingCode")}</Label>
+                  <Label className="text-orange-600 font-medium">{t("staff.bookingCode")}</Label>
                   <p className="font-mono">SW-2024-001</p>
                 </div>
                 <div>
-                  <Label>{t("staff.batteryModel")}</Label>
+                  <Label className="text-orange-600 font-medium">{t("staff.batteryModel")}</Label>
                   <p className="font-medium">TM3-75kWh</p>
                 </div>
               </div>
@@ -72,9 +74,9 @@ export function SwapProcessDialog({
           </Card>
 
           <div className="grid grid-cols-2 gap-4">
-            <Card>
+            <Card className="border border-orange-100 rounded-lg bg-red-50 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg text-red-600">
+                <CardTitle className="text-lg text-red-600 font-bold">
                   {t("staff.batteryOut")}
                 </CardTitle>
               </CardHeader>
@@ -96,9 +98,9 @@ export function SwapProcessDialog({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border border-orange-100 rounded-lg bg-green-50 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg text-green-600">
+                <CardTitle className="text-lg text-green-600 font-bold">
                   {t("staff.batteryIn")}
                 </CardTitle>
               </CardHeader>
@@ -123,33 +125,35 @@ export function SwapProcessDialog({
 
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <QrCode className="w-5 h-5" />
+              <QrCode className="w-5 h-5 text-orange-500" />
               <span>{t("staff.qrCodeScanned")}</span>
               <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
             <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5" />
+              <ShieldCheck className="w-5 h-5 text-orange-500" />
               <span>{t("staff.pinVerified")}</span>
               <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
             <div className="flex items-center space-x-2">
-              <Battery className="w-5 h-5" />
+              <Battery className="w-5 h-5 text-orange-500" />
               <span>{t("staff.batterySwapComplete")}</span>
-              <Button size="sm">{t("staff.markComplete")}</Button>
+              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg">
+                {t("staff.markComplete")}
+              </Button>
             </div>
           </div>
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" className="rounded-lg" onClick={onClose}>
               {t("common.cancel")}
             </Button>
             <div className="space-x-2">
-              <Button variant="outline" onClick={onPOSDialog}>
-                <DollarSign className="w-4 h-4 mr-2" />{" "}
+              <Button variant="outline" className="rounded-lg" onClick={onPOSDialog}>
+                <DollarSign className="w-4 h-4 mr-2" />
                 {t("staff.processPayment")}
               </Button>
-              <Button onClick={onClose}>
-                <Printer className="w-4 h-4 mr-2" />{" "}
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg" onClick={onClose}>
+                <Printer className="w-4 h-4 mr-2" />
                 {t("staff.completeAndPrint")}
               </Button>
             </div>
