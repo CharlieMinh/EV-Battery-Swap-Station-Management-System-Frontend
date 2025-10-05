@@ -135,6 +135,7 @@ const translations = {
     "footer.services": "Services",
     "footer.batterySwap": "Battery Swap",
     "footer.findStations": "Find Stations",
+    "footer.mycar": "My Car",
     "footer.subscriptionPlans": "Subscription Plans",
     "footer.enterpriseSolutions": "Enterprise Solutions",
     "footer.support": "Support",
@@ -228,6 +229,7 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Find Stations",
+    "driver.mycar": "My Car",
     "driver.swap": "Swap",
     "driver.history": "History",
     "driver.profile": "Profile",
@@ -648,6 +650,7 @@ const translations = {
     "footer.services": "Dịch Vụ",
     "footer.batterySwap": "Thay Pin",
     "footer.findStations": "Tìm Trạm",
+    "footer.mycar": "Xe của tôi",
     "footer.subscriptionPlans": "Gói Đăng Ký",
     "footer.enterpriseSolutions": "Giải Pháp Doanh Nghiệp",
     "footer.support": "Hỗ Trợ",
@@ -741,6 +744,7 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
+    "driver.mycar": "Xe của tôi",
     "driver.swap": "Thay Pin",
     "driver.history": "Lịch Sử",
     "driver.profile": "Hồ Sơ",

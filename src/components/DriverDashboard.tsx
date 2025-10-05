@@ -27,6 +27,7 @@ import {
   Zap,
   Bell,
   HeadphonesIcon,
+  Car,
 } from "lucide-react";
 import { User } from "../App";
 
@@ -40,6 +41,7 @@ import { SubscriptionStatus } from "../components/driver/SubscriptionStatus";
 import { SwapHistory } from "../components/driver/SwapHistory";
 import { DriverProfile } from "../components/driver/DriverProfile";
 import { DriverSupport } from "../components/driver/DriverSupport";
+import { MyVehicle } from "./driver/MyVehicle";
 
 interface DriverPortalPageProps {
   user: User;
@@ -48,7 +50,7 @@ interface DriverPortalPageProps {
 
 export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState("map");
+  const [activeSection, setActiveSection] = useState("swap");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
   const [bookingStep, setBookingStep] = useState(1);
   const [selectedVehicle, setSelectedVehicle] = useState<string>("");
@@ -209,7 +211,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             <SidebarGroup className="flex-1">
               <SidebarGroupContent className="h-full">
                 <SidebarMenu className="flex flex-col h-full">
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("map")}
                       isActive={activeSection === "map"}
@@ -217,6 +219,16 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem> */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection("mycar")}
+                      isActive={activeSection === "mycar"}
+                      className="h-[60px]"
+                    >
+                      <Car className="w-4 h-4" />
+                      <span>{t("driver.mycar")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -292,7 +304,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {activeSection === "map" && t("driver.findStations")}
+                  {/* {activeSection === "map" && t("driver.findStations")} */}
+                  {activeSection === "mycar" && t("driver.mycar")}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
                   {activeSection === "profile" && t("driver.profile")}
@@ -311,7 +324,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {activeSection === "map" && (
+            {/* {activeSection === "map" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <StationMap stations={stations} />
@@ -325,8 +338,14 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   />
                 </div>
               </div>
+            )} */}
+            {activeSection === "mycar" && (
+              <div className="space-y-6">
+                <div>
+                  <MyVehicle vehicles={vehicles}></MyVehicle>
+                </div>
+              </div>
             )}
-
             {activeSection === "swap" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -348,7 +367,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 profileName={profileName}
                 profileEmail={profileEmail}
                 profilePhone={profilePhone}
-                vehicles={vehicles}
                 onNameChange={setProfileName}
                 onEmailChange={setProfileEmail}
                 onPhoneChange={setProfilePhone}
