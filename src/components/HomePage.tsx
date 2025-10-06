@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -30,10 +30,40 @@ import {
   Play,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import useGeoLocation from "./map/useGeoLocation";
+import { findNearestStation } from "./map/osrmUtils";
+import MapView from "./map/MapView";
+import { Coordinates, Station } from "./map/osrmUtils";
+
+const stations = [
+  {
+    id: 1,
+    name: "Trạm 1",
+    coordinates: { lat: 10.762622, lng: 106.660172 },
+    address: "Q1, TP.HCM",
+  },
+  {
+    id: 2,
+    name: "Trạm 2",
+    coordinates: { lat: 10.7769, lng: 106.7009 },
+    address: "Q3, TP.HCM",
+  },
+  {
+    id: 3,
+    name: "Trạm 3",
+    coordinates: { lat: 10.795, lng: 106.682 },
+    address: "Phú Nhuận",
+  },
+];
 
 export function Homepage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useGeoLocation();
+  const [loading, setLoading] = useState(false);
+  const [nearestStation, setNearestStation] = useState<
+    (Station & { distance: number }) | null
+  >(null);
 
   const features = [
     {
@@ -126,6 +156,27 @@ export function Homepage() {
     { number: "8,547", label: t("stats.happyCustomers") },
     { number: "99.9%", label: t("stats.uptimeReliability") },
   ];
+
+  const handleFindNearestStation = async () => {
+    const userLocation = {
+      lat: location.coordinates.lat,
+      lng: location.coordinates.lng,
+    };
+
+    const nearest = await findNearestStation(userLocation, stations);
+    console.log("Nearest:", nearestStation);
+
+    if (nearest) {
+      setNearestStation(nearest);
+      navigate("/map", {
+        state: {
+          userLocation,
+          stations,
+          nearestStation: nearest,
+        },
+      });
+    }
+  };
 
   return (
     <div className="h-screen bg-white">
@@ -319,8 +370,9 @@ export function Homepage() {
                     {t("stations.mapTitle")}
                   </h3>
                   <p className="text-gray-600 mb-4">{t("stations.mapDesc")}</p>
-                  <Button onClick={() => navigate("/stations")}>
+                  <Button onClick={handleFindNearestStation} disabled={loading}>
                     {t("stations.viewFullMap")}
+                    {loading ? "Đang tìm..." : "Tìm trạm gần nhất"}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -455,35 +507,6 @@ export function Homepage() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-30 text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl text-white mb-4">
-            {t("cta.title")}
-          </h2>
-          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
-            {t("cta.subtitle")}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={onGetStarted}
-              className="bg-white text-green-600 hover:bg-gray-100"
-            >
-              {t("cta.signUpNow")}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-green-600"
-            >
-              {t("cta.contactSales")}
-            </Button>
-          </div>
-        </div>
-      </section> */}
 
       {/* Footer */}
       <footer id="contact" className="bg-orange-500 text-white py-16">
