@@ -152,19 +152,14 @@ export function Homepage() {
   ];
 
   useEffect(() => {
-    // 1. Chỉ thực hiện khi đang ở trạng thái chờ (đã bấm nút)
-    // 2. Vị trí đã được tải thành công
-    // 3. Không có lỗi
     if (isWaitingForLocation && location.loaded && !location.error) {
       const userLocation = {
         lat: location.coordinates.lat,
         lng: location.coordinates.lng,
       };
 
-      // Ngừng trạng thái chờ
       setIsWaitingForLocation(false);
 
-      // Tự động chuyển trang ngay lập tức
       navigate("/map", {
         state: {
           userLocation,
@@ -173,7 +168,6 @@ export function Homepage() {
       });
     }
 
-    // Xử lý lỗi: Nếu đang chờ và có lỗi, dừng quá trình chờ và thông báo
     if (isWaitingForLocation && location.loaded && location.error) {
       setIsWaitingForLocation(false);
       alert(
@@ -190,13 +184,12 @@ export function Homepage() {
   ]);
 
   const handleFineNearestStation = () => {
-    // 1. Xử lý trường hợp vị trí đã có SẴN (ngăn chặn chờ đợi không cần thiết)
     if (location.loaded && !location.error) {
       const userLocation = {
         lat: location.coordinates.lat,
         lng: location.coordinates.lng,
       };
-      // Chuyển trang ngay lập tức
+
       navigate("/map", {
         state: {
           userLocation,
@@ -206,7 +199,6 @@ export function Homepage() {
       return;
     }
 
-    // 2. Nếu có lỗi ngay lập tức, thông báo cho người dùng
     if (location.error) {
       alert(
         `Lỗi xác định vị trí: ${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`
@@ -214,12 +206,9 @@ export function Homepage() {
       return;
     }
 
-    // 3. Kích hoạt trạng thái chờ
-    // Việc này sẽ làm nút hiển thị "Đang xác định..." và chờ useEffect xử lý chuyển trang
     setIsWaitingForLocation(true);
   };
 
-  // Logic hiển thị và vô hiệu hóa nút
   const isButtonDisabled = isWaitingForLocation;
   let buttonText = t("stations.viewFullMap");
 

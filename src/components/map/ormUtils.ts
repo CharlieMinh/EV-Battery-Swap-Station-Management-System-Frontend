@@ -61,7 +61,7 @@ export async function findNearestStation(
       const raw = await getDistanceBetweenPoints(userLocation, station.coordinates);
       const distance = raw.distance // ép kiểu an toàn
 
-      // bỏ qua kết quả không hợp lệ
+      
       if (!Number.isFinite(distance)) {
         console.warn("Invalid distance for station", station.id, raw);
         continue;
@@ -73,7 +73,7 @@ export async function findNearestStation(
       }
     } catch (err) {
       console.warn("Error calculating distance for station", station.id, err);
-      // tiếp tục với station tiếp theo
+      
     }
   }
 
