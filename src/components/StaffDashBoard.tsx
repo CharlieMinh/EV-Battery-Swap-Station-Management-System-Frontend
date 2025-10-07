@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -25,8 +25,11 @@ import {
   LogOut,
   Zap,
   Bell,
+  User as UserIcon,
 } from "lucide-react";
 import { User } from "../App";
+import staffApi, { Battery, Booking, Transaction, DailyStats } from "../services/staffApi";
+import ProfileSection from "./staff/ProfileSection";
 
 // Import staff components
 import { StaffDashboard } from "./staff/StaffDashboard";
@@ -49,152 +52,108 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const [swapDialog, setSwapDialog] = useState(false);
   const [inspectionDialog, setInspectionDialog] = useState(false);
   const [posDialog, setPosDialog] = useState(false);
+  
+  // State for API data
+  const [batteries, setBatteries] = useState<Battery[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStats>({
+    totalSwaps: 0,
+    revenue: 0,
+    avgSwapTime: 0,
+    customerRating: 0,
+    lowBatteryAlerts: 0,
+    maintenanceNeeded: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statsLoaded, setStatsLoaded] = useState(false);
 
-  const batteries = [
-    {
-      id: "1",
-      slot: "A1",
-      status: "full" as const,
-      health: 95,
-      voltage: 400,
-      cycles: 1250,
-      lastSwap: "10 min ago",
-      model: "TM3-75kWh",
-      temperature: 25,
-    },
-    {
-      id: "2",
-      slot: "A2",
-      status: "charging" as const,
-      health: 92,
-      voltage: 380,
-      cycles: 1180,
-      lastSwap: "2 hours ago",
-      model: "TM3-75kWh",
-      temperature: 28,
-    },
-    {
-      id: "3",
-      slot: "A3",
-      status: "full" as const,
-      health: 88,
-      voltage: 395,
-      cycles: 1650,
-      lastSwap: "1 hour ago",
-      model: "BMW-80kWh",
-      temperature: 24,
-    },
-    {
-      id: "4",
-      slot: "B1",
-      status: "maintenance" as const,
-      health: 65,
-      voltage: 320,
-      cycles: 2800,
-      lastSwap: "1 day ago",
-      model: "TM3-75kWh",
-      temperature: 35,
-    },
-    {
-      id: "5",
-      slot: "B2",
-      status: "charging" as const,
-      health: 90,
-      voltage: 370,
-      cycles: 1420,
-      lastSwap: "30 min ago",
-      model: "BMW-80kWh",
-      temperature: 26,
-    },
-    {
-      id: "6",
-      slot: "B3",
-      status: "full" as const,
-      health: 96,
-      voltage: 398,
-      cycles: 980,
-      lastSwap: "5 min ago",
-      model: "BMW-80kWh",
-      temperature: 23,
-    },
-  ];
-
-  const bookings = [
-    {
-      id: "1",
-      customer: "Alex Chen",
-      vehicle: "Tesla Model 3",
-      time: "15:30",
-      code: "SW-2024-001",
-      status: "pending" as const,
-    },
-    {
-      id: "2",
-      customer: "Sarah Kim",
-      vehicle: "BMW iX3",
-      time: "16:00",
-      code: "SW-2024-002",
-      status: "in-progress" as const,
-    },
-    {
-      id: "3",
-      customer: "Mike Johnson",
-      vehicle: "Nissan Leaf",
-      time: "16:30",
-      code: "SW-2024-003",
-      status: "confirmed" as const,
-    },
-    {
-      id: "4",
-      customer: "Emily Davis",
-      vehicle: "Tesla Model Y",
-      time: "17:00",
-      code: "SW-2024-004",
-      status: "confirmed" as const,
-    },
-  ];
-
-  const recentTransactions = [
-    {
-      id: "1",
-      customer: "Alex Chen",
-      vehicle: "Tesla Model 3",
-      time: "14:32",
-      batteryOut: "A1",
-      batteryIn: "B2",
-      amount: 25,
-      paymentMethod: "subscription" as const,
-    },
-    {
-      id: "2",
-      customer: "Sarah Kim",
-      vehicle: "BMW iX3",
-      time: "14:15",
-      batteryOut: "A3",
-      batteryIn: "B1",
-      amount: 25,
-      paymentMethod: "card" as const,
-    },
-    {
-      id: "3",
-      customer: "Mike Johnson",
-      vehicle: "Nissan Leaf",
-      time: "13:58",
-      batteryOut: "B3",
-      batteryIn: "A2",
-      amount: 25,
-      paymentMethod: "cash" as const,
-    },
-  ];
-
-  const dailyStats = {
-    totalSwaps: 47,
-    revenue: 1175,
-    avgSwapTime: 2.8,
-    customerRating: 4.8,
-    lowBatteryAlerts: 3,
-    maintenanceNeeded: 1,
+  // API Functions
+  const fetchBatteryInventory = async () => {
+    try {
+      setLoading(true);
+      const data = await staffApi.getBatteries(user.stationId || 1);
+      setBatteries(data);
+    } catch (error) {
+      console.error('Error fetching battery inventory:', error);
+      setError('Failed to load battery inventory');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const fetchQueueBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await staffApi.getQueue(user.stationId || 1);
+      setBookings(data);
+    } catch (error) {
+      console.error('Error fetching queue bookings:', error);
+      setError('Failed to load queue bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecentTransactions = async () => {
+    try {
+      setLoading(true);
+      const data = await staffApi.getTransactions(user.stationId || 1, 10);
+      setRecentTransactions(data);
+    } catch (error) {
+      console.error('Error fetching recent transactions:', error);
+      setError('Failed to load recent transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDailyStats = async () => {
+    try {
+      const data = await staffApi.getDailyStats(user.stationId || 1);
+      setDailyStats(data);
+      setStatsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching daily stats:', error);
+      setError('Failed to load daily statistics');
+      setStatsLoaded(true);
+    }
+  };
+
+  // Load daily stats immediately
+  useEffect(() => {
+    fetchDailyStats();
+  }, []);
+
+  // Load other data on component mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (user.stationId) {
+        await Promise.all([
+          fetchBatteryInventory(),
+          fetchQueueBookings(),
+          fetchRecentTransactions()
+        ]);
+      } else {
+        try {
+          const profile = await staffApi.getStaffProfile(user.id);
+          if (profile.stationId) {
+            user.stationId = profile.stationId;
+            await Promise.all([
+              fetchBatteryInventory(),
+              fetchQueueBookings(),
+              fetchRecentTransactions()
+            ]);
+          }
+        } catch (error) {
+          console.error('Error getting staff profile:', error);
+          setError('Unable to load station information');
+        }
+      }
+    };
+    loadInitialData();
+  }, [user.stationId, user.id]);
 
   return (
     <SidebarProvider>
@@ -261,6 +220,16 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       <span>{t("staff.reports")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection("profile")}
+                      isActive={activeSection === "profile"}
+                      className="h-[50px]"
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      <span>Thông Tin Cá Nhân</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -297,6 +266,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                   {activeSection === "inventory" && t("staff.inventory")}
                   {activeSection === "transactions" && t("staff.transactions")}
                   {activeSection === "reports" && t("staff.reports")}
+                  {activeSection === "profile" && "Thông Tin Cá Nhân"}
                 </h1>
               </div>
 
@@ -313,7 +283,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           </header>
 
           {/* Dashboard KPIs */}
-          <StaffDashboard dailyStats={dailyStats} />
+          {activeSection !== "profile" && <StaffDashboard dailyStats={dailyStats} />}
 
           {/* Main Content */}
           <main className="flex-1 p-6">
@@ -355,6 +325,10 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                   </p>
                 </div>
               </div>
+            )}
+
+            {activeSection === "profile" && (
+              <ProfileSection user={user} dailyStats={dailyStats} />
             )}
           </main>
         </SidebarInset>

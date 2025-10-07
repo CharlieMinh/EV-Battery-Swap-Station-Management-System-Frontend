@@ -9,17 +9,7 @@ import {
 import { Badge } from "../ui/badge";
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface Transaction {
-  id: string;
-  customer: string;
-  vehicle: string;
-  time: string;
-  batteryOut: string;
-  batteryIn: string;
-  amount: number;
-  paymentMethod: "subscription" | "card" | "cash";
-}
+import { Transaction } from "../../services/staffApi";
 
 interface TransactionManagementProps {
   recentTransactions: Transaction[];
@@ -76,7 +66,7 @@ export function TransactionManagement({
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-medium text-green-600 text-lg">${transaction.amount}</p>
+                <p className="font-medium text-green-600 text-lg">${transaction.amount.toLocaleString()}</p>
                 <Badge className="bg-green-100 text-green-800 font-semibold">
                   {t("staff.completed")}
                 </Badge>

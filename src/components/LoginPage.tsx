@@ -63,6 +63,11 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
       );
 
       if (response.data.role) {
+        // Save token to localStorage
+        if (response.data.token) {
+          localStorage.setItem('authToken', response.data.token);
+        }
+        
         onLogin(response.data);
         console.log(response.data);
 

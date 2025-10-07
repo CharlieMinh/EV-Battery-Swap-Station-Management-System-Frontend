@@ -315,7 +315,7 @@ const translations = {
     "staff.todaysBookings": "Today's Bookings",
     "staff.todaysBookingsDesc": "Manage customer reservations and walk-ins",
     "staff.pending": "pending",
-    "staff.inProgress": "in-progress",
+    "staff.in-progress": "in-progress",
     "staff.confirmed": "confirmed",
     "staff.startSwap": "Start Swap",
     "staff.batteryInventory": "Battery Inventory",
@@ -400,6 +400,7 @@ const translations = {
     "staff.avgTime": "Avg Time",
     "staff.rating": "Rating",
     "staff.lowBattery": "Low Battery",
+    "staff.completed": "Complete",
 
     // Admin Dashboard
     "admin.overview": "Overview",
@@ -828,7 +829,7 @@ const translations = {
     "staff.todaysBookingsDesc":
       "Quản lý đặt chỗ khách hàng và khách hàng đến trực tiếp",
     "staff.pending": "đang chờ",
-    "staff.inProgress": "đang tiến hành",
+    "staff.in-progress": "đang tiến hành",
     "staff.confirmed": "đã xác nhận",
     "staff.startSwap": "Bắt Đầu Thay Pin",
     "staff.batteryInventory": "Kho Pin",
@@ -913,6 +914,7 @@ const translations = {
     "staff.avgTime": "Thời Gian Trung Bình",
     "staff.rating": "Đánh Giá",
     "staff.lowBattery": "Pin Năng Suất",
+    "staff.completed": "Đã thành công",
 
     // Admin Dashboard
     "admin.overview": "Tổng Quan",

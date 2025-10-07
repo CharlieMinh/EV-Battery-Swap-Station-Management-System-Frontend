@@ -5,18 +5,7 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { RefreshCw, Wrench, FileText, Filter, Plus } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface Battery {
-  id: string;
-  slot: string;
-  status: "full" | "charging" | "maintenance" | "empty";
-  health: number;
-  voltage: number;
-  cycles: number;
-  lastSwap: string;
-  model: string;
-  temperature: number;
-}
+import { Battery } from "../../services/staffApi";
 
 interface BatteryInventoryProps {
   batteries: Battery[];

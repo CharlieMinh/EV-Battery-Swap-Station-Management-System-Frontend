@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { ImageWithFallback } from "./custom/image-with-fallback";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "./LanguageContext";
 import {
@@ -238,7 +237,7 @@ export function Homepage() {
             </div>
 
             <div className="relative">
-              <ImageWithFallback
+              <img
                 src="https://images.unsplash.com/photo-1751355356724-7df0dda28b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMHZlaGljbGUlMjBjaGFyZ2luZyUyMHN0YXRpb24lMjBtb2Rlcm58ZW58MXx8fHwxNzU3NTE1OTMzfDA&ixlib=rb-4.1.0&q=80&w=1080"
                 alt="Modern EV charging station"
                 className="w-full h-96 object-cover rounded-lg shadow-2xl"
