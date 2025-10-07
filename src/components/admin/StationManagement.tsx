@@ -80,12 +80,8 @@ export function StationManagement({
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500">
-                          {t("admin.utilization")}:{" "}
-                        </span>
-                        <span className="font-medium">
-                          {station.utilization}%
-                        </span>
+                        <span className="text-gray-500">Số pin: </span>
+                        <span className="font-medium">17/20</span>
                       </div>
                     </div>
                   </div>
@@ -102,7 +98,7 @@ export function StationManagement({
                   </Button>
                 </div>
               </div>
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span>{t("admin.utilization")}</span>
                   <span>{station.utilization}%</span>
@@ -111,7 +107,7 @@ export function StationManagement({
                   value={station.utilization}
                   className="h-2 bg-orange-100 [&>div]:bg-orange-500 rounded-full"
                 />
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         ))}

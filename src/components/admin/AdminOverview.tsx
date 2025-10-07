@@ -75,8 +75,15 @@ export function AdminOverview({
               <AreaChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                <YAxis
+                  tickFormatter={(value) => `$${value.toLocaleString("en-US")}`}
+                />
+                <Tooltip
+                  formatter={(value) => [
+                    `$${(value as number).toLocaleString("en-US")}`,
+                    "Revenue",
+                  ]}
+                />
                 <Area
                   type="monotone"
                   dataKey="revenue"
@@ -132,7 +139,7 @@ export function AdminOverview({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center border border-orange-200 rounded-lg">
             <Clock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
@@ -165,7 +172,7 @@ export function AdminOverview({
             </p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }

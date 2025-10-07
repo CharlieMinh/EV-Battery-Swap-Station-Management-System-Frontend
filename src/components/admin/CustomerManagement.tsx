@@ -63,9 +63,8 @@ export function CustomerManagement({
       <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
           <CardTitle className="text-orange-600">
-            {t("admin.customerDatabase")}
+            {"Danh sách khách hàng"}
           </CardTitle>
-          <CardDescription>{t("admin.customerDatabaseDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4 ">
@@ -114,7 +113,7 @@ export function CustomerManagement({
                       <span className="font-medium">${customer.revenue}</span>
                     </div>
                   </div>
-                  <div className="flex space-x-2 mt-2">
+                  <div className="flex space-x-2 mt-2 justify-end">
                     <Button size="sm" variant="outline">
                       <Eye className="w-4 h-4" />
                     </Button>
