@@ -496,6 +496,7 @@ const translations = {
     "admin.viewDetails": "View Details",
     "admin.batteries": "Batteries",
     "admin.staff": "Staff",
+    "admin.maintenance": "Maintening",
 
     // Admin Battery Management
     "admin.sevenDays": "7 days",
@@ -952,6 +953,7 @@ const translations = {
     "admin.degraded": "Sức Khỏe (70-90%)",
     "admin.critical": "Sức Khỏe (<70%)",
     "admin.maintenanceSchedule": "Lịch Bảo Trì",
+    "admin.maintenance": "Đang bảo trì",
     "admin.urgent": "Khẩn cấp",
     "admin.urgentDesc": "pin",
     "admin.immediateAttention": "Yêu cầu chú ý ngay",
@@ -961,7 +963,7 @@ const translations = {
     "admin.nextMonth": "Tháng Tiếp Theo",
     "admin.nextMonthDesc": "pin",
     "admin.routineInspection": "Kiểm Tra Thường Xuyên",
-    "admin.batteryAllocation": "Phân Phối Pin",
+    "admin.batteryAllocation": "Phân Phối Pin Cho Các Trạm",
     "admin.optimizeAllocation": "Tối Ưu Hóa Phân Phối",
     "admin.customerManagement": "Quản Lý Khách Hàng",
     "admin.searchCustomers": "Tìm khách hàng...",
@@ -1009,6 +1011,7 @@ const translations = {
     "admin.viewDetails": "Xem Chi Tiết",
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
+    "admin.resolve": "Xử lí",
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",

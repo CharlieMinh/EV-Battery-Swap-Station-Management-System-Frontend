@@ -56,9 +56,8 @@ export function StaffManagement({ staff }: StaffManagementProps) {
       <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
           <CardTitle className="text-orange-600">
-            {t("admin.staffDirectory")}
+            {"Danh sách nhân viên"}
           </CardTitle>
-          <CardDescription>{t("admin.staffDirectoryDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -77,11 +76,20 @@ export function StaffManagement({ staff }: StaffManagementProps) {
                     <p className="font-medium">{member.name}</p>
                     <p className="text-sm text-gray-500">{member.role}</p>
                     <p className="text-xs text-gray-400">{member.station}</p>
+                    <Badge
+                      className={
+                        member.status === "active"
+                          ? "bg-green-400 text-white"
+                          : "bg-red-500 text-white "
+                      }
+                    >
+                      {t(`admin.${member.status}`)}
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-4 mb-2">
-                    <div className="text-center">
+                <div className="text-center">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="">
                       <p
                         className={`text-sm font-medium ${getPerformanceColor(
                           member.performance
@@ -93,23 +101,14 @@ export function StaffManagement({ staff }: StaffManagementProps) {
                         {t("admin.performance")}
                       </p>
                     </div>
-                    <Badge
-                      className={
-                        member.status === "active"
-                          ? "bg-green-400 text-white"
-                          : "bg-red-500 text-white "
-                      }
-                    >
-                      {t(`admin.${member.status}`)}
-                    </Badge>
                   </div>
-                  <div className="flex space-x-2">
+                  {/* <div className="flex space-x-2">
                     <Progress
                       value={member.performance}
                       className="w-20 h-2 bg-orange-100 [&>div]:bg-orange-500"
                     />
-                  </div>
-                  <div className="flex space-x-2 mt-2">
+                  </div> */}
+                  <div className="flex justify-center space-x-2 mt-2">
                     <Button size="sm" variant="outline">
                       <Eye className="w-4 h-4" />
                     </Button>

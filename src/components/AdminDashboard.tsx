@@ -60,12 +60,12 @@ export function AdminDashboardPage({
 
   // Mock data
   const revenueData = [
-    { month: "Jan", revenue: 45000, swaps: 1800, growth: 5.2 },
-    { month: "Feb", revenue: 52000, swaps: 2080, growth: 15.6 },
-    { month: "Mar", revenue: 48000, swaps: 1920, growth: -7.7 },
-    { month: "Apr", revenue: 61000, swaps: 2440, growth: 27.1 },
-    { month: "May", revenue: 58000, swaps: 2320, growth: -4.9 },
-    { month: "Jun", revenue: 67000, swaps: 2680, growth: 15.5 },
+    { month: "Jan", revenue: 45_000, swaps: 1800, growth: 5.2 },
+    { month: "Feb", revenue: 52_000, swaps: 2080, growth: 15.6 },
+    { month: "Mar", revenue: 48_000, swaps: 1920, growth: -7.7 },
+    { month: "Apr", revenue: 61_000, swaps: 2440, growth: 27.1 },
+    { month: "May", revenue: 58_000, swaps: 2320, growth: -4.9 },
+    { month: "Jun", revenue: 67_000, swaps: 2680, growth: 15.5 },
   ];
 
   const stationPerformance = [
@@ -127,7 +127,7 @@ export function AdminDashboardPage({
       id: "1",
       name: "Alex Chen",
       email: "alex@email.com",
-      plan: "Monthly Unlimited",
+      plan: "Thành viên",
       status: "active" as const,
       swaps: 23,
       revenue: 149,
@@ -136,7 +136,7 @@ export function AdminDashboardPage({
       id: "2",
       name: "Sarah Kim",
       email: "sarah@email.com",
-      plan: "Pay Per Swap",
+      plan: "Vãng lai",
       status: "active" as const,
       swaps: 8,
       revenue: 200,
@@ -145,7 +145,7 @@ export function AdminDashboardPage({
       id: "3",
       name: "Mike Johnson",
       email: "mike@email.com",
-      plan: "Enterprise",
+      plan: "Thành viên",
       status: "active" as const,
       swaps: 156,
       revenue: 2400,
@@ -154,7 +154,7 @@ export function AdminDashboardPage({
       id: "4",
       name: "Emily Davis",
       email: "emily@email.com",
-      plan: "Monthly Unlimited",
+      plan: "Vãng lai",
       status: "suspended" as const,
       swaps: 45,
       revenue: 597,
@@ -313,7 +313,7 @@ export function AdminDashboardPage({
                       <span>{t("admin.staff")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("ai-insights")}
                       isActive={activeSection === "ai-insights"}
@@ -322,8 +322,8 @@ export function AdminDashboardPage({
                       <Brain className="w-4 h-4" />
                       <span>{t("admin.aiInsights")}</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  </SidebarMenuItem> */}
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("alerts")}
                       isActive={activeSection === "alerts"}
@@ -332,7 +332,7 @@ export function AdminDashboardPage({
                       <Bell className="w-4 h-4" />
                       <span>{t("admin.alerts")}</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -388,9 +388,9 @@ export function AdminDashboardPage({
           </header>
 
           {/* System Overview KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-8">
-            <Card>
-              <CardContent className="p-6 border border-orange-200 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-0">
+            <Card className="border border-orange-200 rounded-lg">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-orange-600">
@@ -399,10 +399,10 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       ${kpiData.totalRevenue.toLocaleString()}
                     </p>
-                    <div className="flex items-center mt-1">
+                    {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm text-green-600">+12.5%</span>
-                    </div>
+                    </div> */}
                   </div>
                   <DollarSign className="w-8 h-8 text-green-500" />
                 </div>
@@ -419,10 +419,10 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       {kpiData.totalSwaps.toLocaleString()}
                     </p>
-                    <div className="flex items-center mt-1">
+                    {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm text-green-600">+8.3%</span>
-                    </div>
+                    </div> */}
                   </div>
                   <Battery className="w-8 h-8 text-blue-500" />
                 </div>
@@ -439,12 +439,12 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       {kpiData.activeStations}
                     </p>
-                    <div className="flex items-center mt-1">
+                    {/* <div className="flex items-center mt-1">
                       <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm text-green-600">
                         {t("admin.allOnline")}
                       </span>
-                    </div>
+                    </div> */}
                   </div>
                   <MapPin className="w-8 h-8 text-purple-500" />
                 </div>
@@ -461,12 +461,12 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       {kpiData.totalCustomers.toLocaleString()}
                     </p>
-                    <div className="flex items-center mt-1">
+                    {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm text-green-600">
                         +156 {t("admin.newCustomers")}
                       </span>
-                    </div>
+                    </div> */}
                   </div>
                   <Users className="w-8 h-8 text-orange-500" />
                 </div>
@@ -505,9 +505,9 @@ export function AdminDashboardPage({
 
             {activeSection === "staff" && <StaffManagement staff={staff} />}
 
-            {activeSection === "ai-insights" && (
+            {/* {activeSection === "ai-insights" && (
               <AIInsights demandForecast={demandForecast} />
-            )}
+            )} */}
 
             {activeSection === "alerts" && <AlertsManagement alerts={alerts} />}
           </main>
