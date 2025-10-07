@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -61,6 +62,25 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [profileName, setProfileName] = useState<string>(user.name);
   const [profileEmail, setProfileEmail] = useState<string>(user.email);
   const [profilePhone, setProfilePhone] = useState<string>("");
+  const [showAll, setShowAll] = useState(false);
+
+  const [swapHistory, setSwapHistory] = useState<any>(null);
+  const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
+
+  interface Swap {
+    id: string;
+    transactionNumber: string;
+    stationName: string;
+    stationAddress: string;
+    completedAt: string;
+    totalAmount: number;
+    status: string;
+    vehicleLicensePlate: string;
+    batteryHealthIssued: number;
+    batteryHealthReturned: number;
+    isPaid: boolean;
+    notes?: string;
+  }
 
   const stations = [
     {
@@ -123,32 +143,29 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     },
   ];
 
-  const recentSwaps = [
-    {
-      id: "1",
-      station: "Downtown Hub",
-      date: "2024-01-15",
-      time: "14:30",
-      amount: 25,
-      status: "completed",
-    },
-    {
-      id: "2",
-      station: "Mall Station",
-      date: "2024-01-12",
-      time: "09:15",
-      amount: 25,
-      status: "completed",
-    },
-    {
-      id: "3",
-      station: "Highway Rest Stop",
-      date: "2024-01-08",
-      time: "16:45",
-      amount: 30,
-      status: "completed",
-    },
-  ];
+
+
+  useEffect(() => {
+    async function fetchSwapHistory() {
+      try {
+        // ✅ Nếu showAll = false → chỉ lấy 3 bản ghi đầu
+        // ✅ Nếu showAll = true → gọi API all=true để lấy hết
+        const url = showAll
+          ? "http://localhost:5194/api/v1/swaps/mine?all=true"
+          : "http://localhost:5194/api/v1/swaps/mine?page=1&pageSize=3";
+
+        const response = await axios.get(url, { withCredentials: true });
+
+        setSwapHistory(response.data);                // lưu cả object
+        setRecentSwaps(response.data.transactions);
+      } catch (error: any) {
+        console.error("Lỗi khi lấy lịch sử đổi pin:", error);
+      }
+    }
+
+    fetchSwapHistory();
+  }, [showAll]);
+
 
   const subscriptionPlan = {
     name: "Monthly Unlimited",
@@ -357,9 +374,15 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
             {activeSection === "history" && (
               <div className="space-y-6">
-                <SwapHistory recentSwaps={recentSwaps} />
+                <SwapHistory
+                  recentSwaps={recentSwaps}
+                  swapHistory={swapHistory}
+                  showAll={showAll}
+                  setShowAll={setShowAll}
+                />
               </div>
             )}
+
 
             {activeSection === "profile" && (
               <DriverProfile
