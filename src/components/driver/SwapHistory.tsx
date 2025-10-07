@@ -51,7 +51,7 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
         </CardTitle>
         <CardDescription>
           <div className="font-bold">
-            Tổng số lần bạn đã thay pin:{" "}
+            {t("driver.totalSwap")}:{" "}
             <span className="text-orange-500">{swapHistory?.totalCount || 0}</span>
           </div>
 
@@ -90,11 +90,11 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
 
                 <p className="text-sm text-gray-600">{swap.stationAddress}</p>
                 <p className="text-sm text-gray-500">
-                  Hoàn tất: {completedTime}
+                  {t("driver.completeTime")}: {completedTime}
                 </p>
-                <p className="text-sm">Xe: {swap.vehicleLicensePlate}</p>
+                <p className="text-sm">{t("driver.licensePlate")}: {swap.vehicleLicensePlate}</p>
                 <p className="text-sm">
-                  Độ khỏe pin: {swap.batteryHealthIssued}% →{" "}
+                  {t("driver.batteryHealth")}: {swap.batteryHealthIssued}% →{" "}
                   {swap.batteryHealthReturned}%
                 </p>
 
@@ -119,12 +119,12 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
                           size="sm"
                           className="text-orange-500 underline"
                         >
-                          Xem ghi chú
+                          {t("driver.viewAllNotes")}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Ghi chú giao dịch</DialogTitle>
+                          <DialogTitle>{t("driver.transactionNotes")}</DialogTitle>
                         </DialogHeader>
                         <p className="text-gray-700 whitespace-pre-line">
                           {swap.notes || "Không có ghi chú"}
@@ -134,7 +134,7 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
                   </div>
 
                   <div className="text-right font-medium text-green-600">
-                    Tổng: {Number(swap.totalAmount).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    {t("driver.totalAmount")}: {Number(swap.totalAmount).toLocaleString("en-US", { style: "currency", currency: "USD" })}
                   </div>
 
                 </div>
@@ -149,7 +149,7 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
             className="w-full mt-4 border-orange-300 rounded-lg text-orange-500"
             onClick={() => setShowAll(false)}
           >
-            Thu gọn lại
+            {t("driver.collapse")}
           </Button>
         ) : (
           <Button
@@ -157,7 +157,7 @@ export function SwapHistory({ recentSwaps, swapHistory, showAll, setShowAll }: S
             className="w-full mt-4 border-orange-300 rounded-lg bg-orange-500 text-white"
             onClick={() => setShowAll(true)}
           >
-            Xem toàn bộ lịch sử
+            {t("driver.viewAllHistory")}
           </Button>
         )}
 

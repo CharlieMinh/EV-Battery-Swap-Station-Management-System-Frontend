@@ -62,6 +62,9 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [profilePhone, setProfilePhone] = useState<string>("");
   const [showAll, setShowAll] = useState(false);
 
+  const [swapHistory, setSwapHistory] = useState<any>(null);
+  const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
+
   interface Swap {
     id: string;
     transactionNumber: string;
@@ -138,8 +141,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     },
   ];
 
-  const [swapHistory, setSwapHistory] = useState<any>(null);
-  const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
 
 
   useEffect(() => {
