@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -31,9 +31,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
-import { findNearestStation } from "./map/osrmUtils";
-import MapView from "./map/MapView";
-import { Coordinates, Station } from "./map/osrmUtils";
 
 const stations = [
   {
@@ -60,10 +57,7 @@ export function Homepage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useGeoLocation();
-  const [loading, setLoading] = useState(false);
-  const [nearestStation, setNearestStation] = useState<
-    (Station & { distance: number }) | null
-  >(null);
+  const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
   const features = [
     {
@@ -157,26 +151,83 @@ export function Homepage() {
     { number: "99.9%", label: t("stats.uptimeReliability") },
   ];
 
-  const handleFindNearestStation = async () => {
-    const userLocation = {
-      lat: location.coordinates.lat,
-      lng: location.coordinates.lng,
-    };
+  useEffect(() => {
+    // 1. Chỉ thực hiện khi đang ở trạng thái chờ (đã bấm nút)
+    // 2. Vị trí đã được tải thành công
+    // 3. Không có lỗi
+    if (isWaitingForLocation && location.loaded && !location.error) {
+      const userLocation = {
+        lat: location.coordinates.lat,
+        lng: location.coordinates.lng,
+      };
 
-    const nearest = await findNearestStation(userLocation, stations);
-    console.log("Nearest:", nearestStation);
+      // Ngừng trạng thái chờ
+      setIsWaitingForLocation(false);
 
-    if (nearest) {
-      setNearestStation(nearest);
+      // Tự động chuyển trang ngay lập tức
       navigate("/map", {
         state: {
           userLocation,
           stations,
-          nearestStation: nearest,
         },
       });
     }
+
+    // Xử lý lỗi: Nếu đang chờ và có lỗi, dừng quá trình chờ và thông báo
+    if (isWaitingForLocation && location.loaded && location.error) {
+      setIsWaitingForLocation(false);
+      alert(
+        `Lỗi xác định vị trí: ${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`
+      );
+    }
+  }, [
+    isWaitingForLocation,
+    location.loaded,
+    location.error,
+    location.coordinates,
+    navigate,
+    stations,
+  ]);
+
+  const handleFineNearestStation = () => {
+    // 1. Xử lý trường hợp vị trí đã có SẴN (ngăn chặn chờ đợi không cần thiết)
+    if (location.loaded && !location.error) {
+      const userLocation = {
+        lat: location.coordinates.lat,
+        lng: location.coordinates.lng,
+      };
+      // Chuyển trang ngay lập tức
+      navigate("/map", {
+        state: {
+          userLocation,
+          stations,
+        },
+      });
+      return;
+    }
+
+    // 2. Nếu có lỗi ngay lập tức, thông báo cho người dùng
+    if (location.error) {
+      alert(
+        `Lỗi xác định vị trí: ${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`
+      );
+      return;
+    }
+
+    // 3. Kích hoạt trạng thái chờ
+    // Việc này sẽ làm nút hiển thị "Đang xác định..." và chờ useEffect xử lý chuyển trang
+    setIsWaitingForLocation(true);
   };
+
+  // Logic hiển thị và vô hiệu hóa nút
+  const isButtonDisabled = isWaitingForLocation;
+  let buttonText = t("stations.viewFullMap");
+
+  if (isWaitingForLocation && !location.loaded) {
+    buttonText = "Đang xác định vị trí...";
+  } else if (location.error) {
+    buttonText = "Lỗi vị trí: Thử lại";
+  }
 
   return (
     <div className="h-screen bg-white">
@@ -256,15 +307,20 @@ export function Homepage() {
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button
                   size="lg"
-                  onClick={() => navigate("/stations")}
+                  onClick={handleFineNearestStation}
+                  disabled={isButtonDisabled}
                   className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
                   {t("home.hero.findStation")}
                   <MapPin className="w-4 h-4 ml-2" />
                 </Button>
-                <Button size="lg" variant="outline">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate("/driver")}
+                >
                   <Play className="w-4 h-4 mr-2" />
-                  {t("home.hero.watchDemo")}
+                  {"Đặt lịch"}
                 </Button>
               </div>
 
@@ -370,9 +426,11 @@ export function Homepage() {
                     {t("stations.mapTitle")}
                   </h3>
                   <p className="text-gray-600 mb-4">{t("stations.mapDesc")}</p>
-                  <Button onClick={handleFindNearestStation} disabled={loading}>
+                  <Button
+                    onClick={handleFineNearestStation}
+                    disabled={isButtonDisabled}
+                  >
                     {t("stations.viewFullMap")}
-                    {loading ? "Đang tìm..." : "Tìm trạm gần nhất"}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

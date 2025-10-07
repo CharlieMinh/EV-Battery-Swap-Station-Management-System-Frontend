@@ -66,7 +66,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         onLogin(response.data);
         console.log(response.data);
 
-        if (response.data.role === "Driver") navigate("/driver");
+        if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");
         else if (response.data.role === "Admin") navigate("/admin");
       }
