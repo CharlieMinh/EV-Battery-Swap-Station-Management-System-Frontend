@@ -149,7 +149,7 @@ const translations = {
     "footer.termsOfService": "Terms of Service",
 
     // Login
-    "login.title": "LOG IN",
+    "login.title": "SIGN IN",
     "login.subtitle": "Sign in to access your EVSwap account",
     "login.email": "Email",
     "login.password": "Password",

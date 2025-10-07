@@ -71,7 +71,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         onLogin(response.data);
         console.log(response.data);
 
-        if (response.data.role === "Driver") navigate("/driver");
+        if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");
         else if (response.data.role === "Admin") navigate("/admin");
       }
@@ -132,74 +132,62 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">{t("login.signIn")}</TabsTrigger>
-                  <TabsTrigger value="demo">
-                    {t("login.demoAccess")}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login" className="space-y-4">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">{t("login.email")}</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder={t("login.enterEmail")}
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                      {errorEmail && (
-                        <p style={{ color: "red" }}>{errorEmail}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password">{t("login.password")}</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder={t("login.enterPassword")}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                      {errorPassword && (
-                        <p style={{ color: "red" }}>{errorPassword}</p>
-                      )}
-                    </div>
-
-                    {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                      disabled={loading}
-                    >
-                      {loading ? t("login.loading") : t("login.signIn")}
-                    </Button>
-                  </form>
-
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-center">
-                      <Chrome className="w-4 h-4 mr-2" />
-                      {t("login.continueWithGoogle")}
-                    </Button>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t("login.email")}</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t("login.enterEmail")}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
                   </div>
-                </TabsContent>
+                  {errorEmail && <p style={{ color: "red" }}>{errorEmail}</p>}
+                </div>
 
-                {/* <TabsContent value="demo" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t("login.password")}</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder={t("login.enterPassword")}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                  {errorPassword && (
+                    <p style={{ color: "red" }}>{errorPassword}</p>
+                  )}
+                </div>
+
+                {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  disabled={loading}
+                >
+                  {loading ? t("login.loading") : t("login.signIn")}
+                </Button>
+              </form>
+
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full justify-center">
+                  <Chrome className="w-4 h-4 mr-2" />
+                  {t("login.continueWithGoogle")}
+                </Button>
+              </div>
+
+              {/* <TabsContent value="demo" className="space-y-4">
                   <div className="text-sm text-gray-600 mb-4">
                     {t("login.tryPlatform")}
                   </div>
@@ -233,7 +221,6 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
                     </Button>
                   </div>
                 </TabsContent> */}
-              </Tabs>
             </CardContent>
           </Card>
 

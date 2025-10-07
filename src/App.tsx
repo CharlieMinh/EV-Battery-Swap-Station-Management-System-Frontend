@@ -7,6 +7,7 @@ import { DriverPortalPage } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import MapView from "./components/map/MapView";
 
 export type UserRole = "Driver" | "Staff" | "Admin" | null;
 
@@ -92,6 +93,7 @@ function App() {
               )
             }
           />
+          <Route path="/map" element={<MapView />} />
           // Fallback: Nếu không khớp với bất kỳ route nào, chuyển hướng về
           trang chủ
           <Route path="*" element={<Navigate to="/" />} />

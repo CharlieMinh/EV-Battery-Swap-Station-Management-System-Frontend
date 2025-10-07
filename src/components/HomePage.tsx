@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -29,10 +29,34 @@ import {
   Play,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import useGeoLocation from "./map/useGeoLocation";
+
+const stations = [
+  {
+    id: 1,
+    name: "Trạm 1",
+    coordinates: { lat: 10.762622, lng: 106.660172 },
+    address: "Q1, TP.HCM",
+  },
+  {
+    id: 2,
+    name: "Trạm 2",
+    coordinates: { lat: 10.7769, lng: 106.7009 },
+    address: "Q3, TP.HCM",
+  },
+  {
+    id: 3,
+    name: "Trạm 3",
+    coordinates: { lat: 10.795, lng: 106.682 },
+    address: "Phú Nhuận",
+  },
+];
 
 export function Homepage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useGeoLocation();
+  const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
   const features = [
     {
@@ -126,6 +150,73 @@ export function Homepage() {
     { number: "99.9%", label: t("stats.uptimeReliability") },
   ];
 
+  useEffect(() => {
+    if (isWaitingForLocation && location.loaded && !location.error) {
+      const userLocation = {
+        lat: location.coordinates.lat,
+        lng: location.coordinates.lng,
+      };
+
+      setIsWaitingForLocation(false);
+
+      navigate("/map", {
+        state: {
+          userLocation,
+          stations,
+        },
+      });
+    }
+
+    if (isWaitingForLocation && location.loaded && location.error) {
+      setIsWaitingForLocation(false);
+      alert(
+        `Lỗi xác định vị trí: ${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`
+      );
+    }
+  }, [
+    isWaitingForLocation,
+    location.loaded,
+    location.error,
+    location.coordinates,
+    navigate,
+    stations,
+  ]);
+
+  const handleFineNearestStation = () => {
+    if (location.loaded && !location.error) {
+      const userLocation = {
+        lat: location.coordinates.lat,
+        lng: location.coordinates.lng,
+      };
+
+      navigate("/map", {
+        state: {
+          userLocation,
+          stations,
+        },
+      });
+      return;
+    }
+
+    if (location.error) {
+      alert(
+        `Lỗi xác định vị trí: ${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`
+      );
+      return;
+    }
+
+    setIsWaitingForLocation(true);
+  };
+
+  const isButtonDisabled = isWaitingForLocation;
+  let buttonText = t("stations.viewFullMap");
+
+  if (isWaitingForLocation && !location.loaded) {
+    buttonText = "Đang xác định vị trí...";
+  } else if (location.error) {
+    buttonText = "Lỗi vị trí: Thử lại";
+  }
+
   return (
     <div className="h-screen bg-white">
       {/* Navigation */}
@@ -204,15 +295,20 @@ export function Homepage() {
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button
                   size="lg"
-                  onClick={() => navigate("/stations")}
+                  onClick={handleFineNearestStation}
+                  disabled={isButtonDisabled}
                   className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 >
                   {t("home.hero.findStation")}
                   <MapPin className="w-4 h-4 ml-2" />
                 </Button>
-                <Button size="lg" variant="outline">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate("/driver")}
+                >
                   <Play className="w-4 h-4 mr-2" />
-                  {t("home.hero.watchDemo")}
+                  {"Đặt lịch"}
                 </Button>
               </div>
 
@@ -318,7 +414,10 @@ export function Homepage() {
                     {t("stations.mapTitle")}
                   </h3>
                   <p className="text-gray-600 mb-4">{t("stations.mapDesc")}</p>
-                  <Button onClick={() => navigate("/stations")}>
+                  <Button
+                    onClick={handleFineNearestStation}
+                    disabled={isButtonDisabled}
+                  >
                     {t("stations.viewFullMap")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -454,35 +553,6 @@ export function Homepage() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-30 text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl text-white mb-4">
-            {t("cta.title")}
-          </h2>
-          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
-            {t("cta.subtitle")}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={onGetStarted}
-              className="bg-white text-green-600 hover:bg-gray-100"
-            >
-              {t("cta.signUpNow")}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-green-600"
-            >
-              {t("cta.contactSales")}
-            </Button>
-          </div>
-        </div>
-      </section> */}
 
       {/* Footer */}
       <footer id="contact" className="bg-orange-500 text-white py-16">
