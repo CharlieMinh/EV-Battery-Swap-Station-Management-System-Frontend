@@ -9,15 +9,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface DailyStats {
-  totalSwaps: number;
-  revenue: number;
-  avgSwapTime: number;
-  customerRating: number;
-  lowBatteryAlerts: number;
-  maintenanceNeeded: number;
-}
+import { DailyStats } from "../../services/staffApi";
 
 interface StaffDashboardProps {
   dailyStats: DailyStats;
@@ -38,21 +30,21 @@ export function StaffDashboard({ dailyStats }: StaffDashboardProps) {
       <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <DollarSign className="w-8 h-8 text-green-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold">${dailyStats.revenue}</p>
+          <p className="text-2xl font-bold">${dailyStats.revenue.toLocaleString()}</p>
           <p className="text-sm text-orange-500">{t("staff.revenue")}</p>
         </CardContent>
       </Card>
       <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <Clock className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold">{dailyStats.avgSwapTime}m</p>
+          <p className="text-2xl font-bold">{dailyStats.avgSwapTime.toFixed(2)}m</p>
           <p className="text-sm text-orange-500">{t("staff.avgTime")}</p>
         </CardContent>
       </Card>
       <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold">{dailyStats.customerRating}</p>
+          <p className="text-2xl font-bold">{dailyStats.customerRating.toFixed(2)}/5</p>
           <p className="text-sm text-orange-500">{t("staff.rating")}</p>
         </CardContent>
       </Card>

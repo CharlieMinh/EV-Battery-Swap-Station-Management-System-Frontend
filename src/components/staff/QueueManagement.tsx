@@ -10,15 +10,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Clock, ChevronRight } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface Booking {
-  id: string;
-  customer: string;
-  vehicle: string;
-  time: string;
-  code: string;
-  status: "pending" | "in-progress" | "confirmed";
-}
+import { Booking } from "../../services/staffApi";
 
 interface QueueManagementProps {
   bookings: Booking[];
