@@ -560,10 +560,16 @@ export function Homepage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg mr-3">
-                  <Zap className="w-5 h-5 text-white" />
+                <div className="">
+                  <img
+                    src="src/assets/logoEV2.png "
+                    alt="FPTFAST Logo"
+                    className="w-18 h-16 mr-3"
+                  />
                 </div>
-                <span className="text-xl">EV Battery Swap Station</span>
+                <span className="text-3xl font-bold text-white">
+                  F P T F A S T
+                </span>
               </div>
               <p className="text-white-400 mb-4">{t("footer.description")}</p>
               {/* <div className="flex space-x-4">
@@ -640,7 +646,7 @@ export function Homepage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+          {/* <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-white">{t("footer.copyright")}</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-white-400 hover:text-white">
@@ -650,7 +656,7 @@ export function Homepage() {
                 {t("footer.termsOfService")}
               </a>
             </div>
-          </div>
+          </div> */}
         </div>
       </footer>
     </div>

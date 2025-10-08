@@ -171,6 +171,7 @@ const translations = {
     "login.dontHaveAccount": "Don't have an account?",
     "login.signUpHere": "Sign up here",
     "login.batterySwapManagement": "Battery Swap Station Management",
+    "login.loading": "Logging in",
 
     // Register
     "register.name": "Name",
@@ -474,7 +475,7 @@ const translations = {
     "admin.station": "Station",
     "admin.performance": "Performance",
     "admin.active": "active",
-    "admin.onLeave": "on-leave",
+    "admin.on-leave": "on-leave",
     "admin.suspended": "suspended",
     "admin.aiDemandForecasting": "AI Demand Forecasting",
     "admin.aiDemandForecastingDesc": "Predicted vs actual demand patterns",
@@ -697,6 +698,7 @@ const translations = {
     "login.dontHaveAccount": "Không có tài khoản?",
     "login.signUpHere": "Đăng ký tại đây",
     "login.batterySwapManagement": "Quản Lý Trạm Thay Pin",
+    "login.loading": "Đang đăng nhập",
 
     // Register
     "register.namePlaceholder": "Hãy nhập tên của bạn",
@@ -1000,9 +1002,9 @@ const translations = {
     "admin.role": "Vai trò",
     "admin.station": "Trạm",
     "admin.performance": "Hiệu Suất",
-    "admin.active": "active",
-    "admin.onLeave": "on-leave",
-    "admin.suspended": "suspended",
+    "admin.active": "Hoạt động",
+    "admin.on-leave": "Nghỉ phép",
+    "admin.suspended": "Chặn",
     "admin.aiDemandForecasting": "Dự Báo Yêu Cầu AI",
     "admin.aiDemandForecastingDesc": "Mô hình dự đoán vs thực tế",
     "admin.predicted": "Dự đoán",

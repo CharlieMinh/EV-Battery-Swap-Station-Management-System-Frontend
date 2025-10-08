@@ -65,9 +65,9 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
       if (response.data.role) {
         // Save token to localStorage
         if (response.data.token) {
-          localStorage.setItem('authToken', response.data.token);
+          localStorage.setItem("authToken", response.data.token);
         }
-        
+
         onLogin(response.data);
         console.log(response.data);
 
@@ -173,7 +173,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
 
                 <Button
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  className="w-full bg-orange-500 hover:bg-orange-600 mb-2"
                   disabled={loading}
                 >
                   {loading ? t("login.loading") : t("login.signIn")}
