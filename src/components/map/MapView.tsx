@@ -81,16 +81,6 @@ export default function MapView() {
   }, [userLocation, stations]);
 
   useEffect(() => {
-    if (mapRef.current && nearestStation) {
-      const bounds: [number, number][] = [
-        [userLocation.lat, userLocation.lng],
-        [nearestStation.coordinates.lat, nearestStation.coordinates.lng],
-      ];
-      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [nearestStation]);
-
-  useEffect(() => {
     const fetchRoute = async () => {
       if (!nearestStation) {
         setRouteCoords([]);
@@ -114,6 +104,16 @@ export default function MapView() {
       fetchRoute();
     }
   }, [userLocation, nearestStation]);
+
+  useEffect(() => {
+    if (mapRef.current && routeCoords.length > 0) {
+      const bounds = routeCoords.map(([lat, lng]) => [lat, lng]) as [
+        number,
+        number
+      ][];
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [routeCoords]);
 
   if (isLoading) {
     return (
