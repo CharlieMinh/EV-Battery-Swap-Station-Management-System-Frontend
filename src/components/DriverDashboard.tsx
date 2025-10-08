@@ -42,7 +42,9 @@ import { SubscriptionStatus } from "../components/driver/SubscriptionStatus";
 import { SwapHistory } from "../components/driver/SwapHistory";
 import { DriverProfile } from "../components/driver/DriverProfile";
 import { DriverSupport } from "../components/driver/DriverSupport";
-import { MyVehicle } from "./driver/MyVehicle";
+import { MyVehicle } from "../components/driver/MyVehicle";
+
+
 
 interface DriverPortalPageProps {
   user: User;
@@ -66,6 +68,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
   const [swapHistory, setSwapHistory] = useState<any>(null);
   const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
 
   interface Swap {
     id: string;
@@ -124,24 +127,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     },
   ];
 
-  const vehicles = [
-    {
-      id: "1",
-      make: "Tesla",
-      model: "Model 3",
-      year: 2023,
-      vin: "ABC123456",
-      batteryModel: "TM3-75kWh",
-    },
-    {
-      id: "2",
-      make: "BMW",
-      model: "iX3",
-      year: 2022,
-      vin: "DEF789012",
-      batteryModel: "BMW-80kWh",
-    },
-  ];
 
 
 
@@ -165,6 +150,32 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
     fetchSwapHistory();
   }, [showAll]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
+          withCredentials: true,
+        });
+        console.log("Vehicle data:", res.data);
+        setVehicles(res.data);
+      } catch (err) {
+        console.error("Fetch failed:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleRefreshVehicles = async () => {
+    try {
+      const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
+        withCredentials: true,
+      });
+      setVehicles(res.data);
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    }
+  };
 
 
   const subscriptionPlan = {
@@ -359,7 +370,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             {activeSection === "mycar" && (
               <div className="space-y-6">
                 <div>
-                  <MyVehicle vehicles={vehicles}></MyVehicle>
+                  <MyVehicle vehicles={vehicles} onRefresh={handleRefreshVehicles} />
                 </div>
               </div>
             )}
