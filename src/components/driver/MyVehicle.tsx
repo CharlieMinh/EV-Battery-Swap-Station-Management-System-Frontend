@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Card,
     CardContent,
@@ -7,35 +7,93 @@ import {
     CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Badge } from "../ui/badge";
-import { Separator } from "../ui/separator";
-import { Edit, User, Star, Car, CreditCard, Shield } from "lucide-react";
+import { Edit, Car, Delete } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { User as UserType } from "../../App";
-import { Battery } from "lucide-react";
+import VehicleForm from "./VehicleForm";
+import axios from "axios";
+import { showError, showSuccess, showConfirm } from "../ui/alert";
+
 interface Vehicle {
     id: string;
-    make: string;
-    model: string;
-    year: number;
     vin: string;
-    batteryModel: string;
+    plate: string;
+    brand: string;
+    vehicleModelFullName?: string;
+    compatibleBatteryModelName?: string;
+    photoUrl?: string;
 }
 
 interface MyVehicleProps {
     vehicles: Vehicle[];
+    onRefresh: () => void;
 }
-export function MyVehicle({
-    vehicles,
-}: MyVehicleProps) {
+
+export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
     const { t } = useLanguage();
+    const [showForm, setShowForm] = useState(false);
+    const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+
+    const handleAdd = () => {
+        setEditingVehicle(null);
+        setShowForm(true);
+    };
+
+    const handleEdit = (vehicle: Vehicle) => {
+        setEditingVehicle(vehicle);
+        setShowForm(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        const confirmed = await showConfirm(
+            t("driver.confirmDeleteTitle"),
+            t("driver.confirmDeleteText")
+        );
+        if (!confirmed) return;
+
+        try {
+            await axios.delete(`http://localhost:5194/api/v1/vehicles/${id}`, {
+                withCredentials: true,
+            });
+            await showSuccess(t("driver.deleteSuccess"));
+            onRefresh?.();
+        } catch (err: any) {
+            console.log("Lỗi khi xóa:", err);
+            const msg =
+                err.response?.data?.error?.message ||
+                err.response?.data?.error?.code ||
+                t("driver.cannotConnectServer");
+            await showError(msg);
+        }
+    };
+
+    const handleSubmit = async (data: any) => {
+        try {
+            if (editingVehicle) {
+                await axios.put(
+                    `http://localhost:5194/api/v1/vehicles/${editingVehicle.id}`,
+                    data,
+                    { withCredentials: true }
+                );
+                await showSuccess(t("driver.updateSuccess"));
+            } else {
+                await axios.post("http://localhost:5194/api/v1/vehicles", data, {
+                    withCredentials: true,
+                });
+                await showSuccess(t("driver.addSuccess"));
+            }
+            setShowForm(false);
+            onRefresh();
+        } catch (err: any) {
+            const msg =
+                err.response?.data?.error?.message ||
+                t("driver.cannotConnectServer");
+            await showError(msg);
+            throw err; // để form xử lý thêm nếu cần
+        }
+    };
 
     return (
         <div className="space-y-6">
-            {/* Vehicle Information */}
             <Card className="border border-orange-500 rounded-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-orange-500 font-bold">
@@ -46,70 +104,95 @@ export function MyVehicle({
                         {t("driver.vehicleInformationDesc")}
                     </CardDescription>
                 </CardHeader>
+
                 <CardContent>
-                    <div className="space-y-4">
-                        {vehicles.map((vehicle) => (
-                            <div
-                                key={vehicle.id}
-                                className="flex items-center justify-between p-4 border rounded-lg text-orange-500 font-bold"
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <Car className="w-8 h-8 text-blue-500" />
-                                    <div>
-                                        <p className="font-medium">
-                                            {vehicle.year} {vehicle.make} {vehicle.model}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {t("driver.battery")} {vehicle.batteryModel}
-                                        </p>
-                                        <p className="text-xs text-gray-400">VIN: {vehicle.vin}</p>
+                    {showForm ? (
+                        <VehicleForm
+                            initialData={editingVehicle}
+                            isEdit={!!editingVehicle}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setShowForm(false)}
+                            onSuccess={async (msg) => {
+                                await showSuccess(msg);
+                                onRefresh();
+                                setShowForm(false);
+                            }}
+                        />
+                    ) : (
+                        <>
+                            {vehicles.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">
+                                    {t("driver.noVehicleFound")}
+                                </p>
+                            ) : (
+                                vehicles.map((vehicle) => (
+                                    <div
+                                        key={vehicle.id}
+                                        className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition"
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            {vehicle.photoUrl ? (
+                                                <img
+                                                    src={vehicle.photoUrl}
+                                                    alt={vehicle.vehicleModelFullName || t("driver.unknownModel")}
+                                                    className="w-16 h-16 object-cover rounded-md border"
+                                                />
+                                            ) : (
+                                                <Car className="w-10 h-10 text-orange-500" />
+                                            )}
+
+                                            <div>
+                                                <p className="font-semibold text-orange-600">
+                                                    {vehicle.vehicleModelFullName || t("driver.unknownModel")}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                    {t("driver.brand")}: {vehicle.brand}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                    {t("driver.plate")}: {vehicle.plate}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    VIN: {vehicle.vin}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {t("driver.compatibleBattery")}: {vehicle.compatibleBatteryModelName || t("driver.noCompatibleBattery")}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center space-x-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="bg-orange-500 text-white hover:bg-orange-600"
+                                                onClick={() => handleEdit(vehicle)}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="bg-orange-500 text-white hover:bg-orange-600"
+                                                onClick={() => handleDelete(vehicle.id)}
+                                            >
+                                                <Delete className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Badge className="bg-orange-500 text-white" variant="secondary">{t("driver.primary")}</Badge>
-                                    <Button size="sm" variant="outline" className="bg-orange-500 text-white">
-                                        <Edit className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                        <Button variant="outline" className="w-full bg-orange-500 text-white">
-                            {t("driver.addVehicle")}
-                        </Button>
-                    </div>
+                                ))
+                            )}
+
+                            <Button
+                                variant="outline"
+                                className="w-full bg-orange-500 text-white mt-4 hover:bg-orange-600"
+                                onClick={handleAdd}
+                            >
+                                {t("driver.addVehicle")}
+                            </Button>
+                        </>
+                    )}
                 </CardContent>
             </Card>
-
-            {/* Driver Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border border-orange-500 rounded-lg">
-                    <CardContent className="p-4 text-center">
-                        <Battery className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">127</p>
-                        <p className="text-sm text-gray-500">{t("driver.totalSwaps")}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border border-orange-500 rounded-lg">
-                    <CardContent className="p-4 text-center">
-                        <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">4.9</p>
-                        <p className="text-sm text-gray-500">{t("driver.averageRating")}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border border-orange-500 rounded-lg">
-                    <CardContent className="p-4 text-center">
-                        <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">$1,847</p>
-                        <p className="text-sm text-gray-500">{t("driver.totalSavings")}</p>
-                    </CardContent>
-                </Card>
-            </div>
-
         </div>
     );
 }
-
-
-
-
-

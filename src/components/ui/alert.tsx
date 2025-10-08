@@ -2,7 +2,42 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "./utils";
+import { useLanguage } from "../LanguageContext";
+import Swal from "sweetalert2";
+export async function showSuccess(msg: string) {
+  await Swal.fire({
+    icon: "success",
+    title: msg,
+    confirmButtonColor: "#f97316",
+    timer: 2000,
+    position: "center",
+    showConfirmButton: false,
+  });
+}
 
+export async function showError(msg: string) {
+  await Swal.fire({
+    icon: "error",
+    title: "Lỗi!",
+    text: msg,
+    confirmButtonColor: "#f97316",
+    position: "center",
+  });
+}
+
+export async function showConfirm(title: string, text: string) {
+  const result = await Swal.fire({
+    title,
+    text,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#f97316",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Có",
+    cancelButtonText: "Hủy",
+  });
+  return result.isConfirmed;
+}
 const alertVariants = cva(
   "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
   {
