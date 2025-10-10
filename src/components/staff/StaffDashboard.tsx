@@ -16,7 +16,7 @@ interface StaffDashboardProps {
 }
 
 export function StaffDashboard({ dailyStats }: StaffDashboardProps) {
-  const { t } = useLanguage();
+  const { t, formatCurrency } = useLanguage();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 m-6 mb-8">
@@ -30,7 +30,7 @@ export function StaffDashboard({ dailyStats }: StaffDashboardProps) {
       <Card className="border border-orange-200 rounded-lg">
         <CardContent className="p-4 text-center">
           <DollarSign className="w-8 h-8 text-green-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold">${dailyStats.revenue.toLocaleString()}</p>
+          <p className="text-2xl font-bold">{formatCurrency(dailyStats.revenue)}</p>
           <p className="text-sm text-orange-500">{t("staff.revenue")}</p>
         </CardContent>
       </Card>

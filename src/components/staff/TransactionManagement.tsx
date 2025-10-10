@@ -18,7 +18,7 @@ interface TransactionManagementProps {
 export function TransactionManagement({
   recentTransactions,
 }: TransactionManagementProps) {
-  const { t } = useLanguage();
+  const { t, formatCurrency } = useLanguage();
 
   return (
     <Card className="border border-orange-200 rounded-lg shadow-lg bg-white">
@@ -66,7 +66,7 @@ export function TransactionManagement({
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-medium text-green-600 text-lg">${transaction.amount.toLocaleString()}</p>
+                <p className="font-medium text-green-600 text-lg">{formatCurrency(transaction.amount)}</p>
                 <Badge className="bg-green-100 text-green-800 font-semibold">
                   {t("staff.completed")}
                 </Badge>
