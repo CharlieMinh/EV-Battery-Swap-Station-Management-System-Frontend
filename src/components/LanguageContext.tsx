@@ -176,6 +176,19 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
 
+    // Forgot Password
+    "forgotPassword.title": "Forgot Password",
+    "forgotPassword.subtitle": "Enter your email address and we'll send you a link to reset your password",
+    "forgotPassword.enterEmailPlaceholder": "Enter your email address",
+    "forgotPassword.sendResetLink": "Send Reset Link",
+    "forgotPassword.sending": "Sending...",
+    "forgotPassword.backToLogin": "Back to Login",
+    "forgotPassword.emailSent": "Email Sent!",
+    "forgotPassword.checkEmailDesc": "We've sent a password reset link to your email address",
+    "forgotPassword.emailSentTo": "Email sent to:",
+    "forgotPassword.resendEmail": "Resend Email",
+    "forgotPassword.errorGeneric": "Something went wrong. Please try again.",
+
     // Register
     "register.name": "Name",
     "register.joinEVSwap": "Join EVSwap",
@@ -732,6 +745,19 @@ const translations = {
     "login.signUpHere": "Đăng ký tại đây",
     "login.batterySwapManagement": "Quản Lý Trạm Thay Pin",
     "login.loading": "Đang đăng nhập",
+
+    // Forgot Password
+    "forgotPassword.title": "Quên Mật Khẩu",
+    "forgotPassword.subtitle": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu",
+    "forgotPassword.enterEmailPlaceholder": "Nhập địa chỉ email của bạn",
+    "forgotPassword.sendResetLink": "Gửi Liên Kết Đặt Lại",
+    "forgotPassword.sending": "Đang gửi...",
+    "forgotPassword.backToLogin": "Quay Về Đăng Nhập",
+    "forgotPassword.emailSent": "Email Đã Được Gửi!",
+    "forgotPassword.checkEmailDesc": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến địa chỉ email của bạn",
+    "forgotPassword.emailSentTo": "Email đã được gửi đến:",
+    "forgotPassword.resendEmail": "Gửi Lại Email",
+    "forgotPassword.errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại.",
 
     // Register
     "register.namePlaceholder": "Hãy nhập tên của bạn",
