@@ -169,6 +169,17 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
                   )}
                 </div>
 
+                {/* Forgot Password Link */}
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm text-orange-500 hover:text-orange-600 hover:underline"
+                  >
+                    {t("login.forgotPassword")}
+                  </button>
+                </div>
+
                 {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
 
                 <Button

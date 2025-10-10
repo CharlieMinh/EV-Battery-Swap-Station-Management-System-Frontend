@@ -3,6 +3,7 @@ import { LanguageProvider } from "./components/LanguageContext";
 import { Homepage } from "./components/HomePage";
 import { LoginPage } from "./components/LoginPage";
 import { RegisterPage } from "./components/RegisterPage";
+import { ForgetPassword } from "./components/ForgetPassword";
 import { DriverPortalPage } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
@@ -59,6 +60,10 @@ function App() {
                 onBackToLogin={() => {}}
               />
             }
+          />
+          <Route
+            path="/forgot-password"
+            element={<ForgetPassword />}
           />
           <Route
             path="/driver"
