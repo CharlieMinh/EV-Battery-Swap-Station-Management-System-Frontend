@@ -67,10 +67,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         if (response.data.token) {
           localStorage.setItem("authToken", response.data.token);
         }
-
         onLogin(response.data);
-        console.log(response.data);
-
         if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");
         else if (response.data.role === "Admin") navigate("/admin");
