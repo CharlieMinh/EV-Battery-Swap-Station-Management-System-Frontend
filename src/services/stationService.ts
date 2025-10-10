@@ -32,7 +32,21 @@ export async function fetchStations(  page: number,
  {
     try {
         const response = await api.get(`/v1/Stations?page=${page}&pageSize=${pageSize}`)
-        return response.data;
+        const mappedItems = response.data.items.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      address: s.address,
+      isActive: s.isActive,
+      coordinates: {
+        lat: s.lat,   // ✅ map đúng field
+        lng: s.lng,  // ✅ map đúng field
+      },
+    }));
+
+    return {
+      ...response.data,
+      items: mappedItems, // ✅ trả về items đúng kiểu Station
+    };
     } catch (error) {
         console.error('Error fetching stations:', error);
         throw error;
