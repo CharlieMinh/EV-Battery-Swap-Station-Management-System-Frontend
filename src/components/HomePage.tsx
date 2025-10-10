@@ -207,7 +207,7 @@ export function Homepage() {
         lng: location.coordinates.lng,
       };
       console.log("User location:", userLocation);
-
+      console.log("Stations:", stations);
       navigate("/map", {
         state: {
           userLocation,
