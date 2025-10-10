@@ -484,9 +484,7 @@ export function AdminDashboardPage({
               />
             )}
 
-            {activeSection === "stations" && (
-              <StationManagement stationPerformance={stationPerformance} />
-            )}
+            {activeSection === "stations" && <StationManagement />}
 
             {activeSection === "batteries" && (
               <BatteryFleetManagement

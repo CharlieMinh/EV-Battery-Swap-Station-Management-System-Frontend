@@ -1,27 +1,37 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface Station {
-  name: string;
-  swaps: number;
-  revenue: number;
-  utilization: number;
-  status: "active" | "maintenance";
-}
+import { fetchStations } from "@/services/stationService";
+import { Station } from "@/services/stationService";
 
 interface StationManagementProps {
   stationPerformance: Station[];
 }
 
-export function StationManagement({
-  stationPerformance,
-}: StationManagementProps) {
+export function StationManagement() {
   const { t } = useLanguage();
+  const [stationPerformance, setStationPerformance] = React.useState<Station[]>(
+    []
+  );
+
+  useEffect(() => {
+    // Simulate fetching data from an API
+    const getAllStations = async () => {
+      try {
+        const response = await fetchStations(1, 20);
+        setStationPerformance(response.items);
+        console.log("Fetched stations:", response.items);
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+        throw error;
+      }
+    };
+    getAllStations();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -52,12 +62,12 @@ export function StationManagement({
                     <MapPin className="w-8 h-8 text-blue-500 mx-auto mb-1" />
                     <Badge
                       className={
-                        station.status === "active"
+                        station.isActive === true
                           ? "bg-green-400 text-white"
                           : "bg-red-500 text-white "
                       }
                     >
-                      {t(`admin.${station.status}`)}
+                      {t(`admin.${station.isActive}`)}
                     </Badge>
                   </div>
                   <div>
@@ -69,15 +79,15 @@ export function StationManagement({
                         <span className="text-gray-500">
                           {t("admin.swaps")}:{" "}
                         </span>
-                        <span className="font-medium">{station.swaps}</span>
+                        {/* <span className="font-medium">{station.swaps}</span> */}
                       </div>
                       <div>
                         <span className="text-gray-500">
                           {t("admin.revenue")}:{" "}
                         </span>
-                        <span className="font-medium">
+                        {/* <span className="font-medium">
                           ${station.revenue.toLocaleString()}
-                        </span>
+                        </span> */}
                       </div>
                       <div>
                         <span className="text-gray-500">Số pin: </span>

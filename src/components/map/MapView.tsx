@@ -169,10 +169,10 @@ export default function MapView() {
 
         {/* Marker các trạm */}
         {stations.map((station) => {
-          const isNearest = station.id === nearestStation?.id;
+          const isNearest = station.name === nearestStation?.name;
           return (
             <Marker
-              key={station.id}
+              key={station.name}
               position={[station.coordinates.lat, station.coordinates.lng]}
             >
               <Popup>

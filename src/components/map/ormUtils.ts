@@ -8,7 +8,6 @@ export interface Coordinates {
 }
 
 export interface Station {
-  id: number;
   name: string;
   coordinates: Coordinates;
   address: string;
@@ -62,17 +61,14 @@ export async function findNearestStation(
       const distance = raw.distance // ép kiểu an toàn
 
       
-      if (!Number.isFinite(distance)) {
-        console.warn("Invalid distance for station", station.id, raw);
-        continue;
-      }
+
 
       if (distance < shortestDistance) {
         shortestDistance = distance;
         nearestStation = { ...station, distance };
       }
     } catch (err) {
-      console.warn("Error calculating distance for station", station.id, err);
+      console.warn("Error calculating distance for station", station.name, err);
       
     }
   }

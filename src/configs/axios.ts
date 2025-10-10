@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-    baseURL: "https://localhost:7240/api/", // Default fallback
+    baseURL: "http://localhost:5194/api", // Default fallback
     timeout: 10000, // 10 seconds timeout
 });
 
