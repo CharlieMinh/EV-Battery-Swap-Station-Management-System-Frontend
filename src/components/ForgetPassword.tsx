@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -18,47 +18,220 @@ import {
   AlertCircle,
   Lock,
   Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 type ResetStep = "email" | "verification" | "newPassword" | "success";
 
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Password validation
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+
+interface ValidationState {
+  isValid: boolean;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+}
+
 export function ForgetPassword() {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
+  // Step management
   const [currentStep, setCurrentStep] = useState<ResetStep>("email");
+  
+  // Form data
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Validation states
+  const [emailValidation, setEmailValidation] = useState<ValidationState>({ isValid: false, message: '', type: 'info' });
+  const [passwordValidation, setPasswordValidation] = useState<ValidationState>({ isValid: false, message: '', type: 'info' });
+  const [confirmPasswordValidation, setConfirmPasswordValidation] = useState<ValidationState>({ isValid: false, message: '', type: 'info' });
+  
+  // Rate limiting
+  const [rateLimitInfo, setRateLimitInfo] = useState<{remaining: number, resetTime: string, maxRequests: number} | null>(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+
+  // Email validation
+  useEffect(() => {
+    if (!email) {
+      setEmailValidation({ isValid: false, message: '', type: 'info' });
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+      setEmailValidation({ 
+        isValid: false, 
+        message: t("forgotPassword.emailInvalidFormat"), 
+        type: 'error' 
+      });
+    } else {
+      setEmailValidation({ 
+        isValid: true, 
+        message: t("forgotPassword.emailValidFormat"), 
+        type: 'success' 
+      });
+    }
+  }, [email, t]);
+
+  // Password validation
+  useEffect(() => {
+    if (!newPassword) {
+      setPasswordValidation({ isValid: false, message: '', type: 'info' });
+      return;
+    }
+
+    const validations = [];
+    
+    if (newPassword.length < PASSWORD_MIN_LENGTH) {
+      validations.push(t("forgotPassword.passwordTooShort"));
+    }
+    
+    if (!/(?=.*[a-z])/.test(newPassword)) {
+      validations.push(t("forgotPassword.passwordNeedLowercase"));
+    }
+    
+    if (!/(?=.*[A-Z])/.test(newPassword)) {
+      validations.push(t("forgotPassword.passwordNeedUppercase"));
+    }
+    
+    if (!/(?=.*\d)/.test(newPassword)) {
+      validations.push(t("forgotPassword.passwordNeedNumber"));
+    }
+    
+    if (!/(?=.*[@$!%*?&])/.test(newPassword)) {
+      validations.push(t("forgotPassword.passwordNeedSpecial"));
+    }
+
+    if (validations.length === 0) {
+      setPasswordValidation({ 
+        isValid: true, 
+        message: t("forgotPassword.passwordStrong"), 
+        type: 'success' 
+      });
+    } else {
+      setPasswordValidation({ 
+        isValid: false, 
+        message: validations.join(', '), 
+        type: 'error' 
+      });
+    }
+  }, [newPassword, t]);
+
+  // Confirm password validation
+  useEffect(() => {
+    if (!confirmPassword) {
+      setConfirmPasswordValidation({ isValid: false, message: '', type: 'info' });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setConfirmPasswordValidation({ 
+        isValid: false, 
+        message: t("forgotPassword.passwordMismatch"), 
+        type: 'error' 
+      });
+    } else {
+      setConfirmPasswordValidation({ 
+        isValid: true, 
+        message: t("forgotPassword.passwordMatch"), 
+        type: 'success' 
+      });
+    }
+  }, [newPassword, confirmPassword, t]);
+
+  // Rate limit countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (rateLimitCountdown > 0) {
+      interval = setInterval(() => {
+        setRateLimitCountdown(prev => {
+          if (prev <= 1) {
+            setIsRateLimited(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [rateLimitCountdown]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!emailValidation.isValid) {
+      setError(t("forgotPassword.emailInvalidFormat"));
+      return;
+    }
+
+    if (isRateLimited) {
+      setError(t("forgotPassword.rateLimitExceeded"));
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      console.log("Sending forgot password request:", { email });
+      
       const response = await axios.post(
         "http://localhost:5194/api/v1/Auth/forgot-password",
-        {
-          email,
-        }
+        { email }
       );
 
-      if (response.status === 200) {
+      console.log("Forgot password response:", response);
+
+      if (response.status === 200 || response.data.success) {
         setCurrentStep("verification");
+        // Update rate limit info if provided
+        if (response.data.rateLimitInfo) {
+          setRateLimitInfo(response.data.rateLimitInfo);
+        }
       }
     } catch (error) {
+      console.error("Forgot password error:", error);
+      
       if (axios.isAxiosError(error) && error.response) {
         const data = error.response.data;
-        setError(data.error?.message || t("forgotPassword.errorGeneric"));
+        
+        // Handle rate limiting
+        if (error.response.status === 429) {
+          setIsRateLimited(true);
+          if (data.rateLimitInfo) {
+            setRateLimitInfo(data.rateLimitInfo);
+            const resetTime = new Date(data.rateLimitInfo.resetTime);
+            const now = new Date();
+            const secondsUntilReset = Math.ceil((resetTime.getTime() - now.getTime()) / 1000);
+            setRateLimitCountdown(Math.max(0, secondsUntilReset));
+          } else {
+            setRateLimitCountdown(3600); // Default 1 hour
+          }
+          setError(t("forgotPassword.rateLimitExceeded"));
+        } else {
+          setError(data.error?.message || t("forgotPassword.errorGeneric"));
+        }
       } else {
         setError(t("forgotPassword.errorGeneric"));
-        console.error("Unexpected error:", error);
       }
     } finally {
       setLoading(false);
@@ -68,7 +241,6 @@ export function ForgetPassword() {
   const handleVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (!verificationCode || verificationCode.length !== 6) {
       setError(t("forgotPassword.invalidCodeLength"));
       return;
@@ -78,7 +250,7 @@ export function ForgetPassword() {
     setError("");
 
     try {
-      console.log("Verifying code:", { email, otp: verificationCode });
+      console.log("Verifying OTP:", { email, otp: verificationCode });
       
       const response = await axios.post(
         "http://localhost:5194/api/v1/Auth/verify-otp",
@@ -100,9 +272,7 @@ export function ForgetPassword() {
       
       if (axios.isAxiosError(error) && error.response) {
         const data = error.response.data;
-        console.log("Error response data:", data);
         
-        // Handle specific error cases
         if (error.response.status === 400) {
           setError(data.error?.message || t("forgotPassword.invalidCode"));
         } else if (error.response.status === 404) {
@@ -116,7 +286,6 @@ export function ForgetPassword() {
         }
       } else {
         setError(t("forgotPassword.errorGeneric"));
-        console.error("Unexpected error:", error);
       }
     } finally {
       setLoading(false);
@@ -126,13 +295,13 @@ export function ForgetPassword() {
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (newPassword !== confirmPassword) {
-      setError(t("forgotPassword.passwordMismatch"));
+    if (!passwordValidation.isValid) {
+      setError(t("forgotPassword.passwordRequirementsNotMet"));
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError(t("forgotPassword.passwordTooShort"));
+    if (!confirmPasswordValidation.isValid) {
+      setError(t("forgotPassword.passwordMismatch"));
       return;
     }
 
@@ -140,29 +309,58 @@ export function ForgetPassword() {
     setError("");
 
     try {
+      console.log("Resetting password:", { email, otp: verificationCode });
+      
       const response = await axios.post(
         "http://localhost:5194/api/v1/Auth/reset-password",
         {
           email,
           otp: verificationCode,
           newPassword,
+          confirmPassword,
         }
       );
 
-      if (response.status === 200) {
+      console.log("Reset password response:", response);
+
+      if (response.status === 200 || response.data.success) {
         setCurrentStep("success");
       }
     } catch (error) {
+      console.error("Reset password error:", error);
+      
       if (axios.isAxiosError(error) && error.response) {
         const data = error.response.data;
         setError(data.error?.message || t("forgotPassword.errorGeneric"));
       } else {
         setError(t("forgotPassword.errorGeneric"));
-        console.error("Unexpected error:", error);
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendCode = async () => {
+    setLoading(true);
+    setError("");
+    
+    try {
+      await axios.post("http://localhost:5194/api/v1/Auth/forgot-password", { email });
+      setError(""); // Clear any previous errors
+      console.log("Resent verification code to:", email);
+    } catch (err) {
+      console.error("Failed to resend code:", err);
+      setError(t("forgotPassword.errorGeneric"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Render Success Step
@@ -272,13 +470,53 @@ export function ForgetPassword() {
                         type="email"
                         placeholder={t("forgotPassword.enterEmailPlaceholder")}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (error) setError("");
+                        }}
+                        className={`pl-10 ${
+                          emailValidation.type === 'error' ? 'border-red-500' : 
+                          emailValidation.type === 'success' ? 'border-green-500' : ''
+                        }`}
                         required
                       />
                     </div>
+                    {/* Email validation message */}
+                    {emailValidation.message && (
+                      <div className={`flex items-center space-x-2 text-sm ${
+                        emailValidation.type === 'error' ? 'text-red-600' :
+                        emailValidation.type === 'success' ? 'text-green-600' :
+                        emailValidation.type === 'warning' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`}>
+                        {emailValidation.type === 'error' && <AlertCircle className="w-4 h-4" />}
+                        {emailValidation.type === 'success' && <CheckCircle className="w-4 h-4" />}
+                        <span>{emailValidation.message}</span>
+                      </div>
+                    )}
                   </div>
 
+                  {/* Rate limit info */}
+                  {rateLimitInfo && !isRateLimited && (
+                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md">
+                      {t("forgotPassword.rateLimitInfo")} {rateLimitInfo.remaining}/{rateLimitInfo.maxRequests}
+                    </div>
+                  )}
+
+                  {/* Rate limit warning */}
+                  {isRateLimited && (
+                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>{t("forgotPassword.rateLimitExceededDesc")}</span>
+                      </div>
+                      <div className="mt-2 font-mono text-lg">
+                        {t("forgotPassword.timeRemaining")}: {formatTime(rateLimitCountdown)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* General error */}
                   {error && (
                     <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
@@ -289,7 +527,7 @@ export function ForgetPassword() {
                   <Button
                     type="submit"
                     className="w-full bg-orange-500 hover:bg-orange-600"
-                    disabled={loading}
+                    disabled={loading || !emailValidation.isValid || isRateLimited}
                   >
                     {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
                   </Button>
@@ -314,10 +552,8 @@ export function ForgetPassword() {
                         placeholder={t("forgotPassword.enterCodePlaceholder")}
                         value={verificationCode}
                         onChange={(e) => {
-                          // Only allow numbers
                           const value = e.target.value.replace(/\D/g, '');
                           setVerificationCode(value);
-                          // Clear error when user starts typing
                           if (error) setError("");
                         }}
                         className="pl-10 text-center text-lg tracking-widest"
@@ -351,20 +587,7 @@ export function ForgetPassword() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={async () => {
-                          setLoading(true);
-                          setError("");
-                          try {
-                            await axios.post("http://localhost:5194/api/v1/Auth/forgot-password", { email });
-                            setError(""); // Clear any previous errors
-                            console.log("Resent verification code to:", email);
-                          } catch (err) {
-                            console.error("Failed to resend code:", err);
-                            setError(t("forgotPassword.errorGeneric"));
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
+                        onClick={handleResendCode}
                         className="w-full"
                         disabled={loading}
                       >
@@ -393,14 +616,39 @@ export function ForgetPassword() {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="newPassword"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder={t("forgotPassword.enterNewPassword")}
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          if (error) setError("");
+                        }}
+                        className={`pl-10 pr-10 ${
+                          passwordValidation.type === 'error' ? 'border-red-500' : 
+                          passwordValidation.type === 'success' ? 'border-green-500' : ''
+                        }`}
                         required
                       />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 h-4 w-4 text-gray-400"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
+                    {/* Password validation message */}
+                    {passwordValidation.message && (
+                      <div className={`flex items-start space-x-2 text-sm ${
+                        passwordValidation.type === 'error' ? 'text-red-600' :
+                        passwordValidation.type === 'success' ? 'text-green-600' :
+                        'text-blue-600'
+                      }`}>
+                        {passwordValidation.type === 'error' && <AlertCircle className="w-4 h-4 mt-0.5" />}
+                        {passwordValidation.type === 'success' && <CheckCircle className="w-4 h-4 mt-0.5" />}
+                        <span>{passwordValidation.message}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -409,16 +657,42 @@ export function ForgetPassword() {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="confirmPassword"
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder={t("forgotPassword.confirmNewPassword")}
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (error) setError("");
+                        }}
+                        className={`pl-10 pr-10 ${
+                          confirmPasswordValidation.type === 'error' ? 'border-red-500' : 
+                          confirmPasswordValidation.type === 'success' ? 'border-green-500' : ''
+                        }`}
                         required
                       />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3 h-4 w-4 text-gray-400"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
+                    {/* Confirm password validation message */}
+                    {confirmPasswordValidation.message && (
+                      <div className={`flex items-center space-x-2 text-sm ${
+                        confirmPasswordValidation.type === 'error' ? 'text-red-600' :
+                        confirmPasswordValidation.type === 'success' ? 'text-green-600' :
+                        'text-blue-600'
+                      }`}>
+                        {confirmPasswordValidation.type === 'error' && <AlertCircle className="w-4 h-4" />}
+                        {confirmPasswordValidation.type === 'success' && <CheckCircle className="w-4 h-4" />}
+                        <span>{confirmPasswordValidation.message}</span>
+                      </div>
+                    )}
                   </div>
 
+                  {/* General error */}
                   {error && (
                     <div className="flex items-center space-x-2 text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
@@ -429,7 +703,7 @@ export function ForgetPassword() {
                   <Button
                     type="submit"
                     className="w-full bg-orange-500 hover:bg-orange-600"
-                    disabled={loading}
+                    disabled={loading || !passwordValidation.isValid || !confirmPasswordValidation.isValid}
                   >
                     {loading ? t("forgotPassword.resetting") : t("forgotPassword.resetPassword")}
                   </Button>

@@ -215,6 +215,25 @@ const translations = {
     "forgotPassword.passwordTooShort": "Password must be at least 6 characters",
     "forgotPassword.passwordResetSuccess": "Password Reset Successfully!",
     "forgotPassword.passwordResetSuccessDesc": "Your password has been reset. You can now sign in with your new password.",
+    
+    // Email validation
+    "forgotPassword.emailInvalidFormat": "Please enter a valid email address",
+    "forgotPassword.emailValidFormat": "Email format is valid",
+    
+    // Password validation
+    "forgotPassword.passwordNeedLowercase": "at least one lowercase letter",
+    "forgotPassword.passwordNeedUppercase": "at least one uppercase letter", 
+    "forgotPassword.passwordNeedNumber": "at least one number",
+    "forgotPassword.passwordNeedSpecial": "at least one special character (@$!%*?&)",
+    "forgotPassword.passwordStrong": "Password is strong",
+    "forgotPassword.passwordMatch": "Passwords match",
+    "forgotPassword.passwordRequirementsNotMet": "Password does not meet requirements",
+    
+    // Rate limiting
+    "forgotPassword.rateLimitInfo": "Requests remaining:",
+    "forgotPassword.rateLimitExceeded": "Too many requests. Please try again later.",
+    "forgotPassword.rateLimitExceededDesc": "You have exceeded the maximum number of requests per hour",
+    "forgotPassword.timeRemaining": "Time remaining",
 
     // Register
     "register.name": "Name",
@@ -812,6 +831,25 @@ const translations = {
     "forgotPassword.passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
     "forgotPassword.passwordResetSuccess": "Đặt Lại Mật Khẩu Thành Công!",
     "forgotPassword.passwordResetSuccessDesc": "Mật khẩu của bạn đã được đặt lại. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
+    
+    // Email validation
+    "forgotPassword.emailInvalidFormat": "Vui lòng nhập địa chỉ email hợp lệ",
+    "forgotPassword.emailValidFormat": "Định dạng email hợp lệ",
+    
+    // Password validation
+    "forgotPassword.passwordNeedLowercase": "ít nhất một chữ thường",
+    "forgotPassword.passwordNeedUppercase": "ít nhất một chữ hoa",
+    "forgotPassword.passwordNeedNumber": "ít nhất một số",
+    "forgotPassword.passwordNeedSpecial": "ít nhất một ký tự đặc biệt (@$!%*?&)",
+    "forgotPassword.passwordStrong": "Mật khẩu mạnh",
+    "forgotPassword.passwordMatch": "Mật khẩu khớp",
+    "forgotPassword.passwordRequirementsNotMet": "Mật khẩu không đáp ứng yêu cầu",
+    
+    // Rate limiting
+    "forgotPassword.rateLimitInfo": "Số yêu cầu còn lại:",
+    "forgotPassword.rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+    "forgotPassword.rateLimitExceededDesc": "Bạn đã vượt quá số lượng yêu cầu tối đa trong một giờ",
+    "forgotPassword.timeRemaining": "Thời gian còn lại",
 
     // Register
     "register.namePlaceholder": "Hãy nhập tên của bạn",
