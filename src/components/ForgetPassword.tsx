@@ -78,13 +78,13 @@ export function ForgetPassword() {
     setError("");
 
     try {
-      console.log("Verifying code:", { email, code: verificationCode });
+      console.log("Verifying code:", { email, otp: verificationCode });
       
       const response = await axios.post(
-        "http://localhost:5194/api/v1/Auth/verify-reset-code",
+        "http://localhost:5194/api/v1/Auth/verify-otp",
         {
           email,
-          code: verificationCode,
+          otp: verificationCode,
         }
       );
 
@@ -105,6 +105,8 @@ export function ForgetPassword() {
         // Handle specific error cases
         if (error.response.status === 400) {
           setError(data.error?.message || t("forgotPassword.invalidCode"));
+        } else if (error.response.status === 404) {
+          setError(t("forgotPassword.apiNotFound"));
         } else if (error.response.status === 429) {
           setError(t("forgotPassword.tooManyAttempts"));
         } else if (error.response.status === 410) {
@@ -142,7 +144,7 @@ export function ForgetPassword() {
         "http://localhost:5194/api/v1/Auth/reset-password",
         {
           email,
-          code: verificationCode,
+          otp: verificationCode,
           newPassword,
         }
       );
