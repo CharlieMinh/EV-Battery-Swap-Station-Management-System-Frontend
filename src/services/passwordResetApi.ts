@@ -1,29 +1,17 @@
-import api from '../configs/axios';
+import axios, { AxiosError } from 'axios';
 
-// ====== INTERFACES ======
+// Base API URL
+const API_BASE_URL = 'http://localhost:5194/api/v1/Auth';
 
+
+// Interfaces for API requests and responses
 export interface ForgotPasswordRequest {
   email: string;
-}
-
-export interface ForgotPasswordResponse {
-  success: boolean;
-  message: string;
-  maskedEmail?: string;
-  expiresAt?: string;
-  requestId?: string; // Để track request
 }
 
 export interface VerifyOtpRequest {
   email: string;
   otp: string;
-}
-
-export interface VerifyOtpResponse {
-  success: boolean;
-  message: string;
-  tempToken?: string;
-  remainingAttempts?: number; // Số lần thử còn lại
 }
 
 export interface ResetPasswordRequest {
@@ -33,217 +21,252 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  maskedEmail?: string;
+  expiresAt?: string;
+}
+
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
+  tempToken?: string;
+}
+
 export interface ResetPasswordResponse {
   success: boolean;
   message: string;
 }
 
 export interface ApiError {
-  error: {
+  error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, string[]>;
   };
+  errors?: Record<string, string[]>;
+  message?: string;
 }
 
-export interface RateLimitInfo {
-  remaining: number;
-  resetTime: string;
-  maxRequests: number;
-}
+// API service class
+export class PasswordResetService {
+  private static instance: PasswordResetService;
+  private axiosInstance;
 
-// ====== API CONFIGURATION ======
+  private constructor() {
+    this.axiosInstance = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-const API_ENDPOINTS = {
-  FORGOT_PASSWORD: '/v1/Auth/forgot-password',
-  VERIFY_OTP: '/v1/Auth/verify-otp', 
-  RESET_PASSWORD: '/v1/Auth/reset-password'
-} as const;
+    // Response interceptor for error handling
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError<ApiError>) => {
+        console.error('API Error:', error.response?.data || error.message);
+        return Promise.reject(error);
+      }
+    );
+  }
 
-const REQUEST_TIMEOUT = 30000; // 30 seconds
-const MAX_RETRIES = 3;
+  public static getInstance(): PasswordResetService {
+    if (!PasswordResetService.instance) {
+      PasswordResetService.instance = new PasswordResetService();
+    }
+    return PasswordResetService.instance;
+  }
 
-// ====== UTILITY FUNCTIONS ======
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const retryRequest = async <T>(
-  requestFn: () => Promise<T>, 
-  maxRetries: number = MAX_RETRIES
-): Promise<T> => {
-  let lastError: any;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  /**
+   * Request password reset OTP
+   */
+  async requestPasswordReset(request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     try {
-      return await requestFn();
-    } catch (error: any) {
-      lastError = error;
+      console.log('Sending forgot password request:', request);
+      const response = await this.axiosInstance.post<ForgotPasswordResponse>('/forgot-password', request);
+      console.log('Forgot password response:', response.data);
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      const errorData = axiosError.response?.data;
       
-      // Không retry cho lỗi client (4xx)
-      if (error.response?.status >= 400 && error.response?.status < 500) {
-        throw error;
+      console.error('Forgot password error details:', {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        data: errorData
+      });
+      
+      // Handle specific error cases
+      if (errorData?.error?.code === 'USER_NOT_FOUND' || errorData?.message?.includes('không tồn tại')) {
+        throw {
+          type: 'EMAIL_NOT_FOUND',
+          message: errorData.message || 'Email không tồn tại trong hệ thống'
+        };
       }
       
-      // Retry với exponential backoff
-      if (attempt < maxRetries) {
-        await delay(Math.pow(2, attempt) * 1000); // 2s, 4s, 8s
+      if (errorData?.error?.code === 'RATE_LIMIT_EXCEEDED' || errorData?.message?.includes('quá nhiều lần')) {
+        throw {
+          type: 'RATE_LIMIT',
+          message: errorData.message || 'Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.'
+        };
       }
+
+      // Handle validation errors
+      if (errorData?.errors) {
+        const validationErrors = Object.values(errorData.errors).flat();
+        throw {
+          type: 'VALIDATION_ERROR',
+          message: validationErrors[0] || 'Dữ liệu không hợp lệ'
+        };
+      }
+
+      throw {
+        type: 'NETWORK_ERROR',
+        message: 'Không thể kết nối đến server. Vui lòng thử lại.'
+      };
     }
   }
-  
-  throw lastError;
+
+  /**
+   * Verify OTP code
+   */
+  async verifyOtp(request: VerifyOtpRequest): Promise<VerifyOtpResponse> {
+    try {
+      console.log('Sending verify OTP request:', { ...request, otp: '***' });
+      const response = await this.axiosInstance.post<VerifyOtpResponse>('/verify-otp', request);
+      console.log('Verify OTP response:', response.data);
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      const errorData = axiosError.response?.data;
+      
+      console.error('Verify OTP error details:', {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        data: errorData
+      });
+      
+      if (errorData?.error?.code === 'INVALID_OTP' || errorData?.message?.includes('OTP')) {
+        throw {
+          type: 'INVALID_OTP',
+          message: errorData.message || 'Mã OTP không đúng hoặc đã hết hạn'
+        };
+      }
+
+      if (errorData?.errors) {
+        const validationErrors = Object.values(errorData.errors).flat();
+        throw {
+          type: 'VALIDATION_ERROR',
+          message: validationErrors[0] || 'Dữ liệu không hợp lệ'
+        };
+      }
+
+      throw {
+        type: 'NETWORK_ERROR',
+        message: 'Không thể kết nối đến server. Vui lòng thử lại.'
+      };
+    }
+  }
+
+  /**
+   * Reset password with verified OTP
+   */
+  async resetPassword(request: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    try {
+      console.log('Sending reset password request:', { ...request, newPassword: '***', confirmPassword: '***' });
+      const response = await this.axiosInstance.post<ResetPasswordResponse>('/reset-password', request);
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiError>;
+      const errorData = axiosError.response?.data;
+      
+      console.error('Reset password error details:', {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        data: errorData,
+        request: { ...request, newPassword: '***', confirmPassword: '***' }
+      });
+      
+      if (errorData?.error?.code === 'INVALID_OTP' || errorData?.message?.includes('OTP')) {
+        throw {
+          type: 'INVALID_OTP',
+          message: errorData.message || 'Mã OTP không đúng hoặc đã hết hạn'
+        };
+      }
+
+      if (errorData?.errors) {
+        const validationErrors = Object.values(errorData.errors).flat();
+        throw {
+          type: 'VALIDATION_ERROR',
+          message: validationErrors[0] || 'Dữ liệu không hợp lệ'
+        };
+      }
+
+      // Handle 400 Bad Request with detailed message
+      if (axiosError.response?.status === 400) {
+        throw {
+          type: 'VALIDATION_ERROR',
+          message: errorData?.message || errorData?.error?.message || 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.'
+        };
+      }
+
+      throw {
+        type: 'NETWORK_ERROR',
+        message: 'Không thể kết nối đến server. Vui lòng thử lại.'
+      };
+    }
+  }
+}
+
+// Utility functions
+export const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
 };
 
-const handleApiError = (error: any): ApiError => {
-  if (error.response?.data) {
-    return error.response.data;
+export const validateOtp = (otp: string): boolean => {
+  return /^\d{6}$/.test(otp);
+};
+
+export const validatePassword = (password: string): { 
+  isValid: boolean; 
+  errors: string[] 
+} => {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push('Mật khẩu phải có ít nhất 8 ký tự');
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Mật khẩu phải có ít nhất 1 chữ cái in hoa');
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push('Mật khẩu phải có ít nhất 1 chữ cái thường');
+  }
+  
+  if (!/\d/.test(password)) {
+    errors.push('Mật khẩu phải có ít nhất 1 chữ số');
   }
   
   return {
-    error: {
-      code: 'NETWORK_ERROR',
-      message: 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.',
-      details: error.message
-    }
+    isValid: errors.length === 0,
+    errors
   };
 };
 
-// ====== MAIN API ======
-
-export const passwordResetApi = {
-  // Bước 1: Yêu cầu OTP
-  forgotPassword: async (request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> => {
-    try {
-      const response = await retryRequest(async () => {
-        return await api.post<ForgotPasswordResponse>(
-          API_ENDPOINTS.FORGOT_PASSWORD, 
-          {
-            email: request.email.trim().toLowerCase()
-          },
-          {
-            timeout: REQUEST_TIMEOUT,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      });
-      
-      return response.data;
-    } catch (error: any) {
-      console.error('Forgot password error:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  // Bước 2: Xác thực OTP
-  verifyOtp: async (request: VerifyOtpRequest): Promise<VerifyOtpResponse> => {
-    try {
-      const response = await api.post<VerifyOtpResponse>(
-        API_ENDPOINTS.VERIFY_OTP,
-        {
-          email: request.email.trim().toLowerCase(),
-          otp: request.otp.trim()
-        },
-        {
-          timeout: REQUEST_TIMEOUT,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      return response.data;
-    } catch (error: any) {
-      console.error('Verify OTP error:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  // Bước 3: Đặt lại mật khẩu
-  resetPassword: async (request: ResetPasswordRequest): Promise<ResetPasswordResponse> => {
-    try {
-      const response = await api.post<ResetPasswordResponse>(
-        API_ENDPOINTS.RESET_PASSWORD,
-        {
-          email: request.email.trim().toLowerCase(),
-          otp: request.otp.trim(),
-          newPassword: request.newPassword,
-          confirmPassword: request.confirmPassword
-        },
-        {
-          timeout: REQUEST_TIMEOUT,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      return response.data;
-    } catch (error: any) {
-      console.error('Reset password error:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  // ====== UTILITY METHODS ======
-
-  // Kiểm tra email format
-  validateEmail: (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  },
-
-  // Kiểm tra OTP format
-  validateOtp: (otp: string): boolean => {
-    return /^\d{6}$/.test(otp);
-  },
-
-  // Kiểm tra độ mạnh mật khẩu
-  validatePassword: (password: string) => {
-    const checks = {
-      minLength: password.length >= 8,
-      hasUppercase: /[A-Z]/.test(password),
-      hasLowercase: /[a-z]/.test(password),
-      hasNumber: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-    };
-
-    return {
-      isValid: Object.values(checks).every(Boolean),
-      checks
-    };
-  },
-
-  // Mask email để hiển thị
-  maskEmail: (email: string): string => {
-    const [local, domain] = email.split('@');
-    if (local.length <= 2) {
-      return `${local[0]}***@${domain}`;
-    }
-    return `${local[0]}${'*'.repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
-  },
-
-  // Format thời gian countdown
-  formatCountdown: (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  },
-
-  // Kiểm tra rate limit từ response headers
-  getRateLimitInfo: (response: any): RateLimitInfo | null => {
-    const headers = response.headers;
-    if (headers['x-ratelimit-remaining']) {
-      return {
-        remaining: parseInt(headers['x-ratelimit-remaining']),
-        resetTime: headers['x-ratelimit-reset'] || '',
-        maxRequests: parseInt(headers['x-ratelimit-limit']) || 3
-      };
-    }
-    return null;
+export const maskEmail = (email: string): string => {
+  const [username, domain] = email.split('@');
+  if (username.length <= 2) {
+    return `${username[0]}***@${domain}`;
   }
+  const maskedUsername = `${username[0]}${'*'.repeat(username.length - 2)}${username[username.length - 1]}`;
+  return `${maskedUsername}@${domain}`;
 };
 
-// Export default
-export default passwordResetApi;
+// Export singleton instance
+export const passwordResetService = PasswordResetService.getInstance();
