@@ -67,10 +67,19 @@ export function ForgetPassword() {
 
   const handleVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!verificationCode || verificationCode.length !== 6) {
+      setError(t("forgotPassword.invalidCodeLength"));
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      console.log("Verifying code:", { email, code: verificationCode });
+      
       const response = await axios.post(
         "http://localhost:5194/api/v1/Auth/verify-reset-code",
         {
@@ -79,13 +88,30 @@ export function ForgetPassword() {
         }
       );
 
-      if (response.status === 200) {
+      console.log("Verification response:", response);
+
+      if (response.status === 200 || response.data.success) {
         setCurrentStep("newPassword");
+      } else {
+        setError(response.data.message || t("forgotPassword.invalidCode"));
       }
     } catch (error) {
+      console.error("Verification error:", error);
+      
       if (axios.isAxiosError(error) && error.response) {
         const data = error.response.data;
-        setError(data.error?.message || t("forgotPassword.invalidCode"));
+        console.log("Error response data:", data);
+        
+        // Handle specific error cases
+        if (error.response.status === 400) {
+          setError(data.error?.message || t("forgotPassword.invalidCode"));
+        } else if (error.response.status === 429) {
+          setError(t("forgotPassword.tooManyAttempts"));
+        } else if (error.response.status === 410) {
+          setError(t("forgotPassword.codeExpired"));
+        } else {
+          setError(data.error?.message || t("forgotPassword.errorGeneric"));
+        }
       } else {
         setError(t("forgotPassword.errorGeneric"));
         console.error("Unexpected error:", error);
@@ -285,11 +311,21 @@ export function ForgetPassword() {
                         type="text"
                         placeholder={t("forgotPassword.enterCodePlaceholder")}
                         value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          // Only allow numbers
+                          const value = e.target.value.replace(/\D/g, '');
+                          setVerificationCode(value);
+                          // Clear error when user starts typing
+                          if (error) setError("");
+                        }}
+                        className="pl-10 text-center text-lg tracking-widest"
                         maxLength={6}
+                        autoComplete="one-time-code"
                         required
                       />
+                    </div>
+                    <div className="text-xs text-gray-500 text-center">
+                      {verificationCode.length}/6 {t("forgotPassword.digits")}
                     </div>
                   </div>
 
@@ -304,19 +340,44 @@ export function ForgetPassword() {
                     <Button
                       type="submit"
                       className="w-full bg-orange-500 hover:bg-orange-600"
-                      disabled={loading}
+                      disabled={loading || verificationCode.length !== 6}
                     >
                       {loading ? t("forgotPassword.verifying") : t("forgotPassword.verifyCode")}
                     </Button>
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setCurrentStep("email")}
-                      className="w-full"
-                    >
-                      {t("forgotPassword.changeEmail")}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          setLoading(true);
+                          setError("");
+                          try {
+                            await axios.post("http://localhost:5194/api/v1/Auth/forgot-password", { email });
+                            setError(""); // Clear any previous errors
+                            console.log("Resent verification code to:", email);
+                          } catch (err) {
+                            console.error("Failed to resend code:", err);
+                            setError(t("forgotPassword.errorGeneric"));
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        className="w-full"
+                        disabled={loading}
+                      >
+                        {t("forgotPassword.resendCode")}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCurrentStep("email")}
+                        className="w-full"
+                      >
+                        {t("forgotPassword.changeEmail")}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               )}
