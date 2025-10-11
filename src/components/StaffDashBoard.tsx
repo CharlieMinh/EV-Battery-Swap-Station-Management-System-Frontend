@@ -26,6 +26,7 @@ import {
   Zap,
   Bell,
   User as UserIcon,
+  DollarSign,
 } from "lucide-react";
 import { User } from "../App";
 import staffApi, { Battery, Booking, Transaction, DailyStats } from "../services/staffApi";
@@ -36,9 +37,11 @@ import { StaffDashboard } from "./staff/StaffDashboard";
 import { QueueManagement } from "./staff/QueueManagement";
 import { BatteryInventory } from "./staff/BatteryInventory";
 import { TransactionManagement } from "./staff/TransactionManagement";
+import { RevenueTracking } from "./staff/RevenueTracking";
 import { SwapProcessDialog } from "./staff/SwapProcessDialog";
 import { InspectionDialog } from "./staff/InspectionDialog";
 import { POSDialog } from "./staff/POSDialog";
+import { BatteryConditionCheck } from "./staff/BatteryConditionCheck";
 
 interface StaffPortalPageProps {
   user: User;
@@ -52,6 +55,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const [swapDialog, setSwapDialog] = useState(false);
   const [inspectionDialog, setInspectionDialog] = useState(false);
   const [posDialog, setPosDialog] = useState(false);
+  const [batteryCheckDialog, setBatteryCheckDialog] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   
   // State for API data
   const [batteries, setBatteries] = useState<Battery[]>([]);
@@ -182,6 +187,16 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("profile")}
+                      isActive={activeSection === "profile"}
+                      className="h-[50px]"
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      <span>{t("staff.personalInformation")}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("queue")}
                       isActive={activeSection === "queue"}
                       className="h-[50px]"
@@ -212,22 +227,22 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("revenue")}
+                      isActive={activeSection === "revenue"}
+                      className="h-[50px]"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      <span>{t("staff.cashier")}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("reports")}
                       isActive={activeSection === "reports"}
                       className="h-[50px]"
                     >
                       <BarChart3 className="w-4 h-4" />
                       <span>{t("staff.reports")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("profile")}
-                      isActive={activeSection === "profile"}
-                      className="h-[50px]"
-                    >
-                      <UserIcon className="w-4 h-4" />
-                      <span>Thông Tin Cá Nhân</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -265,8 +280,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                   {activeSection === "queue" && t("staff.queueManagement")}
                   {activeSection === "inventory" && t("staff.inventory")}
                   {activeSection === "transactions" && t("staff.transactions")}
+                  {activeSection === "revenue" && t("staff.cashier")}
                   {activeSection === "reports" && t("staff.reports")}
-                  {activeSection === "profile" && "Thông Tin Cá Nhân"}
+                  {activeSection === "profile" && t("staff.personalInformation")}
                 </h1>
               </div>
 
@@ -291,7 +307,62 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               <div className="space-y-6">
                 <QueueManagement
                   bookings={bookings}
-                  onStartSwap={() => setSwapDialog(true)}
+                  onStartSwap={(booking: Booking) => {
+                    setSelectedBooking(booking);
+                    setSwapDialog(true);
+                  }}
+                  onBatteryCheck={(booking) => {
+                    setSelectedBooking(booking);
+                    setBatteryCheckDialog(true);
+                  }}
+                  onCancelBooking={async (booking) => {
+                    try {
+                      // Cập nhật trạng thái booking thành cancelled ngay lập tức
+                      const updatedBookings = bookings.map(b => 
+                        b.id === booking.id 
+                          ? { ...b, status: 'cancelled' as const }
+                          : b
+                      );
+                      setBookings(updatedBookings);
+                      
+                      // Gọi API để cập nhật backend (không cần chờ response)
+                      staffApi.cancelBooking(booking.id, "StaffCancelled").catch(error => {
+                        console.error('Cancel booking API error:', error);
+                        // Nếu API fail, revert lại trạng thái
+                        setBookings(bookings);
+                      });
+                    } catch (error) {
+                      console.error('Cancel booking error:', error);
+                    }
+                  }}
+                  onCheckIn={(booking) => {
+                    // Cập nhật trạng thái booking thành in-progress sau khi check-in
+                    const updatedBookings = bookings.map(b => 
+                      b.id === booking.id 
+                        ? { ...b, status: 'in-progress' as const }
+                        : b
+                    );
+                    setBookings(updatedBookings);
+                  }}
+                  onComplete={(booking) => {
+                    // Cập nhật trạng thái booking thành ready-for-payment
+                    const updatedBookings = bookings.map(b => 
+                      b.id === booking.id 
+                        ? { ...b, status: 'ready-for-payment' as const }
+                        : b
+                    );
+                    setBookings(updatedBookings);
+                  }}
+                  onProcessPaymentAndPrint={(booking) => {
+                    // Mở POS dialog và cập nhật trạng thái thành completed
+                    setPosDialog(true);
+                    const updatedBookings = bookings.map(b => 
+                      b.id === booking.id 
+                        ? { ...b, status: 'completed' as const }
+                        : b
+                    );
+                    setBookings(updatedBookings);
+                  }}
                 />
               </div>
             )}
@@ -313,6 +384,12 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               </div>
             )}
 
+            {activeSection === "revenue" && (
+              <div className="space-y-6">
+                <RevenueTracking stationId={user.stationId || 1} />
+              </div>
+            )}
+
             {activeSection === "reports" && (
               <div className="space-y-6">
                 <div className="text-center py-12">
@@ -327,6 +404,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               </div>
             )}
 
+
+
             {activeSection === "profile" && (
               <ProfileSection user={user} dailyStats={dailyStats} />
             )}
@@ -338,7 +417,18 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       <SwapProcessDialog
         isOpen={swapDialog}
         onClose={() => setSwapDialog(false)}
-        onPOSDialog={() => setPosDialog(true)}
+        onSwapConfirmed={() => {
+          // Cập nhật trạng thái booking thành swap-confirmed
+          if (selectedBooking) {
+            const updatedBookings = bookings.map(b => 
+              b.id === selectedBooking.id 
+                ? { ...b, status: 'swap-confirmed' as const }
+                : b
+            );
+            setBookings(updatedBookings);
+          }
+          setSwapDialog(false);
+        }}
       />
 
       <InspectionDialog
@@ -347,6 +437,36 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       />
 
       <POSDialog isOpen={posDialog} onClose={() => setPosDialog(false)} />
+
+      <BatteryConditionCheck
+        isOpen={batteryCheckDialog}
+        onClose={() => setBatteryCheckDialog(false)}
+        onApprove={(inspectionData) => {
+          console.log('Battery approved:', inspectionData);
+          setBatteryCheckDialog(false);
+          
+          // Cập nhật trạng thái booking thành ready-to-swap sau khi chấp nhận thay pin
+          if (selectedBooking) {
+            const updatedBookings = bookings.map(b => 
+              b.id === selectedBooking.id 
+                ? { ...b, status: 'ready-to-swap' as const }
+                : b
+            );
+            setBookings(updatedBookings);
+          }
+        }}
+        onReject={(reason) => {
+          console.log('Battery rejected:', reason);
+          setBatteryCheckDialog(false);
+          // Có thể thêm logic để từ chối booking
+        }}
+        customerInfo={selectedBooking ? {
+          name: selectedBooking.customer,
+          vehicle: selectedBooking.vehicle,
+          bookingCode: selectedBooking.code
+        } : undefined}
+      />
+
     </SidebarProvider>
   );
 }

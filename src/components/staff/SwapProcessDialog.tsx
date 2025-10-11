@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,79 +9,77 @@ import {
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
 import {
-  QrCode,
-  ShieldCheck,
   Battery,
   CheckCircle,
-  DollarSign,
-  Printer,
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 
 interface SwapProcessDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onPOSDialog: () => void;
+  onSwapConfirmed?: () => void;
 }
 
 export function SwapProcessDialog({
   isOpen,
   onClose,
-  onPOSDialog,
+  onSwapConfirmed,
 }: SwapProcessDialogProps) {
   const { t } = useLanguage();
+  const [swapComplete, setSwapComplete] = useState(false);
+
+  const handleSwapComplete = () => {
+    setSwapComplete(true);
+    onSwapConfirmed?.();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl border border-orange-200 rounded-lg bg-white shadow-lg">
-        <DialogHeader>
-          <DialogTitle className="text-orange-600 text-2xl font-bold">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border border-orange-200 rounded-lg bg-white shadow-lg">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-orange-600 text-xl font-bold">
             {t("staff.batterySwapProcess")}
           </DialogTitle>
-          <DialogDescription className="text-gray-600">
+          <DialogDescription className="text-gray-600 text-sm">
             {t("staff.batterySwapProcessDesc")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Customer Information */}
           <Card className="border border-orange-100 rounded-lg bg-gray-50 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-orange-600 font-bold">
-                {t("staff.customerInformation")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-orange-600 font-medium">{t("staff.name")}</Label>
-                  <p className="font-medium">Alex Chen</p>
+                  <Label className="text-orange-600 font-medium text-sm">{t("staff.name")}</Label>
+                  <p className="font-medium text-base">Alex Chen</p>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium">{t("staff.vehicle")}</Label>
-                  <p className="font-medium">Tesla Model 3 2023</p>
+                  <Label className="text-orange-600 font-medium text-sm">{t("staff.vehicle")}</Label>
+                  <p className="font-medium text-base">Tesla Model 3 2023</p>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium">{t("staff.bookingCode")}</Label>
-                  <p className="font-mono">SW-2024-001</p>
+                  <Label className="text-orange-600 font-medium text-sm">{t("staff.bookingCode")}</Label>
+                  <p className="font-mono text-base">SW-2024-001</p>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium">{t("staff.batteryModel")}</Label>
-                  <p className="font-medium">TM3-75kWh</p>
+                  <Label className="text-orange-600 font-medium text-sm">{t("staff.batteryModel")}</Label>
+                  <p className="font-medium text-base">TM3-75kWh</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="border border-orange-100 rounded-lg bg-red-50 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-red-600 font-bold">
+          {/* Battery Status - Compact */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="border border-red-200 rounded-lg bg-red-50 shadow-sm">
+              <CardContent className="p-3">
+                <CardTitle className="text-sm text-red-600 font-bold mb-2">
                   {t("staff.batteryOut")}
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span>{t("staff.currentBattery")}:</span>
                     <span className="font-medium">Customer's Battery</span>
@@ -98,14 +96,12 @@ export function SwapProcessDialog({
               </CardContent>
             </Card>
 
-            <Card className="border border-orange-100 rounded-lg bg-green-50 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-green-600 font-bold">
+            <Card className="border border-green-200 rounded-lg bg-green-50 shadow-sm">
+              <CardContent className="p-3">
+                <CardTitle className="text-sm text-green-600 font-bold mb-2">
                   {t("staff.batteryIn")}
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span>{t("staff.newBattery")}:</span>
                     <span className="font-medium">Slot B3</span>
@@ -123,43 +119,78 @@ export function SwapProcessDialog({
             </Card>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <QrCode className="w-5 h-5 text-orange-500" />
-              <span>{t("staff.qrCodeScanned")}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-5 h-5 text-orange-500" />
-              <span>{t("staff.pinVerified")}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Battery className="w-5 h-5 text-orange-500" />
-              <span>{t("staff.batterySwapComplete")}</span>
-              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg">
-                {t("staff.markComplete")}
-              </Button>
-            </div>
-          </div>
+          {/* Vehicle Service Information */}
+          <Card className="border border-blue-100 rounded-lg bg-blue-50 shadow-sm">
+            <CardContent className="p-4">
+              <CardTitle className="text-sm text-blue-600 font-bold mb-3">
+                🔧 Thông Tin Dịch Vụ Xe
+              </CardTitle>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-blue-600 font-medium text-sm">Loại xe được thay</Label>
+                  <p className="font-medium text-base">Tesla Model 3 2023</p>
+                </div>
+                <div>
+                  <Label className="text-blue-600 font-medium text-sm">Mô hình pin thay</Label>
+                  <p className="font-medium text-base">TM3-75kWh</p>
+                </div>
+                <div>
+                  <Label className="text-blue-600 font-medium text-sm">Pin cũ (OUT)</Label>
+                  <p className="font-medium text-base">Serial: BAT-OLD-12345</p>
+                </div>
+                <div>
+                  <Label className="text-blue-600 font-medium text-sm">Pin mới (IN)</Label>
+                  <p className="font-medium text-base">Serial: BAT-NEW-67890</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-blue-600 font-medium text-sm">Sửa chữa thêm</Label>
+                  <div className="mt-1 space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">Kiểm tra hệ thống làm mát</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">Vệ sinh đầu nối pin</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">Cập nhật firmware pin</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* Action Buttons */}
           <div className="flex justify-between mt-4">
             <Button variant="outline" className="rounded-lg" onClick={onClose}>
               {t("common.cancel")}
             </Button>
             <div className="space-x-2">
-              <Button variant="outline" className="rounded-lg" onClick={onPOSDialog}>
-                <DollarSign className="w-4 h-4 mr-2" />
-                {t("staff.processPayment")}
-              </Button>
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg" onClick={onClose}>
-                <Printer className="w-4 h-4 mr-2" />
-                {t("staff.completeAndPrint")}
-              </Button>
+              {!swapComplete ? (
+                <Button 
+                  onClick={handleSwapComplete} 
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg font-semibold rounded-lg"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Xác nhận đã thay pin
+                </Button>
+              ) : (
+                <Button 
+                  onClick={onClose} 
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 text-lg font-semibold rounded-lg"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Hoàn thành
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </DialogContent>
+
     </Dialog>
   );
 }
