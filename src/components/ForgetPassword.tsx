@@ -16,26 +16,32 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
+  Lock,
+  Key,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
+type ResetStep = "email" | "verification" | "newPassword" | "success";
 
 export function ForgetPassword() {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
+  const [currentStep, setCurrentStep] = useState<ResetStep>("email");
   const [email, setEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // TODO: Replace with actual API endpoint
       const response = await axios.post(
         "http://localhost:5194/api/v1/Auth/forgot-password",
         {
@@ -44,7 +50,7 @@ export function ForgetPassword() {
       );
 
       if (response.status === 200) {
-        setIsSubmitted(true);
+        setCurrentStep("verification");
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -59,7 +65,80 @@ export function ForgetPassword() {
     }
   };
 
-  if (isSubmitted) {
+  const handleVerificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5194/api/v1/Auth/verify-reset-code",
+        {
+          email,
+          code: verificationCode,
+        }
+      );
+
+      if (response.status === 200) {
+        setCurrentStep("newPassword");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+        setError(data.error?.message || t("forgotPassword.invalidCode"));
+      } else {
+        setError(t("forgotPassword.errorGeneric"));
+        console.error("Unexpected error:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError(t("forgotPassword.passwordMismatch"));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError(t("forgotPassword.passwordTooShort"));
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5194/api/v1/Auth/reset-password",
+        {
+          email,
+          code: verificationCode,
+          newPassword,
+        }
+      );
+
+      if (response.status === 200) {
+        setCurrentStep("success");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+        setError(data.error?.message || t("forgotPassword.errorGeneric"));
+      } else {
+        setError(t("forgotPassword.errorGeneric"));
+        console.error("Unexpected error:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render Success Step
+  if (currentStep === "success") {
     return (
       <div className="min-h-screen bg-orange-50 flex flex-col">
         <div
@@ -92,37 +171,19 @@ export function ForgetPassword() {
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <CardTitle className="text-2xl">
-                  {t("forgotPassword.emailSent")}
+                  {t("forgotPassword.passwordResetSuccess")}
                 </CardTitle>
                 <CardDescription>
-                  {t("forgotPassword.checkEmailDesc")}
+                  {t("forgotPassword.passwordResetSuccessDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-center text-sm text-gray-600">
-                  <p>{t("forgotPassword.emailSentTo")}</p>
-                  <p className="font-medium text-gray-900">{email}</p>
-                </div>
-
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => navigate("/login")}
-                    className="w-full bg-orange-500 hover:bg-orange-600"
-                  >
-                    {t("forgotPassword.backToLogin")}
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsSubmitted(false);
-                      setEmail("");
-                    }}
-                    className="w-full"
-                  >
-                    {t("forgotPassword.resendEmail")}
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => navigate("/login")}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  {t("forgotPassword.backToLogin")}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -160,45 +221,157 @@ export function ForgetPassword() {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl text-center">
-                {t("forgotPassword.title")}
+                {currentStep === "email" && t("forgotPassword.title")}
+                {currentStep === "verification" && t("forgotPassword.verificationTitle")}
+                {currentStep === "newPassword" && t("forgotPassword.newPasswordTitle")}
               </CardTitle>
               <CardDescription className="text-center">
-                {t("forgotPassword.subtitle")}
+                {currentStep === "email" && t("forgotPassword.subtitle")}
+                {currentStep === "verification" && t("forgotPassword.verificationSubtitle")}
+                {currentStep === "newPassword" && t("forgotPassword.newPasswordSubtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t("login.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder={t("forgotPassword.enterEmailPlaceholder")}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
+              {/* Step 1: Email Input */}
+              {currentStep === "email" && (
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t("login.email")}</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={t("forgotPassword.enterEmailPlaceholder")}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {error && (
-                  <div className="flex items-center space-x-2 text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{error}</span>
+                  {error && (
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    disabled={loading}
+                  >
+                    {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
+                  </Button>
+                </form>
+              )}
+
+              {/* Step 2: Verification Code Input */}
+              {currentStep === "verification" && (
+                <form onSubmit={handleVerificationSubmit} className="space-y-4">
+                  <div className="text-center text-sm text-gray-600 mb-4">
+                    <p>{t("forgotPassword.codeSentTo")}</p>
+                    <p className="font-medium text-gray-900">{email}</p>
                   </div>
-                )}
 
-                <Button
-                  type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600"
-                  disabled={loading}
-                >
-                  {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="verificationCode">{t("forgotPassword.verificationCode")}</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="verificationCode"
+                        type="text"
+                        placeholder={t("forgotPassword.enterCodePlaceholder")}
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="pl-10"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <Button
+                      type="submit"
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                      disabled={loading}
+                    >
+                      {loading ? t("forgotPassword.verifying") : t("forgotPassword.verifyCode")}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep("email")}
+                      className="w-full"
+                    >
+                      {t("forgotPassword.changeEmail")}
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {/* Step 3: New Password Input */}
+              {currentStep === "newPassword" && (
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">{t("forgotPassword.newPassword")}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        placeholder={t("forgotPassword.enterNewPassword")}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{t("forgotPassword.confirmPassword")}</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder={t("forgotPassword.confirmNewPassword")}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center space-x-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    disabled={loading}
+                  >
+                    {loading ? t("forgotPassword.resetting") : t("forgotPassword.resetPassword")}
+                  </Button>
+                </form>
+              )}
 
               <div className="mt-6 text-center">
                 <Button
