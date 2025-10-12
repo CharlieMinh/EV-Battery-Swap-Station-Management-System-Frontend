@@ -70,7 +70,6 @@ const translations = {
     "features.yes": "Yes",
     "features.cancel": "Cancel",
 
-
     // Stations
     "stations.title": "Find Stations Near You",
     "stations.subtitle": "Our growing network covers major cities and highways",
@@ -179,18 +178,21 @@ const translations = {
 
     // Forgot Password
     "forgotPassword.title": "Forgot Password",
-    "forgotPassword.subtitle": "Enter your email address and we'll send you a verification code",
+    "forgotPassword.subtitle":
+      "Enter your email address and we'll send you a verification code",
     "forgotPassword.enterEmailPlaceholder": "Enter your email address",
     "forgotPassword.sendResetLink": "Send Verification Code",
     "forgotPassword.sending": "Sending...",
     "forgotPassword.backToLogin": "Back to Login",
     "forgotPassword.emailSent": "Email Sent!",
-    "forgotPassword.checkEmailDesc": "We've sent a password reset link to your email address",
+    "forgotPassword.checkEmailDesc":
+      "We've sent a password reset link to your email address",
     "forgotPassword.emailSentTo": "Email sent to:",
     "forgotPassword.resendEmail": "Resend Email",
     "forgotPassword.errorGeneric": "Something went wrong. Please try again.",
     "forgotPassword.verificationTitle": "Enter Verification Code",
-    "forgotPassword.verificationSubtitle": "We've sent a 6-digit code to your email",
+    "forgotPassword.verificationSubtitle":
+      "We've sent a 6-digit code to your email",
     "forgotPassword.verificationCode": "Verification Code",
     "forgotPassword.enterCodePlaceholder": "Enter 6-digit code",
     "forgotPassword.digits": "digits",
@@ -199,13 +201,19 @@ const translations = {
     "forgotPassword.resendCode": "Resend Code",
     "forgotPassword.verifying": "Verifying...",
     "forgotPassword.changeEmail": "Change Email",
-    "forgotPassword.invalidCode": "Invalid verification code. Please try again.",
-    "forgotPassword.invalidCodeLength": "Please enter a 6-digit verification code.",
-    "forgotPassword.codeExpired": "Verification code has expired. Please request a new one.",
-    "forgotPassword.tooManyAttempts": "Too many attempts. Please try again later.",
-    "forgotPassword.apiNotFound": "API endpoint not found. Please contact support.",
+    "forgotPassword.invalidCode":
+      "Invalid verification code. Please try again.",
+    "forgotPassword.invalidCodeLength":
+      "Please enter a 6-digit verification code.",
+    "forgotPassword.codeExpired":
+      "Verification code has expired. Please request a new one.",
+    "forgotPassword.tooManyAttempts":
+      "Too many attempts. Please try again later.",
+    "forgotPassword.apiNotFound":
+      "API endpoint not found. Please contact support.",
     "forgotPassword.newPasswordTitle": "Set New Password",
-    "forgotPassword.newPasswordSubtitle": "Create a strong password for your account",
+    "forgotPassword.newPasswordSubtitle":
+      "Create a strong password for your account",
     "forgotPassword.newPassword": "New Password",
     "forgotPassword.confirmPassword": "Confirm Password",
     "forgotPassword.enterNewPassword": "Enter new password",
@@ -215,25 +223,30 @@ const translations = {
     "forgotPassword.passwordMismatch": "Passwords do not match",
     "forgotPassword.passwordTooShort": "Password must be at least 6 characters",
     "forgotPassword.passwordResetSuccess": "Password Reset Successfully!",
-    "forgotPassword.passwordResetSuccessDesc": "Your password has been reset. You can now sign in with your new password.",
-    
+    "forgotPassword.passwordResetSuccessDesc":
+      "Your password has been reset. You can now sign in with your new password.",
+
     // Email validation
     "forgotPassword.emailInvalidFormat": "Please enter a valid email address",
     "forgotPassword.emailValidFormat": "Email format is valid",
-    
+
     // Password validation
     "forgotPassword.passwordNeedLowercase": "at least one lowercase letter",
-    "forgotPassword.passwordNeedUppercase": "at least one uppercase letter", 
+    "forgotPassword.passwordNeedUppercase": "at least one uppercase letter",
     "forgotPassword.passwordNeedNumber": "at least one number",
-    "forgotPassword.passwordNeedSpecial": "at least one special character (@$!%*?&)",
+    "forgotPassword.passwordNeedSpecial":
+      "at least one special character (@$!%*?&)",
     "forgotPassword.passwordStrong": "Password is strong",
     "forgotPassword.passwordMatch": "Passwords match",
-    "forgotPassword.passwordRequirementsNotMet": "Password does not meet requirements",
-    
+    "forgotPassword.passwordRequirementsNotMet":
+      "Password does not meet requirements",
+
     // Rate limiting
     "forgotPassword.rateLimitInfo": "Requests remaining:",
-    "forgotPassword.rateLimitExceeded": "Too many requests. Please try again later.",
-    "forgotPassword.rateLimitExceededDesc": "You have exceeded the maximum number of requests per hour",
+    "forgotPassword.rateLimitExceeded":
+      "Too many requests. Please try again later.",
+    "forgotPassword.rateLimitExceededDesc":
+      "You have exceeded the maximum number of requests per hour",
     "forgotPassword.timeRemaining": "Time remaining",
 
     // Register
@@ -529,7 +542,7 @@ const translations = {
     "staff.paymentSuccess": "Payment Successful",
     "staff.timeFilter": "Time Filter",
     "staff.monthly": "Monthly",
-    "staff.quarterly": "Quarterly", 
+    "staff.quarterly": "Quarterly",
     "staff.yearly": "Yearly",
     "staff.onlinePayment": "Online Payment",
     "staff.counterPayment": "Counter Payment",
@@ -559,7 +572,8 @@ const translations = {
     "staff.checkInSuccess": "Check In Successful",
     "staff.batteryAssigned": "Battery Assigned",
     "staff.paymentStatusManagement": "Payment Status Management",
-    "staff.paymentStatusManagementDesc": "Manage payment status for online and counter payments",
+    "staff.paymentStatusManagementDesc":
+      "Manage payment status for online and counter payments",
     "staff.totalRevenue": "Total Revenue",
     "staff.onlineRevenue": "Online Revenue",
     "staff.counterRevenue": "Counter Revenue",
@@ -869,18 +883,21 @@ const translations = {
 
     // Forgot Password
     "forgotPassword.title": "Quên Mật Khẩu",
-    "forgotPassword.subtitle": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác thực",
+    "forgotPassword.subtitle":
+      "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác thực",
     "forgotPassword.enterEmailPlaceholder": "Nhập địa chỉ email của bạn",
     "forgotPassword.sendResetLink": "Gửi Mã Xác Thực",
     "forgotPassword.sending": "Đang gửi...",
     "forgotPassword.backToLogin": "Quay Về Đăng Nhập",
     "forgotPassword.emailSent": "Email Đã Được Gửi!",
-    "forgotPassword.checkEmailDesc": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến địa chỉ email của bạn",
+    "forgotPassword.checkEmailDesc":
+      "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến địa chỉ email của bạn",
     "forgotPassword.emailSentTo": "Email đã được gửi đến:",
     "forgotPassword.resendEmail": "Gửi Lại Email",
     "forgotPassword.errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại.",
     "forgotPassword.verificationTitle": "Nhập Mã Xác Thực",
-    "forgotPassword.verificationSubtitle": "Chúng tôi đã gửi mã 6 chữ số đến email của bạn",
+    "forgotPassword.verificationSubtitle":
+      "Chúng tôi đã gửi mã 6 chữ số đến email của bạn",
     "forgotPassword.verificationCode": "Mã Xác Thực",
     "forgotPassword.enterCodePlaceholder": "Nhập mã 6 chữ số",
     "forgotPassword.digits": "chữ số",
@@ -891,11 +908,15 @@ const translations = {
     "forgotPassword.changeEmail": "Đổi Email",
     "forgotPassword.invalidCode": "Mã xác thực không hợp lệ. Vui lòng thử lại.",
     "forgotPassword.invalidCodeLength": "Vui lòng nhập mã xác thực 6 chữ số.",
-    "forgotPassword.codeExpired": "Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.",
-    "forgotPassword.tooManyAttempts": "Quá nhiều lần thử. Vui lòng thử lại sau.",
-    "forgotPassword.apiNotFound": "API endpoint không tồn tại. Vui lòng liên hệ hỗ trợ.",
+    "forgotPassword.codeExpired":
+      "Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.",
+    "forgotPassword.tooManyAttempts":
+      "Quá nhiều lần thử. Vui lòng thử lại sau.",
+    "forgotPassword.apiNotFound":
+      "API endpoint không tồn tại. Vui lòng liên hệ hỗ trợ.",
     "forgotPassword.newPasswordTitle": "Đặt Mật Khẩu Mới",
-    "forgotPassword.newPasswordSubtitle": "Tạo mật khẩu mạnh cho tài khoản của bạn",
+    "forgotPassword.newPasswordSubtitle":
+      "Tạo mật khẩu mạnh cho tài khoản của bạn",
     "forgotPassword.newPassword": "Mật Khẩu Mới",
     "forgotPassword.confirmPassword": "Xác Nhận Mật Khẩu",
     "forgotPassword.enterNewPassword": "Nhập mật khẩu mới",
@@ -905,25 +926,30 @@ const translations = {
     "forgotPassword.passwordMismatch": "Mật khẩu không khớp",
     "forgotPassword.passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
     "forgotPassword.passwordResetSuccess": "Đặt Lại Mật Khẩu Thành Công!",
-    "forgotPassword.passwordResetSuccessDesc": "Mật khẩu của bạn đã được đặt lại. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
-    
+    "forgotPassword.passwordResetSuccessDesc":
+      "Mật khẩu của bạn đã được đặt lại. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
+
     // Email validation
     "forgotPassword.emailInvalidFormat": "Vui lòng nhập địa chỉ email hợp lệ",
     "forgotPassword.emailValidFormat": "Định dạng email hợp lệ",
-    
+
     // Password validation
     "forgotPassword.passwordNeedLowercase": "ít nhất một chữ thường",
     "forgotPassword.passwordNeedUppercase": "ít nhất một chữ hoa",
     "forgotPassword.passwordNeedNumber": "ít nhất một số",
-    "forgotPassword.passwordNeedSpecial": "ít nhất một ký tự đặc biệt (@$!%*?&)",
+    "forgotPassword.passwordNeedSpecial":
+      "ít nhất một ký tự đặc biệt (@$!%*?&)",
     "forgotPassword.passwordStrong": "Mật khẩu mạnh",
     "forgotPassword.passwordMatch": "Mật khẩu khớp",
-    "forgotPassword.passwordRequirementsNotMet": "Mật khẩu không đáp ứng yêu cầu",
-    
+    "forgotPassword.passwordRequirementsNotMet":
+      "Mật khẩu không đáp ứng yêu cầu",
+
     // Rate limiting
     "forgotPassword.rateLimitInfo": "Số yêu cầu còn lại:",
-    "forgotPassword.rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
-    "forgotPassword.rateLimitExceededDesc": "Bạn đã vượt quá số lượng yêu cầu tối đa trong một giờ",
+    "forgotPassword.rateLimitExceeded":
+      "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+    "forgotPassword.rateLimitExceededDesc":
+      "Bạn đã vượt quá số lượng yêu cầu tối đa trong một giờ",
     "forgotPassword.timeRemaining": "Thời gian còn lại",
 
     // Register
@@ -1248,7 +1274,8 @@ const translations = {
     "staff.checkInSuccess": "Check-in Thành Công",
     "staff.batteryAssigned": "Pin Đã Được Gán",
     "staff.paymentStatusManagement": "Quản Lý Trạng Thái Thanh Toán",
-    "staff.paymentStatusManagementDesc": "Quản lý trạng thái thanh toán cho thanh toán online và tại quầy",
+    "staff.paymentStatusManagementDesc":
+      "Quản lý trạng thái thanh toán cho thanh toán online và tại quầy",
     "staff.totalRevenue": "Tổng Doanh Thu",
     "staff.onlineRevenue": "Doanh Thu Online",
     "staff.counterRevenue": "Doanh Thu Tại Quầy",
@@ -1363,6 +1390,7 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
     "admin.resolve": "Xử lí",
+    "admin.true": "Hoạt động",
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",
@@ -1428,7 +1456,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, formatCurrency }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage, t, formatCurrency }}
+    >
       {children}
     </LanguageContext.Provider>
   );

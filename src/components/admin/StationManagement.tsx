@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -7,6 +7,7 @@ import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { fetchStations } from "@/services/stationService";
 import { Station } from "@/services/stationService";
+import AddStationModal from "./AddStationModal";
 
 interface StationManagementProps {
   stationPerformance: Station[];
@@ -14,9 +15,8 @@ interface StationManagementProps {
 
 export function StationManagement() {
   const { t } = useLanguage();
-  const [stationPerformance, setStationPerformance] = React.useState<Station[]>(
-    []
-  );
+  const [stationPerformance, setStationPerformance] = useState<Station[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Simulate fetching data from an API
@@ -44,11 +44,28 @@ export function StationManagement() {
             <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
           </Button>
           <Button
+            onClick={() => setIsOpen(true)}
             size="sm"
             className="bg-orange-500 hover:bg-orange-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2" /> {t("admin.addStation")}
           </Button>
+
+          {isOpen && (
+            <>
+              <div className="fixed inset-0 backdrop-blur-sm bg-white/10 z-40"></div>
+
+              <AddStationModal
+                onClose={() => setIsOpen(false)}
+                onSuccess={() => {
+                  // Refresh station list after adding a new station
+                  fetchStations(1, 20).then((response) => {
+                    setStationPerformance(response.items);
+                  });
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
 
