@@ -31,7 +31,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
 import MapView from "./map/MapView";
-import { fetchStations, Station } from "../services/stationService";
+import { fetchStations, Station } from "../services/admin/stationService";
 import { get } from "http";
 
 // const stations = [

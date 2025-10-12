@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import useGeoLocation from "./useGeoLocation";
 import { Map } from "leaflet";
 import { FaCrosshairs } from "react-icons/fa";
-import { Coordinates, Station } from "@/services/stationService";
+import { Coordinates, Station } from "@/services/admin/stationService";
 interface MapState {
   userLocation: Coordinates;
   stations: Station[];

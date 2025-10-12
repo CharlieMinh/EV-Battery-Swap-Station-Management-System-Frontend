@@ -1,6 +1,6 @@
 // src/utils/osrmUtils.ts
 import axios from "axios";
-import { Coordinates, Station } from "@/services/stationService";
+import { Coordinates, Station } from "@/services/admin/stationService";
 
 export interface RouteResult {
   distance: number;
