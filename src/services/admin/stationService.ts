@@ -10,11 +10,17 @@ export interface Station {
     id: String;
     name: String;
     address: String;
+    city?: String;
     coordinates: {
         lat: number;
         lng: number;
     };
     isActive: boolean;
+    openTime?:String;
+    closeTime?:String;
+    phoneNumber?:String;
+    primaryImageUrl?:String;
+    isOpenNow: boolean;
 }
 
 
@@ -61,4 +67,14 @@ export async function handleSubmit(data: any): Promise<Station> {
         console.error('Error adding station:', error);
         throw error;
     }
+}
+
+export async function fetchStationById(id: string): Promise<Station> {
+   try {
+      const response = await api.get(`/v1/Stations/${id}`); 
+      return response.data;
+   } catch (error) {
+      console.error('Error fetching station by ID:', error);
+      throw error;
+   }
 }
