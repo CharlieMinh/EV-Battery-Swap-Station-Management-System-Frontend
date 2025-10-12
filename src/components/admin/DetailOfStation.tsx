@@ -54,6 +54,16 @@ interface DetailOfStationProps {
   onClose: () => void;
 }
 
+const formatTime = (timeString: string | null | undefined): string => {
+  if (!timeString) return "N/A";
+  // Cắt bỏ phần giây (ví dụ: "08:00:00" thành "08:00")
+  // Nếu chuỗi có độ dài lớn hơn 5 (HH:MM:SS), cắt 5 ký tự đầu tiên
+  if (timeString.length > 5) {
+    return timeString.substring(0, 5);
+  }
+  return timeString;
+};
+
 export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   const [stationDetail, setStationDetail] = React.useState<Station | null>(
     null
@@ -121,8 +131,8 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   } = stationDetail as any;
 
   // Đảm bảo dữ liệu thời gian luôn có giá trị
-  const openingTime = openTime || "N/A";
-  const closingTime = closeTime || "N/A";
+  const openingTime = formatTime(openTime);
+  const closingTime = formatTime(closeTime);
 
   const statusText = stationDetail.isActive ? "Hoạt động" : "Ngừng hoạt động";
   const statusColor = stationDetail.isActive
@@ -173,13 +183,13 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 <List className="w-4 h-4 mr-2" /> Xem Nhật ký ({logCount})
               </Button>
               <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-                <Settings className="w-4 h-4 mr-2" /> Chỉnh sửa Cấu hình
+                <Settings className="w-4 h-4 mr-2" /> Chỉnh sửa cấu hình
               </Button>
             </div>
           </div>
 
           {/* HÌNH ẢNH VÀ THÔNG TIN CƠ BẢN */}
-          <div className="">
+          <div>
             {/* Cột 1: Hình ảnh */}
             {/* <div className="md:col-span-1">
               <Card className="p-0 overflow-hidden h-full">
@@ -222,7 +232,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 </div>
 
                 {/* Thời gian hoạt động */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-4 whitespace-nowrap">
                   <Clock className="w-5 h-5 text-purple-500" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0">
                     Thời gian hoạt động:
