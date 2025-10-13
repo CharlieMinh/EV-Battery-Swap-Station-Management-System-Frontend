@@ -1,46 +1,97 @@
 import api from '../configs/axios';
 
-// Types
+// Types - Updated to match SQL schema
 export interface Battery {
-  id: string;
-  slot: string;
-  status: 'full' | 'charging' | 'maintenance' | 'empty';
-  health: number;
-  voltage: number;
-  cycles: number;
-  lastSwap: string;
-  model: string;
-  temperature: number;
+  id: string; // BatteryUnits.Id
+  serial: string; // BatteryUnits.Serial
+  batteryModelId: string; // BatteryUnits.BatteryModelId
+  stationId: string; // BatteryUnits.StationId
+  status: number; // BatteryUnits.Status (0=Empty, 1=Charging, 2=Full, 3=Maintenance)
+  updatedAt: string; // BatteryUnits.UpdatedAt
+  isReserved: boolean; // BatteryUnits.IsReserved
+  // Additional fields for UI
+  slot?: string;
+  health?: number;
+  voltage?: number;
+  cycles?: number;
+  lastSwap?: string;
+  model?: string;
+  temperature?: number;
 }
 
 export interface Booking {
-  id: string;
-  customer: string;
-  vehicle: string;
-  time: string;
-  code: string;
-  status: 'pending' | 'in-progress' | 'ready-to-swap' | 'swap-confirmed' | 'ready-for-payment' | 'confirmed' | 'completed' | 'cancelled';
-  slotDate: string;
-  slotTime: string;
-  checkInWindow: {
+  id: string; // Reservations.Id
+  userId: string; // Reservations.UserId
+  stationId: string; // Reservations.StationId
+  batteryModelId: string; // Reservations.BatteryModelId
+  batteryUnitId?: string; // Reservations.BatteryUnitId
+  slotDate: string; // Reservations.SlotDate
+  slotStartTime: string; // Reservations.SlotStartTime
+  slotEndTime: string; // Reservations.SlotEndTime
+  qrCode?: string; // Reservations.QRCode
+  checkedInAt?: string; // Reservations.CheckedInAt
+  verifiedByStaffId?: string; // Reservations.VerifiedByStaffId
+  status: number; // Reservations.Status (0=Pending, 1=CheckedIn, 2=Completed, 3=Cancelled)
+  cancelReason?: number; // Reservations.CancelReason
+  cancelNote?: string; // Reservations.CancelNote
+  cancelledAt?: string; // Reservations.CancelledAt
+  createdAt: string; // Reservations.CreatedAt
+  // Additional fields for UI
+  customer?: string;
+  vehicle?: string;
+  time?: string;
+  code?: string;
+  checkInWindow?: {
     earliest: string;
     latest: string;
   };
-  registrationTime: string;
+  registrationTime?: string;
 }
 
 export interface Transaction {
-  id: string;
-  customer: string;
-  vehicle: string;
-  time: string;
-  batteryOut: string;
-  batteryIn: string;
-  amount: number;
-  paymentMethod: 'subscription' | 'card' | 'cash';
-  paymentStatus: 'unpaid' | 'pending' | 'paid';
-  paymentType: 'online' | 'counter';
-  date: string;
+  id: string; // SwapTransactions.Id
+  transactionNumber: string; // SwapTransactions.TransactionNumber
+  userId: string; // SwapTransactions.UserId
+  reservationId?: string; // SwapTransactions.ReservationId
+  stationId: string; // SwapTransactions.StationId
+  vehicleId: string; // SwapTransactions.VehicleId
+  userSubscriptionId?: string; // SwapTransactions.UserSubscriptionId
+  invoiceId?: string; // SwapTransactions.InvoiceId
+  issuedBatteryId: string; // SwapTransactions.IssuedBatteryId
+  returnedBatteryId?: string; // SwapTransactions.ReturnedBatteryId
+  issuedBatterySerial: string; // SwapTransactions.IssuedBatterySerial
+  returnedBatterySerial?: string; // SwapTransactions.ReturnedBatterySerial
+  checkedInByStaffId?: string; // SwapTransactions.CheckedInByStaffId
+  batteryIssuedByStaffId?: string; // SwapTransactions.BatteryIssuedByStaffId
+  batteryReceivedByStaffId?: string; // SwapTransactions.BatteryReceivedByStaffId
+  completedByStaffId?: string; // SwapTransactions.CompletedByStaffId
+  vehicleOdoAtSwap: number; // SwapTransactions.VehicleOdoAtSwap
+  batteryHealthIssued?: number; // SwapTransactions.BatteryHealthIssued
+  batteryHealthReturned?: number; // SwapTransactions.BatteryHealthReturned
+  paymentType: number; // SwapTransactions.PaymentType (0=Subscription, 1=Card, 2=Cash)
+  swapFee: number; // SwapTransactions.SwapFee
+  kmChargeAmount: number; // SwapTransactions.KmChargeAmount
+  totalAmount: number; // SwapTransactions.TotalAmount
+  isPaid: boolean; // SwapTransactions.IsPaid
+  status: number; // SwapTransactions.Status (0=Started, 1=CheckedIn, 2=BatteryIssued, 3=BatteryReturned, 4=Completed, 5=Cancelled)
+  startedAt: string; // SwapTransactions.StartedAt
+  checkedInAt?: string; // SwapTransactions.CheckedInAt
+  batteryIssuedAt?: string; // SwapTransactions.BatteryIssuedAt
+  batteryReturnedAt?: string; // SwapTransactions.BatteryReturnedAt
+  completedAt?: string; // SwapTransactions.CompletedAt
+  cancelledAt?: string; // SwapTransactions.CancelledAt
+  notes?: string; // SwapTransactions.Notes
+  cancellationReason?: string; // SwapTransactions.CancellationReason
+  // Additional fields for UI
+  customer?: string;
+  vehicle?: string;
+  time?: string;
+  batteryOut?: string;
+  batteryIn?: string;
+  amount?: number;
+  paymentMethod?: 'subscription' | 'card' | 'cash';
+  paymentStatus?: 'unpaid' | 'pending' | 'paid';
+  date?: string;
 }
 
 export interface DailyStats {
@@ -64,12 +115,24 @@ export interface RevenueStats {
 }
 
 export interface ReservationData {
-  id: string;
-  status: 'Pending' | 'CheckedIn' | 'Cancelled';
-  qrCode: string;
-  slotDate: string;
-  slotTime: string;
-  checkInWindow: {
+  id: string; // Reservations.Id
+  userId: string; // Reservations.UserId
+  stationId: string; // Reservations.StationId
+  batteryModelId: string; // Reservations.BatteryModelId
+  batteryUnitId?: string; // Reservations.BatteryUnitId
+  slotDate: string; // Reservations.SlotDate
+  slotStartTime: string; // Reservations.SlotStartTime
+  slotEndTime: string; // Reservations.SlotEndTime
+  qrCode?: string; // Reservations.QRCode
+  checkedInAt?: string; // Reservations.CheckedInAt
+  verifiedByStaffId?: string; // Reservations.VerifiedByStaffId
+  status: number; // Reservations.Status (0=Pending, 1=CheckedIn, 2=Completed, 3=Cancelled)
+  cancelReason?: number; // Reservations.CancelReason
+  cancelNote?: string; // Reservations.CancelNote
+  cancelledAt?: string; // Reservations.CancelledAt
+  createdAt: string; // Reservations.CreatedAt
+  // Additional fields for UI
+  checkInWindow?: {
     earliest: string;
     latest: string;
   };
@@ -103,95 +166,95 @@ export interface InspectionData {
   issues?: string[];
 }
 
-// API Functions - Using mock data (Backend APIs not fully implemented yet)
+// API Functions - Using real backend APIs
 export const staffApi = {
-  // Battery Management - Using mock data (API endpoint not available yet)
+  // Battery Management - Using real API with BatteryUnits endpoint
   async getBatteries(stationId: number): Promise<Battery[]> {
     try {
-      // API endpoint not available yet, return mock data
-      return [
-        {
-          id: "1",
-          slot: "A1",
-          status: "full" as const,
-          health: 95,
-          voltage: 400,
-          cycles: 1250,
-          lastSwap: "10 min ago",
-          model: "TM3-75kWh",
-          temperature: 25,
-        },
-        {
-          id: "2",
-          slot: "A2",
-          status: "charging" as const,
-          health: 92,
-          voltage: 380,
-          cycles: 1180,
-          lastSwap: "2 hours ago",
-          model: "TM3-75kWh",
-          temperature: 28,
-        },
-        {
-          id: "3",
-          slot: "A3",
-          status: "full" as const,
-          health: 88,
-          voltage: 395,
-          cycles: 1650,
-          lastSwap: "1 hour ago",
-          model: "BMW-80kWh",
-          temperature: 24,
-        },
-        {
-          id: "4",
-          slot: "B1",
-          status: "maintenance" as const,
-          health: 65,
-          voltage: 320,
-          cycles: 2800,
-          lastSwap: "1 day ago",
-          model: "TM3-75kWh",
-          temperature: 35,
-        },
-        {
-          id: "5",
-          slot: "B2",
-          status: "charging" as const,
-          health: 90,
-          voltage: 370,
-          cycles: 1420,
-          lastSwap: "30 min ago",
-          model: "BMW-80kWh",
-          temperature: 26,
-        },
-        {
-          id: "6",
-          slot: "B3",
-          status: "full" as const,
-          health: 96,
-          voltage: 398,
-          cycles: 980,
-          lastSwap: "5 min ago",
-          model: "BMW-80kWh",
-          temperature: 23,
-        },
-      ];
+      if (!stationId || stationId === 0) {
+        console.warn('Station ID is invalid, returning empty array');
+        return [];
+      }
+      
+      const response = await api.get(`/BatteryUnits`);
+      console.log('BatteryUnits API response:', response.data);
+      console.log('Requested stationId:', stationId);
+      console.log('All batteries:', response.data.data);
+      
+      // Map all batteries to our interface (temporarily remove station filter)
+      const stationBatteries = response.data.data
+        .map((battery: any) => {
+          console.log(`Battery ${battery.serial} stationId: ${battery.stationId}, requested: ${stationId}`);
+          return {
+          id: battery.id,
+          serial: battery.serial,
+          batteryModelId: battery.batteryModelId,
+          stationId: battery.stationId,
+          status: battery.status === 'Full' ? 2 : 
+                  battery.status === 'Charging' ? 1 : 
+                  battery.status === 'Maintenance' ? 3 : 
+                  battery.status === 'Issued' ? 0 : 0,
+          updatedAt: battery.updatedAt,
+          isReserved: battery.isReserved,
+          // Additional fields for UI compatibility
+          slot: `Slot-${battery.serial.slice(-4)}`,
+          health: 85, // Default value
+          voltage: battery.voltage || 380,
+          cycles: 0, // Default value
+          lastSwap: battery.updatedAt,
+          model: battery.batteryModelName || 'Standard',
+          temperature: 25 // Default value
+          };
+        });
+      
+      console.log('Mapped batteries:', stationBatteries);
+      return stationBatteries;
     } catch (error) {
       console.error('Error fetching batteries:', error);
       return [];
     }
   },
 
-  async updateBatteryStatus(batteryId: string, status: string, staffId: string): Promise<void> {
+  // Get all batteries without filtering
+  async getAllBatteries(): Promise<Battery[]> {
     try {
-      await api.put(`/v1/batteries/${batteryId}/status`, {
-        status,
+      const response = await api.get(`/BatteryUnits`);
+      
+      return response.data.data.map((battery: any) => ({
+        id: battery.id,
+        serial: battery.serial,
+        batteryModelId: battery.batteryModelId,
+        stationId: battery.stationId,
+        status: battery.status === 'Full' ? 2 : 
+                battery.status === 'Charging' ? 1 : 
+                battery.status === 'Maintenance' ? 3 : 
+                battery.status === 'Issued' ? 0 : 0,
+        updatedAt: battery.updatedAt,
+        isReserved: battery.isReserved,
+        // Additional fields for UI compatibility
+        slot: `Slot-${battery.serial.slice(-4)}`,
+        health: 85, // Default value
+        voltage: battery.voltage || 380,
+        cycles: 0, // Default value
+        lastSwap: battery.updatedAt,
+        model: battery.batteryModelName || 'Standard',
+        temperature: 25 // Default value
+      }));
+    } catch (error) {
+      console.error('Error fetching all batteries:', error);
+      return [];
+    }
+  },
+
+  async updateBatteryStatus(batteryId: string, status: number, staffId: string): Promise<void> {
+    try {
+      await api.patch(`/BatteryUnits/${batteryId}/status`, {
+        status, // Use number status (0=Empty, 1=Charging, 2=Full, 3=Maintenance)
         staffId
       });
     } catch (error) {
       console.error('Error updating battery status:', error);
-      // For now, just log the error since this endpoint might not exist
+      throw error;
     }
   },
 
@@ -203,41 +266,17 @@ export const staffApi = {
     registrationTime: string;
   }> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.get(`/v1/slot-reservations/${bookingId}`);
+      const reservation = response.data;
       
-      // Mock data based on booking ID
-      const mockSlotData = {
-        "1": {
-          slotDate: "2024-01-15",
-          slotTime: "15:30 - 16:00",
-          checkInWindow: { earliest: "15:15", latest: "15:45" },
-          registrationTime: "2024-01-14 20:30"
+      return {
+        slotDate: reservation.slotDate,
+        slotTime: `${reservation.slotStartTime} - ${reservation.slotEndTime}`,
+        checkInWindow: {
+          earliest: reservation.slotStartTime,
+          latest: reservation.slotEndTime
         },
-        "2": {
-          slotDate: "2024-01-15",
-          slotTime: "16:00 - 16:30",
-          checkInWindow: { earliest: "15:45", latest: "16:15" },
-          registrationTime: "2024-01-14 18:45"
-        },
-        "3": {
-          slotDate: "2024-01-15",
-          slotTime: "16:30 - 17:00",
-          checkInWindow: { earliest: "16:15", latest: "16:45" },
-          registrationTime: "2024-01-14 22:15"
-        },
-        "4": {
-          slotDate: "2024-01-15",
-          slotTime: "17:00 - 17:30",
-          checkInWindow: { earliest: "16:45", latest: "17:15" },
-          registrationTime: "2024-01-15 09:20"
-        }
-      };
-      
-      return mockSlotData[bookingId as keyof typeof mockSlotData] || {
-        slotDate: "2024-01-15",
-        slotTime: "15:30 - 16:00",
-        checkInWindow: { earliest: "15:15", latest: "15:45" },
-        registrationTime: "2024-01-14 20:30"
+        registrationTime: reservation.createdAt
       };
     } catch (error) {
       console.error('Error fetching booking slot info:', error);
@@ -245,72 +284,38 @@ export const staffApi = {
     }
   },
 
-  // Queue Management - Using mock data (API endpoint not available yet)
+  // Queue Management - Using real API with Reservations endpoint
   async getQueue(stationId: number): Promise<Booking[]> {
     try {
-      // API endpoint not available yet, return mock data
-      return [
-        {
-          id: "1",
-          customer: "Alex Chen",
-          vehicle: "Tesla Model 3",
-          time: "15:30",
-          code: "SW-2024-001",
-          status: "pending" as const,
-          slotDate: "2024-01-15",
-          slotTime: "15:30 - 16:00",
-          checkInWindow: {
-            earliest: "15:15",
-            latest: "15:45"
-          },
-          registrationTime: "2024-01-14 20:30"
+      const response = await api.get(`/v1/Reservations`);
+      return response.data.map((booking: any) => ({
+        id: booking.id,
+        userId: booking.userId,
+        stationId: booking.stationId,
+        batteryModelId: booking.batteryModelId,
+        batteryUnitId: booking.batteryUnitId,
+        slotDate: booking.slotDate,
+        slotStartTime: booking.slotStartTime,
+        slotEndTime: booking.slotEndTime,
+        qrCode: booking.qrCode,
+        checkedInAt: booking.checkedInAt,
+        verifiedByStaffId: booking.verifiedByStaffId,
+        status: booking.status === 'Pending' ? 0 : booking.status === 'CheckedIn' ? 1 : booking.status === 'Completed' ? 2 : 3,
+        cancelReason: booking.cancelReason,
+        cancelNote: booking.cancelNote,
+        cancelledAt: booking.cancelledAt,
+        createdAt: booking.createdAt,
+        // Additional fields for UI compatibility
+        customer: booking.customerName || booking.userName,
+        vehicle: booking.vehicleModel || booking.vehiclePlate,
+        time: booking.slotStartTime,
+        code: booking.qrCode || booking.id.slice(-8),
+        checkInWindow: booking.checkInWindow || {
+          earliest: booking.slotStartTime,
+          latest: booking.slotEndTime
         },
-        {
-          id: "2",
-          customer: "Sarah Kim",
-          vehicle: "BMW iX3",
-          time: "16:00",
-          code: "SW-2024-002",
-          status: "in-progress" as const,
-          slotDate: "2024-01-15",
-          slotTime: "16:00 - 16:30",
-          checkInWindow: {
-            earliest: "15:45",
-            latest: "16:15"
-          },
-          registrationTime: "2024-01-14 18:45"
-        },
-        {
-          id: "3",
-          customer: "Mike Johnson",
-          vehicle: "Nissan Leaf",
-          time: "16:30",
-          code: "SW-2024-003",
-          status: "confirmed" as const,
-          slotDate: "2024-01-15",
-          slotTime: "16:30 - 17:00",
-          checkInWindow: {
-            earliest: "16:15",
-            latest: "16:45"
-          },
-          registrationTime: "2024-01-14 22:15"
-        },
-        {
-          id: "4",
-          customer: "Emily Davis",
-          vehicle: "Tesla Model Y",
-          time: "17:00",
-          code: "SW-2024-004",
-          status: "confirmed" as const,
-          slotDate: "2024-01-15",
-          slotTime: "17:00 - 17:30",
-          checkInWindow: {
-            earliest: "16:45",
-            latest: "17:15"
-          },
-          registrationTime: "2024-01-15 09:20"
-        },
-      ];
+        registrationTime: booking.createdAt
+      }));
     } catch (error) {
       console.error('Error fetching queue:', error);
       return [];
@@ -344,128 +349,93 @@ export const staffApi = {
     }
   },
 
-  // Transaction Management - Using mock data (API endpoint not available yet)
+  // Transaction Management - Using real API with Swaps endpoint
   async getTransactions(stationId: number, limit: number = 10, date?: string): Promise<Transaction[]> {
     try {
-      // API endpoint not available yet, return mock data
-      return [
-        {
-          id: "1",
-          customer: "Alex Chen",
-          vehicle: "Tesla Model 3",
-          time: "14:32",
-          batteryOut: "A1",
-          batteryIn: "B2",
-          amount: 25,
-          paymentMethod: "subscription" as const,
-          paymentStatus: "paid" as const,
-          paymentType: "online" as const,
-          date: "2024-01-15",
-        },
-        {
-          id: "2",
-          customer: "Sarah Kim",
-          vehicle: "BMW iX3",
-          time: "14:15",
-          batteryOut: "A3",
-          batteryIn: "B1",
-          amount: 25,
-          paymentMethod: "card" as const,
-          paymentStatus: "pending" as const,
-          paymentType: "counter" as const,
-          date: "2024-01-15",
-        },
-        {
-          id: "3",
-          customer: "Mike Johnson",
-          vehicle: "Nissan Leaf",
-          time: "13:58",
-          batteryOut: "B3",
-          batteryIn: "A2",
-          amount: 25,
-          paymentMethod: "cash" as const,
-          paymentStatus: "unpaid" as const,
-          paymentType: "counter" as const,
-          date: "2024-01-15",
-        },
-        {
-          id: "4",
-          customer: "Emily Davis",
-          vehicle: "Tesla Model Y",
-          time: "16:30",
-          batteryOut: "A2",
-          batteryIn: "B3",
-          amount: 30,
-          paymentMethod: "card" as const,
-          paymentStatus: "paid" as const,
-          paymentType: "online" as const,
-          date: "2024-01-15",
-        },
-        {
-          id: "5",
-          customer: "John Smith",
-          vehicle: "BMW i4",
-          time: "17:15",
-          batteryOut: "B1",
-          batteryIn: "A3",
-          amount: 25,
-          paymentMethod: "cash" as const,
-          paymentStatus: "pending" as const,
-          paymentType: "counter" as const,
-          date: "2024-01-15",
-        },
-        {
-          id: "6",
-          customer: "Lisa Wang",
-          vehicle: "Nissan Ariya",
-          time: "18:00",
-          batteryOut: "A3",
-          batteryIn: "B2",
-          amount: 28,
-          paymentMethod: "subscription" as const,
-          paymentStatus: "paid" as const,
-          paymentType: "online" as const,
-          date: "2024-01-15",
-        },
-      ];
+      const params = new URLSearchParams({
+        page: '1',
+        pageSize: limit.toString()
+      });
+      
+      const response = await api.get(`/v1/swaps/history?${params}`);
+      return response.data.transactions.map((transaction: any) => ({
+        id: transaction.id,
+        transactionNumber: transaction.transactionNumber,
+        userId: transaction.userId,
+        reservationId: transaction.reservationId,
+        stationId: transaction.stationId,
+        vehicleId: transaction.vehicleId,
+        userSubscriptionId: transaction.userSubscriptionId,
+        invoiceId: transaction.invoiceId,
+        issuedBatteryId: transaction.issuedBatteryId,
+        returnedBatteryId: transaction.returnedBatteryId,
+        issuedBatterySerial: transaction.issuedBatterySerial,
+        returnedBatterySerial: transaction.returnedBatterySerial,
+        checkedInByStaffId: transaction.checkedInByStaffId,
+        batteryIssuedByStaffId: transaction.batteryIssuedByStaffId,
+        batteryReceivedByStaffId: transaction.batteryReceivedByStaffId,
+        completedByStaffId: transaction.completedByStaffId,
+        vehicleOdoAtSwap: transaction.vehicleOdoAtSwap,
+        batteryHealthIssued: transaction.batteryHealthIssued,
+        batteryHealthReturned: transaction.batteryHealthReturned,
+        paymentType: transaction.paymentType,
+        swapFee: transaction.swapFee,
+        kmChargeAmount: transaction.kmChargeAmount,
+        totalAmount: transaction.totalAmount,
+        isPaid: transaction.isPaid,
+        status: transaction.status,
+        startedAt: transaction.startedAt,
+        checkedInAt: transaction.checkedInAt,
+        batteryIssuedAt: transaction.batteryIssuedAt,
+        batteryReturnedAt: transaction.batteryReturnedAt,
+        completedAt: transaction.completedAt,
+        cancelledAt: transaction.cancelledAt,
+        notes: transaction.notes,
+        cancellationReason: transaction.cancellationReason,
+        // Additional fields for UI compatibility
+        customer: transaction.customerName || transaction.userName,
+        vehicle: transaction.vehicleModel || transaction.vehiclePlate,
+        time: transaction.startedAt ? new Date(transaction.startedAt).toLocaleTimeString() : '',
+        batteryOut: transaction.issuedBatterySerial,
+        batteryIn: transaction.returnedBatterySerial,
+        amount: transaction.totalAmount,
+        paymentMethod: transaction.paymentType === 0 ? 'subscription' : transaction.paymentType === 1 ? 'card' : 'cash',
+        paymentStatus: transaction.isPaid ? 'paid' : 'unpaid',
+        date: transaction.startedAt ? new Date(transaction.startedAt).toISOString().split('T')[0] : ''
+      }));
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
     }
   },
 
-  // Revenue Statistics - Using mock data (API endpoint not available yet)
+  // Revenue Statistics - Using real API with aggregated data
   async getRevenueStats(stationId: number, period: 'monthly' | 'quarterly' | 'yearly' = 'monthly'): Promise<RevenueStats> {
     try {
-      // API endpoint not available yet, return mock data
-      const mockTransactions = await this.getTransactions(stationId, 100);
-      
-      const totalRevenue = mockTransactions
-        .filter(t => t.paymentStatus === 'paid')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const onlineRevenue = mockTransactions
-        .filter(t => t.paymentStatus === 'paid' && t.paymentType === 'online')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const counterRevenue = mockTransactions
-        .filter(t => t.paymentStatus === 'paid' && t.paymentType === 'counter')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const paidTransactions = mockTransactions.filter(t => t.paymentStatus === 'paid').length;
-      const pendingTransactions = mockTransactions.filter(t => t.paymentStatus === 'pending').length;
-      const unpaidTransactions = mockTransactions.filter(t => t.paymentStatus === 'unpaid').length;
-      
       const periodLabels = {
         monthly: 'Tháng hiện tại',
         quarterly: 'Quý hiện tại',
         yearly: 'Năm hiện tại'
       };
       
+      // Get transactions for the period
+      const transactions = await this.getTransactions(stationId, 1000);
+      const now = new Date();
+      const startDate = period === 'monthly' ? new Date(now.getFullYear(), now.getMonth(), 1) :
+                      period === 'quarterly' ? new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1) :
+                      new Date(now.getFullYear(), 0, 1);
+      
+      const periodTransactions = transactions.filter(t => new Date(t.startedAt) >= startDate);
+      
+      const totalRevenue = periodTransactions.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+      const paidTransactions = periodTransactions.filter(t => t.isPaid).length;
+      const pendingTransactions = periodTransactions.filter(t => !t.isPaid && t.status < 4).length;
+      const unpaidTransactions = periodTransactions.filter(t => !t.isPaid && t.status >= 4).length;
+      
       return {
         totalRevenue,
-        onlineRevenue,
-        counterRevenue,
+        onlineRevenue: totalRevenue * 0.6, // Estimate
+        counterRevenue: totalRevenue * 0.4, // Estimate
         paidTransactions,
         pendingTransactions,
         unpaidTransactions,
@@ -487,32 +457,51 @@ export const staffApi = {
     }
   },
 
-  // Update Payment Status - Using mock data (API endpoint not available yet)
+  // Update Payment Status - Using real API with SwapTransactions table
   async updatePaymentStatus(transactionId: string, status: 'unpaid' | 'pending' | 'paid'): Promise<void> {
     try {
-      // API endpoint not available yet, just log the update
-      console.log(`Updating transaction ${transactionId} payment status to ${status}`);
+      const isPaid = status === 'paid';
+      await api.put(`/v1/swaps/${transactionId}/payment-status`, {
+        isPaid
+      });
     } catch (error) {
       console.error('Error updating payment status:', error);
       throw error;
     }
   },
 
-  // Dashboard Stats - Using mock data (API endpoints not available yet)
+  // Dashboard Stats - Using real API with aggregated data
   async getDailyStats(stationId: number, date?: string): Promise<DailyStats> {
     try {
-      // API endpoints not available yet, return realistic mock data
+      // Get transactions for the day
+      const transactions = await this.getTransactions(stationId, 100, date);
+      const todayTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.startedAt).toDateString();
+        const targetDate = date ? new Date(date).toDateString() : new Date().toDateString();
+        return transactionDate === targetDate;
+      });
+
+      // Calculate stats from real data
+      const totalSwaps = todayTransactions.length;
+      const revenue = todayTransactions.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+      const avgSwapTime = totalSwaps > 0 ? 8.5 : 0; // Default value since we don't have timing data
+      const customerRating = 4.8; // Default value since we don't have rating data
+      
+      // Get battery alerts from battery status
+      const batteries = await this.getBatteries(stationId);
+      const lowBatteryAlerts = batteries.filter(b => (b.health || 0) < 20).length;
+      const maintenanceNeeded = batteries.filter(b => b.status === 3).length;
+
       return {
-        totalSwaps: Math.floor(Math.random() * 50) + 20,
-        revenue: Math.floor(Math.random() * 2000) + 800,
-        avgSwapTime: Math.round((Math.random() * 2 + 2) * 100) / 100, // Round to 2 decimal places
-        customerRating: Math.round((Math.random() * 1 + 4) * 100) / 100, // Round to 2 decimal places
-        lowBatteryAlerts: Math.floor(Math.random() * 5),
-        maintenanceNeeded: Math.floor(Math.random() * 3),
+        totalSwaps,
+        revenue,
+        avgSwapTime,
+        customerRating,
+        lowBatteryAlerts,
+        maintenanceNeeded,
       };
     } catch (error) {
       console.error('Error fetching daily stats:', error);
-      // Return default stats on error
       return {
         totalSwaps: 0,
         revenue: 0,
@@ -524,12 +513,18 @@ export const staffApi = {
     }
   },
 
-  // Battery Health Monitoring - Placeholder since no specific endpoint exists
+  // Battery Health Monitoring - Using real API
   async createInspection(inspectionData: InspectionData, staffId: string, stationId: number): Promise<void> {
     try {
-      // This would need a specific endpoint for battery inspections
-      console.log('Battery inspection data:', inspectionData);
-      // For now, just log the data since no endpoint exists
+      // Update battery condition using existing endpoint
+      await api.patch(`/BatteryUnits/${inspectionData.batteryId}/status`, {
+        health: inspectionData.health,
+        voltage: inspectionData.voltage,
+        temperature: inspectionData.temperature,
+        notes: inspectionData.notes,
+        staffId,
+        stationId
+      });
     } catch (error) {
       console.error('Error creating inspection:', error);
       throw error;
@@ -543,27 +538,31 @@ export const staffApi = {
       return response.data;
     } catch (error) {
       console.error('Error fetching station info:', error);
-      // Return mock station info
-      return {
-        id: stationId,
-        name: `Station ${stationId}`,
-        address: "123 Main Street",
-        city: "HCM",
-        isActive: true
-      };
+      throw error;
     }
   },
 
-  // Get Staff Profile - Using mock data (API requires authentication)
+  // Get Staff Profile - Using real API with Users endpoint
   async getStaffProfile(staffId: string): Promise<any> {
     try {
-      // API requires authentication, return mock profile
+      if (!staffId || staffId === 'undefined') {
+        console.warn('Staff ID is undefined, skipping API call');
+        return {
+          id: 'unknown',
+          name: 'Unknown Staff',
+          email: 'staff@evbss.com',
+          stationId: 1,
+          role: 'Staff'
+        };
+      }
+      
+      const response = await api.get(`/v1/Users/${staffId}`);
       return {
-        id: staffId,
-        name: "EVBSS Staff",
-        email: "staff@evbss.com",
-        stationId: 1,
-        role: "Staff"
+        id: response.data.id,
+        name: response.data.name || response.data.fullName,
+        email: response.data.email,
+        stationId: response.data.stationId || 1,
+        role: response.data.role || "Staff"
       };
     } catch (error) {
       console.error('Error fetching staff profile:', error);
@@ -571,38 +570,52 @@ export const staffApi = {
     }
   },
 
-  // Check-in API
+  // Check-in API - Using real API with SlotReservations endpoint
   async checkInReservation(qrCode: string): Promise<ReservationData> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Find reservation by QR code first
+      const reservations = await this.getQueue(1);
+      const reservation = reservations.find(r => r.qrCode === qrCode);
       
-      // Mock validation - in real app, this would validate QR signature
-      if (!qrCode || qrCode.length < 10) {
-        throw new Error("Mã QR không hợp lệ");
+      if (!reservation) {
+        throw new Error('Reservation not found');
       }
 
-      // Mock reservation data
+      // Call check-in API
+      await api.post(`/v1/slot-reservations/${reservation.id}/check-in`);
+      
       return {
-        id: "reservation-guid-123",
-        status: 'CheckedIn',
-        qrCode: qrCode,
-        slotDate: "2025-10-09",
-        slotTime: "09:00 - 09:30",
-        checkInWindow: {
-          earliest: "08:45",
-          latest: "09:15"
+        id: reservation.id,
+        userId: reservation.userId,
+        stationId: reservation.stationId,
+        batteryModelId: reservation.batteryModelId,
+        batteryUnitId: reservation.batteryUnitId,
+        slotDate: reservation.slotDate,
+        slotStartTime: reservation.slotStartTime,
+        slotEndTime: reservation.slotEndTime,
+        qrCode: reservation.qrCode,
+        checkedInAt: new Date().toISOString(), // Mark as checked in
+        verifiedByStaffId: "current-staff",
+        status: 1, // CheckedIn
+        cancelReason: reservation.cancelReason,
+        cancelNote: reservation.cancelNote,
+        cancelledAt: reservation.cancelledAt,
+        createdAt: reservation.createdAt,
+        // Additional fields for UI compatibility
+        checkInWindow: reservation.checkInWindow || {
+          earliest: reservation.slotStartTime,
+          latest: reservation.slotEndTime
         },
         customerInfo: {
-          name: "Nguyễn Văn A",
+          name: reservation.customer || "Customer",
           phone: "0123456789",
-          vehicle: "Tesla Model 3 2023"
+          vehicle: reservation.vehicle || "Vehicle"
         },
         assignedBattery: {
-          batteryUnitId: "battery-guid-456",
-          serialNumber: "BAT-12345",
-          chargeLevel: 100,
-          location: "Slot A-03"
+          batteryUnitId: reservation.batteryUnitId || "battery1",
+          serialNumber: `BAT${reservation.id.slice(-4)}`,
+          chargeLevel: 95,
+          location: `Slot-${reservation.id.slice(-4)}`
         }
       };
     } catch (error) {
@@ -611,21 +624,13 @@ export const staffApi = {
     }
   },
 
-  // Cancel booking API
+  // Cancel booking API - Using real API with SlotReservations endpoint
   async cancelBooking(bookingId: string, reason: string = "StaffCancelled"): Promise<{ success: boolean; message: string }> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock validation
-      if (!bookingId) {
-        throw new Error("Booking ID không hợp lệ");
-      }
-
-      // Mock successful cancellation
+      await api.delete(`/v1/slot-reservations/${bookingId}`);
       return {
         success: true,
-        message: "Đặt đơn đã được hủy thành công"
+        message: `Booking ${bookingId} cancelled successfully. Reason: ${reason}`
       };
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -665,6 +670,83 @@ export const staffApi = {
     if (methodStr.includes('subscription') || methodStr.includes('plan')) return 'subscription';
     if (methodStr.includes('card') || methodStr.includes('vnpay')) return 'card';
     return 'cash';
+  },
+
+  // Additional API functions for new features - Using BatteryUnits table
+  async takeBattery(batteryId: string, staffId: string, stationId: number): Promise<void> {
+    try {
+      await api.post(`/BatteryUnits/add-to-station`, {
+        staffId,
+        stationId
+      });
+    } catch (error) {
+      console.error('Error taking battery:', error);
+      throw error;
+    }
+  },
+
+  async createPayment(transactionId: string, paymentMethod: string, amount: number): Promise<any> {
+    try {
+      const response = await api.post(`/v1/payments/vnpay/create`, {
+        transactionId,
+        method: paymentMethod,
+        amount
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw error;
+    }
+  },
+
+  async getInvoice(transactionId: string): Promise<any> {
+    try {
+      const response = await api.get(`/v1/invoices/${transactionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      throw error;
+    }
+  },
+
+  async printInvoice(transactionId: string): Promise<void> {
+    try {
+      // Get invoice data first
+      const invoice = await this.getInvoice(transactionId);
+      // Trigger browser print dialog
+      window.print();
+    } catch (error) {
+      console.error('Error printing invoice:', error);
+      throw error;
+    }
+  },
+
+  async updateReservationStatus(reservationId: string, status: number): Promise<void> {
+    try {
+      await api.put(`/v1/slot-reservations/${reservationId}`, { status });
+    } catch (error) {
+      console.error('Error updating reservation status:', error);
+      throw error;
+    }
+  },
+
+  async getBatteryCondition(batteryId: string): Promise<any> {
+    try {
+      const response = await api.get(`/BatteryUnits/${batteryId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching battery condition:', error);
+      throw error;
+    }
+  },
+
+  async updateBatteryCondition(batteryId: string, conditionData: any): Promise<void> {
+    try {
+      await api.patch(`/BatteryUnits/${batteryId}/status`, conditionData);
+    } catch (error) {
+      console.error('Error updating battery condition:', error);
+      throw error;
+    }
   }
 };
 

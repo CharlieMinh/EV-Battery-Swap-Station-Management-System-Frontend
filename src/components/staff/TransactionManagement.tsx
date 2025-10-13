@@ -10,6 +10,7 @@ import { Badge } from "../ui/badge";
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { Transaction } from "../../services/staffApi";
+import staffApi from "../../services/staffApi";
 
 interface TransactionManagementProps {
   recentTransactions: Transaction[];
@@ -19,6 +20,9 @@ export function TransactionManagement({
   recentTransactions,
 }: TransactionManagementProps) {
   const { t, formatCurrency } = useLanguage();
+  
+  // TransactionManagement component already receives recentTransactions from parent
+  // No need to fetch additional data here as it's already integrated
 
   return (
     <Card className="border border-orange-200 rounded-lg shadow-lg bg-white">
@@ -66,7 +70,7 @@ export function TransactionManagement({
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-medium text-green-600 text-lg">{formatCurrency(transaction.amount)}</p>
+                <p className="font-medium text-green-600 text-lg">{formatCurrency(transaction.amount || transaction.totalAmount || 0)}</p>
                 <Badge className="bg-green-100 text-green-800 font-semibold">
                   {t("staff.completed")}
                 </Badge>

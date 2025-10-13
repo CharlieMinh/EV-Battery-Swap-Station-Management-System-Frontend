@@ -11,21 +11,32 @@ import { Card, CardContent } from "../ui/card";
 import { CreditCard, QrCode, DollarSign, Printer, CheckCircle } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { InvoiceDialog } from "./InvoiceDialog";
+import staffApi from "../../services/staffApi";
 
 interface POSDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  transactionId?: string;
+  amount?: number;
 }
 
-export function POSDialog({ isOpen, onClose }: POSDialogProps) {
+export function POSDialog({ isOpen, onClose, transactionId, amount = 25 }: POSDialogProps) {
   const { t } = useLanguage();
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const [showInvoice, setShowInvoice] = useState(false);
 
-  const handlePayment = (method: string) => {
-    setSelectedPaymentMethod(method);
-    setPaymentSuccess(true);
+  const handlePayment = async (method: string) => {
+    try {
+      if (transactionId) {
+        await staffApi.createPayment(transactionId, method, amount);
+      }
+      setSelectedPaymentMethod(method);
+      setPaymentSuccess(true);
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      alert("Có lỗi xảy ra khi xử lý thanh toán");
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -61,7 +72,7 @@ export function POSDialog({ isOpen, onClose }: POSDialogProps) {
                     Phương thức: {selectedPaymentMethod}
                   </p>
                   <p className="text-gray-600 text-sm">
-                    Số tiền: $25.00 đã được thanh toán thành công
+                    Số tiền: ${amount.toFixed(2)} đã được thanh toán thành công
                   </p>
                 </div>
               </CardContent>
@@ -72,7 +83,7 @@ export function POSDialog({ isOpen, onClose }: POSDialogProps) {
           <Card className="border border-orange-100 rounded-lg bg-gray-50 shadow-sm">
             <CardContent className="p-6">
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-orange-600">$25.00</h3>
+                <h3 className="text-2xl font-bold text-orange-600">${amount.toFixed(2)}</h3>
                 <p className="text-gray-600">{t("staff.batterySwapService")}</p>
               </div>
             </CardContent>
@@ -134,6 +145,7 @@ export function POSDialog({ isOpen, onClose }: POSDialogProps) {
           vehicle: "Tesla Model 3 2023",
           bookingCode: "SW-2024-001"
         }}
+        transactionId={transactionId}
       />
     </Dialog>
   );

@@ -12,6 +12,7 @@ import { Clock, ChevronRight, Battery, Eye, QrCode, X, Zap, CheckCircle, DollarS
 import { useLanguage } from "../LanguageContext";
 import { Booking } from "../../services/staffApi";
 import { CheckInDialog } from "./CheckInDialog";
+import staffApi from "../../services/staffApi";
 
 interface QueueManagementProps {
   bookings: Booking[];
@@ -21,6 +22,7 @@ interface QueueManagementProps {
   onCheckIn?: (booking: Booking) => void;
   onComplete?: (booking: Booking) => void;
   onProcessPaymentAndPrint?: (booking: Booking) => void;
+  onRefreshBookings?: () => void;
 }
 
 export function QueueManagement({
@@ -31,6 +33,7 @@ export function QueueManagement({
   onCheckIn,
   onComplete,
   onProcessPaymentAndPrint,
+  onRefreshBookings,
 }: QueueManagementProps) {
   const { t } = useLanguage();
   const [checkInDialog, setCheckInDialog] = React.useState(false);
@@ -57,22 +60,16 @@ export function QueueManagement({
                     <div className="text-center">
                       <div className="text-orange-600 font-bold text-lg">{booking.time}</div>
                       <div className={`mt-2 px-3 py-1 rounded-full text-white text-sm font-medium ${
-                        booking.status === 'pending' ? 'bg-yellow-500' :
-                        booking.status === 'in-progress' ? 'bg-blue-500' :
-                        booking.status === 'ready-to-swap' ? 'bg-purple-500' :
-                        booking.status === 'swap-confirmed' ? 'bg-green-500' :
-                        booking.status === 'ready-for-payment' ? 'bg-orange-500' :
-                        booking.status === 'completed' ? 'bg-green-500' :
-                        booking.status === 'cancelled' ? 'bg-red-500' :
+                        booking.status === 0 ? 'bg-yellow-500' :
+                        booking.status === 1 ? 'bg-blue-500' :
+                        booking.status === 2 ? 'bg-green-500' :
+                        booking.status === 3 ? 'bg-red-500' :
                         'bg-gray-500'
                       }`}>
-                        {booking.status === 'pending' ? 'Đang chờ' :
-                         booking.status === 'in-progress' ? 'Đang xử lý' :
-                         booking.status === 'ready-to-swap' ? 'Sẵn sàng thay pin' :
-                         booking.status === 'swap-confirmed' ? 'Đã thay pin' :
-                         booking.status === 'ready-for-payment' ? 'Chờ thanh toán' :
-                         booking.status === 'completed' ? 'Hoàn thành' :
-                         booking.status === 'cancelled' ? 'Đã hủy' :
+                        {booking.status === 0 ? 'Đang chờ' :
+                         booking.status === 1 ? 'Đã check-in' :
+                         booking.status === 2 ? 'Hoàn thành' :
+                         booking.status === 3 ? 'Đã hủy' :
                          'Không xác định'}
                       </div>
                     </div>
@@ -82,19 +79,19 @@ export function QueueManagement({
                       <p className="text-xs text-gray-400 font-mono">{booking.code}</p>
                       <div className="mt-2 space-y-1">
                         <p className="text-xs text-blue-600">
-                          <span className="font-medium">Khung giờ:</span> {booking.slotTime}
+                          <span className="font-medium">Khung giờ:</span> {booking.slotStartTime} - {booking.slotEndTime}
                         </p>
                         <p className="text-xs text-green-600">
-                          <span className="font-medium">Check-in:</span> {booking.checkInWindow.earliest} - {booking.checkInWindow.latest}
+                          <span className="font-medium">Check-in:</span> {booking.checkInWindow?.earliest || booking.slotStartTime} - {booking.checkInWindow?.latest || booking.slotEndTime}
                         </p>
                         <p className="text-xs text-gray-500">
-                          <span className="font-medium">Đăng ký:</span> {new Date(booking.registrationTime).toLocaleString('vi-VN')}
+                          <span className="font-medium">Đăng ký:</span> {booking.registrationTime ? new Date(booking.registrationTime).toLocaleString('vi-VN') : new Date(booking.createdAt).toLocaleString('vi-VN')}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    {booking.status === "pending" && (
+                    {booking.status === 0 && (
                       <>
                         <Button 
                           size="sm" 
@@ -108,14 +105,23 @@ export function QueueManagement({
                           size="sm" 
                           variant="outline"
                           className="border-red-300 text-red-600 hover:bg-red-50 font-semibold rounded-lg px-4 py-2" 
-                          onClick={() => onCancelBooking?.(booking)}
+                          onClick={async () => {
+                            try {
+                              await staffApi.cancelBooking(booking.id, "StaffCancelled");
+                              onCancelBooking?.(booking);
+                              onRefreshBookings?.();
+                            } catch (error) {
+                              console.error('Error cancelling booking:', error);
+                              alert("Có lỗi xảy ra khi hủy đặt đơn");
+                            }
+                          }}
                         >
                           <X className="w-4 h-4 mr-2" />
                           Hủy đặt đơn
                         </Button>
                       </>
                     )}
-                    {booking.status === "in-progress" && (
+                    {booking.status === 1 && (
                       <Button 
                         size="sm" 
                         className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-4 py-2" 
@@ -125,7 +131,7 @@ export function QueueManagement({
                         Kiểm tra pin
                       </Button>
                     )}
-                    {booking.status === "ready-to-swap" && (
+                    {booking.status === 1 && (
                       <Button 
                         size="sm" 
                         className="bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-lg px-4 py-2" 
@@ -135,7 +141,7 @@ export function QueueManagement({
                         Thay pin
                       </Button>
                     )}
-                    {booking.status === "swap-confirmed" && (
+                    {booking.status === 2 && (
                       <Button 
                         size="sm" 
                         className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg px-4 py-2" 
@@ -145,7 +151,7 @@ export function QueueManagement({
                         Hoàn thành
                       </Button>
                     )}
-                    {booking.status === "ready-for-payment" && (
+                    {booking.status === 2 && (
                       <Button 
                         size="sm" 
                         className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg px-4 py-2" 
@@ -155,7 +161,7 @@ export function QueueManagement({
                         Thanh toán và in hóa đơn
                       </Button>
                     )}
-                    {booking.status === "completed" && (
+                    {booking.status === 2 && (
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -165,7 +171,7 @@ export function QueueManagement({
                         Hoàn thành
                       </Button>
                     )}
-                    {booking.status === "cancelled" && (
+                    {booking.status === 3 && (
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -195,7 +201,7 @@ export function QueueManagement({
           setCheckInDialog(false);
           
           // Tìm booking đầu tiên có status pending để check-in
-          const pendingBooking = bookings.find(b => b.status === 'pending');
+          const pendingBooking = bookings.find(b => b.status === 0);
           if (pendingBooking && onCheckIn) {
             onCheckIn(pendingBooking);
           }

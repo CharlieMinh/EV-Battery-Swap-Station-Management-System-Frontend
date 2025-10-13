@@ -2,6 +2,7 @@ import React from 'react';
 import { User, MapPin, Phone, Mail, Calendar, Clock, TrendingUp, Star } from 'lucide-react';
 import { DailyStats } from '../../services/staffApi';
 import { useLanguage } from '../LanguageContext';
+import staffApi from '../../services/staffApi';
 
 interface ProfileSectionProps {
   user: {
@@ -15,6 +16,9 @@ interface ProfileSectionProps {
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({ user, dailyStats }) => {
   const { formatCurrency, t } = useLanguage();
+  
+  // ProfileSection component already receives dailyStats from parent
+  // No need to fetch additional data here as it's already integrated
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm border p-6">

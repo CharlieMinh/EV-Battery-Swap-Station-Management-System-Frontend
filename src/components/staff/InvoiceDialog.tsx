@@ -9,6 +9,7 @@ import {
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Printer, Download, X } from "lucide-react";
+import staffApi from "../../services/staffApi";
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -18,19 +19,35 @@ interface InvoiceDialogProps {
     vehicle: string;
     bookingCode: string;
   };
+  transactionId?: string;
 }
 
-export function InvoiceDialog({ isOpen, onClose, customerInfo }: InvoiceDialogProps) {
+export function InvoiceDialog({ isOpen, onClose, customerInfo, transactionId }: InvoiceDialogProps) {
   const currentDate = new Date().toLocaleDateString('vi-VN');
   const currentTime = new Date().toLocaleTimeString('vi-VN');
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      if (transactionId) {
+        await staffApi.printInvoice(transactionId);
+      }
+      window.print();
+    } catch (error) {
+      console.error('Error printing invoice:', error);
+      alert("Có lỗi xảy ra khi in hóa đơn");
+    }
   };
 
-  const handleDownload = () => {
-    // Logic để tải xuống hóa đơn
-    alert("Đã tải xuống hóa đơn thành công!");
+  const handleDownload = async () => {
+    try {
+      if (transactionId) {
+        await staffApi.getInvoice(transactionId);
+      }
+      alert("Đã tải xuống hóa đơn thành công!");
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert("Có lỗi xảy ra khi tải xuống hóa đơn");
+    }
   };
 
   return (

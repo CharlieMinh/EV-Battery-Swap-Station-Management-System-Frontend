@@ -71,6 +71,7 @@ export function RevenueTracking({ stationId }: RevenueTrackingProps) {
       await fetchRevenueData();
     } catch (error) {
       console.error('Error updating payment status:', error);
+      alert("Có lỗi xảy ra khi cập nhật trạng thái thanh toán");
     }
   };
 
@@ -389,8 +390,8 @@ export function RevenueTracking({ stationId }: RevenueTrackingProps) {
                       
                       {/* Status Badges */}
                       <div className="flex items-center space-x-2">
-                        {getStatusBadge(transaction.paymentStatus)}
-                        {getPaymentTypeBadge(transaction.paymentType)}
+                        {getStatusBadge(transaction.paymentStatus || 'unpaid')}
+                        {getPaymentTypeBadge(transaction.paymentMethod || 'cash')}
                       </div>
                     </div>
                   </div>
@@ -398,7 +399,7 @@ export function RevenueTracking({ stationId }: RevenueTrackingProps) {
                   {/* Amount & Actions */}
                   <div className="text-right">
                     <div className="bg-green-100 rounded-lg p-3 mb-3">
-                      <p className="text-xl font-bold text-green-600">{formatCurrency(transaction.amount)}</p>
+                      <p className="text-xl font-bold text-green-600">{formatCurrency(transaction.amount || transaction.totalAmount || 0)}</p>
                       <p className="text-xs text-green-500">Số tiền</p>
                     </div>
                     
