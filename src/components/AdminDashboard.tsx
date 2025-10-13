@@ -493,13 +493,7 @@ export function AdminDashboardPage({
               />
             )}
 
-            {activeSection === "customers" && (
-              <CustomerManagement
-                customers={customers}
-                searchQuery={customerSearchQuery}
-                onSearchChange={setCustomerSearchQuery}
-              />
-            )}
+            {activeSection === "customers" && <CustomerManagement />}
 
             {activeSection === "staff" && <StaffManagement staff={staff} />}
 
