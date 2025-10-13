@@ -43,6 +43,7 @@ import { SwapHistory } from "../components/driver/SwapHistory";
 import { DriverProfile } from "../components/driver/DriverProfile";
 import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
+import { data } from "react-router-dom";
 
 
 
@@ -69,6 +70,11 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [swapHistory, setSwapHistory] = useState<any>(null);
   const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [subscriptionUsage, setSubscriptionUsage] = useState<SubscriptionUsage | null>(null);
+
 
   interface Swap {
     id: string;
@@ -83,6 +89,35 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     batteryHealthReturned: number;
     isPaid: boolean;
     notes?: string;
+  }
+
+  interface UserData {
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber: string;
+    role: string;
+    createdAt: string;
+    lastLogin: string;
+  }
+
+  interface SubscriptionInfo {
+    id: string;
+    startDate: string;
+    endDate: string | null;
+    isActive: boolean;
+    isBlocked: boolean;
+    subscriptionPlan: {
+      name: string;
+    };
+  }
+  interface MonthlyUsage {
+    year: number;
+    month: number;
+    swapCount: number;
+  }
+  interface SubscriptionUsage {
+    monthlyUsage: MonthlyUsage[];
   }
 
   const stations = [
@@ -126,10 +161,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       hours: "Maintenance",
     },
   ];
-
-
-
-
   useEffect(() => {
     async function fetchSwapHistory() {
       try {
@@ -152,6 +183,23 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   }, [showAll]);
 
   useEffect(() => {
+    const fetchSubscriptionData = async () => {
+      try {
+        const infoResponse = await axios.get("http://localhost:5194/api/v1/subscriptions/mine",
+          { withCredentials: true, });
+        const usageResponse = await axios.get("http://localhost:5194/api/v1/subscriptions/mine/usage", { withCredentials: true, });
+        setSubscriptionInfo(infoResponse.data);
+        setSubscriptionUsage(usageResponse.data);
+        console.log("DATA 1:", infoResponse.data);
+        console.log("DATA 2:", infoResponse.data);
+      } catch (error) {
+        console.error("Fetch failed:", error);
+      }
+
+    }
+    fetchSubscriptionData();
+  }, []);
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
@@ -166,6 +214,21 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get("http://localhost:5194/api/v1/auth/me", {
+          withCredentials: true,
+        });
+        console.log("User data:", res.data);
+        setUserData(res.data);
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+      }
+    }
+    fetchProfile();
+  }, []);
+
   const handleRefreshVehicles = async () => {
     try {
       const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
@@ -178,13 +241,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   };
 
 
-  const subscriptionPlan = {
-    name: "Monthly Unlimited",
-    swapsUsed: 12,
-    swapsLimit: 999,
-    renewDate: "2024-02-15",
-    price: 149,
-  };
+
 
   const timeSlots = [
     "09:00",
@@ -378,7 +435,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <SwapStatus onQRDialog={() => setQrDialog(true)} />
-                  <SubscriptionStatus subscriptionPlan={subscriptionPlan} />
+
                 </div>
               </div>
             )}
@@ -396,15 +453,15 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
 
             {activeSection === "profile" && (
-              <DriverProfile
-                user={user}
-                profileName={profileName}
-                profileEmail={profileEmail}
-                profilePhone={profilePhone}
-                onNameChange={setProfileName}
-                onEmailChange={setProfileEmail}
-                onPhoneChange={setProfilePhone}
-              />
+              <div>
+                <DriverProfile
+                  userData={userData}
+                  onNameChange={setProfileName}
+                  onEmailChange={setProfileEmail}
+                  onPhoneChange={setProfilePhone}
+                />
+                <SubscriptionStatus subscriptionInfo={subscriptionInfo} subscriptionUsage={subscriptionUsage} />
+              </div>
             )}
 
             {activeSection === "support" && <DriverSupport />}

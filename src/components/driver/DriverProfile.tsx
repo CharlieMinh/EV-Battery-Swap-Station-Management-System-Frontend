@@ -12,26 +12,28 @@ import { Label } from "../ui/label";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
-import { Edit, User, Star, Car, CreditCard, Shield } from "lucide-react";
+import { Edit, Mail, PhoneCallIcon, User } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { User as UserType } from "../../App";
-import { Battery } from "lucide-react";
+
+interface UserData {
+  id: string;
+  email: string;
+  phoneNumber: string;
+  name: string;
+  role: string;
+  createdAt: string;
+  lastLogin: string;
+}
 
 interface DriverProfileProps {
-  user: UserType;
-  profileName: string;
-  profileEmail: string;
-  profilePhone: string;
+  userData: UserData | null;
   onNameChange: (name: string) => void;
   onEmailChange: (email: string) => void;
   onPhoneChange: (phone: string) => void;
 }
 
 export function DriverProfile({
-  user,
-  profileName,
-  profileEmail,
-  profilePhone,
+  userData,
   onNameChange,
   onEmailChange,
   onPhoneChange,
@@ -39,104 +41,97 @@ export function DriverProfile({
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-6">
-      {/* Profile Information */}
-      <Card className="border border-orange-500 rounded-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-orange-500 fond-bold">
-            <User className="w-5 h-5" />
-            <span>{t("driver.personalInformation")}</span>
-          </CardTitle>
-          <CardDescription>
-            {t("driver.personalInformationDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16">
-              <AvatarFallback className="text-lg">
-                {user.name.charAt(0)}
+    <div className="max-w-6xl mx-auto space-y-10 animate-fade-in px-8 lg:px-16 py-10">
+      {/* Header */}
+      <div className="text-center mb-2">
+        <h1 className="text-4xl font-bold text-orange-600 tracking-tight">
+          {t("driver.profile.title")}
+        </h1>
+      </div>
+
+      {/* Profile Card */}
+      <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+        <CardHeader className="text-center pb-4">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="w-28 h-28 shadow-lg border-4 border-orange-500">
+              <AvatarFallback className="text-4xl font-bold text-orange-600 bg-orange-100">
+                {userData?.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
+
             <div>
-              <h3 className="font-medium">{user.name}</h3>
-              <p className="text-sm text-gray-500">
-                {t("driver.driverSince")} January 2024
-              </p>
-              <Badge className="mt-1">{t("driver.verifiedDriver")}</Badge>
+              <h3 className="text-3xl font-semibold text-gray-900">
+                {userData?.name}
+              </h3>
+              <Badge className="mt-3 px-5 py-2 text-base bg-orange-500 text-white shadow-sm hover:bg-orange-600 transition-all">
+                {userData?.role === "Driver"
+                  ? t("role.driver")
+                  : userData?.role === "Admin"
+                    ? t("role.admin")
+                    : t("role.staff")}
+              </Badge>
             </div>
           </div>
-          <Separator />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </CardHeader>
+
+        <CardContent className="space-y-8 px-2 sm:px-8 lg:px-14 pb-10">
+          <Separator className="bg-orange-300" />
+
+          {/* Inputs mỗi dòng */}
+          <div className="space-y-6">
             <div>
-              <Label htmlFor="name">{t("driver.fullName")}</Label>
+              <Label
+                htmlFor="name"
+                className="text-gray-700 text-sm font-semibold"
+              >
+                <User className="w-4 h-4 text-blue-600" />
+                {t("driver.fullName")}
+              </Label>
               <Input
                 id="name"
-                value={profileName}
+                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                value={userData?.name}
                 onChange={(e) => onNameChange(e.target.value)}
               />
             </div>
+
             <div>
-              <Label htmlFor="email">{t("driver.emailAddress")}</Label>
+              <Label
+                htmlFor="email"
+                className="text-gray-700 text-sm font-semibold"
+              >
+                <Mail className="w-4 h-4 text-blue-600" />
+                {t("driver.email")}
+              </Label>
               <Input
                 id="email"
                 type="email"
-                value={profileEmail}
+                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                value={userData?.email}
                 onChange={(e) => onEmailChange(e.target.value)}
               />
             </div>
+
             <div>
-              <Label htmlFor="phone">{t("driver.phoneNumber")}</Label>
+              <Label
+                htmlFor="phone"
+                className="text-gray-700 text-sm font-semibold"
+              >
+                <PhoneCallIcon className="w-4 h-4 text-blue-600" />
+                {t("driver.phone")}
+              </Label>
               <Input
                 id="phone"
-                value={profilePhone}
+                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                value={userData?.phoneNumber}
                 onChange={(e) => onPhoneChange(e.target.value)}
               />
             </div>
-            <div>
-              <Label>{t("driver.membershipStatus")}</Label>
-              <div className="flex items-center space-x-2 mt-2">
-                <Badge className="bg-green-100 text-green-800">
-                  {t("driver.active")}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  {t("driver.monthlyUnlimited")}
-                </span>
-              </div>
-            </div>
           </div>
-          <Button className="w-full bg-orange-500">
-            <Edit className="w-4 h-4 mr-2" /> {t("driver.updateProfile")}
+
+          <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md mt-8 py-3 text-lg rounded-xl transition-all">
+            <Edit className="w-5 h-5 mr-2" /> {t("driver.profile.editProfile")}
           </Button>
-        </CardContent>
-      </Card>
-
-
-
-      {/* Payment Methods */}
-      <Card className="border border-orange-500 rounded-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-orange-500 fond-bold">
-            <CreditCard className="w-5 h-5" />
-            <span>{t("driver.paymentMethods")}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <CreditCard className="w-6 h-6 text-blue-500" />
-                <div>
-                  <p className="font-medium">•••• •••• •••• 4232</p>
-                  <p className="text-sm text-gray-500">Expires 12/26</p>
-                </div>
-              </div>
-              <Badge className="bg-orange-500">{t("driver.primary")}</Badge>
-            </div>
-            <Button variant="outline" className="w-full bg-orange-500 text-white">
-              {t("driver.addPaymentMethod")}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

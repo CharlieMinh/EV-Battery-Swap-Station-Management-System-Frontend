@@ -176,6 +176,10 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
 
+    //role name
+    "role.driver": "Driver",
+    "role.admin": "Admin",
+    "role.staff": "Staff",
     // Register
     "register.name": "Name",
     "register.joinEVSwap": "Join EVSwap",
@@ -233,6 +237,8 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Find Stations",
+    "driver.profile.title": "Personal Profile",
+    "driver.profile.editProfile": "Edit Profile",
     "driver.mycar": "My Car",
     "driver.swap": "Swap",
     "driver.history": "History",
@@ -246,6 +252,20 @@ const translations = {
     "driver.useMyLocation": "Use My Location",
     "driver.availableStations": "Available Stations",
     "driver.filter": "Filter",
+    "driver.subscription.title": "Subscription Information",
+    "driver.subscription.description": "Details about your plan and current usage.",
+    "driver.subscription.noSubscriptionMessage": "You have not subscribed to any plan yet.",
+    "driver.subscription.planName": "Plan Name",
+    "driver.subscription.statusLabel": "Status",
+    "driver.subscription.startDate": "Start Date",
+    "driver.subscription.endDate": "End Date",
+    "driver.subscription.monthlySwaps": "Swaps This Month",
+    "driver.subscription.undefinedDate": "Not specified",
+    "driver.subscription.status.noPlan": "No Plan",
+    "driver.subscription.status.blocked": "Blocked",
+    "driver.subscription.status.active": "Active",
+    "driver.subscription.status.expired": "Expired",
+    "driver.subscription.status.inactive": "Inactive",
     "driver.searchStations": "Search stations...",
     "driver.available": "available",
     "driver.open": "open",
@@ -708,6 +728,10 @@ const translations = {
     "footer.privacyPolicy": "Chính Sách Bảo Mật",
     "footer.termsOfService": "Điều Khoản Dịch Vụ",
 
+    //role
+    "role.driver": "Tài xế",
+    "role.admin": "Quản trị viên",
+    "role.staff": "Nhân viên",
     // Login
     "login.title": "ĐĂNG NHẬP",
     "login.subtitle": "Đăng nhập để truy cập tài khoản EVSwap của bạn",
@@ -790,6 +814,22 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
+    "driver.subscription.title": "Thông Tin Gói Thuê Bao",
+    "driver.subscription.description": "Chi tiết về gói cước và tình trạng sử dụng hiện tại của bạn.",
+    "driver.subscription.noSubscriptionMessage": "Bạn chưa đăng ký gói thuê bao nào.",
+    "driver.subscription.planName": "Tên gói",
+    "driver.subscription.statusLabel": "Trạng thái",
+    "driver.subscription.startDate": "Ngày bắt đầu",
+    "driver.subscription.endDate": "Ngày kết thúc",
+    "driver.subscription.monthlySwaps": "Lượt đổi pin tháng này",
+    "driver.subscription.undefinedDate": "Không xác định",
+    "driver.subscription.status.noPlan": "Chưa có gói",
+    "driver.subscription.status.blocked": "Bị khóa",
+    "driver.subscription.status.active": "Đang hoạt động",
+    "driver.subscription.status.expired": "Đã hết hạn",
+    "driver.subscription.status.inactive": "Không hoạt động",
+    "driver.profile.title": "Hồ sơ cá nhân",
+    "driver.profile.editProfile": "Sửa hồ sơ",
     "driver.mycar": "Xe của tôi",
     "driver.swap": "Thay Pin",
     "driver.history": "Lịch Sử",
