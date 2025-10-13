@@ -6,59 +6,142 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Progress } from "../ui/progress";
-import { Settings } from "lucide-react";
+import { AlertTriangle, Calendar, CheckCircle, Package, XCircle, Zap } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 
-interface SubscriptionPlan {
-  name: string;
-  swapsUsed: number;
-  swapsLimit: number;
-  renewDate: string;
-  price: number;
+interface SubscriptionInfo {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  isBlocked: boolean;
+  subscriptionPlan: {
+    name: string;
+  };
 }
-
+interface MonthlyUsage {
+  year: number;
+  month: number;
+  swapCount: number;
+}
+interface SubscriptionUsage {
+  monthlyUsage: MonthlyUsage[];
+}
 interface SubscriptionStatusProps {
-  subscriptionPlan: SubscriptionPlan;
+  subscriptionInfo: SubscriptionInfo | null;
+  subscriptionUsage: SubscriptionUsage | null;
 }
 
 export function SubscriptionStatus({
-  subscriptionPlan,
+  subscriptionInfo, subscriptionUsage
 }: SubscriptionStatusProps) {
   const { t } = useLanguage();
 
+  const getCurrentMonthSwaps = () => {
+    if (!subscriptionUsage) return 0;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const currentUsage = subscriptionUsage.monthlyUsage.find(
+      (usage) => usage.year === currentYear && usage.month === currentMonth
+    );
+
+    return currentUsage ? currentUsage.swapCount : 0;
+  };
+
+  const getStatus = () => {
+    if (!subscriptionInfo) {
+      return { text: t("driver.subscription.status.noPlan"), color: "bg-gray-500", icon: <Package className="w-4 h-4 mr-2" /> };
+    }
+    if (subscriptionInfo.isBlocked) {
+      return { text: t("driver.subscription.status.blocked"), color: "bg-red-600", icon: <AlertTriangle className="w-4 h-4 mr-2" /> };
+    }
+    if (subscriptionInfo.isActive) {
+      return { text: t("driver.subscription.status.active"), color: "bg-green-600", icon: <CheckCircle className="w-4 h-4 mr-2" /> };
+    }
+    if (subscriptionInfo.endDate && new Date(subscriptionInfo.endDate) < new Date()) {
+      return { text: t("driver.subscription.status.expired"), color: "bg-yellow-600", icon: <XCircle className="w-4 h-4 mr-2" /> };
+    }
+    return { text: t("driver.subscription.status.inactive"), color: "bg-gray-500", icon: <Package className="w-4 h-4 mr-2" /> };
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return t("driver.subscription.undefinedDate");
+    return new Date(dateString).toLocaleDateString("vi-VN");
+  };
+
+  const swapsUsed = getCurrentMonthSwaps();
+  const status = getStatus();
+
+  if (!subscriptionInfo) {
+    return (
+      <div className="max-w-6xl mx-auto px-8 lg:px-16 mt-8">
+        <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center text-gray-800 tracking-tight">
+              {t("driver.subscription.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center text-gray-600">
+            <p>{t("driver.subscription.noSubscriptionMessage")}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <Card className="border border-orange-500 rounded-lg">
-      <CardHeader>
-        <CardTitle className="text-orange-500 font-bold">{t("driver.subscriptionStatus")}</CardTitle>
-        <CardDescription>{t("driver.subscriptionStatusDesc")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">{subscriptionPlan.name}</span>
-            <Badge className="bg-orange-500">{t("driver.active")}</Badge>
+    <div className="max-w-6xl mx-auto px-8 lg:px-16 mt-8">
+      <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center text-gray-800 tracking-tight">
+            {t("driver.subscription.title")}
+          </CardTitle>
+          <CardDescription className="text-center text-gray-500 pt-2">
+            {t("driver.subscription.description")}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 pt-6">
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+            <span className="font-semibold text-gray-600">{t("driver.subscription.planName")}</span>
+            <span className="font-bold text-lg text-orange-600">
+              {subscriptionInfo.subscriptionPlan.name}
+            </span>
           </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>{t("driver.swapsUsed")}</span>
-              <span>
-                {subscriptionPlan.swapsUsed} / {t("driver.unlimited")}
-              </span>
-            </div>
-            <Progress value={20} className="h-2 [&>div]:bg-orange-500 bg-orange-100" />
+
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+            <span className="font-semibold text-gray-600">{t("driver.subscription.statusLabel")}</span>
+            <Badge className={`text-white ${status.color} hover:${status.color} text-base py-2 px-4 shadow-md`}>
+              {status.icon} {status.text}
+            </Badge>
           </div>
-          <div className="flex justify-between text-sm">
-            <span>{t("driver.nextBilling")}</span>
-            <span>{subscriptionPlan.renewDate}</span>
+
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+            <span className="font-semibold text-gray-600 flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-blue-500" /> {t("driver.subscription.startDate")}
+            </span>
+            <span className="font-medium text-gray-800">{formatDate(subscriptionInfo.startDate)}</span>
           </div>
-          <Button variant="outline" className="w-full bg-orange-500 text-white">
-            <Settings className="w-4 h-4 mr-2" /> {t("driver.managePlan")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+            <span className="font-semibold text-gray-600 flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-red-500" /> {t("driver.subscription.endDate")}
+            </span>
+            <span className="font-medium text-gray-800">{formatDate(subscriptionInfo.endDate)}</span>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+            <span className="font-semibold text-gray-600 flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-500" /> {t("driver.subscription.monthlySwaps")}
+            </span>
+            <span className="font-bold text-lg text-blue-600">{swapsUsed}</span>
+          </div>
+
+        </CardContent>
+      </Card>
+    </div>
   );
 }
