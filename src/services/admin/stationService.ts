@@ -32,7 +32,7 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-export async function fetchStations(  page: number,
+export async function fetchStations( page: number,
   pageSize: number
 )
  {

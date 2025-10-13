@@ -9,10 +9,6 @@ import { fetchStations } from "@/services/admin/stationService";
 import { Station } from "@/services/admin/stationService";
 import { DetailOfStation } from "./DetailOfStation";
 
-interface StationManagementProps {
-  stationPerformance: Station[];
-}
-
 export function StationManagement() {
   const { t } = useLanguage();
   const [stationPerformance, setStationPerformance] = useState<Station[]>([]);

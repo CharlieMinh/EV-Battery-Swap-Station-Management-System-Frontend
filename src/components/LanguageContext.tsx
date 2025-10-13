@@ -70,7 +70,6 @@ const translations = {
     "features.yes": "Yes",
     "features.cancel": "Cancel",
 
-
     // Stations
     "stations.title": "Find Stations Near You",
     "stations.subtitle": "Our growing network covers major cities and highways",
@@ -254,8 +253,10 @@ const translations = {
     "driver.availableStations": "Available Stations",
     "driver.filter": "Filter",
     "driver.subscription.title": "Subscription Information",
-    "driver.subscription.description": "Details about your plan and current usage.",
-    "driver.subscription.noSubscriptionMessage": "You have not subscribed to any plan yet.",
+    "driver.subscription.description":
+      "Details about your plan and current usage.",
+    "driver.subscription.noSubscriptionMessage":
+      "You have not subscribed to any plan yet.",
     "driver.subscription.planName": "Plan Name",
     "driver.subscription.statusLabel": "Status",
     "driver.subscription.startDate": "Start Date",
@@ -490,7 +491,7 @@ const translations = {
     "staff.paymentSuccess": "Payment Successful",
     "staff.timeFilter": "Time Filter",
     "staff.monthly": "Monthly",
-    "staff.quarterly": "Quarterly", 
+    "staff.quarterly": "Quarterly",
     "staff.yearly": "Yearly",
     "staff.onlinePayment": "Online Payment",
     "staff.counterPayment": "Counter Payment",
@@ -520,7 +521,8 @@ const translations = {
     "staff.checkInSuccess": "Check In Successful",
     "staff.batteryAssigned": "Battery Assigned",
     "staff.paymentStatusManagement": "Payment Status Management",
-    "staff.paymentStatusManagementDesc": "Manage payment status for online and counter payments",
+    "staff.paymentStatusManagementDesc":
+      "Manage payment status for online and counter payments",
     "staff.totalRevenue": "Total Revenue",
     "staff.onlineRevenue": "Online Revenue",
     "staff.counterRevenue": "Counter Revenue",
@@ -834,18 +836,21 @@ const translations = {
 
     // Forgot Password
     "forgotPassword.title": "Quên Mật Khẩu",
-    "forgotPassword.subtitle": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác thực",
+    "forgotPassword.subtitle":
+      "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác thực",
     "forgotPassword.enterEmailPlaceholder": "Nhập địa chỉ email của bạn",
     "forgotPassword.sendResetLink": "Gửi Mã Xác Thực",
     "forgotPassword.sending": "Đang gửi...",
     "forgotPassword.backToLogin": "Quay Về Đăng Nhập",
     "forgotPassword.emailSent": "Email Đã Được Gửi!",
-    "forgotPassword.checkEmailDesc": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến địa chỉ email của bạn",
+    "forgotPassword.checkEmailDesc":
+      "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến địa chỉ email của bạn",
     "forgotPassword.emailSentTo": "Email đã được gửi đến:",
     "forgotPassword.resendEmail": "Gửi Lại Email",
     "forgotPassword.errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại.",
     "forgotPassword.verificationTitle": "Nhập Mã Xác Thực",
-    "forgotPassword.verificationSubtitle": "Chúng tôi đã gửi mã 6 chữ số đến email của bạn",
+    "forgotPassword.verificationSubtitle":
+      "Chúng tôi đã gửi mã 6 chữ số đến email của bạn",
     "forgotPassword.verificationCode": "Mã Xác Thực",
     "forgotPassword.enterCodePlaceholder": "Nhập mã 6 chữ số",
     "forgotPassword.digits": "chữ số",
@@ -856,11 +861,15 @@ const translations = {
     "forgotPassword.changeEmail": "Đổi Email",
     "forgotPassword.invalidCode": "Mã xác thực không hợp lệ. Vui lòng thử lại.",
     "forgotPassword.invalidCodeLength": "Vui lòng nhập mã xác thực 6 chữ số.",
-    "forgotPassword.codeExpired": "Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.",
-    "forgotPassword.tooManyAttempts": "Quá nhiều lần thử. Vui lòng thử lại sau.",
-    "forgotPassword.apiNotFound": "API endpoint không tồn tại. Vui lòng liên hệ hỗ trợ.",
+    "forgotPassword.codeExpired":
+      "Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới.",
+    "forgotPassword.tooManyAttempts":
+      "Quá nhiều lần thử. Vui lòng thử lại sau.",
+    "forgotPassword.apiNotFound":
+      "API endpoint không tồn tại. Vui lòng liên hệ hỗ trợ.",
     "forgotPassword.newPasswordTitle": "Đặt Mật Khẩu Mới",
-    "forgotPassword.newPasswordSubtitle": "Tạo mật khẩu mạnh cho tài khoản của bạn",
+    "forgotPassword.newPasswordSubtitle":
+      "Tạo mật khẩu mạnh cho tài khoản của bạn",
     "forgotPassword.newPassword": "Mật Khẩu Mới",
     "forgotPassword.confirmPassword": "Xác Nhận Mật Khẩu",
     "forgotPassword.enterNewPassword": "Nhập mật khẩu mới",
@@ -870,25 +879,30 @@ const translations = {
     "forgotPassword.passwordMismatch": "Mật khẩu không khớp",
     "forgotPassword.passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
     "forgotPassword.passwordResetSuccess": "Đặt Lại Mật Khẩu Thành Công!",
-    "forgotPassword.passwordResetSuccessDesc": "Mật khẩu của bạn đã được đặt lại. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
-    
+    "forgotPassword.passwordResetSuccessDesc":
+      "Mật khẩu của bạn đã được đặt lại. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
+
     // Email validation
     "forgotPassword.emailInvalidFormat": "Vui lòng nhập địa chỉ email hợp lệ",
     "forgotPassword.emailValidFormat": "Định dạng email hợp lệ",
-    
+
     // Password validation
     "forgotPassword.passwordNeedLowercase": "ít nhất một chữ thường",
     "forgotPassword.passwordNeedUppercase": "ít nhất một chữ hoa",
     "forgotPassword.passwordNeedNumber": "ít nhất một số",
-    "forgotPassword.passwordNeedSpecial": "ít nhất một ký tự đặc biệt (@$!%*?&)",
+    "forgotPassword.passwordNeedSpecial":
+      "ít nhất một ký tự đặc biệt (@$!%*?&)",
     "forgotPassword.passwordStrong": "Mật khẩu mạnh",
     "forgotPassword.passwordMatch": "Mật khẩu khớp",
-    "forgotPassword.passwordRequirementsNotMet": "Mật khẩu không đáp ứng yêu cầu",
-    
+    "forgotPassword.passwordRequirementsNotMet":
+      "Mật khẩu không đáp ứng yêu cầu",
+
     // Rate limiting
     "forgotPassword.rateLimitInfo": "Số yêu cầu còn lại:",
-    "forgotPassword.rateLimitExceeded": "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
-    "forgotPassword.rateLimitExceededDesc": "Bạn đã vượt quá số lượng yêu cầu tối đa trong một giờ",
+    "forgotPassword.rateLimitExceeded":
+      "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+    "forgotPassword.rateLimitExceededDesc":
+      "Bạn đã vượt quá số lượng yêu cầu tối đa trong một giờ",
     "forgotPassword.timeRemaining": "Thời gian còn lại",
 
     // Register
@@ -949,8 +963,10 @@ const translations = {
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
     "driver.subscription.title": "Thông Tin Gói Thuê Bao",
-    "driver.subscription.description": "Chi tiết về gói cước và tình trạng sử dụng hiện tại của bạn.",
-    "driver.subscription.noSubscriptionMessage": "Bạn chưa đăng ký gói thuê bao nào.",
+    "driver.subscription.description":
+      "Chi tiết về gói cước và tình trạng sử dụng hiện tại của bạn.",
+    "driver.subscription.noSubscriptionMessage":
+      "Bạn chưa đăng ký gói thuê bao nào.",
     "driver.subscription.planName": "Tên gói",
     "driver.subscription.statusLabel": "Trạng thái",
     "driver.subscription.startDate": "Ngày bắt đầu",
@@ -1229,7 +1245,8 @@ const translations = {
     "staff.checkInSuccess": "Check-in Thành Công",
     "staff.batteryAssigned": "Pin Đã Được Gán",
     "staff.paymentStatusManagement": "Quản Lý Trạng Thái Thanh Toán",
-    "staff.paymentStatusManagementDesc": "Quản lý trạng thái thanh toán cho thanh toán online và tại quầy",
+    "staff.paymentStatusManagementDesc":
+      "Quản lý trạng thái thanh toán cho thanh toán online và tại quầy",
     "staff.totalRevenue": "Tổng Doanh Thu",
     "staff.onlineRevenue": "Doanh Thu Online",
     "staff.counterRevenue": "Doanh Thu Tại Quầy",
@@ -1344,6 +1361,19 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
     "admin.resolve": "Xử lí",
+    "admin.customerDetail": "Chi tiết Khách hàng",
+    "admin.viewHistory": "Xem lịch sử",
+
+    "admin.updateProfile": "Cập nhật hồ sơ",
+
+    "admin.phone": "Số điện thoại",
+
+    "admin.revenueSummary": "Tổng kết Doanh thu & Hiệu suất",
+
+    "admin.swapHistorySummary": "Tóm tắt Lịch sử Đổi Pin",
+    "admin.email": "Email",
+
+    "admin.personalInfo": "Thông tin cá nhân",
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",
@@ -1357,6 +1387,12 @@ const translations = {
     "admin.airportTerminal": "Nhà Ga Sân Bay",
     "admin.highwayRestStop": "Trạm Nghỉ Cao Tốc",
     "admin.universityCampus": "Khuôn Viên Đại Học",
+    "admin.createdAt": "Ngày tham gia", // Key mới
+    "admin.lastLogin": "Lần đăng nhập cuối", // Key mới
+    "admin.totalReservations": "Tổng Lần Thay Pin", // Key mới
+    "admin.completedReservations": "Lượt hoàn thành", // Key mới
+    "admin.cancelledReservations": "Lượt hủy", // Key mới
+    "admin.totalVehicles": "Tổng phương tiện", // Key mới
 
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Không Giới Hạn Hàng Tháng",
@@ -1409,7 +1445,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, formatCurrency }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage, t, formatCurrency }}
+    >
       {children}
     </LanguageContext.Provider>
   );
