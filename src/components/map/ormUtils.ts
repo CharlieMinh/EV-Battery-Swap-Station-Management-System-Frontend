@@ -1,18 +1,6 @@
 // src/utils/osrmUtils.ts
 import axios from "axios";
-
-
-export interface Coordinates {
-  lat: number;
-  lng: number;
-}
-
-export interface Station {
-  id: number;
-  name: string;
-  coordinates: Coordinates;
-  address: string;
-}
+import { Coordinates, Station } from "@/services/admin/stationService";
 
 export interface RouteResult {
   distance: number;
@@ -60,19 +48,12 @@ export async function findNearestStation(
     try {
       const raw = await getDistanceBetweenPoints(userLocation, station.coordinates);
       const distance = raw.distance // ép kiểu an toàn
-
-      
-      if (!Number.isFinite(distance)) {
-        console.warn("Invalid distance for station", station.id, raw);
-        continue;
-      }
-
       if (distance < shortestDistance) {
         shortestDistance = distance;
         nearestStation = { ...station, distance };
       }
     } catch (err) {
-      console.warn("Error calculating distance for station", station.id, err);
+      console.warn("Error calculating distance for station", station.name, err);
       
     }
   }

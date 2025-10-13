@@ -3,10 +3,11 @@ import { LanguageProvider } from "./components/LanguageContext";
 import { Homepage } from "./components/HomePage";
 import { LoginPage } from "./components/LoginPage";
 import { RegisterPage } from "./components/RegisterPage";
+import { ForgotPassword } from "./components/ForgotPassword";
 import { DriverPortalPage } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import MapView from "./components/map/MapView";
 
 export type UserRole = "Driver" | "Staff" | "Admin" | null;
@@ -18,6 +19,12 @@ export interface User {
   role: UserRole;
   avatar?: string;
   stationId?: number;
+}
+
+// Wrapper component to use navigate in ForgotPassword
+function ForgotPasswordWrapper() {
+  const navigate = useNavigate();
+  return <ForgotPassword onBackToLogin={() => navigate('/login')} />;
 }
 
 function App() {
@@ -60,6 +67,11 @@ function App() {
               />
             }
           />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPasswordWrapper />}
+          />
+          
           <Route
             path="/driver"
             element={

@@ -19,7 +19,14 @@ export interface Booking {
   vehicle: string;
   time: string;
   code: string;
-  status: 'pending' | 'in-progress' | 'confirmed' | 'completed';
+  status: 'pending' | 'in-progress' | 'ready-to-swap' | 'swap-confirmed' | 'ready-for-payment' | 'confirmed' | 'completed' | 'cancelled';
+  slotDate: string;
+  slotTime: string;
+  checkInWindow: {
+    earliest: string;
+    latest: string;
+  };
+  registrationTime: string;
 }
 
 export interface Transaction {
@@ -31,6 +38,9 @@ export interface Transaction {
   batteryIn: string;
   amount: number;
   paymentMethod: 'subscription' | 'card' | 'cash';
+  paymentStatus: 'unpaid' | 'pending' | 'paid';
+  paymentType: 'online' | 'counter';
+  date: string;
 }
 
 export interface DailyStats {
@@ -40,6 +50,40 @@ export interface DailyStats {
   customerRating: number;
   lowBatteryAlerts: number;
   maintenanceNeeded: number;
+}
+
+export interface RevenueStats {
+  totalRevenue: number;
+  onlineRevenue: number;
+  counterRevenue: number;
+  paidTransactions: number;
+  pendingTransactions: number;
+  unpaidTransactions: number;
+  period: 'monthly' | 'quarterly' | 'yearly';
+  periodLabel: string;
+}
+
+export interface ReservationData {
+  id: string;
+  status: 'Pending' | 'CheckedIn' | 'Cancelled';
+  qrCode: string;
+  slotDate: string;
+  slotTime: string;
+  checkInWindow: {
+    earliest: string;
+    latest: string;
+  };
+  customerInfo?: {
+    name: string;
+    phone: string;
+    vehicle: string;
+  };
+  assignedBattery?: {
+    batteryUnitId: string;
+    serialNumber: string;
+    chargeLevel: number;
+    location: string;
+  };
 }
 
 export interface SwapData {
@@ -151,6 +195,56 @@ export const staffApi = {
     }
   },
 
+  // Get booking slot information
+  async getBookingSlotInfo(bookingId: string): Promise<{
+    slotDate: string;
+    slotTime: string;
+    checkInWindow: { earliest: string; latest: string };
+    registrationTime: string;
+  }> {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock data based on booking ID
+      const mockSlotData = {
+        "1": {
+          slotDate: "2024-01-15",
+          slotTime: "15:30 - 16:00",
+          checkInWindow: { earliest: "15:15", latest: "15:45" },
+          registrationTime: "2024-01-14 20:30"
+        },
+        "2": {
+          slotDate: "2024-01-15",
+          slotTime: "16:00 - 16:30",
+          checkInWindow: { earliest: "15:45", latest: "16:15" },
+          registrationTime: "2024-01-14 18:45"
+        },
+        "3": {
+          slotDate: "2024-01-15",
+          slotTime: "16:30 - 17:00",
+          checkInWindow: { earliest: "16:15", latest: "16:45" },
+          registrationTime: "2024-01-14 22:15"
+        },
+        "4": {
+          slotDate: "2024-01-15",
+          slotTime: "17:00 - 17:30",
+          checkInWindow: { earliest: "16:45", latest: "17:15" },
+          registrationTime: "2024-01-15 09:20"
+        }
+      };
+      
+      return mockSlotData[bookingId as keyof typeof mockSlotData] || {
+        slotDate: "2024-01-15",
+        slotTime: "15:30 - 16:00",
+        checkInWindow: { earliest: "15:15", latest: "15:45" },
+        registrationTime: "2024-01-14 20:30"
+      };
+    } catch (error) {
+      console.error('Error fetching booking slot info:', error);
+      throw error;
+    }
+  },
+
   // Queue Management - Using mock data (API endpoint not available yet)
   async getQueue(stationId: number): Promise<Booking[]> {
     try {
@@ -163,6 +257,13 @@ export const staffApi = {
           time: "15:30",
           code: "SW-2024-001",
           status: "pending" as const,
+          slotDate: "2024-01-15",
+          slotTime: "15:30 - 16:00",
+          checkInWindow: {
+            earliest: "15:15",
+            latest: "15:45"
+          },
+          registrationTime: "2024-01-14 20:30"
         },
         {
           id: "2",
@@ -171,6 +272,13 @@ export const staffApi = {
           time: "16:00",
           code: "SW-2024-002",
           status: "in-progress" as const,
+          slotDate: "2024-01-15",
+          slotTime: "16:00 - 16:30",
+          checkInWindow: {
+            earliest: "15:45",
+            latest: "16:15"
+          },
+          registrationTime: "2024-01-14 18:45"
         },
         {
           id: "3",
@@ -179,6 +287,13 @@ export const staffApi = {
           time: "16:30",
           code: "SW-2024-003",
           status: "confirmed" as const,
+          slotDate: "2024-01-15",
+          slotTime: "16:30 - 17:00",
+          checkInWindow: {
+            earliest: "16:15",
+            latest: "16:45"
+          },
+          registrationTime: "2024-01-14 22:15"
         },
         {
           id: "4",
@@ -187,6 +302,13 @@ export const staffApi = {
           time: "17:00",
           code: "SW-2024-004",
           status: "confirmed" as const,
+          slotDate: "2024-01-15",
+          slotTime: "17:00 - 17:30",
+          checkInWindow: {
+            earliest: "16:45",
+            latest: "17:15"
+          },
+          registrationTime: "2024-01-15 09:20"
         },
       ];
     } catch (error) {
@@ -236,6 +358,9 @@ export const staffApi = {
           batteryIn: "B2",
           amount: 25,
           paymentMethod: "subscription" as const,
+          paymentStatus: "paid" as const,
+          paymentType: "online" as const,
+          date: "2024-01-15",
         },
         {
           id: "2",
@@ -246,6 +371,9 @@ export const staffApi = {
           batteryIn: "B1",
           amount: 25,
           paymentMethod: "card" as const,
+          paymentStatus: "pending" as const,
+          paymentType: "counter" as const,
+          date: "2024-01-15",
         },
         {
           id: "3",
@@ -256,11 +384,117 @@ export const staffApi = {
           batteryIn: "A2",
           amount: 25,
           paymentMethod: "cash" as const,
+          paymentStatus: "unpaid" as const,
+          paymentType: "counter" as const,
+          date: "2024-01-15",
+        },
+        {
+          id: "4",
+          customer: "Emily Davis",
+          vehicle: "Tesla Model Y",
+          time: "16:30",
+          batteryOut: "A2",
+          batteryIn: "B3",
+          amount: 30,
+          paymentMethod: "card" as const,
+          paymentStatus: "paid" as const,
+          paymentType: "online" as const,
+          date: "2024-01-15",
+        },
+        {
+          id: "5",
+          customer: "John Smith",
+          vehicle: "BMW i4",
+          time: "17:15",
+          batteryOut: "B1",
+          batteryIn: "A3",
+          amount: 25,
+          paymentMethod: "cash" as const,
+          paymentStatus: "pending" as const,
+          paymentType: "counter" as const,
+          date: "2024-01-15",
+        },
+        {
+          id: "6",
+          customer: "Lisa Wang",
+          vehicle: "Nissan Ariya",
+          time: "18:00",
+          batteryOut: "A3",
+          batteryIn: "B2",
+          amount: 28,
+          paymentMethod: "subscription" as const,
+          paymentStatus: "paid" as const,
+          paymentType: "online" as const,
+          date: "2024-01-15",
         },
       ];
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
+    }
+  },
+
+  // Revenue Statistics - Using mock data (API endpoint not available yet)
+  async getRevenueStats(stationId: number, period: 'monthly' | 'quarterly' | 'yearly' = 'monthly'): Promise<RevenueStats> {
+    try {
+      // API endpoint not available yet, return mock data
+      const mockTransactions = await this.getTransactions(stationId, 100);
+      
+      const totalRevenue = mockTransactions
+        .filter(t => t.paymentStatus === 'paid')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const onlineRevenue = mockTransactions
+        .filter(t => t.paymentStatus === 'paid' && t.paymentType === 'online')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const counterRevenue = mockTransactions
+        .filter(t => t.paymentStatus === 'paid' && t.paymentType === 'counter')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const paidTransactions = mockTransactions.filter(t => t.paymentStatus === 'paid').length;
+      const pendingTransactions = mockTransactions.filter(t => t.paymentStatus === 'pending').length;
+      const unpaidTransactions = mockTransactions.filter(t => t.paymentStatus === 'unpaid').length;
+      
+      const periodLabels = {
+        monthly: 'Tháng hiện tại',
+        quarterly: 'Quý hiện tại',
+        yearly: 'Năm hiện tại'
+      };
+      
+      return {
+        totalRevenue,
+        onlineRevenue,
+        counterRevenue,
+        paidTransactions,
+        pendingTransactions,
+        unpaidTransactions,
+        period,
+        periodLabel: periodLabels[period]
+      };
+    } catch (error) {
+      console.error('Error fetching revenue stats:', error);
+      return {
+        totalRevenue: 0,
+        onlineRevenue: 0,
+        counterRevenue: 0,
+        paidTransactions: 0,
+        pendingTransactions: 0,
+        unpaidTransactions: 0,
+        period,
+        periodLabel: 'Tháng hiện tại'
+      };
+    }
+  },
+
+  // Update Payment Status - Using mock data (API endpoint not available yet)
+  async updatePaymentStatus(transactionId: string, status: 'unpaid' | 'pending' | 'paid'): Promise<void> {
+    try {
+      // API endpoint not available yet, just log the update
+      console.log(`Updating transaction ${transactionId} payment status to ${status}`);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      throw error;
     }
   },
 
@@ -333,6 +567,68 @@ export const staffApi = {
       };
     } catch (error) {
       console.error('Error fetching staff profile:', error);
+      throw error;
+    }
+  },
+
+  // Check-in API
+  async checkInReservation(qrCode: string): Promise<ReservationData> {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock validation - in real app, this would validate QR signature
+      if (!qrCode || qrCode.length < 10) {
+        throw new Error("Mã QR không hợp lệ");
+      }
+
+      // Mock reservation data
+      return {
+        id: "reservation-guid-123",
+        status: 'CheckedIn',
+        qrCode: qrCode,
+        slotDate: "2025-10-09",
+        slotTime: "09:00 - 09:30",
+        checkInWindow: {
+          earliest: "08:45",
+          latest: "09:15"
+        },
+        customerInfo: {
+          name: "Nguyễn Văn A",
+          phone: "0123456789",
+          vehicle: "Tesla Model 3 2023"
+        },
+        assignedBattery: {
+          batteryUnitId: "battery-guid-456",
+          serialNumber: "BAT-12345",
+          chargeLevel: 100,
+          location: "Slot A-03"
+        }
+      };
+    } catch (error) {
+      console.error('Error checking in reservation:', error);
+      throw error;
+    }
+  },
+
+  // Cancel booking API
+  async cancelBooking(bookingId: string, reason: string = "StaffCancelled"): Promise<{ success: boolean; message: string }> {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock validation
+      if (!bookingId) {
+        throw new Error("Booking ID không hợp lệ");
+      }
+
+      // Mock successful cancellation
+      return {
+        success: true,
+        message: "Đặt đơn đã được hủy thành công"
+      };
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
       throw error;
     }
   },

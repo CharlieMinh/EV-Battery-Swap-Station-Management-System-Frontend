@@ -67,10 +67,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         if (response.data.token) {
           localStorage.setItem("authToken", response.data.token);
         }
-
         onLogin(response.data);
-        console.log(response.data);
-
         if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");
         else if (response.data.role === "Admin") navigate("/admin");
@@ -167,6 +164,17 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
                   {errorPassword && (
                     <p style={{ color: "red" }}>{errorPassword}</p>
                   )}
+                </div>
+
+                {/* Forgot Password Link */}
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-sm text-orange-500 hover:text-orange-600 hover:underline"
+                  >
+                    {t("login.forgotPassword")}
+                  </button>
                 </div>
 
                 {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}

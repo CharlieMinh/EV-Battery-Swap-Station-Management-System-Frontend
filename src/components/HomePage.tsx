@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -30,33 +30,37 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
+import MapView from "./map/MapView";
+import { fetchStations, Station } from "../services/admin/stationService";
+import { get } from "http";
 
-const stations = [
-  {
-    id: 1,
-    name: "Trạm 1",
-    coordinates: { lat: 10.762622, lng: 106.660172 },
-    address: "Q1, TP.HCM",
-  },
-  {
-    id: 2,
-    name: "Trạm 2",
-    coordinates: { lat: 10.7769, lng: 106.7009 },
-    address: "Q3, TP.HCM",
-  },
-  {
-    id: 3,
-    name: "Trạm 3",
-    coordinates: { lat: 10.795, lng: 106.682 },
-    address: "Phú Nhuận",
-  },
-];
+// const stations = [
+//   {
+//     id: 1,
+//     name: "Trạm 1",
+//     coordinates: { lat: 10.762622, lng: 106.660172 },
+//     address: "Q1, TP.HCM",
+//   },
+//   {
+//     id: 2,
+//     name: "Trạm 2",
+//     coordinates: { lat: 10.7769, lng: 106.7009 },
+//     address: "Q3, TP.HCM",
+//   },
+//   {
+//     id: 3,
+//     name: "Trạm 3",
+//     coordinates: { lat: 10.795, lng: 106.682 },
+//     address: "Phú Nhuận",
+//   },
+// ];
 
 export function Homepage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useGeoLocation();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
+  const [stations, setStations] = useState<Station[] | null>(null);
 
   const features = [
     {
@@ -182,13 +186,28 @@ export function Homepage() {
     stations,
   ]);
 
+  useEffect(() => {
+    const getAllStations = async () => {
+      try {
+        const response = await fetchStations(1, 20);
+        setStations(response.items);
+        console.log("Fetched stations:", response.items);
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+        throw error;
+      }
+    };
+    getAllStations();
+  }, []);
+
   const handleFineNearestStation = () => {
     if (location.loaded && !location.error) {
       const userLocation = {
         lat: location.coordinates.lat,
         lng: location.coordinates.lng,
       };
-
+      console.log("User location:", userLocation);
+      console.log("Stations:", stations);
       navigate("/map", {
         state: {
           userLocation,
@@ -409,11 +428,8 @@ export function Homepage() {
             <CardContent className="p-8">
               <div className="bg-orange-50 rounded-lg h-96 flex items-center justify-center mb-6">
                 <div className="text-center">
-                  <MapPin className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-                  <h3 className="text-xl text-gray-900 mb-2">
-                    {t("stations.mapTitle")}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{t("stations.mapDesc")}</p>
+                  <MapView />
+
                   <Button
                     onClick={handleFineNearestStation}
                     disabled={isButtonDisabled}

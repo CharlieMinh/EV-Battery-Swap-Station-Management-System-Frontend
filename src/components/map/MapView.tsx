@@ -1,10 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Coordinates,
-  findNearestStation,
-  getDistanceBetweenPoints,
-  Station,
-} from "./ormUtils";
+import { findNearestStation, getDistanceBetweenPoints } from "./ormUtils";
 import {
   MapContainer,
   TileLayer,
@@ -17,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import useGeoLocation from "./useGeoLocation";
 import { Map } from "leaflet";
 import { FaCrosshairs } from "react-icons/fa";
-
+import { Coordinates, Station } from "@/services/admin/stationService";
 interface MapState {
   userLocation: Coordinates;
   stations: Station[];
@@ -169,10 +164,10 @@ export default function MapView() {
 
         {/* Marker các trạm */}
         {stations.map((station) => {
-          const isNearest = station.id === nearestStation?.id;
+          const isNearest = station.name === nearestStation?.name;
           return (
             <Marker
-              key={station.id}
+              key={String(station?.name)}
               position={[station.coordinates.lat, station.coordinates.lng]}
             >
               <Popup>
