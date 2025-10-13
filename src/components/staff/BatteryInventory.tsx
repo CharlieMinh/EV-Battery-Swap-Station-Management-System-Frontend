@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { RefreshCw, Wrench, FileText, Filter, Plus, Battery, Layers, AlertTriangle } from "lucide-react";
+import { RefreshCw, Wrench, FileText, Filter, Plus, Battery, Layers, AlertTriangle, Download } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { Battery as BatteryType } from "../../services/staffApi";
 
@@ -13,6 +13,7 @@ interface BatteryInventoryProps {
   selectedBattery: string | null;
   onBatterySelect: (batteryId: string) => void;
   onNewInspection: () => void;
+  onTakeBattery: (batteryId: string) => void;
 }
 
 export function BatteryInventory({
@@ -20,21 +21,22 @@ export function BatteryInventory({
   selectedBattery,
   onBatterySelect,
   onNewInspection,
+  onTakeBattery,
 }: BatteryInventoryProps) {
   const { t } = useLanguage();
   const [filterBy, setFilterBy] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("slot");
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: number) => {
     switch (status) {
-      case "full":
-        return "bg-green-500";
-      case "charging":
-        return "bg-yellow-500";
-      case "maintenance":
-        return "bg-red-500";
-      case "empty":
+      case 0: // Empty
         return "bg-gray-500";
+      case 1: // Charging
+        return "bg-yellow-500";
+      case 2: // Full
+        return "bg-green-500";
+      case 3: // Maintenance
+        return "bg-red-500";
       default:
         return "bg-gray-500";
     }
@@ -47,7 +49,8 @@ export function BatteryInventory({
   };
 
   // Phân loại theo dung lượng
-  const getCapacityCategory = (health: number) => {
+  const getCapacityCategory = (health: number | undefined) => {
+    if (!health) return "critical";
     if (health >= 90) return "high";
     if (health >= 70) return "medium";
     if (health >= 50) return "low";
@@ -55,7 +58,8 @@ export function BatteryInventory({
   };
 
   // Phân loại theo model
-  const getModelCategory = (model: string) => {
+  const getModelCategory = (model: string | undefined) => {
+    if (!model) return "other";
     if (model.includes("Tesla")) return "tesla";
     if (model.includes("BYD")) return "byd";
     if (model.includes("VinFast")) return "vinfast";
@@ -64,10 +68,10 @@ export function BatteryInventory({
 
   // Phân loại theo tình trạng
   const getConditionCategory = (battery: BatteryType) => {
-    if (battery.status === "maintenance") return "maintenance";
-    if (battery.health < 50) return "critical";
-    if (battery.temperature > 45) return "overheated";
-    if (battery.cycles > 1000) return "aged";
+    if (battery.status === 3) return "maintenance"; // Maintenance status
+    if ((battery.health || 0) < 50) return "critical";
+    if ((battery.temperature || 0) > 45) return "overheated";
+    if ((battery.cycles || 0) > 1000) return "aged";
     return "good";
   };
 
@@ -112,19 +116,19 @@ export function BatteryInventory({
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "health":
-          return b.health - a.health;
+          return (b.health || 0) - (a.health || 0);
         case "cycles":
-          return b.cycles - a.cycles;
+          return (b.cycles || 0) - (a.cycles || 0);
         case "temperature":
-          return b.temperature - a.temperature;
+          return (b.temperature || 0) - (a.temperature || 0);
         case "voltage":
-          return b.voltage - a.voltage;
+          return (b.voltage || 0) - (a.voltage || 0);
         case "model":
-          return a.model.localeCompare(b.model);
+          return (a.model || "").localeCompare(b.model || "");
         case "status":
-          return a.status.localeCompare(b.status);
+          return a.status - b.status;
         default:
-          return a.slot.localeCompare(b.slot);
+          return (a.slot || "").localeCompare(b.slot || "");
       }
     });
   }, [batteries, filterBy, sortBy]);
@@ -166,6 +170,20 @@ export function BatteryInventory({
         <div className="flex space-x-2">
           <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg border-none" onClick={onNewInspection}>
             <Plus className="w-4 h-4 mr-2 text-white" /> {t("staff.newInspection")}
+          </Button>
+          <Button 
+            size="sm" 
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg border-none" 
+            onClick={() => {
+              if (selectedBattery) {
+                onTakeBattery(selectedBattery);
+              } else {
+                alert("Vui lòng chọn pin để lấy");
+              }
+            }}
+            disabled={!selectedBattery}
+          >
+            <Download className="w-4 h-4 mr-2 text-white" /> {t("staff.takeBattery")}
           </Button>
         </div>
       </div>
@@ -394,7 +412,11 @@ export function BatteryInventory({
                       )}`}
                     ></div>
                     <Badge variant="secondary">
-                      {t(`staff.${battery.status}`)}
+                      {battery.status === 0 ? t("staff.empty") :
+                       battery.status === 1 ? t("staff.charging") :
+                       battery.status === 2 ? t("staff.full") :
+                       battery.status === 3 ? t("staff.maintenance") :
+                       t("staff.unknown")}
                     </Badge>
                   </div>
                 </div>
@@ -402,22 +424,22 @@ export function BatteryInventory({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>{t("staff.health")}:</span>
-                    <span className={getHealthColor(battery.health)}>
-                      {battery.health}%
+                    <span className={getHealthColor(battery.health || 0)}>
+                      {battery.health || 0}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("staff.voltage")}:</span>
-                    <span>{battery.voltage}V</span>
+                    <span>{battery.voltage || 0}V</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("staff.cycles")}:</span>
-                    <span>{battery.cycles.toLocaleString()}</span>
+                    <span>{(battery.cycles || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("staff.temperature")}:</span>
-                    <span className={battery.temperature > 45 ? "text-red-600 font-medium" : ""}>
-                      {battery.temperature}°C
+                    <span className={(battery.temperature || 0) > 45 ? "text-red-600 font-medium" : ""}>
+                      {battery.temperature || 0}°C
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -428,7 +450,7 @@ export function BatteryInventory({
 
                 <div className="mt-3 pt-3 border-t">
                   <Progress 
-                    value={battery.health} 
+                    value={battery.health || 0} 
                     className={`h-2 mb-2 ${
                       capacityCategory === "high" ? "bg-green-100 [&>div]:bg-green-500" :
                       capacityCategory === "medium" ? "bg-yellow-100 [&>div]:bg-yellow-500" :
