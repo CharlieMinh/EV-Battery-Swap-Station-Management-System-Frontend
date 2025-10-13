@@ -46,14 +46,14 @@ function App() {
     <LanguageProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Homepage />} />
+          <Route path="/" element={<Homepage user={currentUser} onLogout={handleLogout} />} />
           <Route
             path="/login"
             element={
               <LoginPage
                 onLogin={handleLogin}
-                onRegister={() => {}}
-                onBackToHome={() => {}}
+                onRegister={() => { }}
+                onBackToHome={() => { }}
               />
             }
           />
@@ -62,8 +62,8 @@ function App() {
             element={
               <RegisterPage
                 onRegister={handleRegister}
-                onBackToHome={() => {}}
-                onBackToLogin={() => {}}
+                onBackToHome={() => { }}
+                onBackToLogin={() => { }}
               />
             }
           />
@@ -71,7 +71,7 @@ function App() {
             path="/forgot-password"
             element={<ForgotPasswordWrapper />}
           />
-          
+
           <Route
             path="/driver"
             element={

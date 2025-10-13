@@ -31,6 +31,7 @@ import {
   Car,
 } from "lucide-react";
 import { User } from "../App";
+import { useLocation } from "react-router-dom";
 
 // Import driver components
 import { StationMap } from "../components/driver/StationMap";
@@ -53,6 +54,7 @@ interface DriverPortalPageProps {
 }
 
 export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
+  const location = useLocation();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("swap");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
@@ -164,15 +166,13 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   useEffect(() => {
     async function fetchSwapHistory() {
       try {
-        // ✅ Nếu showAll = false → chỉ lấy 3 bản ghi đầu
-        // ✅ Nếu showAll = true → gọi API all=true để lấy hết
         const url = showAll
           ? "http://localhost:5194/api/v1/swaps/mine?all=true"
           : "http://localhost:5194/api/v1/swaps/mine?page=1&pageSize=3";
 
         const response = await axios.get(url, { withCredentials: true });
 
-        setSwapHistory(response.data);                // lưu cả object
+        setSwapHistory(response.data);
         setRecentSwaps(response.data.transactions);
       } catch (error: any) {
         console.error("Lỗi khi lấy lịch sử đổi pin:", error);
@@ -182,6 +182,12 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     fetchSwapHistory();
   }, [showAll]);
 
+  useEffect(() => {
+    const initialSectionFromHomePage = location.state.initialSection;
+    if (initialSectionFromHomePage) {
+      setActiveSection(initialSectionFromHomePage);
+    }
+  }, [location.state])
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       try {
@@ -296,7 +302,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             <SidebarGroup className="flex-1">
               <SidebarGroupContent className="h-full">
                 <SidebarMenu className="flex flex-col h-full">
-                  {/* <SidebarMenuItem>
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("map")}
                       isActive={activeSection === "map"}
@@ -305,7 +311,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem> */}
+                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("mycar")}
@@ -389,7 +395,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {/* {activeSection === "map" && t("driver.findStations")} */}
+                  {activeSection === "map" && t("driver.findStations")}
                   {activeSection === "mycar" && t("driver.mycar")}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
@@ -409,7 +415,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {/* {activeSection === "map" && (
+            {activeSection === "map" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <StationMap stations={stations} />
@@ -423,7 +429,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   />
                 </div>
               </div>
-            )} */}
+            )}
             {activeSection === "mycar" && (
               <div className="space-y-6">
                 <div>
@@ -433,7 +439,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             )}
             {activeSection === "swap" && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
                   <SwapStatus onQRDialog={() => setQrDialog(true)} />
 
                 </div>
@@ -487,6 +493,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       />
 
       <QRCodeDialog isOpen={qrDialog} onClose={() => setQrDialog(false)} />
-    </SidebarProvider>
+    </SidebarProvider >
   );
 }

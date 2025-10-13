@@ -27,12 +27,30 @@ import {
   Twitter,
   Instagram,
   Play,
+  Car,
+  History,
+  UserIcon,
+  LogOut,
+  Map,
+  QrCode,
+  Contact,
+  PhoneCall,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
 import MapView from "./map/MapView";
 import { fetchStations, Station } from "../services/admin/stationService";
+import type { User } from "../App";
 import { get } from "http";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 // const stations = [
 //   {
@@ -54,10 +72,18 @@ import { get } from "http";
 //     address: "Phú Nhuận",
 //   },
 // ];
+interface HomepageProps {
+  user: User | null;
+  onLogout: () => void;
+}
+export function Homepage({ user, onLogout }: HomepageProps) {
 
-export function Homepage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const handleNavigateToDashboard = (section: string) => {
+    navigate("/driver", { state: { initialSection: section } });
+  };
+
   const location = useGeoLocation();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   const [stations, setStations] = useState<Station[] | null>(null);
@@ -281,16 +307,62 @@ export function Homepage() {
               </a>
             </div>
             <div className="flex items-center space-x-4">
-              <LanguageSwitcher />
-              <Button variant="outline" onClick={() => navigate("/login")}>
-                {t("nav.signIn")}
-              </Button>
-              <Button
-                onClick={() => navigate("/register")}
-                className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
-              >
-                {t("nav.getStarted")}
-              </Button>
+              {!user ? (<><LanguageSwitcher />
+                <Button variant="outline" onClick={() => navigate("/login")}>
+                  {t("nav.signIn")}
+                </Button>
+                <Button
+                  onClick={() => navigate("/register")}
+                  className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
+                >
+                  {t("nav.getStarted")}
+                </Button></>) : (<DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-auto justify-start text-white hover:bg-orange-600 hover:text-white px-3">
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{user.name}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('map')}>
+                      <Map className="mr-2 h-4 w-4" />
+                      <span>Tìm trạm</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('mycar')}>
+                      <Car className="mr-2 h-4 w-4" />
+                      <span>Xe của tôi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('swap')}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      <span>Đơn đã đặt</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('history')}>
+                      <History className="mr-2 h-4 w-4" />
+                      <span>Lịch sử đổi pin</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('profile')}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Hồ sơ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('support')}>
+                      <PhoneCall className="mr-2 h-4 w-4" />
+                      <span>Hỗ trợ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Đăng xuất</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>)}
+
             </div>
           </div>
         </div>
@@ -488,9 +560,8 @@ export function Homepage() {
             {pricingPlans.map((plan, index) => (
               <Card
                 key={index}
-                className={`relative ${
-                  plan.popular ? "border-orange-500 border-2" : ""
-                }`}
+                className={`relative ${plan.popular ? "border-orange-500 border-2" : ""
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -517,11 +588,10 @@ export function Homepage() {
                     ))}
                   </ul>
                   <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                        : ""
-                    }`}
+                    className={`w-full ${plan.popular
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                      : ""
+                      }`}
                     variant={plan.popular ? "default" : "outline"}
                     onClick={() => navigate("/register")}
                   >
