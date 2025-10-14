@@ -2,26 +2,27 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Battery, Clock, MapPin, Star, Filter, Search } from "lucide-react";
+import { Clock, Phone, Search, Filter } from "lucide-react"; // Đã thêm icon Phone
 import { useLanguage } from "../LanguageContext";
 
-interface Station {
+// Interface Station không thay đổi
+export interface Station {
   id: string;
   name: string;
   address: string;
-  distance: string;
-  availableBatteries: number;
-  totalSlots: number;
-  rating: number;
-  pricePerSwap: number;
-  status: "open" | "maintenance";
-  waitTime: string;
-  hours: string;
+  city: string;
+  lat: number;
+  lng: number;
+  isActive: boolean;
+  openTime: string;
+  closeTime: string;
+  phoneNumber: string | null;
+  primaryImageUrl: string | null;
+  isOpenNow: boolean;
 }
 
 interface StationListProps {
-  stations: Station[];
+  stations: Station[] | null;
   selectedStation: string | null;
   searchQuery: string;
   onStationSelect: (stationId: string) => void;
@@ -39,78 +40,70 @@ export function StationList({
 }: StationListProps) {
   const { t } = useLanguage();
 
+  // Hiển thị thông báo khi không có trạm nào
+  if (!stations || stations.length === 0) {
+    return (
+      <Card className="border border-orange-500 rounded-lg">
+        <CardHeader>
+          <CardTitle className="text-orange-500 font-bold">{t("driver.availableStations")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-gray-500">{t("driver.noStationsFound")}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border border-orange-500 rounded-lg">
-      <CardHeader >
+      <CardHeader>
         <CardTitle className="text-orange-500 font-bold">{t("driver.availableStations")}</CardTitle>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" className="bg-orange-500 text-white">
-            <Filter className="w-4 h-4 mr-2 text-white" /> {t("driver.filter")}
-          </Button>
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 " />
-            <Input
-              placeholder={t("driver.searchStations")}
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-        </div>
+        {/* Phần search và filter có thể mở lại khi cần */}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {stations.map((station) => (
             <Card
               key={station.id}
-              className={`cursor-pointer transition-colors ${selectedStation === station.id
-                ? "border-2 border-orange-500 rounded-lg"
-                : "border border-orange-500 rounded-lg"
+              className={`cursor-pointer transition-all duration-200 overflow-hidden ${selectedStation === station.id
+                ? "border-2 border-orange-500 shadow-lg"
+                : "border border-gray-200 hover:shadow-md"
                 }`}
               onClick={() => onStationSelect(station.id)}
             >
+
               <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-medium font-bold text-orange-500">{station.name}</h3>
-                    <p className="text-sm text-gray-500">{station.address}</p>
+                    <h3 className="font-bold text-lg text-orange-600">{station.name}</h3>
+                    <p className="text-sm text-gray-500">{station.address}, {station.city}</p>
                   </div>
-                  <Badge className="bg-orange-500"
-                    variant={
-                      station.status === "open" ? "default" : "destructive"
-                    }
-                  >
-                    {t(`driver.${station.status}`)}
+                  {/* === HIỂN THỊ TRẠNG THÁI "MỞ CỬA" / "ĐÓNG CỬA" === */}
+                  <Badge variant={station.isOpenNow ? "default" : "destructive"} className={station.isOpenNow ? "bg-green-500" : ""}>
+                    {t(station.isOpenNow ? "driver.open" : "driver.closed")}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+
+                <div className="space-y-2 mb-4 text-sm text-gray-700">
                   <div className="flex items-center">
-                    <Battery className="w-4 h-4 mr-1 text-green-500" />
-                    {station.availableBatteries}/{station.totalSlots}{" "}
-                    {t("driver.available")}
+                    <Clock className="w-4 h-4 mr-2 text-orange-500" />
+                    <span>Giờ hoạt động: {station.openTime.substring(0, 5)} - {station.closeTime.substring(0, 5)}</span>
                   </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1 text-blue-500" />
-                    {station.waitTime}
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1 text-purple-500" />
-                    {station.distance}
-                  </div>
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 mr-1 text-yellow-500" />
-                    {station.rating}
-                  </div>
+                  {station.phoneNumber && (
+                    <div className="flex items-center">
+                      <Phone className="w-4 h-4 mr-2 text-orange-500" />
+                      <span>{station.phoneNumber}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between items-center mt-3">
-                  <span className="font-medium">
-                    ${station.pricePerSwap}/swap
-                  </span>
-                  <Button className="bg-orange-500"
+
+                <div className="flex justify-end items-center mt-3">
+                  <Button
+                    className="bg-orange-500 hover:bg-orange-600"
                     size="sm"
-                    disabled={station.status !== "open"}
+                    disabled={!station.isOpenNow} // Vô hiệu hóa nút nếu trạm đóng cửa
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // Ngăn sự kiện click của Card cha
                       onBooking();
                     }}
                   >
