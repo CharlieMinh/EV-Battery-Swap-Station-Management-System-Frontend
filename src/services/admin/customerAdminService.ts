@@ -22,7 +22,7 @@ export async function fetchCustomers(  page: number,
   pageSize: number
 ) {
     try {
-        const response = await api.get(`/v1/Users/customers?page=${page}&pageSize=${pageSize}`);
+        const response = await api.get(`/api/v1/Users/customers?page=${page}&pageSize=${pageSize}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching customers:', error);
@@ -32,7 +32,7 @@ export async function fetchCustomers(  page: number,
 
 export async function fetchCustomerById(id: String) {
     try {
-        const response = await api.get(`/v1/Users/${id}`);
+        const response = await api.get(`/api/v1/Users/${id}`);
         const customer = response.data;
         return customer as CustomerDetail;
     } catch (error) {

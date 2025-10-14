@@ -37,7 +37,7 @@ export async function fetchStations( page: number,
 )
  {
     try {
-        const response = await api.get(`/v1/Stations?page=${page}&pageSize=${pageSize}`)
+        const response = await api.get(`/api/v1/Stations?page=${page}&pageSize=${pageSize}`)
         const mappedItems = response.data.items.map((s: any) => ({
       id: s.id,
       name: s.name,
@@ -61,7 +61,7 @@ export async function fetchStations( page: number,
 
 export async function handleSubmit(data: any): Promise<Station> {
     try {
-        const response = await api.post('/v1/admin/stations',data , {withCredentials: true});       
+        const response = await api.post('/api/v1/admin/stations',data , {withCredentials: true});       
         return response.data;
     } catch (error) {
         console.error('Error adding station:', error);
@@ -71,7 +71,7 @@ export async function handleSubmit(data: any): Promise<Station> {
 
 export async function fetchStationById(id: string): Promise<Station> {
    try {
-      const response = await api.get(`/v1/Stations/${id}`); 
+      const response = await api.get(`/api/v1/Stations/${id}`); 
       return response.data;
    } catch (error) {
       console.error('Error fetching station by ID:', error);

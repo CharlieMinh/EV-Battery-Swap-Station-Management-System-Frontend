@@ -52,32 +52,11 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-// const stations = [
-//   {
-//     id: 1,
-//     name: "Trạm 1",
-//     coordinates: { lat: 10.762622, lng: 106.660172 },
-//     address: "Q1, TP.HCM",
-//   },
-//   {
-//     id: 2,
-//     name: "Trạm 2",
-//     coordinates: { lat: 10.7769, lng: 106.7009 },
-//     address: "Q3, TP.HCM",
-//   },
-//   {
-//     id: 3,
-//     name: "Trạm 3",
-//     coordinates: { lat: 10.795, lng: 106.682 },
-//     address: "Phú Nhuận",
-//   },
-// ];
 interface HomepageProps {
   user: User | null;
   onLogout: () => void;
 }
 export function Homepage({ user, onLogout }: HomepageProps) {
-
   const { t } = useLanguage();
   const navigate = useNavigate();
   const handleNavigateToDashboard = (section: string) => {
@@ -307,20 +286,31 @@ export function Homepage({ user, onLogout }: HomepageProps) {
               </a>
             </div>
             <div className="flex items-center space-x-4">
-              {!user ? (<><LanguageSwitcher />
-                <Button variant="outline" onClick={() => navigate("/login")}>
-                  {t("nav.signIn")}
-                </Button>
-                <Button
-                  onClick={() => navigate("/register")}
-                  className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
-                >
-                  {t("nav.getStarted")}
-                </Button></>) : (<DropdownMenu>
+              {!user ? (
+                <>
+                  <LanguageSwitcher />
+                  <Button variant="outline" onClick={() => navigate("/login")}>
+                    {t("nav.signIn")}
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/register")}
+                    className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
+                  >
+                    {t("nav.getStarted")}
+                  </Button>
+                </>
+              ) : (
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-auto justify-start text-white hover:bg-orange-600 hover:text-white px-3">
+                    <Button
+                      variant="ghost"
+                      className="relative h-10 w-auto justify-start text-white hover:bg-orange-600 hover:text-white px-3"
+                    >
                       <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} alt={user.name} />
+                        <AvatarImage
+                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`}
+                          alt={user.name}
+                        />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="font-medium">{user.name}</span>
@@ -328,30 +318,44 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user.name}
+                      </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('map')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("map")}
+                    >
                       <Map className="mr-2 h-4 w-4" />
                       <span>Tìm trạm</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('mycar')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("mycar")}
+                    >
                       <Car className="mr-2 h-4 w-4" />
                       <span>Xe của tôi</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('swap')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("swap")}
+                    >
                       <QrCode className="mr-2 h-4 w-4" />
                       <span>Đơn đã đặt</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('history')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("history")}
+                    >
                       <History className="mr-2 h-4 w-4" />
                       <span>Lịch sử đổi pin</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('profile')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("profile")}
+                    >
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>Hồ sơ</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigateToDashboard('support')}>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("support")}
+                    >
                       <PhoneCall className="mr-2 h-4 w-4" />
                       <span>Hỗ trợ</span>
                     </DropdownMenuItem>
@@ -361,8 +365,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       <span>Đăng xuất</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>)}
-
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
@@ -560,8 +564,9 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             {pricingPlans.map((plan, index) => (
               <Card
                 key={index}
-                className={`relative ${plan.popular ? "border-orange-500 border-2" : ""
-                  }`}
+                className={`relative ${
+                  plan.popular ? "border-orange-500 border-2" : ""
+                }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -588,10 +593,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                     ))}
                   </ul>
                   <Button
-                    className={`w-full ${plan.popular
-                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                      : ""
-                      }`}
+                    className={`w-full ${
+                      plan.popular
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                        : ""
+                    }`}
                     variant={plan.popular ? "default" : "outline"}
                     onClick={() => navigate("/register")}
                   >

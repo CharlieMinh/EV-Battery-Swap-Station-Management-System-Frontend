@@ -46,13 +46,10 @@ import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
 import { data } from "react-router-dom";
 
-
-
 interface DriverPortalPageProps {
   user: User;
   onLogout: () => void;
 }
-
 
 export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const location = useLocation();
@@ -75,8 +72,10 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
-  const [subscriptionUsage, setSubscriptionUsage] = useState<SubscriptionUsage | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] =
+    useState<SubscriptionInfo | null>(null);
+  const [subscriptionUsage, setSubscriptionUsage] =
+    useState<SubscriptionUsage | null>(null);
 
   const [stations, setStations] = useState<Station[] | null>(null);
   // const [slots, setSlots] = useState<Slot[] | null>(null);
@@ -139,7 +138,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     notes?: string;
   }
 
-
   interface UserData {
     id: string;
     email: string;
@@ -173,10 +171,13 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     const fetchActiveReservation = async () => {
       try {
         // 1. Gọi API để lấy các lịch hẹn của người dùng
-        const response = await axios.get("http://localhost:5194/api/v1/slot-reservations/mine", {
-          params: { status: 'Pending' }, // Chỉ lấy các lịch đang ở trạng thái "Pending"
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          "http://localhost:5194/api/v1/slot-reservations/mine",
+          {
+            params: { status: "Pending" }, // Chỉ lấy các lịch đang ở trạng thái "Pending"
+            withCredentials: true,
+          }
+        );
 
         // 2. Nếu server trả về có dữ liệu, lấy cái đầu tiên
         if (response.data && response.data.length > 0) {
@@ -215,13 +216,18 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     if (initialSectionFromHomePage) {
       setActiveSection(initialSectionFromHomePage);
     }
-  }, [location.state])
+  }, [location.state]);
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       try {
-        const infoResponse = await axios.get("http://localhost:5194/api/v1/subscriptions/mine",
-          { withCredentials: true, });
-        const usageResponse = await axios.get("http://localhost:5194/api/v1/subscriptions/mine/usage", { withCredentials: true, });
+        const infoResponse = await axios.get(
+          "http://localhost:5194/api/v1/subscriptions/mine",
+          { withCredentials: true }
+        );
+        const usageResponse = await axios.get(
+          "http://localhost:5194/api/v1/subscriptions/mine/usage",
+          { withCredentials: true }
+        );
         setSubscriptionInfo(infoResponse.data);
         setSubscriptionUsage(usageResponse.data);
         console.log("DATA 1:", infoResponse.data);
@@ -229,8 +235,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       } catch (error) {
         console.error("Fetch failed:", error);
       }
-
-    }
+    };
     fetchSubscriptionData();
   }, []);
   useEffect(() => {
@@ -249,15 +254,14 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const res = await axios.get("http://localhost:5194/api/v1/stations", { withCredentials: true, });
+        const res = await axios.get("http://localhost:5194/api/v1/stations", {
+          withCredentials: true,
+        });
         setStations(res.data.items);
-      } catch (error) {
-
-      }
-    }
+      } catch (error) {}
+    };
     fetchStations();
-  }, []
-  )
+  }, []);
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -269,7 +273,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       } catch (error) {
         console.error("Lỗi khi lấy thông tin người dùng:", error);
       }
-    }
+    };
     fetchProfile();
   }, []);
 
@@ -286,31 +290,32 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
   const fetchAvailableSlots = async () => {
     try {
-      const dateParam = typeof bookingDate === "string"
-        ? bookingDate
-        : bookingDate?.toISOString().slice(0, 10);
-      const res = await axios.get("http://localhost:5194/api/v1/slot-reservations/available-slots",
+      const dateParam =
+        typeof bookingDate === "string"
+          ? bookingDate
+          : bookingDate?.toISOString().slice(0, 10);
+      const res = await axios.get(
+        "http://localhost:5194/api/v1/slot-reservations/available-slots",
         {
           params: {
             stationId: selectedStation,
             date: dateParam,
-            batteryModelId: selectedVehicle?.compatibleBatteryModelId
-          }, withCredentials: true
-        });
+            batteryModelId: selectedVehicle?.compatibleBatteryModelId,
+          },
+          withCredentials: true,
+        }
+      );
       setSlots(res.data);
     } catch (error) {
       console.log("Thất bại khi lấy slot");
     }
-  }
+  };
   useEffect(() => {
     // Chỉ gọi API khi dialog đang mở và đã có đủ 3 thông tin
     if (bookingDialog && selectedStation && selectedVehicle && bookingDate) {
       fetchAvailableSlots();
     }
   }, [bookingDialog, selectedStation, selectedVehicle, bookingDate]); // Móc thần kỳ: Chạy lại khi 1 trong các giá trị này thay đổi
-
-
-
 
   const handleBooking = () => {
     if (selectedStation) {
@@ -333,13 +338,17 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     }
     setIsBooking(true);
     try {
-      const response = await axios.post("http://localhost:5194/api/v1/slot-reservations", {
-        stationId: selectedStation,
-        batteryModelId: selectedVehicle.compatibleBatteryModelId,
-        slotDate: bookingDate.toISOString().slice(0, 10),
-        slotStartTime: selectedSlot.slotStartTime,
-        slotEndTime: selectedSlot.slotEndTime,
-      }, { withCredentials: true });
+      const response = await axios.post(
+        "http://localhost:5194/api/v1/slot-reservations",
+        {
+          stationId: selectedStation,
+          batteryModelId: selectedVehicle.compatibleBatteryModelId,
+          slotDate: bookingDate.toISOString().slice(0, 10),
+          slotStartTime: selectedSlot.slotStartTime,
+          slotEndTime: selectedSlot.slotEndTime,
+        },
+        { withCredentials: true }
+      );
       setBookingResult(response.data);
       setActiveReservation(response.data);
       setBookingStep(5);
@@ -507,7 +516,10 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             {activeSection === "mycar" && (
               <div className="space-y-6">
                 <div>
-                  <MyVehicle vehicles={vehicles} onRefresh={handleRefreshVehicles} />
+                  <MyVehicle
+                    vehicles={vehicles}
+                    onRefresh={handleRefreshVehicles}
+                  />
                 </div>
               </div>
             )}
@@ -516,10 +528,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 <SwapStatus
                   // ✅ Truyền lịch hẹn đang hoạt động vào
                   activeReservation={activeReservation}
-
                   // ✅ Truyền hàm để mở dialog QR
                   onQRDialog={() => setQrDialog(true)}
-
                   // ✅ Truyền hàm để chuyển người dùng sang tab đặt lịch nếu họ chưa có lịch
                   onNavigateToBooking={() => setActiveSection("map")}
                 />
@@ -537,7 +547,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               </div>
             )}
 
-
             {activeSection === "profile" && (
               <div>
                 <DriverProfile
@@ -546,7 +555,10 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   onEmailChange={setProfileEmail}
                   onPhoneChange={setProfilePhone}
                 />
-                <SubscriptionStatus subscriptionInfo={subscriptionInfo} subscriptionUsage={subscriptionUsage} />
+                <SubscriptionStatus
+                  subscriptionInfo={subscriptionInfo}
+                  subscriptionUsage={subscriptionUsage}
+                />
               </div>
             )}
 
@@ -559,21 +571,17 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       <BookingWizard
         isOpen={bookingDialog}
         onClose={() => setBookingDialog(false)}
-
         stations={stations}
         vehicles={vehicles}
         slots={slots}
-
         bookingStep={bookingStep}
         selectedStation={selectedStation}
         selectedVehicle={selectedVehicle}
         bookingDate={bookingDate}
         selectedSlot={selectedSlot}
         bookingResult={bookingResult}
-
         isLoadingSlots={isLoadingSlots}
         isBooking={isBooking}
-
         onStepChange={setBookingStep}
         onVehicleSelect={setSelectedVehicle}
         onDateChange={setBookingDate}
@@ -582,7 +590,11 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
         onQRDialog={() => setQrDialog(true)}
       />
 
-      <QRCodeDialog isOpen={qrDialog} onClose={() => setQrDialog(false)} bookingResult={bookingResult} />
-    </SidebarProvider >
+      <QRCodeDialog
+        isOpen={qrDialog}
+        onClose={() => setQrDialog(false)}
+        bookingResult={bookingResult}
+      />
+    </SidebarProvider>
   );
 }

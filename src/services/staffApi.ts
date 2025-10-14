@@ -176,7 +176,7 @@ export const staffApi = {
         return [];
       }
       
-      const response = await api.get(`/BatteryUnits`);
+      const response = await api.get(`/api/BatteryUnits`);
       console.log('BatteryUnits API response:', response.data);
       console.log('Requested stationId:', stationId);
       console.log('All batteries:', response.data.data);
@@ -218,7 +218,7 @@ export const staffApi = {
   // Get all batteries without filtering
   async getAllBatteries(): Promise<Battery[]> {
     try {
-      const response = await api.get(`/BatteryUnits`);
+      const response = await api.get(`/api/BatteryUnits`);
       
       return response.data.data.map((battery: any) => ({
         id: battery.id,
@@ -248,7 +248,7 @@ export const staffApi = {
 
   async updateBatteryStatus(batteryId: string, status: number, staffId: string): Promise<void> {
     try {
-      await api.patch(`/BatteryUnits/${batteryId}/status`, {
+      await api.patch(`/api/BatteryUnits/${batteryId}/status`, {
         status, // Use number status (0=Empty, 1=Charging, 2=Full, 3=Maintenance)
         staffId
       });
@@ -266,7 +266,7 @@ export const staffApi = {
     registrationTime: string;
   }> {
     try {
-      const response = await api.get(`/v1/slot-reservations/${bookingId}`);
+      const response = await api.get(`/api/v1/slot-reservations/${bookingId}`);
       const reservation = response.data;
       
       return {
@@ -287,7 +287,7 @@ export const staffApi = {
   // Queue Management - Using real API with Reservations endpoint
   async getQueue(stationId: number): Promise<Booking[]> {
     try {
-      const response = await api.get(`/v1/Reservations`);
+      const response = await api.get(`/api/v1/Reservations`);
       return response.data.map((booking: any) => ({
         id: booking.id,
         userId: booking.userId,
@@ -325,7 +325,7 @@ export const staffApi = {
   // Swap Process - Using real API (Backend completed 100%)
   async startSwapProcess(bookingId: string, staffId: string, stationId: number): Promise<void> {
     try {
-      await api.post('/v1/swaps/start', {
+      await api.post('/api/v1/swaps/start', {
         reservationId: bookingId,
         staffId,
         stationId
@@ -338,7 +338,7 @@ export const staffApi = {
 
   async completeSwapProcess(swapData: SwapData, staffId: string, stationId: number): Promise<void> {
     try {
-      await api.put(`/v1/swaps/${swapData.bookingId}/complete`, {
+      await api.put(`/api/v1/swaps/${swapData.bookingId}/complete`, {
         ...swapData,
         staffId,
         stationId
@@ -357,7 +357,7 @@ export const staffApi = {
         pageSize: limit.toString()
       });
       
-      const response = await api.get(`/v1/swaps/history?${params}`);
+      const response = await api.get(`/api/v1/swaps/history?${params}`);
       return response.data.transactions.map((transaction: any) => ({
         id: transaction.id,
         transactionNumber: transaction.transactionNumber,
@@ -461,7 +461,7 @@ export const staffApi = {
   async updatePaymentStatus(transactionId: string, status: 'unpaid' | 'pending' | 'paid'): Promise<void> {
     try {
       const isPaid = status === 'paid';
-      await api.put(`/v1/swaps/${transactionId}/payment-status`, {
+      await api.put(`/api/v1/swaps/${transactionId}/payment-status`, {
         isPaid
       });
     } catch (error) {
@@ -517,7 +517,7 @@ export const staffApi = {
   async createInspection(inspectionData: InspectionData, staffId: string, stationId: number): Promise<void> {
     try {
       // Update battery condition using existing endpoint
-      await api.patch(`/BatteryUnits/${inspectionData.batteryId}/status`, {
+      await api.patch(`/api/BatteryUnits/${inspectionData.batteryId}/status`, {
         health: inspectionData.health,
         voltage: inspectionData.voltage,
         temperature: inspectionData.temperature,
@@ -534,7 +534,7 @@ export const staffApi = {
   // Get Station Info - Using real API (Only this endpoint works)
   async getStationInfo(stationId: number): Promise<any> {
     try {
-      const response = await api.get(`/v1/Stations/${stationId}`);
+      const response = await api.get(`/api/v1/Stations/${stationId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching station info:', error);
@@ -556,7 +556,7 @@ export const staffApi = {
         };
       }
       
-      const response = await api.get(`/v1/Users/${staffId}`);
+      const response = await api.get(`/api/v1/Users/${staffId}`);
       return {
         id: response.data.id,
         name: response.data.name || response.data.fullName,
@@ -582,7 +582,7 @@ export const staffApi = {
       }
 
       // Call check-in API
-      await api.post(`/v1/slot-reservations/${reservation.id}/check-in`);
+      await api.post(`/api/v1/slot-reservations/${reservation.id}/check-in`);
       
       return {
         id: reservation.id,
@@ -627,7 +627,7 @@ export const staffApi = {
   // Cancel booking API - Using real API with SlotReservations endpoint
   async cancelBooking(bookingId: string, reason: string = "StaffCancelled"): Promise<{ success: boolean; message: string }> {
     try {
-      await api.delete(`/v1/slot-reservations/${bookingId}`);
+      await api.delete(`/api/v1/slot-reservations/${bookingId}`);
       return {
         success: true,
         message: `Booking ${bookingId} cancelled successfully. Reason: ${reason}`
@@ -675,7 +675,7 @@ export const staffApi = {
   // Additional API functions for new features - Using BatteryUnits table
   async takeBattery(batteryId: string, staffId: string, stationId: number): Promise<void> {
     try {
-      await api.post(`/BatteryUnits/add-to-station`, {
+      await api.post(`/api/BatteryUnits/add-to-station`, {
         staffId,
         stationId
       });
@@ -687,7 +687,7 @@ export const staffApi = {
 
   async createPayment(transactionId: string, paymentMethod: string, amount: number): Promise<any> {
     try {
-      const response = await api.post(`/v1/payments/vnpay/create`, {
+      const response = await api.post(`/api/v1/payments/vnpay/create`, {
         transactionId,
         method: paymentMethod,
         amount
@@ -701,7 +701,7 @@ export const staffApi = {
 
   async getInvoice(transactionId: string): Promise<any> {
     try {
-      const response = await api.get(`/v1/invoices/${transactionId}`);
+      const response = await api.get(`/api/v1/invoices/${transactionId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching invoice:', error);
@@ -723,7 +723,7 @@ export const staffApi = {
 
   async updateReservationStatus(reservationId: string, status: number): Promise<void> {
     try {
-      await api.put(`/v1/slot-reservations/${reservationId}`, { status });
+      await api.put(`/api/v1/slot-reservations/${reservationId}`, { status });
     } catch (error) {
       console.error('Error updating reservation status:', error);
       throw error;
@@ -732,7 +732,7 @@ export const staffApi = {
 
   async getBatteryCondition(batteryId: string): Promise<any> {
     try {
-      const response = await api.get(`/BatteryUnits/${batteryId}`);
+      const response = await api.get(`/api/BatteryUnits/${batteryId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching battery condition:', error);
@@ -742,7 +742,7 @@ export const staffApi = {
 
   async updateBatteryCondition(batteryId: string, conditionData: any): Promise<void> {
     try {
-      await api.patch(`/BatteryUnits/${batteryId}/status`, conditionData);
+      await api.patch(`/api/BatteryUnits/${batteryId}/status`, conditionData);
     } catch (error) {
       console.error('Error updating battery condition:', error);
       throw error;
