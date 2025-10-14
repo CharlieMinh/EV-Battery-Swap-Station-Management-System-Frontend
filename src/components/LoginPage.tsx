@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -28,8 +28,7 @@ import {
 import { User as UserType } from "../App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { on } from "events";
-import { error } from "console";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 interface LoginPageProps {
   onLogin: (user: UserType) => void;
@@ -46,6 +45,22 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleLoginSuccess = (response: { token: string; role: string; name: string }) => {
+    // Create user object
+    const user: UserType = {
+      id: '', 
+      email: '', 
+      name: response.name,
+      role: response.role as any
+    };
+
+    onLogin(user);
+  };
+
+  const handleGoogleLoginError = (error: any) => {
+    setErrorEmail(error);
+  };
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -188,11 +203,24 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
                 </Button>
               </form>
 
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-muted-foreground">
+                    {t("login.orContinueWith") || "Or continue with"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Google Login Button */}
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-center">
-                  <Chrome className="w-4 h-4 mr-2" />
-                  {t("login.continueWithGoogle")}
-                </Button>
+                <GoogleLoginButton 
+                  onSuccess={handleGoogleLoginSuccess}
+                  onError={handleGoogleLoginError}
+                />
               </div>
 
               {/* <TabsContent value="demo" className="space-y-4">
