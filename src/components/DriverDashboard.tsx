@@ -194,22 +194,24 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   useEffect(() => {
     async function fetchSwapHistory() {
       try {
-        const url = showAll
-          ? "http://localhost:5194/api/v1/swaps/mine?all=true"
-          : "http://localhost:5194/api/v1/swaps/mine?page=1&pageSize=3";
+        let url;
+        if (showAll) {
+          url = "http://localhost:5194/api/v1/swaps/history?page=1&pageSize=50";
+        } else {
+          url = "http://localhost:5194/api/v1/swaps/history?page=1&pageSize=3";
+        }
 
         const response = await axios.get(url, { withCredentials: true });
-
         setSwapHistory(response.data);
         setRecentSwaps(response.data.transactions);
-      } catch (error: any) {
+
+      } catch (error) {
         console.error("Lỗi khi lấy lịch sử đổi pin:", error);
       }
     }
 
     fetchSwapHistory();
   }, [showAll]);
-
   useEffect(() => {
     const initialSectionFromHomePage = location.state.initialSection;
     if (initialSectionFromHomePage) {
