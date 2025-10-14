@@ -7,34 +7,55 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { QrCode, Download } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import { QRCodeSVG } from "qrcode.react"; // 1. Import công cụ vẽ QR
 
 interface QRCodeDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  bookingResult: any; // 2. Thêm prop để nhận dữ liệu đặt chỗ
 }
 
-export function QRCodeDialog({ isOpen, onClose }: QRCodeDialogProps) {
+export function QRCodeDialog({ isOpen, onClose, bookingResult }: QRCodeDialogProps) {
   const { t } = useLanguage();
 
+  // Lấy chuỗi qrCode và mã đặt chỗ từ kết quả
+  const qrCodeValue = bookingResult?.qrCode;
+  const reservationCode = bookingResult?.reservationCode;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpen-change={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("driver.checkInQRCode")}</DialogTitle>
           <DialogDescription>{t("driver.scanAtStation")}</DialogDescription>
         </DialogHeader>
-        <div className="text-center space-y-4">
-          <div className="bg-white p-8 rounded-lg border-2 border-dashed border-gray-300">
-            <QrCode className="w-32 h-32 mx-auto text-gray-400" />
-          </div>
-          <div>
-            <p className="font-mono text-lg">SW-2024-001</p>
-            <p className="text-sm text-gray-500">{t("driver.expiresIn")}</p>
-          </div>
-          <Button className="w-full">
-            <Download className="w-4 h-4 mr-2" /> {t("driver.saveToPhone")}
+        <div className="flex flex-col items-center justify-center p-6 space-y-4">
+          {qrCodeValue ? (
+            <>
+              {/* 3. Dùng QRCodeSVG để vẽ hình ảnh QR */}
+              <div className="bg-white p-4 rounded-lg border">
+                <QRCodeSVG
+                  value={qrCodeValue}
+                  size={256}
+                  bgColor={"#ffffff"}
+                  fgColor={"#000000"}
+                  level={"L"}
+                />
+              </div>
+
+              {/* 4. Hiển thị mã đặt chỗ thật */}
+              <div>
+                <p className="font-mono text-lg tracking-widest">{reservationCode}</p>
+                <p className="text-sm text-center text-gray-500">{t("driver.yourBookingCode")}</p>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-500 py-10">{t("driver.noQrCode")}</p>
+          )}
+
+          <Button variant="outline" className="w-full" onClick={onClose}>
+            {t("driver.close")}
           </Button>
         </div>
       </DialogContent>

@@ -53,15 +53,16 @@ interface DriverPortalPageProps {
   onLogout: () => void;
 }
 
+
 export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const location = useLocation();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("swap");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
-  const [bookingStep, setBookingStep] = useState(1);
-  const [selectedVehicle, setSelectedVehicle] = useState<string>("");
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [bookingDialog, setBookingDialog] = useState(false);
+  // const [bookingStep, setBookingStep] = useState(1);
+  // const [selectedVehicle, setSelectedVehicle] = useState<string>("");
+  // const [selectedTime, setSelectedTime] = useState<string>("");
+  // const [bookingDialog, setBookingDialog] = useState(false);
   const [qrDialog, setQrDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [profileName, setProfileName] = useState<string>(user.name);
@@ -71,13 +72,58 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
   const [swapHistory, setSwapHistory] = useState<any>(null);
   const [recentSwaps, setRecentSwaps] = useState<Swap[]>([]);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [subscriptionUsage, setSubscriptionUsage] = useState<SubscriptionUsage | null>(null);
 
+  const [stations, setStations] = useState<Station[] | null>(null);
+  // const [slots, setSlots] = useState<Slot[] | null>(null);
+  // const [bookingDate, setBookingDate] = useState<Date | null>(null);
+  // const [bookingVehicle, setBookingVehicle] = useState<Vehicle | null>(null);
+  const [bookingDialog, setBookingDialog] = useState(false);
+  const [bookingStep, setBookingStep] = useState(1);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null); // Sửa: Dùng object Vehicle, không dùng string
+  const [bookingDate, setBookingDate] = useState<Date | undefined>(new Date()); // Sửa: Khởi tạo giá trị mặc định
+  const [slots, setSlots] = useState<Slot[]>([]); // Sửa: Khởi tạo là mảng rỗng
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null); // Sửa: Đổi tên từ selectedTime
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingResult, setBookingResult] = useState<any>(null);
 
+  const [activeReservation, setActiveReservation] = useState<any>(null);
+  interface Slot {
+    slotStartTime: string;
+    slotEndTime: string;
+    totalCapacity: number;
+    currentReservations: number;
+    isAvailable: boolean;
+  }
+  interface Vehicle {
+    id: string;
+    compatibleBatteryModelId: string;
+    vin: string;
+    plate: string;
+    brand: string;
+    vehicleModelFullName?: string;
+    compatibleBatteryModelName?: string;
+    photoUrl?: string;
+  }
+  interface Station {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    lat: number;
+    lng: number;
+    isActive: boolean;
+    openTime: string;
+    closeTime: string;
+    phoneNumber: string | null;
+    primaryImageUrl: string | null;
+    isOpenNow: boolean;
+  }
   interface Swap {
     id: string;
     transactionNumber: string;
@@ -92,6 +138,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     isPaid: boolean;
     notes?: string;
   }
+
 
   interface UserData {
     id: string;
@@ -122,47 +169,28 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     monthlyUsage: MonthlyUsage[];
   }
 
-  const stations = [
-    {
-      id: "1",
-      name: "Downtown Hub",
-      address: "123 Main St, City Center",
-      distance: "0.8 km",
-      availableBatteries: 12,
-      totalSlots: 20,
-      rating: 4.8,
-      pricePerSwap: 25,
-      status: "open" as const,
-      waitTime: "< 5 min",
-      hours: "24/7",
-    },
-    {
-      id: "2",
-      name: "Mall Station",
-      address: "456 Shopping Ave",
-      distance: "1.2 km",
-      availableBatteries: 8,
-      totalSlots: 15,
-      rating: 4.6,
-      pricePerSwap: 25,
-      status: "open" as const,
-      waitTime: "10-15 min",
-      hours: "6AM - 11PM",
-    },
-    {
-      id: "3",
-      name: "Airport Terminal",
-      address: "789 Airport Rd",
-      distance: "5.4 km",
-      availableBatteries: 0,
-      totalSlots: 25,
-      rating: 4.9,
-      pricePerSwap: 30,
-      status: "maintenance" as const,
-      waitTime: "Closed",
-      hours: "Maintenance",
-    },
-  ];
+  useEffect(() => {
+    const fetchActiveReservation = async () => {
+      try {
+        // 1. Gọi API để lấy các lịch hẹn của người dùng
+        const response = await axios.get("http://localhost:5194/api/v1/slot-reservations/mine", {
+          params: { status: 'Pending' }, // Chỉ lấy các lịch đang ở trạng thái "Pending"
+          withCredentials: true,
+        });
+
+        // 2. Nếu server trả về có dữ liệu, lấy cái đầu tiên
+        if (response.data && response.data.length > 0) {
+          // 3. Bỏ dữ liệu vào state "activeReservation"
+          setActiveReservation(response.data[0]);
+        }
+      } catch (error) {
+        console.error("Không thể lấy lịch hẹn đang hoạt động:", error);
+      }
+    };
+
+    fetchActiveReservation();
+  }, []);
+
   useEffect(() => {
     async function fetchSwapHistory() {
       try {
@@ -211,7 +239,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
         const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
           withCredentials: true,
         });
-        console.log("Vehicle data:", res.data);
         setVehicles(res.data);
       } catch (err) {
         console.error("Fetch failed:", err);
@@ -219,7 +246,18 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     };
     fetchData();
   }, []);
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const res = await axios.get("http://localhost:5194/api/v1/stations", { withCredentials: true, });
+        setStations(res.data.items);
+      } catch (error) {
 
+      }
+    }
+    fetchStations();
+  }, []
+  )
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -246,34 +284,70 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     }
   };
 
+  const fetchAvailableSlots = async () => {
+    try {
+      const dateParam = typeof bookingDate === "string"
+        ? bookingDate
+        : bookingDate?.toISOString().slice(0, 10);
+      const res = await axios.get("http://localhost:5194/api/v1/slot-reservations/available-slots",
+        {
+          params: {
+            stationId: selectedStation,
+            date: dateParam,
+            batteryModelId: selectedVehicle?.compatibleBatteryModelId
+          }, withCredentials: true
+        });
+      setSlots(res.data);
+    } catch (error) {
+      console.log("Thất bại khi lấy slot");
+    }
+  }
+  useEffect(() => {
+    // Chỉ gọi API khi dialog đang mở và đã có đủ 3 thông tin
+    if (bookingDialog && selectedStation && selectedVehicle && bookingDate) {
+      fetchAvailableSlots();
+    }
+  }, [bookingDialog, selectedStation, selectedVehicle, bookingDate]); // Móc thần kỳ: Chạy lại khi 1 trong các giá trị này thay đổi
 
 
 
-  const timeSlots = [
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-  ];
 
   const handleBooking = () => {
     if (selectedStation) {
-      setBookingDialog(true);
+      // Reset lại toàn bộ state của wizard về giá trị ban đầu
       setBookingStep(1);
+      setSelectedVehicle(null);
+      setBookingDate(new Date());
+      setSelectedSlot(null);
+      setSlots([]);
+      setBookingResult(null);
+
+      // Mở dialog
+      setBookingDialog(true);
+    }
+  };
+  const handleConfirmBooking = async () => {
+    if (!selectedStation || !selectedVehicle || !bookingDate || !selectedSlot) {
+      alert("Vui lòng chọn đầy đủ thông tin đặt chỗ!");
+      return;
+    }
+    setIsBooking(true);
+    try {
+      const response = await axios.post("http://localhost:5194/api/v1/slot-reservations", {
+        stationId: selectedStation,
+        batteryModelId: selectedVehicle.compatibleBatteryModelId,
+        slotDate: bookingDate.toISOString().slice(0, 10),
+        slotStartTime: selectedSlot.slotStartTime,
+        slotEndTime: selectedSlot.slotEndTime,
+      }, { withCredentials: true });
+      setBookingResult(response.data);
+      setActiveReservation(response.data);
+      setBookingStep(5);
+    } catch (error) {
+      console.error("Lỗi khi xác nhận đặt chỗ:", error);
+      alert("Đặt chỗ thất bại, có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -417,8 +491,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
           <main className="flex-1 p-6">
             {activeSection === "map" && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <StationMap stations={stations} />
+                <div className="grid grid-cols-1">
+                  {/* <StationMap stations={stations} />*/}
                   <StationList
                     stations={stations}
                     selectedStation={selectedStation}
@@ -439,10 +513,16 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             )}
             {activeSection === "swap" && (
               <div className="space-y-6">
-                <div>
-                  <SwapStatus onQRDialog={() => setQrDialog(true)} />
+                <SwapStatus
+                  // ✅ Truyền lịch hẹn đang hoạt động vào
+                  activeReservation={activeReservation}
 
-                </div>
+                  // ✅ Truyền hàm để mở dialog QR
+                  onQRDialog={() => setQrDialog(true)}
+
+                  // ✅ Truyền hàm để chuyển người dùng sang tab đặt lịch nếu họ chưa có lịch
+                  onNavigateToBooking={() => setActiveSection("map")}
+                />
               </div>
             )}
 
@@ -479,20 +559,30 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       <BookingWizard
         isOpen={bookingDialog}
         onClose={() => setBookingDialog(false)}
-        bookingStep={bookingStep}
-        selectedVehicle={selectedVehicle}
-        selectedTime={selectedTime}
-        selectedStation={selectedStation}
-        vehicles={vehicles}
+
         stations={stations}
-        timeSlots={timeSlots}
+        vehicles={vehicles}
+        slots={slots}
+
+        bookingStep={bookingStep}
+        selectedStation={selectedStation}
+        selectedVehicle={selectedVehicle}
+        bookingDate={bookingDate}
+        selectedSlot={selectedSlot}
+        bookingResult={bookingResult}
+
+        isLoadingSlots={isLoadingSlots}
+        isBooking={isBooking}
+
         onStepChange={setBookingStep}
         onVehicleSelect={setSelectedVehicle}
-        onTimeSelect={setSelectedTime}
+        onDateChange={setBookingDate}
+        onSlotSelect={setSelectedSlot}
+        onConfirm={handleConfirmBooking}
         onQRDialog={() => setQrDialog(true)}
       />
 
-      <QRCodeDialog isOpen={qrDialog} onClose={() => setQrDialog(false)} />
+      <QRCodeDialog isOpen={qrDialog} onClose={() => setQrDialog(false)} bookingResult={bookingResult} />
     </SidebarProvider >
   );
 }
