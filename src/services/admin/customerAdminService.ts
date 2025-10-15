@@ -6,6 +6,7 @@ export interface Customer {
     email: String;
     name: String;
     PhoneNumber: String;
+    status: String;
     createdAt: Date;
     lastLogin: Date;
     totalReservations: Number;

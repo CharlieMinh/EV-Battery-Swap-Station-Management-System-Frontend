@@ -1365,6 +1365,8 @@ const translations = {
     "admin.resolve": "Xử lí",
     "admin.customerDetail": "Chi tiết Khách hàng",
     "admin.viewHistory": "Xem lịch sử",
+    "admin.Active": "Hoạt động",
+    "admin.Blocked": "Bị khóa",
 
     "admin.updateProfile": "Cập nhật hồ sơ",
 

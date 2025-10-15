@@ -1,0 +1,30 @@
+import api from "@/configs/axios";
+
+export interface Staff {
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber: string | null;
+    role: string;
+    status: string;
+    createdAt: Date;
+    lastLogin: Date;
+}
+
+export interface StaffDetails extends Staff {
+    totalReservationsVerified: number;
+    totalSwapTransactions: number;
+    recentReservationsVerified: number;
+    recentSwapTransactions: number;
+}
+
+export async function fetchStaffList(page: number, pageSize: number) {
+    try {
+        const response = await api.get(`/api/v1/Users/staff?page=${page}&pageSize=${pageSize}`);
+        console.log(" API response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching staff list:', error);
+        throw error;
+    }
+}
