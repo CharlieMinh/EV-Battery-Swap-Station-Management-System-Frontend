@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,22 +11,36 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Eye, Edit, Plus, Filter } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface StaffMember {
-  id: string;
-  name: string;
-  role: string;
-  station: string;
-  performance: number;
-  status: "active" | "on-leave";
-}
+import { fetchStaffList, Staff } from "@/services/admin/staffAdminService";
+import { get } from "http";
 
 interface StaffManagementProps {
-  staff: StaffMember[];
+  staff: Staff[];
 }
 
-export function StaffManagement({ staff }: StaffManagementProps) {
+export function StaffManagement() {
   const { t } = useLanguage();
+
+  const [staffList, setStaffList] = useState<Staff[] | null>(null);
+
+  useEffect(() => {
+    const getAllStaff = async () => {
+      try {
+        const response = await fetchStaffList(1, 20);
+        setStaffList(response.data);
+        console.log("Fetched staff:", response.data);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        throw error;
+      }
+    };
+    getAllStaff();
+  }, []);
+
+  if (!staffList) {
+    console.log("Staff list is null or undefined");
+    return;
+  }
 
   const getPerformanceColor = (performance: number) => {
     if (performance >= 95) return "text-green-600";
@@ -61,7 +75,7 @@ export function StaffManagement({ staff }: StaffManagementProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {staff.map((member) => (
+            {staffList.map((member) => (
               <div
                 key={member.id}
                 className="flex items-center justify-between p-4 border rounded-lg border border-orange-200 rounded-lg"
@@ -75,10 +89,10 @@ export function StaffManagement({ staff }: StaffManagementProps) {
                   <div>
                     <p className="font-medium">{member.name}</p>
                     <p className="text-sm text-gray-500">{member.role}</p>
-                    <p className="text-xs text-gray-400">{member.station}</p>
+                    {/* <p className="text-xs text-gray-400">{member.station}</p> */}
                     <Badge
                       className={
-                        member.status === "active"
+                        member.status === "Active"
                           ? "bg-green-400 text-white"
                           : "bg-red-500 text-white "
                       }
@@ -90,13 +104,13 @@ export function StaffManagement({ staff }: StaffManagementProps) {
                 <div className="text-center">
                   <div className="flex flex-col items-center text-center">
                     <div className="">
-                      <p
+                      {/* <p
                         className={`text-sm font-medium ${getPerformanceColor(
                           member.performance
                         )}`}
                       >
                         {member.performance}%
-                      </p>
+                      </p> */}
                       <p className="text-xs text-gray-500">
                         {t("admin.performance")}
                       </p>

@@ -115,16 +115,16 @@ export function CustomerManagement() {
                     <p className="font-medium">{customer.name}</p>
                     <p className="text-sm text-gray-500">{customer.email}</p>
                     <div className="flex items-center space-x-2 mt-1 ">
-                      {/* <Badge
+                      <Badge
                         className={
-                          customer.status === "active"
+                          customer.status === "Active"
                             ? "bg-green-400 text-white"
                             : "bg-red-500 text-white "
                         }
                       >
                         {t(`admin.${customer.status}`)}
                       </Badge>
-                      <span className="text-xs text-gray-400">
+                      {/* <span className="text-xs text-gray-400">
                         {customer.plan}
                       </span> */}
                     </div>

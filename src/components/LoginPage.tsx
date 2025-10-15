@@ -46,13 +46,17 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleLoginSuccess = (response: { token: string; role: string; name: string }) => {
+  const handleGoogleLoginSuccess = (response: {
+    token: string;
+    role: string;
+    name: string;
+  }) => {
     // Create user object
     const user: UserType = {
-      id: '', 
-      email: '', 
+      id: "",
+      email: "",
       name: response.name,
-      role: response.role as any
+      role: response.role as any,
     };
 
     onLogin(user);
@@ -76,7 +80,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         },
         { withCredentials: true }
       );
-
+      onLogin(response.data);
       if (response.data.role) {
         // Save token to localStorage
         if (response.data.token) {
@@ -217,7 +221,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
 
               {/* Google Login Button */}
               <div className="space-y-3">
-                <GoogleLoginButton 
+                <GoogleLoginButton
                   onSuccess={handleGoogleLoginSuccess}
                   onError={handleGoogleLoginError}
                 />
