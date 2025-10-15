@@ -5,30 +5,21 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-<<<<<<< HEAD
-import { fetchStations } from "@/services/stationService";
-import { Station } from "@/services/stationService";
+import { fetchStations, Station } from "@/services/admin/stationService";
 import AddStationModal from "./AddStationModal";
+import { DetailOfStation } from "./DetailOfStation";
 
 interface StationManagementProps {
   stationPerformance: Station[];
 }
-=======
-import { fetchStations } from "@/services/admin/stationService";
-import { Station } from "@/services/admin/stationService";
-import { DetailOfStation } from "./DetailOfStation";
->>>>>>> origin
 
 export function StationManagement() {
   const { t } = useLanguage();
   const [stationPerformance, setStationPerformance] = useState<Station[]>([]);
-<<<<<<< HEAD
   const [isOpen, setIsOpen] = useState(false);
-=======
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     null
   );
->>>>>>> origin
 
   useEffect(() => {
     // Simulate fetching data from an API

@@ -176,7 +176,6 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
 
-<<<<<<< HEAD
     // Forgot Password
     "forgotPassword.title": "Forgot Password",
     "forgotPassword.subtitle":
@@ -250,12 +249,10 @@ const translations = {
       "You have exceeded the maximum number of requests per hour",
     "forgotPassword.timeRemaining": "Time remaining",
 
-=======
     //role name
     "role.driver": "Driver",
     "role.admin": "Admin",
     "role.staff": "Staff",
->>>>>>> origin
     // Register
     "register.name": "Name",
     "register.joinEVSwap": "Join EVSwap",
@@ -1439,9 +1436,7 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
     "admin.resolve": "Xử lí",
-<<<<<<< HEAD
     "admin.true": "Hoạt động",
-=======
     "admin.customerDetail": "Chi tiết Khách hàng",
     "admin.viewHistory": "Xem lịch sử",
 
@@ -1455,7 +1450,6 @@ const translations = {
     "admin.email": "Email",
 
     "admin.personalInfo": "Thông tin cá nhân",
->>>>>>> origin
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",

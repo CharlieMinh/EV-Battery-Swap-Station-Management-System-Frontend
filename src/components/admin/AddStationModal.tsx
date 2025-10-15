@@ -1,6 +1,6 @@
 import React from "react";
 import { geocodeAddress } from "../map/geocode";
-import { createStation } from "@/services/stationService";
+import { createStation } from "@/services/admin/stationService";
 import { X } from "lucide-react";
 
 export interface AddStationModalProps {
@@ -36,7 +36,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
     try {
       const fullAddress = `${formData.address}, ${formData.city}, Việt Nam`;
       const coords = await geocodeAddress(fullAddress);
-      
+
       if (!coords) {
         alert(
           "Không thể lấy tọa độ từ địa chỉ đã nhập. Vui lòng kiểm tra lại."
