@@ -396,7 +396,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate("/driver")}
+                  onClick={() => handleNavigateToDashboard('map')}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   {"Đặt lịch"}
