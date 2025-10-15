@@ -33,11 +33,23 @@ interface CheckInDialogProps {
 
 interface ReservationData {
   id: string;
-  status: 'Pending' | 'CheckedIn' | 'Cancelled';
-  qrCode: string;
+  userId: string;
+  stationId: string;
+  batteryModelId: string;
+  batteryUnitId?: string;
   slotDate: string;
-  slotTime: string;
-  checkInWindow: {
+  slotStartTime: string;
+  slotEndTime: string;
+  qrCode?: string;
+  checkedInAt?: string;
+  verifiedByStaffId?: string;
+  status: number; // 0=Pending, 1=CheckedIn, 2=Completed, 3=Cancelled
+  cancelReason?: number;
+  cancelNote?: string;
+  cancelledAt?: string;
+  createdAt: string;
+  // Additional fields for UI compatibility
+  checkInWindow?: {
     earliest: string;
     latest: string;
   };
@@ -85,7 +97,7 @@ export function CheckInDialog({
   };
 
   const handleConfirmCheckIn = () => {
-    if (reservationData) {
+    if (reservationData && reservationData.qrCode) {
       onCheckIn(reservationData.qrCode);
       onClose();
     }
@@ -96,36 +108,16 @@ export function CheckInDialog({
     setError("");
 
     try {
-      // Giả lập check-in thành công với QR code giả
-      const mockReservation: ReservationData = {
-        id: "reservation-guid-123",
-        status: 'CheckedIn',
-        qrCode: "SIMULATED-QR-CODE-12345",
-        slotDate: "2025-10-09",
-        slotTime: "09:00 - 09:30",
-        checkInWindow: {
-          earliest: "08:45",
-          latest: "09:15"
-        },
-        customerInfo: {
-          name: "Alex Chen",
-          phone: "0123456789",
-          vehicle: "Tesla Model 3"
-        },
-        assignedBattery: {
-          batteryUnitId: "battery-guid-456",
-          serialNumber: "BAT-12345",
-          chargeLevel: 100,
-          location: "Slot A-03"
-        }
-      };
-
+      // Use real API with simulated QR code
+      const mockReservation = await staffApi.checkInReservation("SIMULATED-QR-CODE-12345");
       setReservationData(mockReservation);
       
-      // Tự động check-in sau 1 giây
+      // Auto check-in after 1 second
       setTimeout(() => {
-        onCheckIn(mockReservation.qrCode);
-        onClose();
+        if (mockReservation.qrCode) {
+          onCheckIn(mockReservation.qrCode);
+          onClose();
+        }
       }, 1000);
       
     } catch (err) {
@@ -142,20 +134,22 @@ export function CheckInDialog({
     onClose();
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: number) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'CheckedIn': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
+      case 0: return 'bg-yellow-100 text-yellow-800';
+      case 1: return 'bg-green-100 text-green-800';
+      case 2: return 'bg-blue-100 text-blue-800';
+      case 3: return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: number) => {
     switch (status) {
-      case 'Pending': return 'Chờ check-in';
-      case 'CheckedIn': return 'Đã check-in';
-      case 'Cancelled': return 'Đã hủy';
+      case 0: return 'Chờ check-in';
+      case 1: return 'Đã check-in';
+      case 2: return 'Hoàn thành';
+      case 3: return 'Đã hủy';
       default: return 'Không xác định';
     }
   };

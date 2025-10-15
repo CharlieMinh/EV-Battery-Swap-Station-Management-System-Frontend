@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { DailyStats } from "../../services/staffApi";
+import staffApi from "../../services/staffApi";
 
 interface StaffDashboardProps {
   dailyStats: DailyStats;
@@ -17,6 +18,9 @@ interface StaffDashboardProps {
 
 export function StaffDashboard({ dailyStats }: StaffDashboardProps) {
   const { t, formatCurrency } = useLanguage();
+  
+  // StaffDashboard component already receives dailyStats from parent
+  // No need to fetch additional data here as it's already integrated
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 m-6 mb-8">

@@ -176,6 +176,7 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
 
+<<<<<<< HEAD
     // Forgot Password
     "forgotPassword.title": "Forgot Password",
     "forgotPassword.subtitle":
@@ -249,6 +250,12 @@ const translations = {
       "You have exceeded the maximum number of requests per hour",
     "forgotPassword.timeRemaining": "Time remaining",
 
+=======
+    //role name
+    "role.driver": "Driver",
+    "role.admin": "Admin",
+    "role.staff": "Staff",
+>>>>>>> origin
     // Register
     "register.name": "Name",
     "register.joinEVSwap": "Join EVSwap",
@@ -306,6 +313,8 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Find Stations",
+    "driver.profile.title": "Personal Profile",
+    "driver.profile.editProfile": "Edit Profile",
     "driver.mycar": "My Car",
     "driver.swap": "Swap",
     "driver.history": "History",
@@ -319,6 +328,22 @@ const translations = {
     "driver.useMyLocation": "Use My Location",
     "driver.availableStations": "Available Stations",
     "driver.filter": "Filter",
+    "driver.subscription.title": "Subscription Information",
+    "driver.subscription.description":
+      "Details about your plan and current usage.",
+    "driver.subscription.noSubscriptionMessage":
+      "You have not subscribed to any plan yet.",
+    "driver.subscription.planName": "Plan Name",
+    "driver.subscription.statusLabel": "Status",
+    "driver.subscription.startDate": "Start Date",
+    "driver.subscription.endDate": "End Date",
+    "driver.subscription.monthlySwaps": "Swaps This Month",
+    "driver.subscription.undefinedDate": "Not specified",
+    "driver.subscription.status.noPlan": "No Plan",
+    "driver.subscription.status.blocked": "Blocked",
+    "driver.subscription.status.active": "Active",
+    "driver.subscription.status.expired": "Expired",
+    "driver.subscription.status.inactive": "Inactive",
     "driver.searchStations": "Search stations...",
     "driver.available": "available",
     "driver.open": "open",
@@ -437,6 +462,7 @@ const translations = {
     "staff.batteryInventory": "Battery Inventory",
     "staff.filter": "Filter",
     "staff.newInspection": "New Inspection",
+    "staff.takeBattery": "Take Battery",
     "staff.slot": "Slot",
     "staff.health": "Health",
     "staff.voltage": "Voltage",
@@ -856,6 +882,10 @@ const translations = {
     "footer.privacyPolicy": "Chính Sách Bảo Mật",
     "footer.termsOfService": "Điều Khoản Dịch Vụ",
 
+    //role
+    "role.driver": "Tài xế",
+    "role.admin": "Quản trị viên",
+    "role.staff": "Nhân viên",
     // Login
     "login.title": "ĐĂNG NHẬP",
     "login.subtitle": "Đăng nhập để truy cập tài khoản EVSwap của bạn",
@@ -1009,6 +1039,24 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
+    "driver.subscription.title": "Thông Tin Gói Thuê Bao",
+    "driver.subscription.description":
+      "Chi tiết về gói cước và tình trạng sử dụng hiện tại của bạn.",
+    "driver.subscription.noSubscriptionMessage":
+      "Bạn chưa đăng ký gói thuê bao nào.",
+    "driver.subscription.planName": "Tên gói",
+    "driver.subscription.statusLabel": "Trạng thái",
+    "driver.subscription.startDate": "Ngày bắt đầu",
+    "driver.subscription.endDate": "Ngày kết thúc",
+    "driver.subscription.monthlySwaps": "Lượt đổi pin tháng này",
+    "driver.subscription.undefinedDate": "Không xác định",
+    "driver.subscription.status.noPlan": "Chưa có gói",
+    "driver.subscription.status.blocked": "Bị khóa",
+    "driver.subscription.status.active": "Đang hoạt động",
+    "driver.subscription.status.expired": "Đã hết hạn",
+    "driver.subscription.status.inactive": "Không hoạt động",
+    "driver.profile.title": "Hồ sơ cá nhân",
+    "driver.profile.editProfile": "Sửa hồ sơ",
     "driver.mycar": "Xe của tôi",
     "driver.swap": "Thay Pin",
     "driver.history": "Lịch Sử",
@@ -1138,7 +1186,8 @@ const translations = {
     "staff.startSwap": "Bắt Đầu Thay Pin",
     "staff.batteryInventory": "Kho Pin",
     "staff.filter": "Lọc",
-    "staff.newInspection": "Kiểm Tra Mới",
+    "staff.newInspection": "Nhập Pin",
+    "staff.takeBattery": "Lấy Pin",
     "staff.slot": "Slot",
     "staff.health": "Sức Khỏe",
     "staff.voltage": "Điện áp",
@@ -1390,7 +1439,23 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
     "admin.resolve": "Xử lí",
+<<<<<<< HEAD
     "admin.true": "Hoạt động",
+=======
+    "admin.customerDetail": "Chi tiết Khách hàng",
+    "admin.viewHistory": "Xem lịch sử",
+
+    "admin.updateProfile": "Cập nhật hồ sơ",
+
+    "admin.phone": "Số điện thoại",
+
+    "admin.revenueSummary": "Tổng kết Doanh thu & Hiệu suất",
+
+    "admin.swapHistorySummary": "Tóm tắt Lịch sử Đổi Pin",
+    "admin.email": "Email",
+
+    "admin.personalInfo": "Thông tin cá nhân",
+>>>>>>> origin
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",
@@ -1404,6 +1469,12 @@ const translations = {
     "admin.airportTerminal": "Nhà Ga Sân Bay",
     "admin.highwayRestStop": "Trạm Nghỉ Cao Tốc",
     "admin.universityCampus": "Khuôn Viên Đại Học",
+    "admin.createdAt": "Ngày tham gia", // Key mới
+    "admin.lastLogin": "Lần đăng nhập cuối", // Key mới
+    "admin.totalReservations": "Tổng Lần Thay Pin", // Key mới
+    "admin.completedReservations": "Lượt hoàn thành", // Key mới
+    "admin.cancelledReservations": "Lượt hủy", // Key mới
+    "admin.totalVehicles": "Tổng phương tiện", // Key mới
 
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Không Giới Hạn Hàng Tháng",

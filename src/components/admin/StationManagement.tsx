@@ -5,6 +5,7 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+<<<<<<< HEAD
 import { fetchStations } from "@/services/stationService";
 import { Station } from "@/services/stationService";
 import AddStationModal from "./AddStationModal";
@@ -12,11 +13,22 @@ import AddStationModal from "./AddStationModal";
 interface StationManagementProps {
   stationPerformance: Station[];
 }
+=======
+import { fetchStations } from "@/services/admin/stationService";
+import { Station } from "@/services/admin/stationService";
+import { DetailOfStation } from "./DetailOfStation";
+>>>>>>> origin
 
 export function StationManagement() {
   const { t } = useLanguage();
   const [stationPerformance, setStationPerformance] = useState<Station[]>([]);
+<<<<<<< HEAD
   const [isOpen, setIsOpen] = useState(false);
+=======
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(
+    null
+  );
+>>>>>>> origin
 
   useEffect(() => {
     // Simulate fetching data from an API
@@ -114,15 +126,26 @@ export function StationManagement() {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button size="sm" variant="outline">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedStationId(station.id as string)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline">
+
+                  {selectedStationId && (
+                    <DetailOfStation
+                      stationId={selectedStationId}
+                      onClose={() => setSelectedStationId(null)}
+                    />
+                  )}
+                  {/* <Button size="sm" variant="outline">
                     <Edit className="w-4 h-4" />
                   </Button>
                   <Button size="sm" variant="outline">
                     <Settings className="w-4 h-4" />
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               {/* <div className="mt-4">

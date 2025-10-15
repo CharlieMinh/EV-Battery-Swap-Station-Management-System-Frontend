@@ -27,37 +27,42 @@ import {
   Twitter,
   Instagram,
   Play,
+  Car,
+  History,
+  UserIcon,
+  LogOut,
+  Map,
+  QrCode,
+  Contact,
+  PhoneCall,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
 import MapView from "./map/MapView";
-import { fetchStations, Station } from "../services/stationService";
+import { fetchStations, Station } from "../services/admin/stationService";
+import type { User } from "../App";
 import { get } from "http";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-// const stations = [
-//   {
-//     id: 1,
-//     name: "Trạm 1",
-//     coordinates: { lat: 10.762622, lng: 106.660172 },
-//     address: "Q1, TP.HCM",
-//   },
-//   {
-//     id: 2,
-//     name: "Trạm 2",
-//     coordinates: { lat: 10.7769, lng: 106.7009 },
-//     address: "Q3, TP.HCM",
-//   },
-//   {
-//     id: 3,
-//     name: "Trạm 3",
-//     coordinates: { lat: 10.795, lng: 106.682 },
-//     address: "Phú Nhuận",
-//   },
-// ];
-
-export function Homepage() {
+interface HomepageProps {
+  user: User | null;
+  onLogout: () => void;
+}
+export function Homepage({ user, onLogout }: HomepageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const handleNavigateToDashboard = (section: string) => {
+    navigate("/driver", { state: { initialSection: section } });
+  };
+
   const location = useGeoLocation();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   const [stations, setStations] = useState<Station[] | null>(null);
@@ -281,16 +286,87 @@ export function Homepage() {
               </a>
             </div>
             <div className="flex items-center space-x-4">
-              <LanguageSwitcher />
-              <Button variant="outline" onClick={() => navigate("/login")}>
-                {t("nav.signIn")}
-              </Button>
-              <Button
-                onClick={() => navigate("/register")}
-                className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
-              >
-                {t("nav.getStarted")}
-              </Button>
+              {!user ? (
+                <>
+                  <LanguageSwitcher />
+                  <Button variant="outline" onClick={() => navigate("/login")}>
+                    {t("nav.signIn")}
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/register")}
+                    className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
+                  >
+                    {t("nav.getStarted")}
+                  </Button>
+                </>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-10 w-auto justify-start text-white hover:bg-orange-600 hover:text-white px-3"
+                    >
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarImage
+                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`}
+                          alt={user.name}
+                        />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{user.name}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <p className="text-sm font-medium leading-none">
+                        {user.name}
+                      </p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("map")}
+                    >
+                      <Map className="mr-2 h-4 w-4" />
+                      <span>Tìm trạm</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("mycar")}
+                    >
+                      <Car className="mr-2 h-4 w-4" />
+                      <span>Xe của tôi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("swap")}
+                    >
+                      <QrCode className="mr-2 h-4 w-4" />
+                      <span>Đơn đã đặt</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("history")}
+                    >
+                      <History className="mr-2 h-4 w-4" />
+                      <span>Lịch sử đổi pin</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("profile")}
+                    >
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Hồ sơ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("support")}
+                    >
+                      <PhoneCall className="mr-2 h-4 w-4" />
+                      <span>Hỗ trợ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Đăng xuất</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
@@ -324,7 +400,7 @@ export function Homepage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate("/driver")}
+                  onClick={() => handleNavigateToDashboard('map')}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   {"Đặt lịch"}

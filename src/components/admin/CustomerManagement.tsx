@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,16 +11,12 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Eye, Edit, Plus, Search, Filter } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  plan: string;
-  status: "active" | "suspended";
-  swaps: number;
-  revenue: number;
-}
+import {
+  Customer,
+  CustomerDetail,
+  fetchCustomers,
+} from "@/services/admin/customerAdminService";
+import CustomerDetailModal from "./CustomerDetailModal";
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -28,12 +24,48 @@ interface CustomerManagementProps {
   onSearchChange: (query: string) => void;
 }
 
-export function CustomerManagement({
-  customers,
-  searchQuery,
-  onSearchChange,
-}: CustomerManagementProps) {
+export function CustomerManagement() {
   const { t } = useLanguage();
+  const [customer, setCustomer] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  // Đã đổi tên state thành selectedCustomer
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+
+  useEffect(() => {
+    const getAllCustomers = async () => {
+      try {
+        const response = await fetchCustomers(1, 20);
+        setCustomer(response.data);
+        console.log("Fetched customers:", response.data);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        throw error;
+      }
+    };
+    getAllCustomers();
+  }, []);
+
+  const handleViewDetails = (customer: Customer) => {
+    setSelectedCustomer(customer);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedCustomer(null);
+  };
+
+  const filteredCustomers = useMemo(() => {
+    if (!searchQuery) return customer;
+    const query = searchQuery.toLowerCase();
+    return customer.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.email.toLowerCase().includes(query) ||
+        c.PhoneNumber.includes(query)
+    );
+  }, [customer, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -43,13 +75,13 @@ export function CustomerManagement({
         </h2>
         <div className="flex space-x-2">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
-            <Input
+            {/* <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" /> */}
+            {/* <Input
               placeholder={t("admin.searchCustomers")}
               className="pl-9 w-64"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-            />
+            /> */}
           </div>
           <Button variant="outline" size="sm">
             <Filter className="w-10 h-4" /> {t("admin.filter")}
@@ -68,9 +100,9 @@ export function CustomerManagement({
         </CardHeader>
         <CardContent>
           <div className="space-y-4 ">
-            {customers.map((customer) => (
+            {customer.map((customer) => (
               <div
-                key={customer.id}
+                key={customer.id as string}
                 className="flex items-center justify-between p-4 border rounded-lg border border-orange-200 rounded-lg"
               >
                 <div className="flex items-center space-x-4">
@@ -83,7 +115,7 @@ export function CustomerManagement({
                     <p className="font-medium">{customer.name}</p>
                     <p className="text-sm text-gray-500">{customer.email}</p>
                     <div className="flex items-center space-x-2 mt-1 ">
-                      <Badge
+                      {/* <Badge
                         className={
                           customer.status === "active"
                             ? "bg-green-400 text-white"
@@ -94,7 +126,7 @@ export function CustomerManagement({
                       </Badge>
                       <span className="text-xs text-gray-400">
                         {customer.plan}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </div>
@@ -104,17 +136,25 @@ export function CustomerManagement({
                       <span className="text-gray-500">
                         {t("admin.swaps")}:{" "}
                       </span>
-                      <span className="font-medium">{customer.swaps}</span>
+                      <span className="font-medium">
+                        {customer.totalReservations.toLocaleString()}
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-500">
                         {t("admin.revenue")}:{" "}
                       </span>
-                      <span className="font-medium">${customer.revenue}</span>
+                      <span className="font-medium">
+                        ${customer.completedReservations.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                   <div className="flex space-x-2 mt-2 justify-end">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(customer)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="outline">
@@ -127,6 +167,11 @@ export function CustomerManagement({
           </div>
         </CardContent>
       </Card>
+
+      <CustomerDetailModal
+        customer={selectedCustomer}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

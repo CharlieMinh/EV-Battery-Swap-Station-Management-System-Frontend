@@ -11,13 +11,17 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Camera, FileText } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import staffApi from "../../services/staffApi";
 
 interface InspectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  batteryId?: string;
+  staffId?: string;
+  stationId?: number;
 }
 
-export function InspectionDialog({ isOpen, onClose }: InspectionDialogProps) {
+export function InspectionDialog({ isOpen, onClose, batteryId, staffId, stationId }: InspectionDialogProps) {
   const { t } = useLanguage();
 
   const inspectionItems = [
@@ -44,7 +48,7 @@ export function InspectionDialog({ isOpen, onClose }: InspectionDialogProps) {
           <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-orange-100">
             <div>
               <Label className="text-orange-600 font-medium">{t("staff.batteryId")}</Label>
-              <p className="font-mono">BAT-2024-001</p>
+              <p className="font-mono">{batteryId || "BAT-2024-001"}</p>
             </div>
             <div>
               <Label className="text-orange-600 font-medium">{t("staff.customer")}</Label>
@@ -89,7 +93,27 @@ export function InspectionDialog({ isOpen, onClose }: InspectionDialogProps) {
             <Button variant="outline" onClick={onClose}>
               {t("common.cancel")}
             </Button>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white" onClick={onClose}>
+            <Button 
+              className="bg-orange-500 hover:bg-orange-600 text-white" 
+              onClick={async () => {
+                try {
+                  if (staffId && stationId && batteryId) {
+                    await staffApi.createInspection({
+                      batteryId,
+                      health: 85,
+                      voltage: 380,
+                      temperature: 25,
+                      notes: "Inspection completed",
+                      issues: []
+                    }, staffId, stationId);
+                  }
+                  onClose();
+                } catch (error) {
+                  console.error('Error completing inspection:', error);
+                  alert("Có lỗi xảy ra khi hoàn thành inspection");
+                }
+              }}
+            >
               {t("staff.completeInspection")}
             </Button>
           </div>

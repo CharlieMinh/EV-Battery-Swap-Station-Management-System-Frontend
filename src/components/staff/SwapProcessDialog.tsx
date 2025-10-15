@@ -15,24 +15,45 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import staffApi from "../../services/staffApi";
 
 interface SwapProcessDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSwapConfirmed?: () => void;
+  bookingId?: string;
+  staffId?: string;
+  stationId?: number;
 }
 
 export function SwapProcessDialog({
   isOpen,
   onClose,
   onSwapConfirmed,
+  bookingId,
+  staffId,
+  stationId,
 }: SwapProcessDialogProps) {
   const { t } = useLanguage();
   const [swapComplete, setSwapComplete] = useState(false);
 
-  const handleSwapComplete = () => {
-    setSwapComplete(true);
-    onSwapConfirmed?.();
+  const handleSwapComplete = async () => {
+    try {
+      if (bookingId && staffId && stationId) {
+        await staffApi.completeSwapProcess({
+          bookingId,
+          batteryOutId: "BAT-OLD-12345",
+          batteryInId: "BAT-NEW-67890",
+          amount: 25,
+          paymentMethod: "card"
+        }, staffId, stationId);
+      }
+      setSwapComplete(true);
+      onSwapConfirmed?.();
+    } catch (error) {
+      console.error('Error completing swap:', error);
+      alert("Có lỗi xảy ra khi hoàn thành thay pin");
+    }
   };
 
   return (

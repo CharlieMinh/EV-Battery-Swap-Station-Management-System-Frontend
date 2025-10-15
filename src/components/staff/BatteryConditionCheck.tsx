@@ -16,6 +16,7 @@ import {
   FileText
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import staffApi from "../../services/staffApi";
 
 interface BatteryConditionCheckProps {
   isOpen: boolean;
@@ -27,6 +28,9 @@ interface BatteryConditionCheckProps {
     vehicle: string;
     bookingCode: string;
   };
+  batteryId?: string;
+  staffId?: string;
+  stationId?: number;
 }
 
 interface BatteryInspectionData {
@@ -52,11 +56,14 @@ export function BatteryConditionCheck({
   onClose,
   onApprove,
   onReject,
-  customerInfo
+  customerInfo,
+  batteryId,
+  staffId,
+  stationId
 }: BatteryConditionCheckProps) {
   const { t } = useLanguage();
   const [inspectionData, setInspectionData] = useState<BatteryInspectionData>({
-    batteryId: "BAT-2024-001",
+    batteryId: batteryId || "BAT-2024-001",
     repairRequired: false,
     repairCost: 0,
     repairDescription: '',
@@ -103,6 +110,25 @@ export function BatteryConditionCheck({
       ...prev,
       notes
     }));
+  };
+
+  const handleApprove = async () => {
+    try {
+      if (staffId && stationId) {
+        await staffApi.createInspection({
+          batteryId: inspectionData.batteryId,
+          health: inspectionData.batteryStatus.capacity,
+          voltage: inspectionData.batteryStatus.voltage,
+          temperature: inspectionData.batteryStatus.temperature,
+          notes: inspectionData.notes,
+          issues: inspectionData.repairRequired ? [inspectionData.repairDescription] : []
+        }, staffId, stationId);
+      }
+      onApprove(inspectionData);
+    } catch (error) {
+      console.error('Error creating inspection:', error);
+      alert("Có lỗi xảy ra khi tạo inspection");
+    }
   };
 
 
@@ -333,7 +359,7 @@ export function BatteryConditionCheck({
             <Button 
               className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1" 
               size="sm"
-              onClick={() => onApprove(inspectionData)}
+              onClick={handleApprove}
             >
               Chấp nhận thay pin
             </Button>

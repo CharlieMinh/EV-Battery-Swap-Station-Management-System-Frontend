@@ -373,6 +373,18 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 selectedBattery={selectedBattery}
                 onBatterySelect={setSelectedBattery}
                 onNewInspection={() => setInspectionDialog(true)}
+                onTakeBattery={async (batteryId) => {
+                  try {
+                    await staffApi.takeBattery(batteryId, user.id, user.stationId || 1);
+                    alert("Đã lấy pin thành công!");
+                    // Refresh battery list
+                    const updatedBatteries = await staffApi.getBatteries(user.stationId || 1);
+                    setBatteries(updatedBatteries);
+                  } catch (error) {
+                    console.error('Error taking battery:', error);
+                    alert("Có lỗi xảy ra khi lấy pin");
+                  }
+                }}
               />
             )}
 
