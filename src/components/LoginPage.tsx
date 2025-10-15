@@ -210,7 +210,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-muted-foreground">
-                    {t("login.orContinueWith") || "Or continue with"}
+                    Đăng nhập với
                   </span>
                 </div>
               </div>
