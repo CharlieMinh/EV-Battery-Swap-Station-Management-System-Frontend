@@ -495,7 +495,7 @@ export function AdminDashboardPage({
 
             {activeSection === "customers" && <CustomerManagement />}
 
-            {activeSection === "staff" && <StaffManagement staff={staff} />}
+            {activeSection === "staff" && <StaffManagement />}
 
             {/* {activeSection === "ai-insights" && (
               <AIInsights demandForecast={demandForecast} />

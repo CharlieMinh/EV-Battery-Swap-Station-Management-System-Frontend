@@ -37,39 +37,22 @@ function ForgotPasswordWrapper() {
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // useEffect(() => {
-  //   const savedUser = localStorage.getItem("currentUser");
-  //   const token = localStorage.getItem("authToken");
 
-  //   if (token) {
-  //     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  //   }
-
-  //   if (savedUser) {
-  //     setCurrentUser(JSON.parse(savedUser));
-  //   }
-  // }, []);
-
-  // const handleLogin = (user: User) => {
-  //   setCurrentUser(user);
-  // };
-
-  // const handleRegister = (user: User) => {
-  //   setCurrentUser(user);
-  // };
-
-  // const handleLogout = () => {
-  //   setCurrentUser(null);
-  // };
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await api.get("/api/v1/Auth/me", {
-          withCredentials: true, // gửi cookie JWT
+          withCredentials: true,
         });
         setCurrentUser(response.data);
-      } catch (error) {
-        setCurrentUser(null);
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          // Không có JWT trong cookie → user chưa đăng nhập → KHÔNG PHẢI lỗi nặng
+          console.warn("Chưa đăng nhập (401). Bỏ qua, set user = null.");
+          setCurrentUser(null);
+        } else {
+          console.error("Lỗi khác khi gọi /me:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -77,7 +60,6 @@ function App() {
 
     fetchUser();
   }, []);
-
   const handleLogin = (user: User) => {
     setCurrentUser(user);
   };
@@ -157,8 +139,6 @@ function App() {
             }
           />
           <Route path="/map" element={<MapView />} />
-          // Fallback: Nếu không khớp với bất kỳ route nào, chuyển hướng về
-          trang chủ
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>

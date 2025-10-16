@@ -80,12 +80,8 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         },
         { withCredentials: true }
       );
-      onLogin(response.data);
-      if (response.data.role) {
-        // Save token to localStorage
-        if (response.data.token) {
-          localStorage.setItem("authToken", response.data.token);
-        }
+      if (response.status === 200) {
+        console.log("Login successful:", response.data);
         onLogin(response.data);
         if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");

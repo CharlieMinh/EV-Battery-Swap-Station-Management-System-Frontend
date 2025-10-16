@@ -28,3 +28,14 @@ export async function fetchStaffList(page: number, pageSize: number) {
         throw error;
     }
 }
+
+export async function fetchStaffById(id: string) {
+    try {
+        const response = await api.get(`/api/v1/Users/${id}`);
+        const staff = response.data;
+        return staff as StaffDetails;
+    } catch (error) {
+        console.error('Error fetching staff by ID:', error);
+        throw error;
+    }
+}
