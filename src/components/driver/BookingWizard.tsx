@@ -6,7 +6,6 @@ import { Calendar } from '../ui/calendar';
 import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
-// Các interface này có thể được chuyển ra một file định nghĩa chung (types.ts) nếu muốn
 interface Vehicle {
   id: string;
   vin: string;
@@ -14,7 +13,7 @@ interface Vehicle {
   brand: string;
   vehicleModelFullName?: string;
   compatibleBatteryModelName?: string;
-  compatibleBatteryModelId: string; // Quan trọng để fetch slot
+  compatibleBatteryModelId: string;
   photoUrl?: string;
 }
 interface Slot {
@@ -39,10 +38,7 @@ export interface Station {
   isOpenNow: boolean;
 }
 
-/**
- * Props cho BookingWizard, được thiết kế để nhận toàn bộ state và logic từ component cha.
- * Component này chỉ có nhiệm vụ hiển thị giao diện.
- */
+
 interface BookingWizardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -158,20 +154,53 @@ export function BookingWizard({
 
         {/* BƯỚC 2: CHỌN NGÀY */}
         {bookingStep === 2 && (
-          <div className="space-y-4 flex flex-col items-center">
-            <h3 className="text-lg font-medium">Hãy chọn ngày phù hợp với bạn<nav></nav></h3>
-            <Calendar
-              mode="single"
-              selected={bookingDate}
-              onSelect={onDateChange}
-              disabled={(date: Date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-              className="rounded-md border"
-            />
+          <div className="space-y-6 flex flex-col items-center">
+            <h3 className="text-lg font-medium">Hãy chọn ngày phù hợp với bạn</h3>
+
+            <div className="flex justify-center items-center w-full">
+              <Calendar
+                mode="single"
+                selected={bookingDate}
+                onSelect={onDateChange}
+                disabled={(date: Date) =>
+                  date < new Date(new Date().setHours(0, 0, 0, 0))
+                }
+                captionLayout="dropdown"
+                fromYear={2020}
+                toYear={2030}
+                className="rounded-xl border border-gray-300 shadow-md p-6 w-full max-w-md bg-white"
+                classNames={{
+                  root: "flex justify-center",
+                  months: "flex flex-col items-center space-y-4",
+                  month: "space-y-4",
+                  caption: "flex flex-col items-center gap-2 mb-2 w-full",
+                  caption_label: "hidden",
+                  dropdowns: "flex justify-center items-center gap-2",
+                  dropdown: "rounded-md border border-gray-300 text-sm px-2 py-1 hover:border-orange-400 focus:border-orange-500 outline-none",
+                  nav: "flex items-center justify-between w-full mt-2",
+                  nav_button: "w-8 h-8 flex items-center justify-center rounded-md hover:bg-orange-100 transition text-gray-700",
+                  table: "w-full border-spacing-2",
+                  head_row: "text-gray-500",
+                  head_cell: "text-sm font-medium text-center w-10 h-10",
+                  row: "text-center",
+                  day: "w-10 h-10 flex items-center justify-center rounded-full text-sm font-medium hover:bg-orange-100 transition",
+                  day_selected: "bg-orange-500 text-white hover:bg-orange-600",
+                  day_today: "border border-orange-400 font-bold text-orange-600",
+                  day_outside: "text-gray-400",
+                }}
+              />
+            </div>
+
+
             <div className="flex justify-between w-full pt-4">
               <Button variant="outline" onClick={() => onStepChange(1)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
               </Button>
-              <Button className='bg-orange-500 text-white' onClick={() => onStepChange(3)} disabled={!bookingDate}>
+              <Button
+                className="bg-orange-500 text-white"
+                onClick={() => onStepChange(3)}
+                disabled={!bookingDate}
+              >
                 {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -188,19 +217,35 @@ export function BookingWizard({
               </div>
             ) : (
               <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2">
-                {slots.length > 0 ? slots.map((slot) => (
-                  <Button
-                    key={slot.slotStartTime}
-                    // 1. Sửa điều kiện `variant`
-                    variant={selectedSlot?.slotStartTime === slot.slotStartTime ? "default" : "outline"}
-                    className={`h-12 ${selectedSlot?.slotStartTime === slot.slotStartTime ? 'bg-orange-500' : ''}`}
-                    // 2. Sửa hàm `onClick` để truyền cả object slot
-                    onClick={() => onSlotSelect(slot)}
-                    disabled={!slot.isAvailable}
-                  >
-                    {slot.slotStartTime.substring(0, 5)}
-                  </Button>
-                )) : <p className='col-span-4 text-center text-gray-500 py-16'>{t('driver.noAvailableSlots')}</p>}
+                {slots.length > 0 ? slots.map((slot) => {
+                  const now = new Date();
+                  const isToday = bookingDate
+                    ? bookingDate.getFullYear() === now.getFullYear() &&
+                    bookingDate.getMonth() === now.getMonth() &&
+                    bookingDate.getDate() === now.getDate()
+                    : false;
+                  let isSlotDisabled = !slot.isAvailable;
+                  if (isToday) {
+                    const [hours, minutes] = slot.slotStartTime.split(':');
+                    const slotTime = new Date();
+                    slotTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+                    if (slotTime < now) {
+                      isSlotDisabled = true;
+                    }
+                  }
+                  return (
+                    <Button
+                      key={slot.slotStartTime}
+                      variant={selectedSlot?.slotStartTime === slot.slotStartTime ? "default" : "outline"}
+                      className={`h-12 ${selectedSlot?.slotStartTime === slot.slotStartTime ? 'bg-orange-500' : ''}`}
+                      onClick={() => onSlotSelect(slot)}
+                      disabled={isSlotDisabled}
+                    >
+                      {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)}
+                    </Button>
+                  );
+                }) : <p className='col-span-4 text-center text-gray-500 py-16'>{t('driver.noAvailableSlots')}</p>}
               </div>
             )}
             <div className="flex justify-between pt-4">
@@ -208,7 +253,6 @@ export function BookingWizard({
                 <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
               </Button>
               <Button className='bg-orange-500 text-white' onClick={() => onStepChange(4)} disabled={!selectedSlot}>
-                {/* Sửa lại: chỉ cần check !selectedSlot là đủ */}
                 {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

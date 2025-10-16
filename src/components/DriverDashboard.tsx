@@ -167,30 +167,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     monthlyUsage: MonthlyUsage[];
   }
 
-  useEffect(() => {
-    const fetchActiveReservation = async () => {
-      try {
-        // 1. Gọi API để lấy các lịch hẹn của người dùng
-        const response = await axios.get(
-          "http://localhost:5194/api/v1/slot-reservations/mine",
-          {
-            params: { status: "Pending" }, // Chỉ lấy các lịch đang ở trạng thái "Pending"
-            withCredentials: true,
-          }
-        );
 
-        // 2. Nếu server trả về có dữ liệu, lấy cái đầu tiên
-        if (response.data && response.data.length > 0) {
-          // 3. Bỏ dữ liệu vào state "activeReservation"
-          setActiveReservation(response.data[0]);
-        }
-      } catch (error) {
-        console.error("Không thể lấy lịch hẹn đang hoạt động:", error);
-      }
-    };
-
-    fetchActiveReservation();
-  }, []);
 
   useEffect(() => {
     async function fetchSwapHistory() {
@@ -260,7 +237,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
           withCredentials: true,
         });
         setStations(res.data.items);
-      } catch (error) {}
+      } catch (error) { }
     };
     fetchStations();
   }, []);
@@ -292,16 +269,12 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
 
   const fetchAvailableSlots = async () => {
     try {
-      const dateParam =
-        typeof bookingDate === "string"
-          ? bookingDate
-          : bookingDate?.toISOString().slice(0, 10);
       const res = await axios.get(
         "http://localhost:5194/api/v1/slot-reservations/available-slots",
         {
           params: {
             stationId: selectedStation,
-            date: dateParam,
+            date: formatDateForApi(bookingDate!),
             batteryModelId: selectedVehicle?.compatibleBatteryModelId,
           },
           withCredentials: true,
@@ -333,6 +306,22 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       setBookingDialog(true);
     }
   };
+  const getReservation = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5194/api/v1/slot-reservations/mine",
+        {
+          params: { status: "Pending" },
+          withCredentials: true,
+        }
+      );
+      if (response.data && response.data.length > 0) {
+        setActiveReservation(response.data[0]);
+      }
+    } catch (error) {
+      console.error("Không thể lấy lịch hẹn của bạn:", error);
+    }
+  }
   const handleConfirmBooking = async () => {
     if (!selectedStation || !selectedVehicle || !bookingDate || !selectedSlot) {
       alert("Vui lòng chọn đầy đủ thông tin đặt chỗ!");
@@ -345,14 +334,13 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
         {
           stationId: selectedStation,
           batteryModelId: selectedVehicle.compatibleBatteryModelId,
-          slotDate: bookingDate.toISOString().slice(0, 10),
+          slotDate: formatDateForApi(bookingDate),
           slotStartTime: selectedSlot.slotStartTime,
           slotEndTime: selectedSlot.slotEndTime,
         },
         { withCredentials: true }
       );
       setBookingResult(response.data);
-      setActiveReservation(response.data);
       setBookingStep(5);
     } catch (error) {
       console.error("Lỗi khi xác nhận đặt chỗ:", error);
@@ -360,6 +348,13 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     } finally {
       setIsBooking(false);
     }
+  };
+  const formatDateForApi = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -409,7 +404,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => setActiveSection("swap")}
+                      onClick={() => { setActiveSection("swap"); getReservation(); }}
+
                       isActive={activeSection === "swap"}
                       className="h-[60px]"
                     >
@@ -530,7 +526,6 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 <SwapStatus
                   // ✅ Truyền lịch hẹn đang hoạt động vào
                   activeReservation={activeReservation}
-                  // ✅ Truyền hàm để mở dialog QR
                   onQRDialog={() => setQrDialog(true)}
                   // ✅ Truyền hàm để chuyển người dùng sang tab đặt lịch nếu họ chưa có lịch
                   onNavigateToBooking={() => setActiveSection("map")}

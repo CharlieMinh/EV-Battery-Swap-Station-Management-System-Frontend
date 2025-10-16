@@ -2,10 +2,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Clock, Phone, Search, Filter } from "lucide-react"; // Đã thêm icon Phone
+import { Clock, Phone, Search, Filter } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 
-// Interface Station không thay đổi
+
 export interface Station {
   id: string;
   name: string;
@@ -58,7 +58,6 @@ export function StationList({
     <Card className="border border-orange-500 rounded-lg">
       <CardHeader>
         <CardTitle className="text-orange-500 font-bold">{t("driver.availableStations")}</CardTitle>
-        {/* Phần search và filter có thể mở lại khi cần */}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -80,7 +79,7 @@ export function StationList({
                   </div>
                   {/* === HIỂN THỊ TRẠNG THÁI "MỞ CỬA" / "ĐÓNG CỬA" === */}
                   <Badge variant={station.isOpenNow ? "default" : "destructive"} className={station.isOpenNow ? "bg-green-500" : ""}>
-                    {t(station.isOpenNow ? "driver.open" : "driver.closed")}
+                    {t(station.isOpenNow ? "Đang mở cửa" : "Đã đóng cửa")}
                   </Badge>
                 </div>
 
@@ -101,9 +100,9 @@ export function StationList({
                   <Button
                     className="bg-orange-500 hover:bg-orange-600"
                     size="sm"
-                    disabled={!station.isOpenNow} // Vô hiệu hóa nút nếu trạm đóng cửa
+                    disabled={!station.isActive}
                     onClick={(e) => {
-                      e.stopPropagation(); // Ngăn sự kiện click của Card cha
+                      e.stopPropagation();
                       onBooking();
                     }}
                   >
