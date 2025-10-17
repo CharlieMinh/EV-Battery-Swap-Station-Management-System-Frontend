@@ -39,6 +39,8 @@ export function SwapProcessDialog({
 
   const handleSwapComplete = async () => {
     try {
+      console.log('SwapProcessDialog: Completing swap for booking:', bookingId);
+      
       if (bookingId && staffId && stationId) {
         await staffApi.completeSwapProcess({
           bookingId,
@@ -47,12 +49,31 @@ export function SwapProcessDialog({
           amount: 25,
           paymentMethod: "card"
         }, staffId, stationId);
+        
+        console.log('SwapProcessDialog: Swap completed successfully');
       }
+      
       setSwapComplete(true);
       onSwapConfirmed?.();
-    } catch (error) {
-      console.error('Error completing swap:', error);
-      alert("Có lỗi xảy ra khi hoàn thành thay pin");
+    } catch (error: any) {
+      console.error("SwapProcessDialog: Error completing swap:", error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        console.warn('SwapProcessDialog: Token expired, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
+        return;
+      }
+      
+      if (error.response?.status === 403) {
+        console.warn('SwapProcessDialog: Access forbidden for swap process');
+        alert('Không có quyền thực hiện quy trình thay pin này');
+        return;
+      }
+      
+      alert('Có lỗi xảy ra khi hoàn thành quy trình thay pin');
     }
   };
 
