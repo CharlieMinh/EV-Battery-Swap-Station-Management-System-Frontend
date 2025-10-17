@@ -16,6 +16,8 @@ import {
 } from "react-router-dom";
 import MapView from "./components/map/MapView";
 import api from "./configs/axios";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export type UserRole = "Driver" | "Staff" | "Admin" | null;
 
@@ -141,6 +143,17 @@ function App() {
           <Route path="/map" element={<MapView />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="light"
+        />
       </BrowserRouter>
     </LanguageProvider>
   );

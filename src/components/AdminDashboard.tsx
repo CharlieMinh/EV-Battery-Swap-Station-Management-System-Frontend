@@ -43,6 +43,7 @@ import { CustomerManagement } from "../components/admin/CustomerManagement";
 import { StaffManagement } from "../components/admin/StaffManagement";
 import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
+import AddUser from "./admin/AddUser";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -313,6 +314,17 @@ export function AdminDashboardPage({
                       <span>{t("admin.staff")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection("add-account")}
+                      isActive={activeSection === "add-account"}
+                      className="h-[50px]"
+                    >
+                      <Zap className="w-4 h-4" />
+                      <span>Add Account</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("ai-insights")}
@@ -372,6 +384,7 @@ export function AdminDashboardPage({
                   {activeSection === "staff" && t("admin.staff")}
                   {activeSection === "ai-insights" && t("admin.aiInsights")}
                   {activeSection === "alerts" && t("admin.alerts")}
+                  {activeSection === "add-account" && "Add Account"}
                 </h1>
               </div>
 
@@ -502,6 +515,8 @@ export function AdminDashboardPage({
             )} */}
 
             {activeSection === "alerts" && <AlertsManagement alerts={alerts} />}
+
+            {activeSection === "add-account" && <AddUser />}
           </main>
         </SidebarInset>
       </div>
