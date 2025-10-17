@@ -2,8 +2,8 @@ import api from '@/configs/axios';
 import React from 'react'
 
 export interface Coordinates {
-    lat: number;
-    lng: number;
+  lat: number;
+  lng: number;
 }
 
 export interface Station {
@@ -44,22 +44,22 @@ export async function fetchStations( page: number,
       address: s.address,
       isActive: s.isActive,
       coordinates: {
-        lat: s.lat,   // ✅ map đúng field
-        lng: s.lng,  // ✅ map đúng field
+        lat: s.lat,   
+        lng: s.lng,   
       },
     }));
 
     return {
       ...response.data,
-      items: mappedItems, // ✅ trả về items đúng kiểu Station
+      items: mappedItems,
     };
-    } catch (error) {
-        console.error('Error fetching stations:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('Error fetching stations:', error);
+    throw error;
+  }
 }
 
-export async function handleSubmit(data: any): Promise<Station> {
+export async function createStation(data: any): Promise<Station> {
     try {
         const response = await api.post('/api/v1/admin/stations',data , {withCredentials: true});       
         return response.data;
@@ -67,7 +67,8 @@ export async function handleSubmit(data: any): Promise<Station> {
         console.error('Error adding station:', error);
         throw error;
     }
-}
+  } 
+
 
 export async function fetchStationById(id: string): Promise<Station> {
    try {

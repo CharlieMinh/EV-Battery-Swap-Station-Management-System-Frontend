@@ -5,13 +5,18 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { fetchStations } from "@/services/admin/stationService";
-import { Station } from "@/services/admin/stationService";
+import { fetchStations, Station } from "@/services/admin/stationService";
+import AddStationModal from "./AddStationModal";
 import { DetailOfStation } from "./DetailOfStation";
+
+interface StationManagementProps {
+  stationPerformance: Station[];
+}
 
 export function StationManagement() {
   const { t } = useLanguage();
   const [stationPerformance, setStationPerformance] = useState<Station[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     null
   );
@@ -42,11 +47,28 @@ export function StationManagement() {
             <Filter className="w-4 h-4 mr-2" /> {t("admin.filter")}
           </Button>
           <Button
+            onClick={() => setIsOpen(true)}
             size="sm"
             className="bg-orange-500 hover:bg-orange-600 text-white"
           >
             <Plus className="w-4 h-4 mr-2" /> {t("admin.addStation")}
           </Button>
+
+          {isOpen && (
+            <>
+              <div className="fixed inset-0 backdrop-blur-sm bg-white/10 z-40"></div>
+
+              <AddStationModal
+                onClose={() => setIsOpen(false)}
+                onSuccess={() => {
+                  // Refresh station list after adding a new station
+                  fetchStations(1, 20).then((response) => {
+                    setStationPerformance(response.items);
+                  });
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
 
