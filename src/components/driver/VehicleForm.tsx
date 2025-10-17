@@ -5,6 +5,7 @@ import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useLanguage } from "../LanguageContext";
 import { showError, showSuccess } from "../ui/alert";
+import { Upload } from "lucide-react";
 
 interface VehicleFormProps {
     onSubmit: (data: any) => Promise<void>;
@@ -33,6 +34,8 @@ export default function VehicleForm({
     const [vin, setVin] = useState(initialData?.vin || "");
     const [plate, setPlate] = useState(initialData?.plate || "");
     const [photoUrl, setPhotoUrl] = useState(initialData?.photoUrl || "");
+    const [vehiclePhotoFile, setVehiclePhotoFile] = useState<File | null>(null);
+    const [vehiclePhotoPreview, setVehiclePhotoPreview] = useState<string | null>(null);
     const [vehicleModelId, setVehicleModelId] = useState(initialData?.vehicleModelId || "");
     const [models, setModels] = useState<VehicleModel[]>([]);
     const [loading, setLoading] = useState(false);
@@ -45,6 +48,33 @@ export default function VehicleForm({
             .catch(() => showError(t("driver.cannotLoadModels")));
     }, [t]);
 
+    // Handle vehicle photo upload
+    const handleVehiclePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type.toLowerCase())) {
+            showError("Chỉ chấp nhận file ảnh định dạng JPEG hoặc PNG");
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            showError("Kích thước file không được vượt quá 10MB");
+            return;
+        }
+
+        setVehiclePhotoFile(file);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setVehiclePhotoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -52,7 +82,7 @@ export default function VehicleForm({
             vin: vin.trim(),
             plate: plate.trim(),
             vehicleModelId: vehicleModelId || null,
-            photoUrl: photoUrl || null,
+            photoUrl: vehiclePhotoPreview || photoUrl || null, // Use uploaded photo or existing URL
         };
 
         try {
@@ -125,14 +155,75 @@ export default function VehicleForm({
                         </select>
                     </div>
 
-                    {/* Ảnh */}
+                    {/* Ảnh xe - Upload */}
                     <div>
                         <label className="block text-sm font-medium mb-1">{t("driver.vehiclePhoto")}</label>
-                        <Input
-                            value={photoUrl}
-                            onChange={(e) => setPhotoUrl(e.target.value)}
-                            placeholder="https://..."
-                        />
+                        
+                        {/* Upload Section */}
+                        <div className="border-2 border-dashed border-orange-300 rounded-lg p-4 bg-orange-50">
+                            <div className="flex flex-col items-center space-y-2">
+                                <Upload className="w-8 h-8 text-orange-400" />
+                                <div className="text-center">
+                                    <p className="text-sm font-medium text-gray-700 mb-1">
+                                        Tải lên ảnh xe
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Hỗ trợ: JPEG, PNG (Tối đa 10MB)
+                                    </p>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/jpg,image/png"
+                                    onChange={handleVehiclePhotoUpload}
+                                    className="hidden"
+                                    id="vehicle-photo-upload"
+                                />
+                                <label htmlFor="vehicle-photo-upload">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="bg-white hover:bg-gray-50"
+                                        onClick={() => document.getElementById("vehicle-photo-upload")?.click()}
+                                    >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Chọn ảnh xe
+                                    </Button>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Preview uploaded image */}
+                        {vehiclePhotoPreview && (
+                            <div className="mt-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Ảnh đã chọn:
+                                </label>
+                                <div className="relative border rounded-lg overflow-hidden">
+                                    <img
+                                        src={vehiclePhotoPreview}
+                                        alt="Vehicle preview"
+                                        className="w-full h-48 object-cover bg-gray-100"
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    File: {vehiclePhotoFile?.name} ({(vehiclePhotoFile!.size / 1024 / 1024).toFixed(2)} MB)
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Fallback URL input (for edit mode) */}
+                        {!vehiclePhotoPreview && (
+                            <div className="mt-3">
+                                <Input
+                                    value={photoUrl}
+                                    onChange={(e) => setPhotoUrl(e.target.value)}
+                                    placeholder="https://..."
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Hoặc nhập URL ảnh xe đã upload lên storage
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Nút */}

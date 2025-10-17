@@ -10,8 +10,11 @@ import { Button } from "../ui/button";
 import { Edit, Car, Delete } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import VehicleForm from "./VehicleForm";
+import ScanVehicleRegistration from "./ScanVehicleRegistration";
+import VehicleFormWithPreview from "./VehicleFormWithPreview";
 import axios from "axios";
 import { showError, showSuccess, showConfirm } from "../ui/alert";
+import type { ScanResult } from "../../services/vehicleApi";
 
 interface Vehicle {
     id: string;
@@ -31,11 +34,35 @@ interface MyVehicleProps {
 export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
     const { t } = useLanguage();
     const [showForm, setShowForm] = useState(false);
+    const [showScan, setShowScan] = useState(false);
     const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+    const [scanData, setScanData] = useState<{
+        scanResult: ScanResult | null;
+        registrationImageUrl: string | null;
+    } | null>(null);
 
     const handleAdd = () => {
         setEditingVehicle(null);
+        setScanData(null);
+        setShowForm(false);
+        setShowScan(true); // Start with scan step
+    };
+
+    const handleScanSuccess = (scanResult: ScanResult, imageFile: File) => {
+        // Convert image file to URL for preview
+        const imageUrl = URL.createObjectURL(imageFile);
+        
+        setScanData({
+            scanResult,
+            registrationImageUrl: imageUrl,
+        });
+        setShowScan(false);
         setShowForm(true);
+    };
+
+    const handleBackFromScan = () => {
+        setShowScan(false);
+        setScanData(null);
     };
 
     const handleEdit = (vehicle: Vehicle) => {
@@ -94,31 +121,65 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
 
     return (
         <div className="space-y-6">
-            <Card className="border border-orange-500 rounded-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-orange-500 font-bold">
-                        <Car className="w-5 h-5" />
-                        <span>{t("driver.vehicleInformation")}</span>
-                    </CardTitle>
-                    <CardDescription>
-                        {t("driver.vehicleInformationDesc")}
-                    </CardDescription>
-                </CardHeader>
+            {showScan ? (
+                // Step 1: Scan registration photo
+                <ScanVehicleRegistration
+                    onScanSuccess={handleScanSuccess}
+                    onBack={handleBackFromScan}
+                />
+            ) : showForm ? (
+                // Step 2: Fill vehicle form (with or without scan data)
+                editingVehicle ? (
+                    // Edit existing vehicle (use old form)
+                    <VehicleForm
+                        initialData={editingVehicle}
+                        isEdit={true}
+                        onSubmit={handleSubmit}
+                        onCancel={() => {
+                            setShowForm(false);
+                            setEditingVehicle(null);
+                        }}
+                        onSuccess={async (msg) => {
+                            await showSuccess(msg);
+                            onRefresh();
+                            setShowForm(false);
+                            setEditingVehicle(null);
+                        }}
+                    />
+                ) : (
+                    // Add new vehicle with scan data
+                    <VehicleFormWithPreview
+                        initialData={null}
+                        isEdit={false}
+                        onSubmit={handleSubmit}
+                        onCancel={() => {
+                            setShowForm(false);
+                            setScanData(null);
+                        }}
+                        onSuccess={async (msg) => {
+                            await showSuccess(msg);
+                            onRefresh();
+                            setShowForm(false);
+                            setScanData(null);
+                        }}
+                        scanResult={scanData?.scanResult}
+                        registrationImageUrl={scanData?.registrationImageUrl}
+                    />
+                )
+            ) : (
+                // Step 0: Vehicle list
+                <Card className="border border-orange-500 rounded-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center space-x-2 text-orange-500 font-bold">
+                            <Car className="w-5 h-5" />
+                            <span>{t("driver.vehicleInformation")}</span>
+                        </CardTitle>
+                        <CardDescription>
+                            {t("driver.vehicleInformationDesc")}
+                        </CardDescription>
+                    </CardHeader>
 
-                <CardContent>
-                    {showForm ? (
-                        <VehicleForm
-                            initialData={editingVehicle}
-                            isEdit={!!editingVehicle}
-                            onSubmit={handleSubmit}
-                            onCancel={() => setShowForm(false)}
-                            onSuccess={async (msg) => {
-                                await showSuccess(msg);
-                                onRefresh();
-                                setShowForm(false);
-                            }}
-                        />
-                    ) : (
+                    <CardContent>
                         <>
                             {vehicles.length === 0 ? (
                                 <p className="text-gray-500 text-center py-4">
@@ -190,9 +251,9 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
                                 {t("driver.addVehicle")}
                             </Button>
                         </>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
