@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Button } from "../ui/button";
-import { QrCode, MapPin } from "lucide-react";
+import { QrCode, MapPin, Loader2 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -9,20 +9,17 @@ interface SwapStatusProps {
   activeReservation: any | null;
   onQRDialog: () => void;
   onNavigateToBooking: () => void;
+  onCancelReservation: () => void;
+  isCancelling: boolean;
 }
 
-export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking }: SwapStatusProps) {
+export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking, onCancelReservation, isCancelling }: SwapStatusProps) {
   const { t } = useLanguage();
 
-  // --- TRƯỜNG HỢP 1: CÓ LỊCH HẸN ĐANG HOẠT ĐỘNG ---
   if (activeReservation) {
-
     const dateString = activeReservation.slotDate;
-
     const parts = dateString.split('-').map(Number);
-
     const localDate = new Date(parts[0], parts[1] - 1, parts[2]);
-
 
     return (
       <Card className="border border-orange-500 rounded-lg">
@@ -35,7 +32,6 @@ export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking 
             <div>
               <h3 className="text-lg font-medium text-orange-600">{activeReservation.stationName}</h3>
               <p className="text-gray-500">
-                {/* 4. Sử dụng biến `localDate` đã được xử lý an toàn */}
                 {localDate.toLocaleDateString('vi-VN')} lúc {activeReservation.slotStartTime.substring(0, 5)}
               </p>
             </div>
@@ -43,10 +39,22 @@ export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking 
               <QRCodeSVG value={activeReservation.qrCode || ""} size={128} />
             </div>
             <p className="font-mono text-lg tracking-widest">{activeReservation.reservationCode}</p>
+            <div className="space-y-2 pt-4">
 
-            <Button className="w-full bg-orange-500" onClick={onQRDialog}>
-              <QrCode className="w-4 h-4 mr-2" /> {t("driver.viewFullQRCode")}
-            </Button>
+
+              <Button
+                variant="outline"
+                className="w-full bg-orange-500 hover:bg-orange-600"
+                onClick={onCancelReservation}
+                disabled={isCancelling}
+              >
+                {isCancelling ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {t("driver.cancel")}
+              </Button>
+            </div>
+
           </div>
         </CardContent>
       </Card>
