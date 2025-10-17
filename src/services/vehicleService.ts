@@ -114,29 +114,22 @@ class VehicleService {
     /**
      * Create new vehicle with file upload
      */
-    async createVehicle(data: CreateVehicleRequest): Promise<Vehicle> {
-        const formData = new FormData();
-        formData.append('Vin', data.vin);
-        formData.append('Plate', data.plate);
-        formData.append('VehicleModelId', data.vehicleModelId);
-        formData.append('Photo', data.photo);
-        formData.append('RegistrationPhoto', data.registrationPhoto);
+  async createVehicle(vehicleFormData: FormData): Promise<Vehicle> { // 1. Sửa kiểu tham số thành FormData
+    try {
+      // 2. Gửi thẳng FormData nhận được, không tạo mới
+      const response = await api.post('/api/v1/vehicles', vehicleFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-        try {
-            const response = await api.post('/api/v1/vehicles', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            return response.data;
-        } catch (error: any) {
-            console.error('Vehicle creation error:', error);
-            console.error('Error response:', error.response?.data);
-            console.error('Error status:', error.response?.status);
-            throw error;
-        }
+      return response.data;
+    } catch (error: any) {
+      console.error('Vehicle creation error:', error);
+      console.error('Error response:', error.response?.data);
+      throw error;
     }
+  }
 
     /**
      * Create new vehicle with URL
@@ -149,11 +142,15 @@ class VehicleService {
     /**
      * Update vehicle
      */
-    async updateVehicle(id: string, data: Partial<CreateVehicleWithUrlRequest>): Promise<Vehicle> {
-        const response = await api.put(`/api/v1/vehicles/${id}`, data);
-        return response.data;
-    }
-
+   // New version sending FormData
+async updateVehicle(id: string, vehicleFormData: FormData): Promise<Vehicle> {
+    const response = await api.put(`/api/v1/vehicles/${id}`, vehicleFormData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+}
     /**
      * Delete vehicle
      */
