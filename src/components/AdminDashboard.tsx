@@ -69,44 +69,6 @@ export function AdminDashboardPage({
     { month: "Jun", revenue: 67_000, swaps: 2680, growth: 15.5 },
   ];
 
-  const stationPerformance = [
-    {
-      name: "Downtown Hub",
-      swaps: 456,
-      revenue: 11400,
-      utilization: 85,
-      status: "active" as const,
-    },
-    {
-      name: "Mall Station",
-      swaps: 389,
-      revenue: 9725,
-      utilization: 78,
-      status: "active" as const,
-    },
-    {
-      name: "Airport Terminal",
-      swaps: 234,
-      revenue: 7020,
-      utilization: 45,
-      status: "maintenance" as const,
-    },
-    {
-      name: "Highway Rest Stop",
-      swaps: 567,
-      revenue: 17010,
-      utilization: 92,
-      status: "active" as const,
-    },
-    {
-      name: "University Campus",
-      swaps: 298,
-      revenue: 7450,
-      utilization: 67,
-      status: "active" as const,
-    },
-  ];
-
   const batteryHealth = [
     { range: "90-100%", count: 145, color: "#22c55e" },
     { range: "70-89%", count: 87, color: "#f59e0b" },
@@ -121,80 +83,6 @@ export function AdminDashboardPage({
     { time: "3PM", predicted: 89, actual: 85, confidence: 90 },
     { time: "6PM", predicted: 134, actual: 128, confidence: 94 },
     { time: "9PM", predicted: 78, actual: 82, confidence: 87 },
-  ];
-
-  const customers = [
-    {
-      id: "1",
-      name: "Alex Chen",
-      email: "alex@email.com",
-      plan: "Thành viên",
-      status: "active" as const,
-      swaps: 23,
-      revenue: 149,
-    },
-    {
-      id: "2",
-      name: "Sarah Kim",
-      email: "sarah@email.com",
-      plan: "Vãng lai",
-      status: "active" as const,
-      swaps: 8,
-      revenue: 200,
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@email.com",
-      plan: "Thành viên",
-      status: "active" as const,
-      swaps: 156,
-      revenue: 2400,
-    },
-    {
-      id: "4",
-      name: "Emily Davis",
-      email: "emily@email.com",
-      plan: "Vãng lai",
-      status: "suspended" as const,
-      swaps: 45,
-      revenue: 597,
-    },
-  ];
-
-  const staff = [
-    {
-      id: "1",
-      name: "John Smith",
-      role: "Station Manager",
-      station: "Downtown Hub",
-      performance: 95,
-      status: "active" as const,
-    },
-    {
-      id: "2",
-      name: "Lisa Wang",
-      role: "Technician",
-      station: "Mall Station",
-      performance: 88,
-      status: "active" as const,
-    },
-    {
-      id: "3",
-      name: "Carlos Rodriguez",
-      role: "Supervisor",
-      station: "Airport Terminal",
-      performance: 92,
-      status: "on-leave" as const,
-    },
-    {
-      id: "4",
-      name: "Amy Foster",
-      role: "Technician",
-      station: "Highway Rest Stop",
-      performance: 97,
-      status: "active" as const,
-    },
   ];
 
   const alerts = [
@@ -322,7 +210,7 @@ export function AdminDashboardPage({
                       className="h-[50px]"
                     >
                       <Zap className="w-4 h-4" />
-                      <span>Add Account</span>
+                      <span>Thêm người dùng</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   {/* <SidebarMenuItem>

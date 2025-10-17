@@ -34,26 +34,29 @@ export function CustomerManagement() {
     null
   );
 
+  const getAllCustomers = async () => {
+    try {
+      const response = await fetchCustomers(1, 20);
+      setCustomer(response.data);
+      console.log("Fetched customers:", response.data);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
+  };
+
+  // useEffect chỉ chạy lần đầu
   useEffect(() => {
-    const getAllCustomers = async () => {
-      try {
-        const response = await fetchCustomers(1, 20);
-        setCustomer(response.data);
-        console.log("Fetched customers:", response.data);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-        throw error;
-      }
-    };
     getAllCustomers();
   }, []);
 
-  const handleViewDetails = (customer: Customer) => {
-    setSelectedCustomer(customer);
-  };
-
+  // handleCloseModal
   const handleCloseModal = () => {
     setSelectedCustomer(null);
+    getAllCustomers(); // reload dữ liệu sau khi đóng modal
+  };
+
+  const handleViewDetails = (customer: Customer) => {
+    setSelectedCustomer(customer);
   };
 
   const filteredCustomers = useMemo(() => {
@@ -63,7 +66,7 @@ export function CustomerManagement() {
       (c) =>
         c.name.toLowerCase().includes(query) ||
         c.email.toLowerCase().includes(query) ||
-        c.PhoneNumber.includes(query)
+        c.phoneNumber.includes(query)
     );
   }, [customer, searchQuery]);
 
@@ -122,7 +125,7 @@ export function CustomerManagement() {
                             : "bg-red-500 text-white "
                         }
                       >
-                        {t(`admin.${customer.status}`)}
+                        {customer.status == "Active" ? "Hoạt động" : "Chặn"}
                       </Badge>
                       {/* <span className="text-xs text-gray-400">
                         {customer.plan}
