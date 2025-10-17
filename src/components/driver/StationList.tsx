@@ -77,16 +77,15 @@ export function StationList({
                     <h3 className="font-bold text-lg text-orange-600">{station.name}</h3>
                     <p className="text-sm text-gray-500">{station.address}, {station.city}</p>
                   </div>
-                  {/* === HIỂN THỊ TRẠNG THÁI "MỞ CỬA" / "ĐÓNG CỬA" === */}
                   <Badge variant={station.isOpenNow ? "default" : "destructive"} className={station.isOpenNow ? "bg-green-500" : ""}>
-                    {t(station.isOpenNow ? "Đang mở cửa" : "Đã đóng cửa")}
+                    {station.isOpenNow ? t("driver.stationStatus.open") : t("driver.stationStatus.closed")}
                   </Badge>
                 </div>
 
                 <div className="space-y-2 mb-4 text-sm text-gray-700">
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2 text-orange-500" />
-                    <span>Giờ hoạt động: {station.openTime.substring(0, 5)} - {station.closeTime.substring(0, 5)}</span>
+                    <span>{t("driver.operatingHours")}: {station.openTime.substring(0, 5)} - {station.closeTime.substring(0, 5)}</span>
                   </div>
                   {station.phoneNumber && (
                     <div className="flex items-center">

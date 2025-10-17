@@ -56,6 +56,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("swap");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   // const [bookingStep, setBookingStep] = useState(1);
   // const [selectedVehicle, setSelectedVehicle] = useState<string>("");
   // const [selectedTime, setSelectedTime] = useState<string>("");
@@ -92,6 +93,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [bookingResult, setBookingResult] = useState<any>(null);
 
   const [activeReservation, setActiveReservation] = useState<any>(null);
+
   interface Slot {
     slotStartTime: string;
     slotEndTime: string;
@@ -283,6 +285,46 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       setSlots(res.data);
     } catch (error) {
       console.log("Thất bại khi lấy slot");
+    }
+  };
+  const handleCancelReservation = async () => {
+    // Kiểm tra xem có lịch hẹn nào để hủy không
+    if (!activeReservation) {
+      alert("Không có lịch hẹn nào để hủy.");
+      return;
+    }
+
+    // Hỏi người dùng để xác nhận, tránh bấm nhầm
+    if (!window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này không?")) {
+      return;
+    }
+
+    setIsCancelling(true); // Bật trạng thái loading
+    try {
+      // Gọi API DELETE đến server
+      await axios.delete(
+        // URL được tạo động với ID của lịch hẹn
+        `http://localhost:5194/api/v1/slot-reservations/${activeReservation.id}`,
+        {
+          // Body của request DELETE phải được đặt trong thuộc tính `data` của config
+          data: {
+            reason: 3,
+            note: "User cancelled from the web portal"
+          },
+          withCredentials: true,
+        }
+      );
+
+      // Xử lý khi thành công
+      alert("Hủy lịch hẹn thành công!");
+      setActiveReservation(null); // Xóa lịch hẹn khỏi giao diện
+      setBookingResult(null); // Cũng xóa kết quả cũ
+
+    } catch (error) {
+      console.error("Lỗi khi hủy lịch hẹn:", error);
+      alert("Hủy lịch thất bại, vui lòng thử lại.");
+    } finally {
+      setIsCancelling(false); // Tắt trạng thái loading
     }
   };
   useEffect(() => {
@@ -529,6 +571,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   onQRDialog={() => setQrDialog(true)}
                   // ✅ Truyền hàm để chuyển người dùng sang tab đặt lịch nếu họ chưa có lịch
                   onNavigateToBooking={() => setActiveSection("map")}
+                  onCancelReservation={handleCancelReservation}
+                  isCancelling={isCancelling}
                 />
               </div>
             )}

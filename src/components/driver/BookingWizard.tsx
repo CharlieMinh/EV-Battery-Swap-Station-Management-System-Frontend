@@ -131,12 +131,11 @@ export function BookingWizard({
                   onClick={() => onVehicleSelect(vehicle)}
                 >
                   <CardContent className="p-4 flex items-center justify-between">
-                    {/* ... Nội dung card xe ... */}
                     <div className="flex items-center space-x-4">
                       {vehicle.photoUrl ? <img src={vehicle.photoUrl} alt={vehicle.vehicleModelFullName} className="w-16 h-12 object-cover rounded-md" /> : <Car className="w-10 h-10 text-gray-400" />}
                       <div>
                         <p className="font-bold">{vehicle.vehicleModelFullName || vehicle.brand}</p>
-                        <p className="text-sm text-gray-600">Biển số: <span className="font-semibold">{vehicle.plate}</span></p>
+                        <p className="text-sm text-gray-600">{t('driver.booking.licensePlate')}: <span className="font-semibold">{vehicle.plate}</span></p>
                       </div>
                     </div>
                     {selectedVehicle?.id === vehicle.id && <CheckCircle className="w-6 h-6 text-green-500" />}
@@ -155,7 +154,7 @@ export function BookingWizard({
         {/* BƯỚC 2: CHỌN NGÀY */}
         {bookingStep === 2 && (
           <div className="space-y-6 flex flex-col items-center">
-            <h3 className="text-lg font-medium">Hãy chọn ngày phù hợp với bạn</h3>
+            <h3 className="text-lg font-medium">{t('driver.booking.selectDateTitle')}</h3>
 
             <div className="flex justify-center items-center w-full">
               <Calendar
@@ -190,7 +189,6 @@ export function BookingWizard({
                 }}
               />
             </div>
-
 
             <div className="flex justify-between w-full pt-4">
               <Button variant="outline" onClick={() => onStepChange(1)}>
@@ -242,7 +240,8 @@ export function BookingWizard({
                       onClick={() => onSlotSelect(slot)}
                       disabled={isSlotDisabled}
                     >
-                      {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)}
+                      {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)} <br></br>
+                      {t('driver.currentReservations')}: 5/5
                     </Button>
                   );
                 }) : <p className='col-span-4 text-center text-gray-500 py-16'>{t('driver.noAvailableSlots')}</p>}
