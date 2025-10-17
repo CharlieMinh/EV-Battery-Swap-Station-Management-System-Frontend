@@ -1,22 +1,22 @@
-import React, { use, useEffect, useState } from "react";
 import {
-  Customer,
-  CustomerDetail,
-  fetchCustomerById,
-} from "@/services/admin/customerAdminService";
+  fetchStaffById,
+  Staff,
+  StaffDetails,
+} from "@/services/admin/staffAdminService";
+import { useEffect, useState } from "react";
 import { useLanguage } from "../LanguageContext";
 import {
-  BarChart,
+  Loader2,
+  User,
+  Mail,
+  Smartphone,
+  Zap,
   Calendar,
   Clock,
   Edit,
-  Loader2,
-  Mail,
-  Smartphone,
-  Truck,
-  User,
   X,
-  Zap,
+  BarChart,
+  Truck,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -39,47 +39,42 @@ const formatDateTime = (isoString: any) => {
   }
 };
 
-interface CustomerDetailModalProps {
-  customer: Customer | null;
+const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
+
+interface StaffDetailModalProps {
+  staff: Staff | null;
   onClose: () => void;
 }
 
-const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
-
-const CustomerDetailModal = ({
-  customer,
-  onClose,
-}: CustomerDetailModalProps) => {
+const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
   const { t } = useLanguage();
-  const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(
-    null
-  );
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const [staffDetail, setStaffDetail] = useState<StaffDetails | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!customer || !customer.id) return;
+    if (!staff || !staff.id) return;
 
-    const getCustomerById = async () => {
+    const getStaffById = async () => {
       setLoading(true);
-      setCustomerDetail(null);
+      setStaffDetail(null);
 
       try {
-        const data = await fetchCustomerById(customer.id);
-        setCustomerDetail(data);
-        console.log("Fetched customer detail:", data);
+        const data = await fetchStaffById(staff.id);
+        setStaffDetail(data);
+        console.log("Fetched staff detail:", data);
       } catch (error) {
-        console.error("Error fetching customer detail:", error);
+        console.error("Error fetching staff detail:", error);
         throw error;
       } finally {
         setLoading(false);
       }
     };
-    getCustomerById();
-  }, [customer, onClose]);
+    getStaffById();
+  }, [staff, onClose]);
 
-  if (!customer) return;
+  if (!staff) return;
 
-  if (loading || !customerDetail) {
+  if (loading || !staffDetail) {
     return (
       <div className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-10 shadow-2xl flex flex-col items-center justify-center w-full max-w-sm">
@@ -93,23 +88,23 @@ const CustomerDetailModal = ({
   }
 
   const data = [
-    { icon: User, label: t("admin.name"), value: customerDetail.name },
-    { icon: Mail, label: t("admin.email"), value: customerDetail.email },
+    { icon: User, label: t("admin.name"), value: staffDetail.name },
+    { icon: Mail, label: t("admin.email"), value: staffDetail.email },
     {
       icon: Smartphone,
       label: t("admin.phone"),
-      value: customerDetail.PhoneNumber,
+      value: staffDetail.phoneNumber,
     },
-    { icon: Zap, label: t("admin.role"), value: customerDetail.role || "N/A" },
+    { icon: Zap, label: t("admin.role"), value: staffDetail.role || "N/A" },
     {
       icon: Calendar,
       label: t("admin.createdAt"),
-      value: formatDateTime(customerDetail.createdAt),
+      value: formatDateTime(staffDetail.createdAt),
     },
     {
       icon: Clock,
       label: t("admin.lastLogin"),
-      value: formatDateTime(customerDetail.lastLogin),
+      value: formatDateTime(staffDetail.lastLogin),
     },
   ];
 
@@ -127,7 +122,7 @@ const CustomerDetailModal = ({
         {/* Header with Close Button and Actions */}
         <div className="sticky top-0 bg-white p-6 border-b border-gray-100 z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <h2 className="text-2xl font-bold text-orange-600 mb-3 sm:mb-0">
-            {t("admin.customerDetail")}
+            {t("admin.staffDetail")}
           </h2>
           <div className="flex space-x-3">
             <Button
@@ -194,7 +189,7 @@ const CustomerDetailModal = ({
                   </p>{" "}
                   {/* Dùng key mới */}
                   <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.totalReservations)}
+                    {formatNumber(staffDetail.totalReservationsVerified)}
                   </p>
                 </div>
                 {/* Revenue (Doanh Thu) */}
@@ -205,7 +200,7 @@ const CustomerDetailModal = ({
                   </p>{" "}
                   {/* Dùng key mới */}
                   <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.completedReservations)} VND
+                    {formatNumber(staffDetail.totalSwapTransactions)} VND
                   </p>
                 </div>
                 {/* Cancelled Swaps (Lượt hủy) */}
@@ -215,7 +210,7 @@ const CustomerDetailModal = ({
                     {t("admin.cancelledReservations")}
                   </p>
                   <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.cancelledReservations)}
+                    {formatNumber(staffDetail.recentReservationsVerified)}
                   </p>
                 </div>
                 {/* Total Vehicles (Tổng phương tiện) */}
@@ -225,7 +220,7 @@ const CustomerDetailModal = ({
                     {t("admin.totalVehicles")}
                   </p>
                   <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.totalVehicles)}
+                    {formatNumber(staffDetail.recentSwapTransactions)}
                   </p>
                 </div>
               </div>
@@ -254,4 +249,4 @@ const CustomerDetailModal = ({
   );
 };
 
-export default CustomerDetailModal;
+export default StaffDetailModal;

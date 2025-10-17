@@ -13,6 +13,7 @@ import { Eye, Edit, Plus, Filter } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { fetchStaffList, Staff } from "@/services/admin/staffAdminService";
 import { get } from "http";
+import StaffDetailModal from "./StaffDetailModal";
 
 interface StaffManagementProps {
   staff: Staff[];
@@ -22,6 +23,7 @@ export function StaffManagement() {
   const { t } = useLanguage();
 
   const [staffList, setStaffList] = useState<Staff[] | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
   useEffect(() => {
     const getAllStaff = async () => {
@@ -42,10 +44,12 @@ export function StaffManagement() {
     return;
   }
 
-  const getPerformanceColor = (performance: number) => {
-    if (performance >= 95) return "text-green-600";
-    if (performance >= 85) return "text-yellow-600";
-    return "text-red-600";
+  const handleViewDetails = (staff: Staff) => {
+    setSelectedStaff(staff);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedStaff(null);
   };
 
   return (
@@ -123,7 +127,11 @@ export function StaffManagement() {
                     />
                   </div> */}
                   <div className="flex justify-center space-x-2 mt-2">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(member)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="outline">
@@ -136,6 +144,7 @@ export function StaffManagement() {
           </div>
         </CardContent>
       </Card>
+      <StaffDetailModal staff={selectedStaff} onClose={handleCloseModal} />
     </div>
   );
 }
