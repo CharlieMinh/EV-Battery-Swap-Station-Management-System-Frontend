@@ -3,9 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { QrCode, MapPin } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { QRCodeSVG } from 'qrcode.react'; // 1. Import công cụ vẽ QR
+import { QRCodeSVG } from 'qrcode.react';
 
-// 2. Cập nhật Props: Thêm activeReservation và onNavigateToBooking
 interface SwapStatusProps {
   activeReservation: any | null;
   onQRDialog: () => void;
@@ -17,6 +16,14 @@ export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking 
 
   // --- TRƯỜNG HỢP 1: CÓ LỊCH HẸN ĐANG HOẠT ĐỘNG ---
   if (activeReservation) {
+
+    const dateString = activeReservation.slotDate;
+
+    const parts = dateString.split('-').map(Number);
+
+    const localDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+
     return (
       <Card className="border border-orange-500 rounded-lg">
         <CardHeader>
@@ -26,13 +33,13 @@ export function SwapStatus({ activeReservation, onQRDialog, onNavigateToBooking 
         <CardContent>
           <div className="text-center space-y-4">
             <div>
-              {/* 3. Hiển thị dữ liệu thật */}
+              <h3 className="text-lg font-medium text-orange-600">{activeReservation.stationName}</h3>
               <p className="text-gray-500">
-                {new Date(activeReservation.slotDate).toLocaleDateString('vi-VN')} lúc {activeReservation.slotStartTime.substring(0, 5)}
+                {/* 4. Sử dụng biến `localDate` đã được xử lý an toàn */}
+                {localDate.toLocaleDateString('vi-VN')} lúc {activeReservation.slotStartTime.substring(0, 5)}
               </p>
             </div>
             <div className="bg-white p-4 rounded-lg inline-block border">
-              {/* 4. Hiển thị ảnh QR thật (phiên bản nhỏ) */}
               <QRCodeSVG value={activeReservation.qrCode || ""} size={128} />
             </div>
             <p className="font-mono text-lg tracking-widest">{activeReservation.reservationCode}</p>
