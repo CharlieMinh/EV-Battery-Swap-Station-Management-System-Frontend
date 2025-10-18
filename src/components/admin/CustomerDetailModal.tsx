@@ -3,6 +3,8 @@ import {
   Customer,
   CustomerDetail,
   fetchCustomerById,
+  updateUser,
+  UpdateUserPayload,
 } from "@/services/admin/customerAdminService";
 import { useLanguage } from "../LanguageContext";
 import {
@@ -12,6 +14,7 @@ import {
   Edit,
   Loader2,
   Mail,
+  Save,
   Smartphone,
   Truck,
   User,
@@ -20,6 +23,9 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { set } from "date-fns";
+import { toast } from "react-toastify";
+import { get } from "http";
 
 const formatDateTime = (isoString: any) => {
   if (!isoString) return "N/A";
@@ -46,6 +52,34 @@ interface CustomerDetailModalProps {
 
 const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
 
+const getRoleNumber = (role: string | number): number => {
+  if (typeof role === "number") return role;
+  switch (role) {
+    case "Driver":
+      return 0;
+    case "Staff":
+      return 1;
+    case "Admin":
+      return 2;
+    default:
+      return parseInt(role) || 0;
+  }
+};
+
+const getRoleText = (role: string | number): string => {
+  const roleNum = typeof role === "number" ? role : getRoleNumber(role);
+  switch (roleNum) {
+    case 0:
+      return "Tài xế";
+    case 1:
+      return "Nhân viên";
+    case 2:
+      return "Quản lý";
+    default:
+      return "N/A";
+  }
+};
+
 const CustomerDetailModal = ({
   customer,
   onClose,
@@ -55,6 +89,13 @@ const CustomerDetailModal = ({
     null
   );
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phoneNumber: "",
+    role: "0",
+    status: "0",
+  });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!customer || !customer.id) return;
@@ -66,7 +107,19 @@ const CustomerDetailModal = ({
       try {
         const data = await fetchCustomerById(customer.id);
         setCustomerDetail(data);
+
+        const roleValue = getRoleNumber(data.role || "0").toString();
+        const statusValue =
+          data.status === "Active" || data.status === "0" ? "0" : "1";
+        setFormData({
+          name: data.name || "",
+          phoneNumber: data.phoneNumber || "",
+          role: roleValue,
+          status: statusValue,
+        });
+
         console.log("Fetched customer detail:", data);
+        console.log("Initialized formData:", { roleValue, statusValue });
       } catch (error) {
         console.error("Error fetching customer detail:", error);
         throw error;
@@ -76,6 +129,47 @@ const CustomerDetailModal = ({
     };
     getCustomerById();
   }, [customer, onClose]);
+
+  const handleSave = async () => {
+    if (!customerDetail) return;
+
+    try {
+      setLoading(true);
+      const payload: UpdateUserPayload = {
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role,
+        status: formData.status,
+      };
+
+      console.log("Payload being sent:", payload);
+      console.log("Payload types:", {
+        role: typeof payload.role,
+        status: typeof payload.status,
+      });
+
+      const updatedCustomer = await updateUser(customerDetail.id!, payload);
+      console.log("Response from server:", updatedCustomer);
+
+      toast.success(t("admin.updateSuccess"));
+
+      // Cập nhật customerDetail với dữ liệu mới từ formData
+      setCustomerDetail({
+        ...customerDetail,
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role,
+        status: formData.status === "0" ? "Active" : "Inactive",
+      });
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      toast.error(t("admin.updateFailed"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!customer) return;
 
@@ -92,15 +186,56 @@ const CustomerDetailModal = ({
     );
   }
 
+  const getDisplayValue = (key: string) => {
+    switch (key) {
+      case "name":
+        return formData.name || customerDetail.name;
+      case "phoneNumber":
+        return formData.phoneNumber || customerDetail.phoneNumber;
+      case "role":
+        return getRoleText(formData.role);
+      case "status":
+        return formData.status === "0" ? "Đang hoạt động" : "Ngừng hoạt động";
+      default:
+        return "";
+    }
+  };
+
   const data = [
-    { icon: User, label: t("admin.name"), value: customerDetail.name },
-    { icon: Mail, label: t("admin.email"), value: customerDetail.email },
     {
+      key: "name",
+      icon: User,
+      label: t("admin.name"),
+      value: getDisplayValue("name"),
+      editable: true,
+    },
+    {
+      key: "email",
+      icon: Mail,
+      label: t("admin.email"),
+      value: customerDetail.email,
+    },
+    {
+      key: "phoneNumber",
       icon: Smartphone,
       label: t("admin.phone"),
-      value: customerDetail.PhoneNumber,
+      value: getDisplayValue("phoneNumber"),
+      editable: true,
     },
-    { icon: Zap, label: t("admin.role"), value: customerDetail.role || "N/A" },
+    {
+      key: "role",
+      icon: Zap,
+      label: t("admin.role"),
+      value: getDisplayValue("role"),
+      editable: true,
+    },
+    {
+      key: "status",
+      icon: Zap,
+      label: t("admin.status"),
+      value: getDisplayValue("status"),
+      editable: true,
+    },
     {
       icon: Calendar,
       label: t("admin.createdAt"),
@@ -112,6 +247,8 @@ const CustomerDetailModal = ({
       value: formatDateTime(customerDetail.lastLogin),
     },
   ];
+
+  console.log("Rendering CustomerDetailModal with data:", data);
 
   return (
     // Modal Overlay (dimming/blur background)
@@ -137,9 +274,30 @@ const CustomerDetailModal = ({
             >
               <Calendar className="w-4 h-4 mr-1" /> {t("admin.viewHistory")}
             </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
-            </Button>
+            {!isEditing ? (
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleSave}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
+                  </>
+                )}
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -165,12 +323,58 @@ const CustomerDetailModal = ({
                 {data.map((item, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <item.icon className="w-5 h-5 text-gray-500" />
-                    <p>
-                      <span className="font-semibold text-sm mr-2">
-                        {item.label}:
-                      </span>
-                      <span className="font-medium">{item.value}</span>
-                    </p>
+                    {isEditing && item.editable ? (
+                      item.key === "role" ? (
+                        <select
+                          value={formData.role}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              role: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1"
+                        >
+                          <option value={"0"}>Tài xế</option>
+                          <option value={"1"}>Nhân viên</option>
+                          <option value={"2"}>Quản lý</option>
+                        </select>
+                      ) : item.key === "status" ? (
+                        <select
+                          value={formData.status}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              status: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1"
+                        >
+                          <option value={"0"}>Đang hoạt động</option>
+                          <option value={"1"}>Ngừng hoạt động</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={(formData as any)[item.key] || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              [item.key]: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1 w-full"
+                          required
+                        />
+                      )
+                    ) : (
+                      <p>
+                        <span className="font-semibold text-sm mr-2">
+                          {item.label}:
+                        </span>
+                        <span className="font-medium">{item.value}</span>
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

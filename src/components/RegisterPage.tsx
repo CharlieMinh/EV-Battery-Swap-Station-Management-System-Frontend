@@ -28,6 +28,7 @@ import {
 import { User as UserType } from "../App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 interface RegisterPageProps {
   onRegister: (user: UserType) => void;
@@ -71,6 +72,7 @@ export function RegisterPage({
     useState<boolean>(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
@@ -149,7 +151,11 @@ export function RegisterPage({
       );
 
       onRegister(response.data);
-      alert("Registration successful! Please log in.");
+      setSuccessMessage(t("register.registrationSuccess"));
+      toast.success(t("register.registrationSuccess"), {
+        position: "top-right",
+        autoClose: 4000,
+      });
       navigate("/login");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -162,6 +168,11 @@ export function RegisterPage({
           console.error("Unexpected error:", error);
         }
       }
+
+      toast.error(t("register.registrationFailed"), {
+        position: "top-right",
+        autoClose: 4000,
+      });
     } finally {
       setIsLoading(false);
     }

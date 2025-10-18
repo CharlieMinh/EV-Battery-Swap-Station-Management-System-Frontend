@@ -237,6 +237,16 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Find Stations",
+    "driver.currentReservations": "Battery",
+    "driver.noStationsFound": "No stations found.",
+    "driver.stationStatus.open": "Open",
+    "driver.stationStatus.closed": "Closed",
+    "driver.operatingHours": "Operating Hours",
+    "driver.booking.licensePlate": "License Plate",
+    "driver.booking.selectDateTitle": "Please select a convenient date",
+    "driver.noAvailableSlots": "No available slots for the selected date.",
+    "driver.confirmAndBook": "Confirm & Book",
+    "driver.yourBookingCodeIs": "Your booking code is",
     "driver.profile.title": "Personal Profile",
     "driver.profile.editProfile": "Edit Profile",
     "driver.mycar": "My Car",
@@ -963,6 +973,16 @@ const translations = {
 
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
+    "driver.currentReservations": "Số lượng pin",
+    "driver.noStationsFound": "Không tìm thấy trạm nào.",
+    "driver.stationStatus.open": "Đang mở cửa",
+    "driver.stationStatus.closed": "Đã đóng cửa",
+    "driver.operatingHours": "Giờ hoạt động",
+    "driver.booking.licensePlate": "Biển số",
+    "driver.booking.selectDateTitle": "Hãy chọn ngày phù hợp với bạn",
+    "driver.noAvailableSlots": "Không có khung giờ trống cho ngày đã chọn.",
+    "driver.confirmAndBook": "Xác nhận & Đặt chỗ",
+    "driver.yourBookingCodeIs": "Mã đặt chỗ của bạn là",
     "driver.subscription.title": "Thông Tin Gói Thuê Bao",
     "driver.subscription.description":
       "Chi tiết về gói cước và tình trạng sử dụng hiện tại của bạn.",

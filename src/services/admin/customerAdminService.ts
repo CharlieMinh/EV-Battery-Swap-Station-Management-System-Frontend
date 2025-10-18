@@ -1,22 +1,30 @@
 import api from "@/configs/axios";
+import { ca } from "date-fns/locale";
 import { data } from "react-router-dom";
 
 export interface Customer {
-    id: String;
-    email: String;
-    name: String;
-    PhoneNumber: String;
-    status: String;
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber: string;
+    status: string;
     createdAt: Date;
     lastLogin: Date;
-    totalReservations: Number;
-    completedReservations: Number;
+    totalReservations: number;
+    completedReservations: number;
 }
 
 export interface CustomerDetail extends Customer {
-    role: String;
-    cancelledReservations: Number;
-    totalVehicles: Number;
+    role: string;
+    cancelledReservations: number;
+    totalVehicles: number;
+}
+
+export interface UpdateUserPayload {
+    name?: string;
+    phoneNumber?: string;
+    role: string;
+    status: string;
 }
 
 export async function fetchCustomers(  page: number,
@@ -31,7 +39,7 @@ export async function fetchCustomers(  page: number,
     }
 }
 
-export async function fetchCustomerById(id: String) {
+export async function fetchCustomerById(id: string) {
     try {
         const response = await api.get(`/api/v1/Users/${id}`);
         const customer = response.data;
@@ -41,3 +49,24 @@ export async function fetchCustomerById(id: String) {
         throw error;
     }
 }
+
+export async function updateUser(id: string, payload: UpdateUserPayload) {
+    try {
+        // Thử các format khác
+        const wrappedPayload = {
+            name: payload.name,
+            phoneNumber: payload.phoneNumber,
+            role: parseInt(payload.role),
+            status: parseInt(payload.status) // Có thể backend cần số thay vì string
+        };
+
+        const response = await api.put(`/api/v1/Users/${id}`, wrappedPayload, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating user:', error);
+        throw error;
+    }
+}
+

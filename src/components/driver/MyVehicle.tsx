@@ -9,8 +9,8 @@ import {
 import { Button } from "../ui/button";
 import { Edit, Car, Delete } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import VehicleForm from "./VehicleForm";
-import axios from "axios";
+import VehicleFormWithOCR from "./VehicleFormWithOCR";
+import { vehicleService } from "../../services/vehicleService";
 import { showError, showSuccess, showConfirm } from "../ui/alert";
 
 interface Vehicle {
@@ -51,9 +51,7 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
         if (!confirmed) return;
 
         try {
-            await axios.delete(`http://localhost:5194/api/v1/vehicles/${id}`, {
-                withCredentials: true,
-            });
+            await vehicleService.deleteVehicle(id);
             await showSuccess(t("driver.deleteSuccess"));
             onRefresh?.();
         } catch (err: any) {
@@ -69,16 +67,10 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
     const handleSubmit = async (data: any) => {
         try {
             if (editingVehicle) {
-                await axios.put(
-                    `http://localhost:5194/api/v1/vehicles/${editingVehicle.id}`,
-                    data,
-                    { withCredentials: true }
-                );
+                await vehicleService.updateVehicle(editingVehicle.id, data);
                 await showSuccess(t("driver.updateSuccess"));
             } else {
-                await axios.post("http://localhost:5194/api/v1/vehicles", data, {
-                    withCredentials: true,
-                });
+                await vehicleService.createVehicle(data);
                 await showSuccess(t("driver.addSuccess"));
             }
             setShowForm(false);
@@ -107,7 +99,7 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
 
                 <CardContent>
                     {showForm ? (
-                        <VehicleForm
+                        <VehicleFormWithOCR
                             initialData={editingVehicle}
                             isEdit={!!editingVehicle}
                             onSubmit={handleSubmit}
