@@ -39,7 +39,6 @@ import { BatteryInventory } from "./staff/BatteryInventory";
 import { TransactionManagement } from "./staff/TransactionManagement";
 import { RevenueTracking } from "./staff/RevenueTracking";
 import { SwapProcessDialog } from "./staff/SwapProcessDialog";
-import { InspectionDialog } from "./staff/InspectionDialog";
 import { POSDialog } from "./staff/POSDialog";
 import { BatteryConditionCheck } from "./staff/BatteryConditionCheck";
 
@@ -53,7 +52,6 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const [activeSection, setActiveSection] = useState("queue");
   const [selectedBattery, setSelectedBattery] = useState<string | null>(null);
   const [swapDialog, setSwapDialog] = useState(false);
-  const [inspectionDialog, setInspectionDialog] = useState(false);
   const [posDialog, setPosDialog] = useState(false);
   const [batteryCheckDialog, setBatteryCheckDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -91,13 +89,29 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const fetchQueueBookings = async () => {
     try {
       setLoading(true);
+      console.log('StaffDashBoard: Fetching real bookings from API...');
       const data = await staffApi.getQueue(user.stationId || 1);
+      console.log('StaffDashBoard: Real bookings fetched:', data);
       setBookings(data);
     } catch (error) {
       console.error('Error fetching queue bookings:', error);
       setError('Failed to load queue bookings');
+      setBookings([]); // Set empty array on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Test function to get real staff data from /api/v1/Users/staff
+  const testRealStaffAPI = async () => {
+    try {
+      console.log('StaffDashBoard: Testing /api/v1/Users/staff API...');
+      const staffData = await staffApi.getRealStaffData();
+      console.log('StaffDashBoard: Real staff data:', staffData);
+      alert(`API /api/v1/Users/staff hoạt động!\nDữ liệu: ${JSON.stringify(staffData, null, 2)}`);
+    } catch (error) {
+      console.error('StaffDashBoard: Error testing staff API:', error);
+      alert('Lỗi khi gọi API /api/v1/Users/staff');
     }
   };
 
@@ -134,31 +148,52 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   // Load other data on component mount
   useEffect(() => {
     const loadInitialData = async () => {
-      if (user.stationId) {
+      try {
+        console.log('StaffDashBoard: Initializing user session...');
+        const sessionData = await staffApi.initializeUserSession();
+        console.log('StaffDashBoard: Session initialized:', sessionData);
+        
+        // Update user object with session data
+        user.id = sessionData.user.id;
+        user.name = sessionData.user.name;
+        user.email = sessionData.user.email;
+        user.role = sessionData.user.role;
+        user.stationId = typeof sessionData.stationId === 'string' ? parseInt(sessionData.stationId) : sessionData.stationId;
+        
+        console.log('StaffDashBoard: User updated with session data:', user);
+        
+        // Load all data after session is initialized
         await Promise.all([
           fetchBatteryInventory(),
           fetchQueueBookings(),
           fetchRecentTransactions()
         ]);
-      } else {
-        try {
-          const profile = await staffApi.getStaffProfile(user.id);
-          if (profile.stationId) {
-            user.stationId = profile.stationId;
-            await Promise.all([
-              fetchBatteryInventory(),
-              fetchQueueBookings(),
-              fetchRecentTransactions()
-            ]);
+        
+      } catch (error) {
+        console.error('StaffDashBoard: Error initializing session:', error);
+        setError('Unable to initialize user session');
+        
+        // Fallback: try to get staff profile if user.id exists
+        if (user.id && user.id !== 'undefined') {
+          try {
+            const profile = await staffApi.getStaffProfile(user.id);
+            if (profile.stationId) {
+              user.stationId = profile.stationId;
+              await Promise.all([
+                fetchBatteryInventory(),
+                fetchQueueBookings(),
+                fetchRecentTransactions()
+              ]);
+            }
+          } catch (profileError) {
+            console.error('StaffDashBoard: Error getting staff profile:', profileError);
+            setError('Unable to load station information');
           }
-        } catch (error) {
-          console.error('Error getting staff profile:', error);
-          setError('Unable to load station information');
         }
       }
     };
     loadInitialData();
-  }, [user.stationId, user.id]);
+  }, []);
 
   return (
     <SidebarProvider>
@@ -305,6 +340,16 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           <main className="flex-1 p-6">
             {activeSection === "queue" && (
               <div className="space-y-6">
+                {/* Test API Button */}
+                <div className="flex justify-end mb-4">
+                  <Button 
+                    onClick={testRealStaffAPI}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    Test API /api/v1/Users/staff
+                  </Button>
+                </div>
+                
                 <QueueManagement
                   bookings={bookings}
                   onStartSwap={(booking: Booking) => {
@@ -320,7 +365,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       // Cập nhật trạng thái booking thành cancelled ngay lập tức
                       const updatedBookings = bookings.map(b => 
                         b.id === booking.id 
-                          ? { ...b, status: 'cancelled' as const }
+                          ? { ...b, status: 3 } // 3 = Cancelled
                           : b
                       );
                       setBookings(updatedBookings);
@@ -336,19 +381,19 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     }
                   }}
                   onCheckIn={(booking) => {
-                    // Cập nhật trạng thái booking thành in-progress sau khi check-in
+                    // Cập nhật trạng thái booking thành checked-in sau khi check-in
                     const updatedBookings = bookings.map(b => 
                       b.id === booking.id 
-                        ? { ...b, status: 'in-progress' as const }
+                        ? { ...b, status: 1 } // 1 = CheckedIn
                         : b
                     );
                     setBookings(updatedBookings);
                   }}
                   onComplete={(booking) => {
-                    // Cập nhật trạng thái booking thành ready-for-payment
+                    // Cập nhật trạng thái booking thành completed
                     const updatedBookings = bookings.map(b => 
                       b.id === booking.id 
-                        ? { ...b, status: 'ready-for-payment' as const }
+                        ? { ...b, status: 2 } // 2 = Completed
                         : b
                     );
                     setBookings(updatedBookings);
@@ -358,7 +403,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     setPosDialog(true);
                     const updatedBookings = bookings.map(b => 
                       b.id === booking.id 
-                        ? { ...b, status: 'completed' as const }
+                        ? { ...b, status: 2 } // 2 = Completed
                         : b
                     );
                     setBookings(updatedBookings);
@@ -372,7 +417,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 batteries={batteries}
                 selectedBattery={selectedBattery}
                 onBatterySelect={setSelectedBattery}
-                onNewInspection={() => setInspectionDialog(true)}
+                onNewInspection={() => {}}
                 onTakeBattery={async (batteryId) => {
                   try {
                     await staffApi.takeBattery(batteryId, user.id, user.stationId || 1);
@@ -434,7 +479,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           if (selectedBooking) {
             const updatedBookings = bookings.map(b => 
               b.id === selectedBooking.id 
-                ? { ...b, status: 'swap-confirmed' as const }
+                ? { ...b, status: 1 } // 1 = CheckedIn (swap confirmed)
                 : b
             );
             setBookings(updatedBookings);
@@ -443,10 +488,6 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         }}
       />
 
-      <InspectionDialog
-        isOpen={inspectionDialog}
-        onClose={() => setInspectionDialog(false)}
-      />
 
       <POSDialog isOpen={posDialog} onClose={() => setPosDialog(false)} />
 
@@ -461,7 +502,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           if (selectedBooking) {
             const updatedBookings = bookings.map(b => 
               b.id === selectedBooking.id 
-                ? { ...b, status: 'ready-to-swap' as const }
+                ? { ...b, status: 1 } // 1 = CheckedIn (ready to swap)
                 : b
             );
             setBookings(updatedBookings);
@@ -473,9 +514,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           // Có thể thêm logic để từ chối booking
         }}
         customerInfo={selectedBooking ? {
-          name: selectedBooking.customer,
-          vehicle: selectedBooking.vehicle,
-          bookingCode: selectedBooking.code
+          name: selectedBooking.customer || 'Unknown Customer',
+          vehicle: selectedBooking.vehicle || 'Unknown Vehicle',
+          bookingCode: selectedBooking.code || selectedBooking.id
         } : undefined}
       />
 

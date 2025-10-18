@@ -17,7 +17,7 @@ const api = axios.create({
 //     return config;
 // });
 
-// // Handle auth errors
+// Handle auth errors
 // api.interceptors.response.use(
 //     response => response,
 //     error => {

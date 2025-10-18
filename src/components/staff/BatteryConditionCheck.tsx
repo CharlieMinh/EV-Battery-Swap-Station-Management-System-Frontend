@@ -114,6 +114,8 @@ export function BatteryConditionCheck({
 
   const handleApprove = async () => {
     try {
+      console.log('BatteryConditionCheck: Creating inspection for battery:', batteryId);
+      
       if (staffId && stationId) {
         await staffApi.createInspection({
           batteryId: inspectionData.batteryId,
@@ -123,11 +125,31 @@ export function BatteryConditionCheck({
           notes: inspectionData.notes,
           issues: inspectionData.repairRequired ? [inspectionData.repairDescription] : []
         }, staffId, stationId);
+        
+        console.log('BatteryConditionCheck: Inspection created successfully');
       }
+      
       onApprove(inspectionData);
-    } catch (error) {
-      console.error('Error creating inspection:', error);
-      alert("Có lỗi xảy ra khi tạo inspection");
+      onClose();
+    } catch (error: any) {
+      console.error("BatteryConditionCheck: Error creating inspection:", error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        console.warn('BatteryConditionCheck: Token expired, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
+        return;
+      }
+      
+      if (error.response?.status === 403) {
+        console.warn('BatteryConditionCheck: Access forbidden for battery inspection');
+        alert('Không có quyền thực hiện kiểm tra pin này');
+        return;
+      }
+      
+      alert('Có lỗi xảy ra khi tạo báo cáo kiểm tra pin');
     }
   };
 

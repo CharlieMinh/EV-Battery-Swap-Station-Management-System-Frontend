@@ -168,6 +168,57 @@ export interface InspectionData {
 
 // API Functions - Using real backend APIs
 export const staffApi = {
+  // Initialize user session - Get current user and staff profile
+  initializeUserSession: async function(): Promise<{
+    user: any;
+    stationId: string | number;
+    staffProfile: any;
+  }> {
+    try {
+      console.log('initializeUserSession: Starting user session initialization');
+      const currentUser = await this.getCurrentUser();
+      console.log('initializeUserSession: Current user received:', currentUser);
+      
+      let staffProfile = null;
+      let stationId = currentUser.stationId || '9939220c-42ee-4e9b-9f87-6365f6555a8b';
+      
+      if (currentUser.role === 'Staff' || currentUser.role === 'staff') {
+        try {
+          staffProfile = await this.getStaffProfile(currentUser.id);
+          console.log('initializeUserSession: Staff profile received:', staffProfile);
+          stationId = staffProfile.stationId || stationId;
+        } catch (staffError) {
+          console.warn('initializeUserSession: Could not fetch staff profile:', staffError);
+        }
+      }
+      
+      const result = {
+        user: currentUser,
+        stationId,
+        staffProfile
+      };
+      
+      console.log('initializeUserSession: Session initialized successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error initializing user session:', error);
+      throw error;
+    }
+  },
+
+  // Get current user info
+  getCurrentUser: async function(): Promise<any> {
+    try {
+      console.log('getCurrentUser: Fetching current user info from /api/v1/Auth/me');
+      const response = await api.get('/api/v1/Auth/me');
+      console.log('getCurrentUser: API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      throw error;
+    }
+  },
+
   // Battery Management - Using real API with BatteryUnits endpoint
   async getBatteries(stationId: number): Promise<Battery[]> {
     try {
@@ -284,19 +335,183 @@ export const staffApi = {
     }
   },
 
+  // Add battery units to station
+  async addBatteryUnitsToStation(requestData: any): Promise<any> {
+    try {
+      console.log('addBatteryUnitsToStation: Adding battery units to station:', requestData);
+      
+      // Log request details
+      console.log('addBatteryUnitsToStation: Request URL:', '/api/BatteryUnits/add-to-station');
+      console.log('addBatteryUnitsToStation: Request method:', 'POST');
+      console.log('addBatteryUnitsToStation: Request headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')?.substring(0, 20)}...`
+      });
+      
+      const response = await api.post('/api/BatteryUnits/add-to-station', requestData);
+      console.log('addBatteryUnitsToStation: Success response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('addBatteryUnitsToStation: Error adding battery units:', error);
+      
+      // Log detailed error information
+      if (error.response) {
+        console.error('addBatteryUnitsToStation: Error response data:', error.response.data);
+        console.error('addBatteryUnitsToStation: Error response status:', error.response.status);
+        console.error('addBatteryUnitsToStation: Error response headers:', error.response.headers);
+      }
+      
+      if (error.response?.status === 400) {
+        console.error('addBatteryUnitsToStation: 400 Bad Request - Invalid request data');
+        throw new Error(`400 Bad Request: ${JSON.stringify(error.response.data)}`);
+      }
+      
+      if (error.response?.status === 401) {
+        console.warn('addBatteryUnitsToStation: Token expired, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        window.location.href = '/login';
+        return;
+      }
+      
+      if (error.response?.status === 403) {
+        console.warn('addBatteryUnitsToStation: Access forbidden for adding battery units');
+        throw new Error('Không có quyền thêm pin vào trạm này');
+      }
+      
+      throw error;
+    }
+  },
+
+  // Get driver info by QR code
+  async getDriverByQRCode(qrCode: string): Promise<any> {
+    try {
+      console.log('getDriverByQRCode: Fetching driver info for QR:', qrCode);
+      const response = await api.get(`/api/v1/drivers/qr/${qrCode}`);
+      console.log('getDriverByQRCode: Driver info received:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('getDriverByQRCode: Error fetching driver info:', error);
+      
+      // If API fails, return mock data for testing
+      console.log('getDriverByQRCode: Returning mock driver data for testing');
+      return {
+        id: 'driver-001',
+        name: 'Nguyễn Văn A',
+        email: 'nguyenvana@email.com',
+        phone: '0123456789',
+        licenseNumber: 'A123456789',
+        vehicleInfo: {
+          model: 'Tesla Model 3',
+          plateNumber: '30A-12345',
+          batteryModel: 'battery-model-001'
+        },
+        qrCode: qrCode
+      };
+    }
+  },
+
+  // Get reservation by driver ID
+  async getReservationByDriverId(driverId: string): Promise<any> {
+    try {
+      console.log('getReservationByDriverId: Fetching reservation for driver:', driverId);
+      const response = await api.get(`/api/v1/reservations/driver/${driverId}`);
+      console.log('getReservationByDriverId: Reservation received:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('getReservationByDriverId: Error fetching reservation:', error);
+      
+      // If API fails, return mock data for testing
+      console.log('getReservationByDriverId: Returning mock reservation data for testing');
+      return {
+        id: 'reservation-001',
+        userId: driverId,
+        stationId: '1',
+        batteryModelId: 'battery-model-001',
+        batteryUnitId: 'battery-unit-001',
+        slotDate: new Date().toISOString().split('T')[0],
+        slotStartTime: '09:00',
+        slotEndTime: '09:30',
+        qrCode: 'RESERVATION-QR-001',
+        status: 0,
+        createdAt: new Date().toISOString(),
+        customerInfo: {
+          name: 'Nguyễn Văn A',
+          phone: '0123456789',
+          vehicle: 'Tesla Model 3'
+        }
+      };
+    }
+  },
+
+  // Test API /api/v1/Users/staff - Get real staff data
+  async getRealStaffData(): Promise<any> {
+    try {
+      console.log('getRealStaffData: Fetching real staff data from /api/v1/Users/staff');
+      const response = await api.get('/api/v1/Users/staff');
+      console.log('getRealStaffData: Real staff data received:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('getRealStaffData: Error fetching staff data:', error);
+      throw error;
+    }
+  },
+
   // Queue Management - Using real API with Reservations endpoint
   async getQueue(stationId: number): Promise<Booking[]> {
     try {
-      const response = await api.get(`/api/v1/Reservations`);
-      return response.data.map((booking: any) => ({
+      console.log('getQueue: Fetching reservations for station:', stationId);
+      
+      // Try to get reservations from the correct API endpoint
+      let response;
+      try {
+        // First try: /api/v1/slot-reservations (most likely endpoint for reservations)
+        response = await api.get(`/api/v1/slot-reservations`);
+        console.log('getQueue: Got reservations from /api/v1/slot-reservations:', response.data);
+      } catch (slotReservationsError: any) {
+        console.warn('getQueue: /api/v1/slot-reservations failed:', slotReservationsError.response?.status);
+        
+        try {
+          // Second try: /api/v1/Reservations
+          response = await api.get(`/api/v1/Reservations`);
+          console.log('getQueue: Got reservations from /api/v1/Reservations:', response.data);
+        } catch (reservationsError: any) {
+          console.warn('getQueue: /api/v1/Reservations failed:', reservationsError.response?.status);
+          
+          try {
+            // Third try: /api/Reservations (without v1)
+            response = await api.get(`/api/Reservations`);
+            console.log('getQueue: Got reservations from /api/Reservations:', response.data);
+          } catch (legacyError: any) {
+            console.warn('getQueue: All reservation endpoints failed, returning empty array');
+            return [];
+          }
+        }
+      }
+      
+      // Handle different response formats
+      let reservations = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          reservations = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          reservations = response.data.data;
+        } else if (response.data.reservations && Array.isArray(response.data.reservations)) {
+          reservations = response.data.reservations;
+        }
+      }
+      
+      console.log('getQueue: Processing reservations:', reservations.length);
+      
+      return reservations.map((booking: any) => ({
         id: booking.id,
-        userId: booking.userId,
+        userId: booking.userId || booking.customerId,
         stationId: booking.stationId,
         batteryModelId: booking.batteryModelId,
         batteryUnitId: booking.batteryUnitId,
-        slotDate: booking.slotDate,
-        slotStartTime: booking.slotStartTime,
-        slotEndTime: booking.slotEndTime,
+        slotDate: booking.slotDate || new Date().toISOString().split('T')[0],
+        slotStartTime: booking.slotStartTime || booking.startTime,
+        slotEndTime: booking.slotEndTime || booking.endTime,
         qrCode: booking.qrCode,
         checkedInAt: booking.checkedInAt,
         verifiedByStaffId: booking.verifiedByStaffId,
@@ -306,18 +521,20 @@ export const staffApi = {
         cancelledAt: booking.cancelledAt,
         createdAt: booking.createdAt,
         // Additional fields for UI compatibility
-        customer: booking.customerName || booking.userName,
-        vehicle: booking.vehicleModel || booking.vehiclePlate,
-        time: booking.slotStartTime,
+        customer: booking.customerName || booking.userName || 'Customer',
+        vehicle: booking.vehicleModel || booking.vehiclePlate || 'Vehicle',
+        time: booking.slotStartTime || booking.startTime,
         code: booking.qrCode || booking.id.slice(-8),
         checkInWindow: booking.checkInWindow || {
-          earliest: booking.slotStartTime,
-          latest: booking.slotEndTime
+          earliest: booking.slotStartTime || booking.startTime,
+          latest: booking.slotEndTime || booking.endTime
         },
         registrationTime: booking.createdAt
       }));
-    } catch (error) {
-      console.error('Error fetching queue:', error);
+    } catch (error: any) {
+      console.error('getQueue: Error fetching queue:', error);
+      
+      // Return empty array instead of throwing error
       return [];
     }
   },
@@ -488,7 +705,7 @@ export const staffApi = {
       const customerRating = 4.8; // Default value since we don't have rating data
       
       // Get battery alerts from battery status
-      const batteries = await this.getBatteries(stationId);
+        const batteries = await this.getBatteries(stationId);
       const lowBatteryAlerts = batteries.filter(b => (b.health || 0) < 20).length;
       const maintenanceNeeded = batteries.filter(b => b.status === 3).length;
 
@@ -542,11 +759,11 @@ export const staffApi = {
     }
   },
 
-  // Get Staff Profile - Using real API with Users endpoint
+  // Get Staff Profile - Using real API with Users/staff endpoint
   async getStaffProfile(staffId: string): Promise<any> {
     try {
       if (!staffId || staffId === 'undefined') {
-        console.warn('Staff ID is undefined, skipping API call');
+        console.warn('Staff ID is undefined, returning default profile');
         return {
           id: 'unknown',
           name: 'Unknown Staff',
@@ -556,16 +773,107 @@ export const staffApi = {
         };
       }
       
-      const response = await api.get(`/api/v1/Users/${staffId}`);
+      // Check if token exists before making API call
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      if (!token) {
+        console.warn('getStaffProfile: No token found, returning default profile');
+        return {
+          id: staffId,
+          name: 'EVBSS Staff',
+          email: 'staff@evbss.local',
+          stationId: 1,
+          role: 'Staff'
+        };
+      }
+      
+      console.log('getStaffProfile: Fetching staff profile with token:', token.substring(0, 20) + '...');
+      
+      // Try different approaches to get staff profile
+      let response;
+      try {
+        // First try: Get current user info
+        response = await api.get('/api/v1/Auth/me');
+        console.log('getStaffProfile: Got current user info:', response.data);
+        
+        // If user is staff, return their profile
+        if (response.data.role === 'Staff' || response.data.role === 'staff') {
       return {
         id: response.data.id,
-        name: response.data.name || response.data.fullName,
-        email: response.data.email,
-        stationId: response.data.stationId || 1,
-        role: response.data.role || "Staff"
+            name: response.data.name || response.data.fullName || 'EVBSS Staff',
+            email: response.data.email || 'staff@evbss.local',
+            stationId: response.data.stationId || 1,
+            role: response.data.role || 'Staff'
+          };
+        }
+      } catch (authError: any) {
+        console.warn('getStaffProfile: Auth/me failed, trying Users/staff:', authError.response?.status);
+        
+        // Fallback: Try Users/staff endpoint
+        response = await api.get(`/api/v1/Users/staff`);
+      }
+      
+      // Handle paginated response (as shown in Swagger UI)
+      const staffData = response.data.data && response.data.data.length > 0 
+        ? response.data.data[0] // Get first staff member from paginated response
+        : response.data; // Fallback to direct response
+      
+      console.log('getStaffProfile: API response:', staffData);
+      
+      return {
+        id: staffData.id,
+        name: staffData.name || staffData.fullName,
+        email: staffData.email,
+        stationId: staffData.stationId || 1,
+        role: staffData.role || "Staff"
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching staff profile:', error);
+      
+      // If it's a 401 Unauthorized error, clear token and redirect
+      if (error.response?.status === 401) {
+        console.warn('Token expired or invalid, clearing storage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return null;
+      }
+      
+      // If it's a 403 Forbidden error, return a default profile instead of throwing
+      if (error.response?.status === 403) {
+        console.warn('Access forbidden for staff profile, returning default profile');
+        return {
+          id: staffId,
+          name: 'EVBSS Staff',
+          email: 'staff@evbss.local',
+          stationId: 1,
+          role: 'Staff'
+        };
+      }
+      
+      throw error;
+    }
+  },
+
+  // Get reservation by QR code - Using real API
+  getReservationByQRCode: async function(qrCode: string): Promise<any> {
+    try {
+      console.log('getReservationByQRCode: Searching for reservation with QR:', qrCode);
+      
+      // Search through reservations to find matching QR code
+      const reservations = await this.getQueue(1);
+      const reservation = reservations.find(r => r.qrCode === qrCode);
+      
+      if (!reservation) {
+        console.warn('getReservationByQRCode: No reservation found for QR code:', qrCode);
+        return null;
+      }
+      
+      console.log('getReservationByQRCode: Found reservation:', reservation);
+      return reservation;
+    } catch (error) {
+      console.error('Error getting reservation by QR code:', error);
       throw error;
     }
   },
@@ -737,6 +1045,38 @@ export const staffApi = {
     } catch (error) {
       console.error('Error fetching battery condition:', error);
       throw error;
+    }
+  },
+
+  // Function to take battery from station (DELETE /api/BatteryUnits/{id})
+  async takeBatteryFromStation(batteryId: string): Promise<any> {
+    try {
+      console.log('staffApi: Taking battery from station:', batteryId);
+      
+      const response = await api.delete(`/api/BatteryUnits/${batteryId}`);
+      console.log('staffApi: Battery taken successfully:', response.data);
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('staffApi: Error taking battery from station:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Pin không tồn tại hoặc đã được lấy');
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error('Không thể lấy pin này (có thể đang được sử dụng)');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Token đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
+      if (error.response?.status === 403) {
+        throw new Error('Không có quyền lấy pin này');
+      }
+      
+      throw new Error('Có lỗi xảy ra khi lấy pin');
     }
   },
 
