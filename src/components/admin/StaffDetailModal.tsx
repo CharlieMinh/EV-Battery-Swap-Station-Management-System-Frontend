@@ -17,9 +17,17 @@ import {
   X,
   BarChart,
   Truck,
+  Save,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { tr } from "date-fns/locale";
+import {
+  updateUser,
+  UpdateUserPayload,
+} from "@/services/admin/customerAdminService";
+import { toast } from "react-toastify";
+import { set } from "date-fns";
 
 const formatDateTime = (isoString: any) => {
   if (!isoString) return "N/A";
@@ -39,6 +47,34 @@ const formatDateTime = (isoString: any) => {
   }
 };
 
+const getRoleNumber = (role: string | number): number => {
+  if (typeof role === "number") return role;
+  switch (role) {
+    case "Driver":
+      return 0;
+    case "Staff":
+      return 1;
+    case "Admin":
+      return 2;
+    default:
+      return parseInt(role) || 0;
+  }
+};
+
+const getRoleText = (role: string | number): string => {
+  const roleNum = typeof role === "number" ? role : getRoleNumber(role);
+  switch (roleNum) {
+    case 0:
+      return "Tài xế";
+    case 1:
+      return "Nhân viên";
+    case 2:
+      return "Quản lý";
+    default:
+      return "N/A";
+  }
+};
+
 const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
 
 interface StaffDetailModalProps {
@@ -50,6 +86,13 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
   const { t } = useLanguage();
   const [staffDetail, setStaffDetail] = useState<StaffDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phoneNumber: "",
+    role: "0",
+    status: "0",
+  });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!staff || !staff.id) return;
@@ -61,7 +104,16 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       try {
         const data = await fetchStaffById(staff.id);
         setStaffDetail(data);
-        console.log("Fetched staff detail:", data);
+
+        const roleValue = getRoleNumber(data.role || "0").toString();
+        const statusValue =
+          data.status === "Active" || data.status === "0" ? "0" : "1";
+        setFormData({
+          name: data.name || "",
+          phoneNumber: data.phoneNumber || "",
+          role: roleValue,
+          status: statusValue,
+        });
       } catch (error) {
         console.error("Error fetching staff detail:", error);
         throw error;
@@ -71,6 +123,35 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
     };
     getStaffById();
   }, [staff, onClose]);
+
+  const handleSave = async () => {
+    if (!staffDetail) return;
+
+    try {
+      setLoading(true);
+      const payload: UpdateUserPayload = {
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role,
+        status: formData.status,
+      };
+      const updateStaff = await updateUser(staffDetail.id, payload);
+      toast.success(t("admin.updateSuccess"));
+      setStaffDetail({
+        ...staffDetail,
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        role: getRoleText(formData.role),
+        status: formData.status === "0" ? "Active" : "Inactive",
+      });
+    } catch (error) {
+      console.error("Error updating staff:", error);
+      toast.error(t("admin.updateFailed"));
+    } finally {
+      setLoading(false);
+    }
+    setIsEditing(false);
+  };
 
   if (!staff) return;
 
@@ -87,15 +168,56 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
     );
   }
 
+  const getDisplayValue = (key: string) => {
+    switch (key) {
+      case "name":
+        return formData.name || staffDetail.name;
+      case "phoneNumber":
+        return formData.phoneNumber || staffDetail.phoneNumber;
+      case "role":
+        return getRoleText(formData.role);
+      case "status":
+        return formData.status === "0" ? "Đang hoạt động" : "Ngừng hoạt động";
+      default:
+        return "";
+    }
+  };
+
   const data = [
-    { icon: User, label: t("admin.name"), value: staffDetail.name },
-    { icon: Mail, label: t("admin.email"), value: staffDetail.email },
     {
+      key: "name",
+      icon: User,
+      label: t("admin.name"),
+      value: getDisplayValue("name"),
+      editable: true,
+    },
+    {
+      key: "email",
+      icon: Mail,
+      label: t("admin.email"),
+      value: staffDetail.email,
+    },
+    {
+      key: "phoneNumber",
       icon: Smartphone,
       label: t("admin.phone"),
-      value: staffDetail.phoneNumber,
+      value: getDisplayValue("phoneNumber"),
+      editable: true,
     },
-    { icon: Zap, label: t("admin.role"), value: staffDetail.role || "N/A" },
+    {
+      key: "role",
+      icon: Zap,
+      label: t("admin.role"),
+      value: getDisplayValue("role"),
+      editable: true,
+    },
+    {
+      key: "status",
+      icon: Zap,
+      label: t("admin.status"),
+      value: getDisplayValue("status"),
+      editable: true,
+    },
     {
       icon: Calendar,
       label: t("admin.createdAt"),
@@ -132,9 +254,55 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
             >
               <Calendar className="w-4 h-4 mr-1" /> {t("admin.viewHistory")}
             </Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
-            </Button>
+            {!isEditing ? (
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleSave}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-gray-600 border-gray-400 hover:bg-gray-100"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      name: staffDetail.name || "",
+                      phoneNumber: staffDetail.phoneNumber || "",
+                      role:
+                        staffDetail.role === "Driver"
+                          ? "0"
+                          : staffDetail.role === "Staff"
+                          ? "1"
+                          : "2",
+                      status: staffDetail.status === "Active" ? "0" : "1",
+                    });
+                  }}
+                  disabled={loading}
+                >
+                  Hủy thay đổi
+                </Button>
+              </>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -160,12 +328,58 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                 {data.map((item, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <item.icon className="w-5 h-5 text-gray-500" />
-                    <p>
-                      <span className="font-semibold text-sm mr-2">
-                        {item.label}:
-                      </span>
-                      <span className="font-medium">{item.value}</span>
-                    </p>
+                    {isEditing && item.editable ? (
+                      item.key === "role" ? (
+                        <select
+                          value={formData.role}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              role: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1"
+                        >
+                          <option value={"0"}>Tài xế</option>
+                          <option value={"1"}>Nhân viên</option>
+                          <option value={"2"}>Quản lý</option>
+                        </select>
+                      ) : item.key === "status" ? (
+                        <select
+                          value={formData.status}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              status: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1"
+                        >
+                          <option value={"0"}>Đang hoạt động</option>
+                          <option value={"1"}>Ngừng hoạt động</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={(formData as any)[item.key] || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              [item.key]: e.target.value,
+                            })
+                          }
+                          className="border rounded p-1 w-full"
+                          required
+                        />
+                      )
+                    ) : (
+                      <p>
+                        <span className="font-semibold text-sm mr-2">
+                          {item.label}:
+                        </span>
+                        <span className="font-medium">{item.value}</span>
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

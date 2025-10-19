@@ -664,6 +664,7 @@ const translations = {
     "admin.batteries": "Batteries",
     "admin.staff": "Staff",
     "admin.maintenance": "Maintening",
+    "admin.saveChanges": "Save Changes",
 
     // Admin Battery Management
     "admin.sevenDays": "7 days",
@@ -1003,7 +1004,8 @@ const translations = {
     "driver.confirmCancel": "Xác nhận hủy",
     "driver.cancelBooking": "Hủy lịch hẹn",
     "driver.booking.atTime": "lúc",
-    "driver.swapStatus.noReservationTitle": "Bạn hiện không có đơn đặt lịch nào",
+    "driver.swapStatus.noReservationTitle":
+      "Bạn hiện không có đơn đặt lịch nào",
     "driver.swapStatus.bookNow": "Đặt lịch ngay",
     "driver.currentReservations": "Số lượng pin",
     "driver.noStationsFound": "Không tìm thấy trạm nào.",
@@ -1321,6 +1323,8 @@ const translations = {
     "staff.loadingData": "Đang tải dữ liệu...",
 
     // Admin Dashboard
+    "admin.loadingDetails": "Đang tải...",
+    "admin.saveChanges": "Lưu Thay Đổi",
     "admin.overview": "Tổng Quan",
     "admin.stations": "Trạm",
     "admin.analytics": "Phân Tích",

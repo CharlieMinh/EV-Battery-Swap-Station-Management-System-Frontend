@@ -31,7 +31,7 @@ export async function fetchStaffList(page: number, pageSize: number) {
 
 export async function fetchStaffById(id: string) {
     try {
-        const response = await api.get(`/api/v1/Users/staff`);
+        const response = await api.get(`/api/v1/Users/staff/${id}`);
         const staff = response.data;
         return staff as StaffDetails;
     } catch (error) {
