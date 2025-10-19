@@ -1323,6 +1323,7 @@ const translations = {
     "staff.loadingData": "Đang tải dữ liệu...",
 
     // Admin Dashboard
+    "admin.true": "Hoạt động",
     "admin.loadingDetails": "Đang tải...",
     "admin.saveChanges": "Lưu Thay Đổi",
     "admin.overview": "Tổng Quan",
