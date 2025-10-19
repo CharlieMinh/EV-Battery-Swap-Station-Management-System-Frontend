@@ -8,23 +8,22 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useLanguage } from "../LanguageContext";
-import { QRCodeSVG } from "qrcode.react"; // 1. Import công cụ vẽ QR
+import { QRCodeSVG } from "qrcode.react";
 
 interface QRCodeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  bookingResult: any; // 2. Thêm prop để nhận dữ liệu đặt chỗ
+  bookingResult: any;
 }
 
 export function QRCodeDialog({ isOpen, onClose, bookingResult }: QRCodeDialogProps) {
   const { t } = useLanguage();
 
-  // Lấy chuỗi qrCode và mã đặt chỗ từ kết quả
   const qrCodeValue = bookingResult?.qrCode;
   const reservationCode = bookingResult?.reservationCode;
 
   return (
-    <Dialog open={isOpen} onOpen-change={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("driver.checkInQRCode")}</DialogTitle>
@@ -33,7 +32,6 @@ export function QRCodeDialog({ isOpen, onClose, bookingResult }: QRCodeDialogPro
         <div className="flex flex-col items-center justify-center p-6 space-y-4">
           {qrCodeValue ? (
             <>
-              {/* 3. Dùng QRCodeSVG để vẽ hình ảnh QR */}
               <div className="bg-white p-4 rounded-lg border">
                 <QRCodeSVG
                   value={qrCodeValue}
@@ -43,8 +41,6 @@ export function QRCodeDialog({ isOpen, onClose, bookingResult }: QRCodeDialogPro
                   level={"L"}
                 />
               </div>
-
-              {/* 4. Hiển thị mã đặt chỗ thật */}
               <div>
                 <p className="font-mono text-lg tracking-widest">{reservationCode}</p>
                 <p className="text-sm text-center text-gray-500">{t("driver.yourBookingCode")}</p>

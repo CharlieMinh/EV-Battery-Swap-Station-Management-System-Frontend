@@ -45,6 +45,7 @@ import { DriverProfile } from "../components/driver/DriverProfile";
 import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
 import { data } from "react-router-dom";
+import { toast } from "react-toastify";
 
 interface DriverPortalPageProps {
   user: User;
@@ -91,7 +92,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
-
+  const [showCancelPrompt, setShowCancelPrompt] = useState(false);
   const [activeReservation, setActiveReservation] = useState<any>(null);
 
   interface Slot {
@@ -287,42 +288,36 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       console.log("Thất bại khi lấy slot");
     }
   };
-  const handleCancelReservation = async () => {
-    // Kiểm tra xem có lịch hẹn nào để hủy không
-    if (!activeReservation) {
-      alert("Không có lịch hẹn nào để hủy.");
-      return;
-    }
-
-    // Hỏi người dùng để xác nhận, tránh bấm nhầm
-    if (!window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này không?")) {
-      return;
-    }
-
+  const showCancelReservation = () => {
+    setShowCancelPrompt(true);
+  }
+  const hideCancelReservation = () => {
+    setShowCancelPrompt(false);
+  }
+  const handleCancelReservation = async (note: string) => {
     setIsCancelling(true); // Bật trạng thái loading
     try {
       // Gọi API DELETE đến server
       await axios.delete(
-        // URL được tạo động với ID của lịch hẹn
         `http://localhost:5194/api/v1/slot-reservations/${activeReservation.id}`,
         {
           // Body của request DELETE phải được đặt trong thuộc tính `data` của config
           data: {
-            reason: 3,
-            note: "User cancelled from the web portal"
+            reason: 0,
+            note: note
           },
           withCredentials: true,
         }
       );
 
       // Xử lý khi thành công
-      alert("Hủy lịch hẹn thành công!");
-      setActiveReservation(null); // Xóa lịch hẹn khỏi giao diện
-      setBookingResult(null); // Cũng xóa kết quả cũ
+      toast.success(t("driver.cancelBooking.success"));
+      setActiveReservation(null);
+      setShowCancelPrompt(false);
 
     } catch (error) {
       console.error("Lỗi khi hủy lịch hẹn:", error);
-      alert("Hủy lịch thất bại, vui lòng thử lại.");
+      toast.error(t("driver.cancelBooking.error"));
     } finally {
       setIsCancelling(false); // Tắt trạng thái loading
     }
@@ -348,6 +343,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       setBookingDialog(true);
     }
   };
+
   const getReservation = async () => {
     try {
       const response = await axios.get(
@@ -361,14 +357,16 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
         setActiveReservation(response.data[0]);
       }
     } catch (error) {
-      console.error("Không thể lấy lịch hẹn của bạn:", error);
+      console.error(t("driver.booking.errorFetchReservation"), error);
     }
   }
+
   const handleConfirmBooking = async () => {
     if (!selectedStation || !selectedVehicle || !bookingDate || !selectedSlot) {
-      alert("Vui lòng chọn đầy đủ thông tin đặt chỗ!");
+      toast.error(t("driver.booking.errorValidation")); // Dùng toast cho cả lỗi validation
       return;
     }
+
     setIsBooking(true);
     try {
       const response = await axios.post(
@@ -376,17 +374,35 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
         {
           stationId: selectedStation,
           batteryModelId: selectedVehicle.compatibleBatteryModelId,
-          slotDate: formatDateForApi(bookingDate),
+          slotDate: formatDateForApi(bookingDate), // Sử dụng hàm format ngày tháng
           slotStartTime: selectedSlot.slotStartTime,
           slotEndTime: selectedSlot.slotEndTime,
         },
         { withCredentials: true }
       );
+
+      // ✅ KHI THÀNH CÔNG:
+      toast.success(t("driver.booking.success"));
+
       setBookingResult(response.data);
+      setActiveReservation(response.data);
       setBookingStep(5);
-    } catch (error) {
-      console.error("Lỗi khi xác nhận đặt chỗ:", error);
-      alert("Đặt chỗ thất bại, có lỗi xảy ra. Vui lòng thử lại.");
+
+    } catch (error: any) { // ✅ KHI THẤT BẠI: Xử lý lỗi chi tiết hơn ở đây
+
+      console.error(t("driver.booking.errorConfirm"), error); // Giữ lại log để debug
+
+      // Cố gắng lấy message từ backend
+      const backendErrorMessage = error?.response?.data?.error?.message;
+
+      if (backendErrorMessage) {
+        // Nếu có message từ backend, hiển thị nó
+        toast.error(backendErrorMessage);
+      } else {
+        // Nếu không có, hiển thị lỗi chung chung
+        toast.error(t("driver.booking.errorGeneric"));
+      }
+
     } finally {
       setIsBooking(false);
     }
@@ -566,12 +582,13 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
             {activeSection === "swap" && (
               <div className="space-y-6">
                 <SwapStatus
-                  // ✅ Truyền lịch hẹn đang hoạt động vào
+                  showCancelPrompt={showCancelPrompt}
                   activeReservation={activeReservation}
                   onQRDialog={() => setQrDialog(true)}
-                  // ✅ Truyền hàm để chuyển người dùng sang tab đặt lịch nếu họ chưa có lịch
                   onNavigateToBooking={() => setActiveSection("map")}
                   onCancelReservation={handleCancelReservation}
+                  onShowCancelReservation={showCancelReservation}
+                  onHideCancelReservation={hideCancelReservation}
                   isCancelling={isCancelling}
                 />
               </div>
