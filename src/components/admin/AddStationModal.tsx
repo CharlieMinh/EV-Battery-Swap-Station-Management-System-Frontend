@@ -34,7 +34,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
     e.preventDefault();
     setLoading(true);
     try {
-      const fullAddress = `${formData.address}, ${formData.city}, Việt Nam`;
+      const fullAddress = `${formData.address}, ${formData.city}`;
       const coords = await geocodeAddress(fullAddress);
 
       if (!coords) {
@@ -49,7 +49,8 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
         name: formData.name,
         address: formData.address,
         city: formData.city,
-        coordinates: coords,
+        lat: coords.lat, // 👈 thêm dòng này
+        lng: coords.lng, // 👈 thêm dòng này
         isActive: formData.isActive,
       };
 
