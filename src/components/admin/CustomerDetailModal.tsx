@@ -283,20 +283,45 @@ const CustomerDetailModal = ({
                 <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
               </Button>
             ) : (
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
-                  </>
-                )}
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleSave}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-gray-600 border-gray-400 hover:bg-gray-100"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      name: customerDetail.name || "",
+                      phoneNumber: customerDetail.phoneNumber || "",
+                      role:
+                        customerDetail.role === "Driver"
+                          ? "0"
+                          : customerDetail.role === "Staff"
+                          ? "1"
+                          : "2",
+                      status: customerDetail.status === "Active" ? "0" : "1",
+                    });
+                  }}
+                  disabled={loading}
+                >
+                  Hủy thay đổi
+                </Button>
+              </>
             )}
             <Button
               variant="secondary"

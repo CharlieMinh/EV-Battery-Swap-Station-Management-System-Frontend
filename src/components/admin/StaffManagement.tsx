@@ -25,17 +25,17 @@ export function StaffManagement() {
   const [staffList, setStaffList] = useState<Staff[] | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
+  const getAllStaff = async () => {
+    try {
+      const response = await fetchStaffList(1, 20);
+      setStaffList(response.data);
+      console.log("Fetched staff:", response.data);
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+      throw error;
+    }
+  };
   useEffect(() => {
-    const getAllStaff = async () => {
-      try {
-        const response = await fetchStaffList(1, 20);
-        setStaffList(response.data);
-        console.log("Fetched staff:", response.data);
-      } catch (error) {
-        console.error("Error fetching staff:", error);
-        throw error;
-      }
-    };
     getAllStaff();
   }, []);
 
@@ -50,6 +50,7 @@ export function StaffManagement() {
 
   const handleCloseModal = () => {
     setSelectedStaff(null);
+    getAllStaff(); // reload dữ liệu sau khi đóng modal
   };
 
   return (
