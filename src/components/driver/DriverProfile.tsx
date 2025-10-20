@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -26,20 +26,16 @@ interface UserData {
 }
 
 interface DriverProfileProps {
+  submitUpdateProfile: (name: string, phone: string) => void,
   userData: UserData | null;
-  onNameChange: (name: string) => void;
-  onEmailChange: (email: string) => void;
-  onPhoneChange: (phone: string) => void;
 }
 
 export function DriverProfile({
-  userData,
-  onNameChange,
-  onEmailChange,
-  onPhoneChange,
+  userData, submitUpdateProfile,
 }: DriverProfileProps) {
   const { t } = useLanguage();
-
+  const [name, setName] = useState<any>(userData?.name);
+  const [phoneNumber, setphoneNumber] = useState<any>(userData?.phoneNumber);
   return (
     <div className="max-w-6xl mx-auto space-y-10 animate-fade-in px-8 lg:px-16 py-10">
       {/* Header */}
@@ -90,8 +86,8 @@ export function DriverProfile({
               <Input
                 id="name"
                 className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
-                value={userData?.name}
-                onChange={(e) => onNameChange(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
 
@@ -108,7 +104,7 @@ export function DriverProfile({
                 type="email"
                 className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
                 value={userData?.email}
-                onChange={(e) => onEmailChange(e.target.value)}
+                disabled={true}
               />
             </div>
 
@@ -123,13 +119,13 @@ export function DriverProfile({
               <Input
                 id="phone"
                 className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
-                value={userData?.phoneNumber}
-                onChange={(e) => onPhoneChange(e.target.value)}
+                value={phoneNumber}
+                onChange={(e) => setphoneNumber(e.target.value)}
               />
             </div>
           </div>
 
-          <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md mt-8 py-3 text-lg rounded-xl transition-all">
+          <Button onClick={() => submitUpdateProfile(name, phoneNumber)} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md mt-8 py-3 text-lg rounded-xl transition-all">
             <Edit className="w-5 h-5 mr-2" /> {t("driver.profile.editProfile")}
           </Button>
         </CardContent>

@@ -46,8 +46,10 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
     const handleDelete = async (id: string) => {
         const confirmed = await showConfirm(
             t("driver.confirmDeleteTitle"),
-            t("driver.confirmDeleteText")
+            t("driver.confirmDeleteText"), t("features.yes"),
+            t("features.cancel")
         );
+
         if (!confirmed) return;
 
         try {
@@ -58,9 +60,8 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
             console.log("Lỗi khi xóa:", err);
             const msg =
                 err.response?.data?.error?.message ||
-                err.response?.data?.error?.code ||
                 t("driver.cannotConnectServer");
-            await showError(msg);
+            await showError(msg, t("driver.errorAddCar"));
         }
     };
 
@@ -79,8 +80,8 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
             const msg =
                 err.response?.data?.error?.message ||
                 t("driver.cannotConnectServer");
-            await showError(msg);
-            throw err; // để form xử lý thêm nếu cần
+            await showError(msg, t("driver.errorAddCar"));
+            // throw err; // ĐÃ XÓA DÒNG NÀY
         }
     };
 
@@ -104,11 +105,7 @@ export function MyVehicle({ vehicles, onRefresh }: MyVehicleProps) {
                             isEdit={!!editingVehicle}
                             onSubmit={handleSubmit}
                             onCancel={() => setShowForm(false)}
-                            onSuccess={async (msg) => {
-                                await showSuccess(msg);
-                                onRefresh();
-                                setShowForm(false);
-                            }}
+                        // ĐÃ XÓA PROP onSuccess TẠI ĐÂY
                         />
                     ) : (
                         <>

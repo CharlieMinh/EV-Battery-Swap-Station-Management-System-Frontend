@@ -46,6 +46,7 @@ import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
 import { data } from "react-router-dom";
 import { toast } from "react-toastify";
+import { showError, showSuccess } from "./ui/alert";
 
 interface DriverPortalPageProps {
   user: User;
@@ -94,6 +95,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
   const [bookingResult, setBookingResult] = useState<any>(null);
   const [showCancelPrompt, setShowCancelPrompt] = useState(false);
   const [activeReservation, setActiveReservation] = useState<any>(null);
+  const [name, setName] = useState<any>(null);
+  const [phoneNumber, setPhoneNumber] = useState<any>(null);
 
   interface Slot {
     slotStartTime: string;
@@ -244,18 +247,8 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
     };
     fetchStations();
   }, []);
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get("http://localhost:5194/api/v1/auth/me", {
-          withCredentials: true,
-        });
-        console.log("User data:", res.data);
-        setUserData(res.data);
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin người dùng:", error);
-      }
-    };
     fetchProfile();
   }, []);
 
@@ -322,6 +315,25 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       setIsCancelling(false); // Tắt trạng thái loading
     }
   };
+  const handleUpdateProfile = async (name: string, phone: string) => {
+    try {
+      await axios.put(`http://localhost:5194/api/v1/Users/${userData?.id}`, {
+        "name": name,
+        "phoneNumber": phone
+      }, { withCredentials: true }
+      )
+      showSuccess("Cập nhật thông tin thành công !");
+      fetchProfile();
+    } catch (error: any) {
+      const backendErrorMessage = error?.response?.data?.error?.message;
+      if (backendErrorMessage) {
+        showError("Không thể cập nhật thông tin ! Vui lòng thử lại sau", backendErrorMessage);
+      } else {
+        showError("Không thể cập nhật thông tin ! Vui lòng thử lại sau", "Invalid Error");
+      }
+
+    }
+  }
   useEffect(() => {
     // Chỉ gọi API khi dialog đang mở và đã có đủ 3 thông tin
     if (bookingDialog && selectedStation && selectedVehicle && bookingDate) {
@@ -360,7 +372,17 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
       console.error(t("driver.booking.errorFetchReservation"), error);
     }
   }
-
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get("http://localhost:5194/api/v1/auth/me", {
+        withCredentials: true,
+      });
+      console.log("User data:", res.data);
+      setUserData(res.data);
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin người dùng:", error);
+    }
+  };
   const handleConfirmBooking = async () => {
     if (!selectedStation || !selectedVehicle || !bookingDate || !selectedSlot) {
       toast.error(t("driver.booking.errorValidation")); // Dùng toast cho cả lỗi validation
@@ -609,9 +631,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
               <div>
                 <DriverProfile
                   userData={userData}
-                  onNameChange={setProfileName}
-                  onEmailChange={setProfileEmail}
-                  onPhoneChange={setProfilePhone}
+                  submitUpdateProfile={handleUpdateProfile}
                 />
                 <SubscriptionStatus
                   subscriptionInfo={subscriptionInfo}

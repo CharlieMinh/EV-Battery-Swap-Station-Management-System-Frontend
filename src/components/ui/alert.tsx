@@ -15,17 +15,20 @@ export async function showSuccess(msg: string) {
   });
 }
 
-export async function showError(msg: string) {
+
+
+export async function showError(msg: string, errorTitle: string) {
   await Swal.fire({
     icon: "error",
-    title: "Lỗi!",
+    title: errorTitle,
     text: msg,
     confirmButtonColor: "#f97316",
     position: "center",
   });
 }
 
-export async function showConfirm(title: string, text: string) {
+
+export async function showConfirm(title: string, text: string, confirmTitle: string, cancelTitle: string) {
   const result = await Swal.fire({
     title,
     text,
@@ -33,8 +36,8 @@ export async function showConfirm(title: string, text: string) {
     showCancelButton: true,
     confirmButtonColor: "#f97316",
     cancelButtonColor: "#6b7280",
-    confirmButtonText: "Có",
-    cancelButtonText: "Hủy",
+    confirmButtonText: confirmTitle,
+    cancelButtonText: cancelTitle,
   });
   return result.isConfirmed;
 }
