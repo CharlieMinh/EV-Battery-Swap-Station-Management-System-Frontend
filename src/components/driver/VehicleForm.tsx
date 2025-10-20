@@ -42,7 +42,7 @@ export default function VehicleForm({
         axios
             .get("http://localhost:5194/api/v1/vehicle-models", { withCredentials: true })
             .then((res) => setModels(res.data))
-            .catch(() => showError(t("driver.cannotLoadModels")));
+            .catch(() => showError(t("driver.cannotLoadModels"), "Invalid error"));
     }, [t]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +67,7 @@ export default function VehicleForm({
                 err.response?.data?.error?.message ||
                 err.response?.data?.error?.code ||
                 t("driver.cannotConnectServer");
-            await showError(msg);
+            await showError(msg, "Invalid error");
         } finally {
             setLoading(false);
         }

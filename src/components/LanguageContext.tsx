@@ -238,6 +238,7 @@ const translations = {
     // Driver Portal
     "driver.findStations": "Find Stations",
     "driver.booking.errorFetchReservation": "Could not fetch your reservation:",
+    "driver.errorAddCar": "Could not add your car:",
     "driver.booking.errorValidation": "Please select all booking details!",
     "driver.booking.success": "Booking successful!",
     "driver.booking.errorConfirm": "Error confirming booking:",
@@ -875,6 +876,7 @@ const translations = {
     "forgotPassword.emailSentTo": "Email đã được gửi đến:",
     "forgotPassword.resendEmail": "Gửi Lại Email",
     "forgotPassword.errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "driver.errorAddCar": "Không thể thêm xe của bạn:",
     "forgotPassword.verificationTitle": "Nhập Mã Xác Thực",
     "forgotPassword.verificationSubtitle":
       "Chúng tôi đã gửi mã 6 chữ số đến email của bạn",

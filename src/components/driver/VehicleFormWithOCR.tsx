@@ -24,31 +24,25 @@ export default function VehicleFormWithOCR({
 }: VehicleFormWithOCRProps) {
     const { t } = useLanguage();
 
-    // Ref cho các input file (đã bỏ ref cho camera)
     const registrationFileInputRef = useRef<HTMLInputElement>(null);
     const vehicleFileInputRef = useRef<HTMLInputElement>(null);
 
-    // State cho các trường trong form
     const [vin, setVin] = useState(initialData?.vin || "");
     const [plate, setPlate] = useState(initialData?.plate || "");
     const [vehicleModelId, setVehicleModelId] = useState(initialData?.vehicleModelId || "");
     const [vehiclePhoto, setVehiclePhoto] = useState<File | null>(null);
     const [registrationPhoto, setRegistrationPhoto] = useState<File | null>(null);
 
-    // State cho việc hiển thị ảnh xem trước (preview)
     const [vehiclePhotoPreview, setVehiclePhotoPreview] = useState<string | null>(initialData?.photoUrl || null);
     const [registrationPhotoPreview, setRegistrationPhotoPreview] = useState<string | null>(initialData?.registrationPhotoUrl || null);
 
-    // State cho chức năng OCR
     const [isScanning, setIsScanning] = useState(false);
     const [ocrResult, setOcrResult] = useState<VehicleRegistrationScanResult | null>(null);
     const [showOcrResult, setShowOcrResult] = useState(false);
 
-    // State cho danh sách loại xe và trạng thái loading
     const [models, setModels] = useState<VehicleModel[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Load danh sách loại xe khi component được tạo (giữ nguyên)
     useEffect(() => {
         const loadModels = async () => {
             try {
@@ -56,20 +50,22 @@ export default function VehicleFormWithOCR({
                 setModels(models);
             } catch (error) {
                 console.error("Error loading vehicle models:", error);
-                showError(t("driver.cannotLoadModels"));
+                // ✨ SỬA: Thêm tham số title
+                showError(t("driver.cannotLoadModels"), t("driver.errorAddCar"));
             }
         };
         loadModels();
     }, [t]);
 
-    // Xử lý khi người dùng chọn file (giữ nguyên)
     const handleFileSelect = (file: File, type: 'vehicle' | 'registration') => {
         if (!file.type.startsWith('image/')) {
-            showError("Vui lòng chọn file ảnh hợp lệ");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng chọn file ảnh hợp lệ", t("driver.errorAddCar"));
             return;
         }
         if (file.size > 10 * 1024 * 1024) { // 10MB
-            showError("Kích thước file không được vượt quá 10MB");
+            // ✨ SỬA: Thêm tham số title
+            showError("Kích thước file không được vượt quá 10MB", t("driver.errorAddCar"));
             return;
         }
 
@@ -84,10 +80,10 @@ export default function VehicleFormWithOCR({
         reader.readAsDataURL(file);
     };
 
-    // Xử lý quét ảnh cà vẹt (giữ nguyên)
     const scanRegistrationImage = async () => {
         if (!registrationPhoto) {
-            showError("Vui lòng chọn ảnh cà vẹt xe trước khi quét");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng chọn ảnh cà vẹt xe trước khi quét", t("driver.errorAddCar"));
             return;
         }
         setIsScanning(true);
@@ -108,37 +104,39 @@ export default function VehicleFormWithOCR({
                     setVehicleModelId(matchedModel.id);
                     showSuccess(`Đã tự động chọn model: ${matchedModel.fullName}`);
                 } else {
-                    showError(`Không tìm thấy model "${result.vehicleModel}" của hãng "${result.brand}". Vui lòng chọn model phù hợp từ danh sách.`);
+                    // ✨ SỬA: Thêm tham số title
+                    showError(`Không tìm thấy model "${result.vehicleModel}" của hãng "${result.brand}". Vui lòng chọn model phù hợp từ danh sách.`, t("driver.errorAddCar"));
                 }
             }
 
             if (result.errorMessage) {
-                showError(`Lỗi quét ảnh: ${result.errorMessage}`);
+                // ✨ SỬA: Thêm tham số title
+                showError(`Lỗi quét ảnh: ${result.errorMessage}`, t("driver.errorAddCar"));
             } else {
                 showSuccess(`Quét thành công! Độ tin cậy: ${result.confidence.toFixed(1)}%`);
             }
         } catch (error: any) {
             console.error("OCR Error:", error);
             const errorMsg = error.response?.data?.error?.message || "Lỗi khi quét ảnh cà vẹt xe";
-            showError(errorMsg);
+            // ✨ SỬA: Thêm tham số title
+            showError(errorMsg, t("driver.errorAddCar"));
         } finally {
             setIsScanning(false);
         }
     };
 
-    // ✨ SỬA: Cập nhật logic submit để phân biệt giữa Tạo mới và Sửa
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 1. Validation: Chỉ bắt buộc cả 2 ảnh khi tạo mới
         if (!isEdit && (!vehiclePhoto || !registrationPhoto)) {
-            showError("Khi tạo xe mới, vui lòng chọn đầy đủ ảnh xe và ảnh cà vẹt xe");
+            // ✨ SỬA: Thêm tham số title
+            showError("Khi tạo xe mới, vui lòng chọn đầy đủ ảnh xe và ảnh cà vẹt xe", t("driver.errorAddCar"));
             return;
         }
 
-        // Validation cho ảnh xe khi tạo mới
         if (!isEdit && !vehiclePhoto) {
-            showError("Vui lòng cung cấp ảnh xe");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng cung cấp ảnh xe", t("driver.errorAddCar"));
             return;
         }
 
@@ -147,25 +145,24 @@ export default function VehicleFormWithOCR({
         formData.append('Plate', plate.trim());
         formData.append('VehicleModelId', vehicleModelId);
 
-        // 2. FormData: Chỉ thêm file vào FormData nếu người dùng có chọn file mới
         if (vehiclePhoto) {
             formData.append('Photo', vehiclePhoto);
         }
 
-        // Chỉ thêm ảnh cà vẹt khi tạo mới (vì không cho sửa)
         if (!isEdit && registrationPhoto) {
             formData.append('RegistrationPhoto', registrationPhoto);
         }
 
         try {
             setLoading(true);
-            await onSubmit(formData); // Gửi FormData lên component cha
+            await onSubmit(formData);
             const msg = isEdit ? t("driver.vehicleUpdated") : t("driver.vehicleAdded");
             onSuccess?.(msg);
         } catch (err: any) {
             console.error("Lỗi khi gửi form:", err);
             const msg = err.response?.data?.error?.message || t("driver.cannotConnectServer");
-            await showError(msg);
+            // ✨ SỬA: Thêm tham số title
+            await showError(msg, t("driver.errorAddCar"));
         } finally {
             setLoading(false);
         }
@@ -180,7 +177,6 @@ export default function VehicleFormWithOCR({
             </CardHeader>
 
             <CardContent className="space-y-6">
-                {/* ✨ SỬA: Chỉ hiện mục OCR khi tạo mới */}
                 {!isEdit && (
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
@@ -192,7 +188,6 @@ export default function VehicleFormWithOCR({
                             <div>
                                 <label className="block text-sm font-medium mb-2">Ảnh cà vẹt xe (bắt buộc)</label>
                                 <div className="flex space-x-2">
-                                    {/* 🗑️ XÓA: Đã bỏ nút "Chụp ảnh" */}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -237,7 +232,6 @@ export default function VehicleFormWithOCR({
                     </div>
                 )}
 
-                {/* ✨ SỬA: Hiển thị ảnh cà vẹt ở dạng chỉ xem khi sửa */}
                 {isEdit && registrationPhotoPreview && (
                     <div>
                         <label className="block text-sm font-medium mb-1">Ảnh cà vẹt xe (không thể thay đổi)</label>
@@ -250,7 +244,6 @@ export default function VehicleFormWithOCR({
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Các input VIN, Plate, Model giữ nguyên */}
                     <div>
                         <label className="block text-sm font-medium mb-1">{t("driver.vin")}</label>
                         <Input value={vin} onChange={(e) => setVin(e.target.value)} placeholder={t("driver.enterVin")} required disabled={isEdit} />
@@ -270,13 +263,11 @@ export default function VehicleFormWithOCR({
                         {/* ... code hiển thị cảnh báo OCR giữ nguyên ... */}
                     </div>
 
-                    {/* ✨ SỬA: Chỉnh sửa lại khu vực upload ảnh xe */}
                     <div>
                         <label className="block text-sm font-medium mb-1">
                             {isEdit ? "Thay đổi ảnh xe của bạn (tùy chọn)" : "Ảnh xe của bạn (bắt buộc)"}
                         </label>
                         <div className="flex space-x-2">
-                            {/* 🗑️ XÓA: Đã bỏ nút "Chụp ảnh" */}
                             <Button
                                 type="button"
                                 variant="outline"

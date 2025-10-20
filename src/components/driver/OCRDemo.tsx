@@ -18,12 +18,14 @@ export default function OCRDemo() {
 
     const handleFileSelect = (file: File) => {
         if (!file.type.startsWith('image/')) {
-            showError("Vui lòng chọn file ảnh hợp lệ");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng chọn file ảnh hợp lệ", "Lỗi");
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) { // 10MB
-            showError("Kích thước file không được vượt quá 10MB");
+            // ✨ SỬA: Thêm tham số title
+            showError("Kích thước file không được vượt quá 10MB", "Lỗi");
             return;
         }
 
@@ -42,7 +44,8 @@ export default function OCRDemo() {
 
     const scanImage = async () => {
         if (!selectedFile) {
-            showError("Vui lòng chọn ảnh cà vẹt xe trước khi quét");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng chọn ảnh cà vẹt xe trước khi quét", "Lỗi");
             return;
         }
 
@@ -52,14 +55,16 @@ export default function OCRDemo() {
             setOcrResult(result);
 
             if (result.errorMessage) {
-                showError(`Lỗi quét ảnh: ${result.errorMessage}`);
+                // ✨ SỬA: Thêm tham số title
+                showError(`Lỗi quét ảnh: ${result.errorMessage}`, "Lỗi");
             } else {
                 showSuccess(`Quét thành công! Độ tin cậy: ${result.confidence.toFixed(1)}%`);
             }
         } catch (error: any) {
             console.error("OCR Error:", error);
             const errorMsg = error.response?.data?.error?.message || "Lỗi khi quét ảnh cà vẹt xe";
-            showError(errorMsg);
+            // ✨ SỬA: Thêm tham số title
+            showError(errorMsg, "Lỗi");
         } finally {
             setIsScanning(false);
         }
@@ -67,7 +72,8 @@ export default function OCRDemo() {
 
     const scanFromUrl = async () => {
         if (!imageUrl.trim()) {
-            showError("Vui lòng nhập URL ảnh");
+            // ✨ SỬA: Thêm tham số title
+            showError("Vui lòng nhập URL ảnh", "Lỗi");
             return;
         }
 
@@ -77,14 +83,16 @@ export default function OCRDemo() {
             setOcrResult(result);
 
             if (result.errorMessage) {
-                showError(`Lỗi quét ảnh: ${result.errorMessage}`);
+                // ✨ SỬA: Thêm tham số title
+                showError(`Lỗi quét ảnh: ${result.errorMessage}`, "Lỗi");
             } else {
                 showSuccess(`Quét thành công! Độ tin cậy: ${result.confidence.toFixed(1)}%`);
             }
         } catch (error: any) {
             console.error("OCR Error:", error);
             const errorMsg = error.response?.data?.error?.message || "Lỗi khi quét ảnh từ URL";
-            showError(errorMsg);
+            // ✨ SỬA: Thêm tham số title
+            showError(errorMsg, "Lỗi");
         } finally {
             setIsScanning(false);
         }
@@ -123,7 +131,7 @@ export default function OCRDemo() {
                                 <span>Chọn file</span>
                             </Button>
                         </div>
-                        
+
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -211,7 +219,7 @@ export default function OCRDemo() {
                                 )}
                                 Kết quả quét OCR
                             </h3>
-                            
+
                             {ocrResult.errorMessage ? (
                                 <p className="text-red-600">{ocrResult.errorMessage}</p>
                             ) : (
