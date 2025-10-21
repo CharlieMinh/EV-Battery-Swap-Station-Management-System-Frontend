@@ -176,6 +176,79 @@ const translations = {
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
 
+    // Forgot Password
+    "forgotPassword.title": "Forgot Password",
+    "forgotPassword.subtitle":
+      "Enter your email address and we'll send you a verification code",
+    "forgotPassword.enterEmailPlaceholder": "Enter your email address",
+    "forgotPassword.sendResetLink": "Send Verification Code",
+    "forgotPassword.sending": "Sending...",
+    "forgotPassword.backToLogin": "Back to Login",
+    "forgotPassword.emailSent": "Email Sent!",
+    "forgotPassword.checkEmailDesc":
+      "We've sent a password reset link to your email address",
+    "forgotPassword.emailSentTo": "Email sent to:",
+    "forgotPassword.resendEmail": "Resend Email",
+    "forgotPassword.errorGeneric": "Something went wrong. Please try again.",
+    "forgotPassword.verificationTitle": "Enter Verification Code",
+    "forgotPassword.verificationSubtitle":
+      "We've sent a 6-digit code to your email",
+    "forgotPassword.verificationCode": "Verification Code",
+    "forgotPassword.enterCodePlaceholder": "Enter 6-digit code",
+    "forgotPassword.digits": "digits",
+    "forgotPassword.codeSentTo": "Code sent to:",
+    "forgotPassword.verifyCode": "Verify Code",
+    "forgotPassword.resendCode": "Resend Code",
+    "forgotPassword.verifying": "Verifying...",
+    "forgotPassword.changeEmail": "Change Email",
+    "forgotPassword.invalidCode":
+      "Invalid verification code. Please try again.",
+    "forgotPassword.invalidCodeLength":
+      "Please enter a 6-digit verification code.",
+    "forgotPassword.codeExpired":
+      "Verification code has expired. Please request a new one.",
+    "forgotPassword.tooManyAttempts":
+      "Too many attempts. Please try again later.",
+    "forgotPassword.apiNotFound":
+      "API endpoint not found. Please contact support.",
+    "forgotPassword.newPasswordTitle": "Set New Password",
+    "forgotPassword.newPasswordSubtitle":
+      "Create a strong password for your account",
+    "forgotPassword.newPassword": "New Password",
+    "forgotPassword.confirmPassword": "Confirm Password",
+    "forgotPassword.enterNewPassword": "Enter new password",
+    "forgotPassword.confirmNewPassword": "Confirm new password",
+    "forgotPassword.resetPassword": "Reset Password",
+    "forgotPassword.resetting": "Resetting...",
+    "forgotPassword.passwordMismatch": "Passwords do not match",
+    "forgotPassword.passwordTooShort": "Password must be at least 6 characters",
+    "forgotPassword.passwordResetSuccess": "Password Reset Successfully!",
+    "forgotPassword.passwordResetSuccessDesc":
+      "Your password has been reset. You can now sign in with your new password.",
+
+    // Email validation
+    "forgotPassword.emailInvalidFormat": "Please enter a valid email address",
+    "forgotPassword.emailValidFormat": "Email format is valid",
+
+    // Password validation
+    "forgotPassword.passwordNeedLowercase": "at least one lowercase letter",
+    "forgotPassword.passwordNeedUppercase": "at least one uppercase letter",
+    "forgotPassword.passwordNeedNumber": "at least one number",
+    "forgotPassword.passwordNeedSpecial":
+      "at least one special character (@$!%*?&)",
+    "forgotPassword.passwordStrong": "Password is strong",
+    "forgotPassword.passwordMatch": "Passwords match",
+    "forgotPassword.passwordRequirementsNotMet":
+      "Password does not meet requirements",
+
+    // Rate limiting
+    "forgotPassword.rateLimitInfo": "Requests remaining:",
+    "forgotPassword.rateLimitExceeded":
+      "Too many requests. Please try again later.",
+    "forgotPassword.rateLimitExceededDesc":
+      "You have exceeded the maximum number of requests per hour",
+    "forgotPassword.timeRemaining": "Time remaining",
+
     //role name
     "role.driver": "Driver",
     "role.admin": "Admin",
@@ -1422,6 +1495,7 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.staff": "Nhân Viên",
     "admin.resolve": "Xử lí",
+    "admin.true": "Hoạt động",
     "admin.customerDetail": "Chi tiết Khách hàng",
     "admin.viewHistory": "Xem lịch sử",
     "admin.Active": "Hoạt động",
