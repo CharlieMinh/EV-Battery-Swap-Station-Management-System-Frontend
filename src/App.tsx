@@ -123,7 +123,15 @@ function App() {
               currentUser?.role === "Staff" ? (
                 <StaffPortalPage user={currentUser} onLogout={handleLogout} />
               ) : (
-                <Navigate to="/login" />
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-orange-600 mb-4">Chưa đăng nhập</h1>
+                    <p className="text-gray-600 mb-4">Bạn cần đăng nhập với tài khoản Staff để truy cập trang này</p>
+                    <a href="/login" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg">
+                      Đăng nhập
+                    </a>
+                  </div>
+                </div>
               )
             }
           />

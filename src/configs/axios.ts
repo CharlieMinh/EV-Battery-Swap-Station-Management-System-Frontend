@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create axios instance
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5194", // Use env variable
+    baseURL: "http://localhost:5194", // Direct backend URL
     timeout: 30000, // 10 seconds timeout
     withCredentials: true, // Allow sending cookies
 });

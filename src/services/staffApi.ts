@@ -444,19 +444,6 @@ export const staffApi = {
     }
   },
 
-  // Test API /api/v1/Users/staff - Get real staff data
-  async getRealStaffData(): Promise<any> {
-    try {
-      console.log('getRealStaffData: Fetching real staff data from /api/v1/Users/staff');
-      const response = await api.get('/api/v1/Users/staff');
-      console.log('getRealStaffData: Real staff data received:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('getRealStaffData: Error fetching staff data:', error);
-      throw error;
-    }
-  },
-
   // Queue Management - Using real API with Reservations endpoint
   async getQueue(stationId: number): Promise<Booking[]> {
     try {
