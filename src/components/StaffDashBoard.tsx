@@ -27,6 +27,7 @@ import {
   Bell,
   User as UserIcon,
   DollarSign,
+  Battery as BatteryIcon,
 } from "lucide-react";
 import { User } from "../App";
 import staffApi, { Battery, Booking, Transaction, DailyStats } from "../services/staffApi";
@@ -34,13 +35,13 @@ import ProfileSection from "./staff/ProfileSection";
 
 // Import staff components
 import { StaffDashboard } from "./staff/StaffDashboard";
-import { QueueManagement } from "./staff/QueueManagement";
-import { BatteryInventory } from "./staff/BatteryInventory";
 import { TransactionManagement } from "./staff/TransactionManagement";
 import { RevenueTracking } from "./staff/RevenueTracking";
 import { SwapProcessDialog } from "./staff/SwapProcessDialog";
 import { POSDialog } from "./staff/POSDialog";
 import { BatteryConditionCheck } from "./staff/BatteryConditionCheck";
+import { StaffQueueManagement } from "./staff/StaffQueueManagement";
+import { StaffInventoryMonitoring } from "./staff/StaffInventory";
 
 interface StaffPortalPageProps {
   user: User;
@@ -49,7 +50,10 @@ interface StaffPortalPageProps {
 
 export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState("queue");
+  
+  // Debug log
+  console.log('StaffPortalPage rendered with user:', user);
+  const [activeSection, setActiveSection] = useState("queue-pro");
   const [selectedBattery, setSelectedBattery] = useState<string | null>(null);
   const [swapDialog, setSwapDialog] = useState(false);
   const [posDialog, setPosDialog] = useState(false);
@@ -99,19 +103,6 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       setBookings([]); // Set empty array on error
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Test function to get real staff data from /api/v1/Users/staff
-  const testRealStaffAPI = async () => {
-    try {
-      console.log('StaffDashBoard: Testing /api/v1/Users/staff API...');
-      const staffData = await staffApi.getRealStaffData();
-      console.log('StaffDashBoard: Real staff data:', staffData);
-      alert(`API /api/v1/Users/staff hoạt động!\nDữ liệu: ${JSON.stringify(staffData, null, 2)}`);
-    } catch (error) {
-      console.error('StaffDashBoard: Error testing staff API:', error);
-      alert('Lỗi khi gọi API /api/v1/Users/staff');
     }
   };
 
@@ -195,6 +186,18 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
     loadInitialData();
   }, []);
 
+  // Fallback if user is not properly loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-orange-600 mb-4">Đang tải...</h1>
+          <p className="text-gray-600">Vui lòng chờ trong giây lát</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
@@ -220,6 +223,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
+                  {/* Thông Tin Cá Nhân - Đầu tiên */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("profile")}
@@ -230,26 +234,32 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       <span>{t("staff.personalInformation")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Quản Lý Hàng Chờ - Tính năng chính */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => setActiveSection("queue")}
-                      isActive={activeSection === "queue"}
+                      onClick={() => setActiveSection("queue-pro")}
+                      isActive={activeSection === "queue-pro"}
                       className="h-[50px]"
                     >
-                      <Clipboard className="w-4 h-4" />
-                      <span>{t("staff.queueManagement")}</span>
+                      <Zap className="w-4 h-4" />
+                      <span>Quản lý hàng chờ</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Giám sát kho pin */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => setActiveSection("inventory")}
-                      isActive={activeSection === "inventory"}
+                      onClick={() => setActiveSection("inventory-monitoring")}
+                      isActive={activeSection === "inventory-monitoring"}
                       className="h-[50px]"
                     >
-                      <Package className="w-4 h-4" />
-                      <span>{t("staff.inventory")}</span>
+                      <BatteryIcon className="w-4 h-4" />
+                      <span>Kho pin</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Giao Dịch */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("transactions")}
@@ -260,6 +270,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       <span>{t("staff.transactions")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Thu Ngân */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("revenue")}
@@ -270,6 +282,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       <span>{t("staff.cashier")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  {/* Báo Cáo */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("reports")}
@@ -312,11 +326,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {activeSection === "queue" && t("staff.queueManagement")}
-                  {activeSection === "inventory" && t("staff.inventory")}
                   {activeSection === "transactions" && t("staff.transactions")}
                   {activeSection === "revenue" && t("staff.cashier")}
                   {activeSection === "reports" && t("staff.reports")}
+                  {activeSection === "queue-pro" && "Quản lý hàng chờ"}
+                  {activeSection === "inventory-monitoring" && "Kho pin"}
                   {activeSection === "profile" && t("staff.personalInformation")}
                 </h1>
               </div>
@@ -338,100 +352,6 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {activeSection === "queue" && (
-              <div className="space-y-6">
-                {/* Test API Button */}
-                <div className="flex justify-end mb-4">
-                  <Button 
-                    onClick={testRealStaffAPI}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    Test API /api/v1/Users/staff
-                  </Button>
-                </div>
-                
-                <QueueManagement
-                  bookings={bookings}
-                  onStartSwap={(booking: Booking) => {
-                    setSelectedBooking(booking);
-                    setSwapDialog(true);
-                  }}
-                  onBatteryCheck={(booking) => {
-                    setSelectedBooking(booking);
-                    setBatteryCheckDialog(true);
-                  }}
-                  onCancelBooking={async (booking) => {
-                    try {
-                      // Cập nhật trạng thái booking thành cancelled ngay lập tức
-                      const updatedBookings = bookings.map(b => 
-                        b.id === booking.id 
-                          ? { ...b, status: 3 } // 3 = Cancelled
-                          : b
-                      );
-                      setBookings(updatedBookings);
-                      
-                      // Gọi API để cập nhật backend (không cần chờ response)
-                      staffApi.cancelBooking(booking.id, "StaffCancelled").catch(error => {
-                        console.error('Cancel booking API error:', error);
-                        // Nếu API fail, revert lại trạng thái
-                        setBookings(bookings);
-                      });
-                    } catch (error) {
-                      console.error('Cancel booking error:', error);
-                    }
-                  }}
-                  onCheckIn={(booking) => {
-                    // Cập nhật trạng thái booking thành checked-in sau khi check-in
-                    const updatedBookings = bookings.map(b => 
-                      b.id === booking.id 
-                        ? { ...b, status: 1 } // 1 = CheckedIn
-                        : b
-                    );
-                    setBookings(updatedBookings);
-                  }}
-                  onComplete={(booking) => {
-                    // Cập nhật trạng thái booking thành completed
-                    const updatedBookings = bookings.map(b => 
-                      b.id === booking.id 
-                        ? { ...b, status: 2 } // 2 = Completed
-                        : b
-                    );
-                    setBookings(updatedBookings);
-                  }}
-                  onProcessPaymentAndPrint={(booking) => {
-                    // Mở POS dialog và cập nhật trạng thái thành completed
-                    setPosDialog(true);
-                    const updatedBookings = bookings.map(b => 
-                      b.id === booking.id 
-                        ? { ...b, status: 2 } // 2 = Completed
-                        : b
-                    );
-                    setBookings(updatedBookings);
-                  }}
-                />
-              </div>
-            )}
-
-            {activeSection === "inventory" && (
-              <BatteryInventory
-                batteries={batteries}
-                selectedBattery={selectedBattery}
-                onBatterySelect={setSelectedBattery}
-                onNewInspection={() => {}}
-                onTakeBattery={async (batteryId) => {
-                  try {
-                    await staffApi.takeBattery(batteryId, user.id, user.stationId || 1);
-                    alert("Đã lấy pin thành công!");
-                    // Refresh battery list
-                    const updatedBatteries = await staffApi.getBatteries(user.stationId || 1);
-                    setBatteries(updatedBatteries);
-                  } catch (error) {
-                    console.error('Error taking battery:', error);
-                    alert("Có lỗi xảy ra khi lấy pin");
-                  }
-                }}
-              />
-            )}
 
             {activeSection === "transactions" && (
               <div className="space-y-6">
@@ -461,6 +381,22 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               </div>
             )}
 
+            {activeSection === "queue-pro" && (
+              <StaffQueueManagement 
+                bookings={bookings}
+                onRefreshBookings={() => {
+                  console.log('Refreshing bookings...');
+                  fetchQueueBookings();
+                }}
+              />
+            )}
+
+            {activeSection === "inventory-monitoring" && (
+              <StaffInventoryMonitoring 
+                stationId={user.stationId?.toString() || "station-001"}
+                stationName={user.name || "Trạm của bạn"}
+              />
+            )}
 
 
             {activeSection === "profile" && (

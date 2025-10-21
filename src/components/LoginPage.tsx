@@ -28,6 +28,7 @@ import {
 import { User as UserType } from "../App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from "../configs/axios";
 import GoogleLoginButton from "./GoogleLoginButton";
 
 interface LoginPageProps {
@@ -68,18 +69,23 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    console.log("handleLogin called!");
+    console.log("handleLogin called with:", { email, password });
 
     setLoading(true);
+    setErrorEmail("");
+    setErrorPassword("");
+    
     try {
-      const response = await axios.post(
-        "http://localhost:5194/api/v1/Auth/login",
+      console.log("Making API call to:", "/api/v1/Auth/login");
+      const response = await api.post(
+        "/api/v1/Auth/login",
         {
           email,
           password,
-        },
-        { withCredentials: true }
+        }
       );
+      console.log("API Response:", response);
+      
       if (response.status === 200) {
         console.log("Login successful:", response.data);
         
@@ -90,23 +96,54 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
           console.log("Token saved to localStorage");
         }
         
-        onLogin(response.data);
+        // Map API response to User interface
+        const user: UserType = {
+          id: response.data.id || "temp-id", // API might not return id, use temp-id
+          name: response.data.name,
+          email: email, // Use the email from form since API doesn't return it
+          role: response.data.role,
+          stationId: response.data.stationId || undefined
+        };
+        
+        console.log("Mapped user:", user);
+        onLogin(user);
+        
         if (response.data.role === "Driver") navigate("/");
         else if (response.data.role === "Staff") navigate("/staff");
         else if (response.data.role === "Admin") navigate("/admin");
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const data = error.response.data;
+      console.error("Login error details:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          headers: error.response?.headers
+        });
+        
+        if (error.response) {
+          const data = error.response.data;
 
-        // Validation lỗi 400
-        if (data.error?.code === "VALIDATION_FAILED") {
-          setErrorEmail(data.error.details?.email?.[0] || "");
-          setErrorPassword(data.error.details?.password?.[0] || "");
-        }
-        // Invalid credentials 401
-        else if (data.error?.code === "INVALID_CREDENTIALS") {
-          setErrorPassword(data.error.message || "Invalid email or password.");
+          // Validation lỗi 400
+          if (data.error?.code === "VALIDATION_FAILED") {
+            setErrorEmail(data.error.details?.email?.[0] || "");
+            setErrorPassword(data.error.details?.password?.[0] || "");
+          }
+          // Invalid credentials 401
+          else if (data.error?.code === "INVALID_CREDENTIALS") {
+            setErrorPassword(data.error.message || "Invalid email or password.");
+          }
+          else {
+            setErrorPassword(data.message || "Login failed. Please try again.");
+          }
+        } else if (error.request) {
+          console.error("No response received:", error.request);
+          setErrorPassword("Cannot connect to server. Please check your connection.");
+        } else {
+          console.error("Request setup error:", error.message);
+          setErrorPassword("Login failed. Please try again.");
         }
       } else {
         // Lỗi không mong muốn
