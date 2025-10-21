@@ -33,33 +33,38 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const fullAddress = `${formData.address}, ${formData.city}`;
-      const coords = await geocodeAddress(fullAddress);
+      console.log("🔍 Đang geocode địa chỉ:", fullAddress);
+
+      const coords = await geocodeAddress(fullAddress, formData.city);
 
       if (!coords) {
         alert(
-          "Không thể lấy tọa độ từ địa chỉ đã nhập. Vui lòng kiểm tra lại."
+          "❌ Không thể lấy tọa độ từ địa chỉ đã nhập.\nVui lòng kiểm tra lại hoặc nhập cụ thể hơn."
         );
         setLoading(false);
         return;
       }
 
+      console.log("📍 Tọa độ tìm được:", coords);
+
       const newStation = {
-        name: formData.name,
-        address: formData.address,
-        city: formData.city,
-        lat: coords.lat, // 👈 thêm dòng này
-        lng: coords.lng, // 👈 thêm dòng này
+        name: formData.name.trim(),
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        lat: coords.lat,
+        lng: coords.lng,
         isActive: formData.isActive,
       };
 
       await createStation(newStation);
-      alert("Thêm trạm thành công!");
+      alert("✅ Thêm trạm thành công!");
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error creating station:", error);
+      console.error("❌ Lỗi khi tạo trạm:", error);
       alert("Đã xảy ra lỗi khi thêm trạm. Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -68,8 +73,8 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40 flex items-center justify-center p-4">
-      {/* Form chính */}
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative animate-fade-in">
+        {/* Nút đóng */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
@@ -105,6 +110,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
               name="address"
               value={formData.address}
               onChange={handleChange}
+              placeholder="VD: 216 Võ Văn Ngân, Bình Thọ"
               className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
@@ -119,6 +125,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
               name="city"
               value={formData.city}
               onChange={handleChange}
+              placeholder="VD: Thủ Đức, Hồ Chí Minh"
               className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
@@ -127,7 +134,11 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 mt-3 font-medium transition-colors"
+            className={`w-full text-white rounded-lg py-2 mt-3 font-medium transition-colors ${
+              loading
+                ? "bg-orange-400 cursor-not-allowed"
+                : "bg-orange-500 hover:bg-orange-600"
+            }`}
           >
             {loading ? "Đang lưu..." : "Lưu trạm"}
           </button>
