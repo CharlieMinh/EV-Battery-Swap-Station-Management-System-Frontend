@@ -7,19 +7,19 @@ export interface Coordinates {
 }
 
 export interface Station {
-    id: String;
-    name: String;
-    address: String;
-    city?: String;
+    id: string;
+    name: string;
+    address: string;
+    city?: string;
     coordinates: {
         lat: number;
         lng: number;
     };
     isActive: boolean;
-    openTime?:String;
-    closeTime?:String;
-    phoneNumber?:String;
-    primaryImageUrl?:String;
+    openTime?:string;
+    closeTime?:string;
+    phoneNumber?:string;
+    primaryImageUrl?:string;
     isOpenNow: boolean;
 }
 
@@ -30,6 +30,15 @@ export interface PaginatedResponse<T> {
   totalPages: number;
   currentPage: number;
   pageSize: number;
+}
+
+export interface StationDetail extends Station {
+    description?: string;
+  images?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  totalChargers?: number;
+  availableChargers?: number;
 }
 
 export async function fetchStations( page: number,
@@ -70,7 +79,7 @@ export async function createStation(data: any): Promise<Station> {
   } 
 
 
-export async function fetchStationById(id: string): Promise<Station> {
+export async function fetchStationById(id: string): Promise<StationDetail> {
    try {
       const response = await api.get(`/api/v1/Stations/${id}`); 
       return response.data;
