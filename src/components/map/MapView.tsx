@@ -13,6 +13,7 @@ import useGeoLocation from "./useGeoLocation";
 import { Map } from "leaflet";
 import { FaCrosshairs } from "react-icons/fa";
 import { Coordinates, Station } from "@/services/admin/stationService";
+import { StationDetail } from "./StationDetail";
 interface MapState {
   userLocation: Coordinates;
   stations: Station[];
@@ -30,6 +31,9 @@ export default function MapView() {
   >(null);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(
+    null
+  );
 
   // kiểm tra nếu không có state (ví dụ reload F5)
   useEffect(() => {
@@ -62,15 +66,16 @@ export default function MapView() {
     const findAndSetNearestStation = async () => {
       if (userLocation && stations.length > 0) {
         const nearest = await findNearestStation(userLocation, stations);
-        setNearestStation(nearest);
 
-        if (!nearest) {
-          console.warn("Không tìm thấy trạm gần nhất.");
-          setIsLoading(false); // Kết thúc loading
+        if (nearest) {
+          setNearestStation(nearest);
+          setSelectedStationId(nearest.id as string);
+        } else {
+          setNearestStation(null);
+          setSelectedStationId(null);
         }
-      } else {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
     findAndSetNearestStation();
   }, [userLocation, stations]);
@@ -145,6 +150,14 @@ export default function MapView() {
 
   return (
     <div className="w-full h-screen relative">
+      {selectedStationId && (
+        <div className="absolute top-5 left-5 z-[9999]">
+          <StationDetail
+            stationId={selectedStationId}
+            onClose={() => setSelectedStationId(null)}
+          />
+        </div>
+      )}
       <MapContainer
         center={[userLocation.lat, userLocation.lng]}
         zoom={ZOOM_LEVEL}
@@ -200,6 +213,29 @@ export default function MapView() {
             }}
           />
         )}
+        {stations.map((station) => {
+          const isNearest = station.name === nearestStation?.name;
+          return (
+            <Marker
+              key={station.id}
+              position={[station.coordinates.lat, station.coordinates.lng]}
+              eventHandlers={{
+                click: () => {
+                  setSelectedStationId(station.id); // cập nhật trạm được chọn
+                },
+              }}
+            >
+              <Popup>
+                <b>{station.name}</b>
+                <br />
+                {station.address}
+                {isNearest && (
+                  <div style={{ color: "red" }}>⭐ Trạm gần nhất</div>
+                )}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

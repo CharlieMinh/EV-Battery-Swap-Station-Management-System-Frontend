@@ -233,7 +233,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
   return (
     // Modal Overlay (dimming/blur background)
     <div
-      className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
       onClick={onClose}
     >
       {/* Modal Content */}
