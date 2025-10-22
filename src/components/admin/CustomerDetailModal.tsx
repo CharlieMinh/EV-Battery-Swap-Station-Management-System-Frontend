@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Customer,
   CustomerDetail,
@@ -22,16 +22,30 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { set } from "date-fns";
+import { Card } from "../ui/card";
 import { toast } from "react-toastify";
-import { get } from "http";
+
+const StatItem: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color: string;
+}> = ({ icon: Icon, label, value, color }) => (
+  <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 py-4 px-3 flex flex-col items-center text-center cursor-default">
+    <Icon className={`w-6 h-6 ${color} mb-3`} />
+    <p className="text-sm text-gray-500 font-medium leading-tight mb-3">
+      {label}
+    </p>
+    <p className="text-xl font-bold text-gray-900 mt-0.5 leading-tight">
+      {value}
+    </p>
+  </div>
+);
 
 const formatDateTime = (isoString: any) => {
   if (!isoString) return "N/A";
   try {
     const date = new Date(isoString);
-    // Format: DD/MM/YYYY HH:MM:SS
     const datePart = date.toLocaleDateString("vi-VN");
     const timePart = date.toLocaleTimeString("vi-VN", {
       hour: "2-digit",
@@ -88,7 +102,7 @@ const CustomerDetailModal = ({
   const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(
     null
   );
-  const [loading, setLoading] = React.useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     name: "",
     phoneNumber: "",
@@ -99,15 +113,12 @@ const CustomerDetailModal = ({
 
   useEffect(() => {
     if (!customer || !customer.id) return;
-
     const getCustomerById = async () => {
       setLoading(true);
       setCustomerDetail(null);
-
       try {
         const data = await fetchCustomerById(customer.id);
         setCustomerDetail(data);
-
         const roleValue = getRoleNumber(data.role || "0").toString();
         const statusValue =
           data.status === "Active" || data.status === "0" ? "0" : "1";
@@ -117,12 +128,8 @@ const CustomerDetailModal = ({
           role: roleValue,
           status: statusValue,
         });
-
-        console.log("Fetched customer detail:", data);
-        console.log("Initialized formData:", { roleValue, statusValue });
       } catch (error) {
         console.error("Error fetching customer detail:", error);
-        throw error;
       } finally {
         setLoading(false);
       }
@@ -132,7 +139,6 @@ const CustomerDetailModal = ({
 
   const handleSave = async () => {
     if (!customerDetail) return;
-
     try {
       setLoading(true);
       const payload: UpdateUserPayload = {
@@ -141,19 +147,8 @@ const CustomerDetailModal = ({
         role: formData.role,
         status: formData.status,
       };
-
-      console.log("Payload being sent:", payload);
-      console.log("Payload types:", {
-        role: typeof payload.role,
-        status: typeof payload.status,
-      });
-
-      const updatedCustomer = await updateUser(customerDetail.id!, payload);
-      console.log("Response from server:", updatedCustomer);
-
+      await updateUser(customerDetail.id!, payload);
       toast.success(t("admin.updateSuccess"));
-
-      // Cập nhật customerDetail với dữ liệu mới từ formData
       setCustomerDetail({
         ...customerDetail,
         name: formData.name,
@@ -161,26 +156,22 @@ const CustomerDetailModal = ({
         role: formData.role,
         status: formData.status === "0" ? "Active" : "Inactive",
       });
-
       setIsEditing(false);
     } catch (error) {
-      console.error("Error updating customer:", error);
       toast.error(t("admin.updateFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  if (!customer) return;
+  if (!customer) return null;
 
   if (loading || !customerDetail) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-10 shadow-2xl flex flex-col items-center justify-center w-full max-w-sm">
-          <Loader2 className="w-8 h-8 text-orange-600 animate-spin mb-4" />
-          <p className="text-gray-700 font-medium">
-            {t("admin.loadingDetails")}
-          </p>
+      <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+        <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
+          <Loader2 className="animate-spin w-6 h-6 inline-block mr-2 text-orange-600" />
+          Đang tải dữ liệu khách hàng...
         </div>
       </div>
     );
@@ -248,39 +239,72 @@ const CustomerDetailModal = ({
     },
   ];
 
-  console.log("Rendering CustomerDetailModal with data:", data);
+  const handleClose = () => {
+    if (isEditing) {
+      // Reset form và tắt chế độ chỉnh sửa trước khi đóng
+      setFormData({
+        name: customerDetail?.name || "",
+        phoneNumber: customerDetail?.phoneNumber || "",
+        role:
+          customerDetail?.role === "Driver"
+            ? "0"
+            : customerDetail?.role === "Staff"
+            ? "1"
+            : "2",
+        status: customerDetail?.status === "Active" ? "0" : "1",
+      });
+
+      // Đặt lại isEditing rồi mới đóng modal
+      setIsEditing(false);
+
+      // Đợi 1 tick để React cập nhật state trước khi unmount modal
+      setTimeout(() => {
+        onClose();
+      }, 0);
+    } else {
+      onClose();
+    }
+  };
 
   return (
-    // Modal Overlay (dimming/blur background)
     <div
-      className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/10 backdrop-blur-sm px-4"
+      onClick={handleClose}
     >
-      {/* Modal Content */}
       <div
-        className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all duration-300 scale-100"
-        onClick={(e) => e.stopPropagation()} // Prevent click propagation to overlay
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-9 border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Close Button and Actions */}
-        <div className="sticky top-0 bg-white p-6 border-b border-gray-100 z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <h2 className="text-2xl font-bold text-orange-600 mb-3 sm:mb-0">
-            {t("admin.customerDetail")}
-          </h2>
-          <div className="flex space-x-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-orange-600 border-orange-600 hover:bg-orange-50"
-            >
-              <Calendar className="w-4 h-4 mr-1" /> {t("admin.viewHistory")}
-            </Button>
+        {/* Nút đóng */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-orange-200">
+          <div className="flex items-center space-x-4">
+            <User className="w-11 h-11 text-orange-600 shrink-0" />
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">
+                {customerDetail.name}
+              </h1>
+              <p className="text-gray-500 text-sm mt-1">
+                {customerDetail.email}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex space-x-3 mt-4 sm:mt-0">
             {!isEditing ? (
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-500 hover:bg-blue-600"
                 onClick={() => setIsEditing(true)}
               >
-                <Edit className="w-4 h-4 mr-1" /> {t("admin.updateProfile")}
+                <Edit className="w-4 h-4 mr-2" /> {t("admin.updateProfile")}
               </Button>
             ) : (
               <>
@@ -298,11 +322,9 @@ const CustomerDetailModal = ({
                     </>
                   )}
                 </Button>
-
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="text-gray-600 border-gray-400 hover:bg-gray-100"
+                  size="sm"
                   onClick={() => {
                     setIsEditing(false);
                     setFormData({
@@ -317,166 +339,114 @@ const CustomerDetailModal = ({
                       status: customerDetail.status === "Active" ? "0" : "1",
                     });
                   }}
-                  disabled={loading}
+                  className="border-gray-300 hover:bg-gray-100"
                 >
                   Hủy thay đổi
                 </Button>
               </>
             )}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onClose}
-              className="hover:bg-red-500 hover:text-white ml-3"
-            >
-              <X className="w-5 h-5" />
-            </Button>
           </div>
         </div>
 
-        {/* Body Content */}
-        <div className="p-6 space-y-8">
-          {/* 1. Thông tin cá nhân */}
-          <Card className="border border-orange-200">
-            <CardHeader>
-              <CardTitle className="text-orange-600">
-                {t("admin.personalInfo")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4 text-gray-700">
-                {data.map((item, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <item.icon className="w-5 h-5 text-gray-500" />
-                    {isEditing && item.editable ? (
-                      item.key === "role" ? (
-                        <select
-                          value={formData.role}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              role: e.target.value,
-                            })
-                          }
-                          className="border rounded p-1"
-                        >
-                          <option value={"0"}>Tài xế</option>
-                          <option value={"1"}>Nhân viên</option>
-                          <option value={"2"}>Quản lý</option>
-                        </select>
-                      ) : item.key === "status" ? (
-                        <select
-                          value={formData.status}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              status: e.target.value,
-                            })
-                          }
-                          className="border rounded p-1"
-                        >
-                          <option value={"0"}>Đang hoạt động</option>
-                          <option value={"1"}>Ngừng hoạt động</option>
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={(formData as any)[item.key] || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              [item.key]: e.target.value,
-                            })
-                          }
-                          className="border rounded p-1 w-full"
-                          required
-                        />
-                      )
-                    ) : (
-                      <p>
-                        <span className="font-semibold text-sm mr-2">
-                          {item.label}:
-                        </span>
-                        <span className="font-medium">{item.value}</span>
-                      </p>
-                    )}
-                  </div>
-                ))}
+        {/* Thông tin cơ bản */}
+        <Card className="mt-8 bg-white border border-orange-100 shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-5 text-orange-700 border-b pb-3 border-orange-100">
+            {t("admin.personalInfo")}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5 text-sm">
+            {data.map((item, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <item.icon className="w-5 h-5 text-gray-500" />
+                {isEditing && item.editable ? (
+                  item.key === "role" ? (
+                    <select
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value })
+                      }
+                      className="border rounded-md p-1 text-gray-700"
+                    >
+                      <option value={"0"}>Tài xế</option>
+                      <option value={"1"}>Nhân viên</option>
+                      <option value={"2"}>Quản lý</option>
+                    </select>
+                  ) : item.key === "status" ? (
+                    <select
+                      value={formData.status}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                      className="border rounded-md p-1 text-gray-700"
+                    >
+                      <option value={"0"}>Đang hoạt động</option>
+                      <option value={"1"}>Ngừng hoạt động</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={(formData as any)[item.key] || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [item.key]: e.target.value,
+                        })
+                      }
+                      className="border rounded-md p-1 text-gray-700 w-full"
+                    />
+                  )
+                ) : (
+                  <p>
+                    <span className="font-semibold text-sm mr-2">
+                      {item.label}:
+                    </span>
+                    <span className="font-medium">{item.value}</span>
+                  </p>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+        </Card>
 
-          {/* 2. Tổng kết Doanh thu & Hiệu suất */}
-          <Card className="border border-green-200">
-            <CardHeader>
-              <CardTitle className="text-green-600">
-                {t("admin.revenueSummary")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Total Swaps (Tổng Lần Thay Pin) */}
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                  <BarChart className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {t("admin.totalSwaps")}
-                  </p>{" "}
-                  {/* Dùng key mới */}
-                  <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.totalReservations)}
-                  </p>
-                </div>
-                {/* Revenue (Doanh Thu) */}
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                  <Zap className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {t("admin.revenue")}
-                  </p>{" "}
-                  {/* Dùng key mới */}
-                  <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.completedReservations)} VND
-                  </p>
-                </div>
-                {/* Cancelled Swaps (Lượt hủy) */}
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                  <X className="w-6 h-6 text-red-500 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {t("admin.cancelledReservations")}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.cancelledReservations)}
-                  </p>
-                </div>
-                {/* Total Vehicles (Tổng phương tiện) */}
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                  <Truck className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {t("admin.totalVehicles")}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-800">
-                    {formatNumber(customerDetail.totalVehicles)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Hiệu suất */}
+        <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
+          Hiệu suất & Dữ liệu khách hàng
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
+          <StatItem
+            icon={BarChart}
+            color="text-orange-500"
+            label={t("admin.totalSwaps")}
+            value={formatNumber(customerDetail.totalReservations)}
+          />
+          <StatItem
+            icon={Zap}
+            color="text-green-500"
+            label={t("admin.revenue")}
+            value={`${formatNumber(customerDetail.completedReservations)} VND`}
+          />
+          <StatItem
+            icon={X}
+            color="text-red-500"
+            label={t("admin.cancelledReservations")}
+            value={formatNumber(customerDetail.cancelledReservations)}
+          />
+          <StatItem
+            icon={Truck}
+            color="text-blue-500"
+            label={t("admin.totalVehicles")}
+            value={formatNumber(customerDetail.totalVehicles)}
+          />
+        </div>
 
-          {/* 3. Lịch sử đổi pin (Placeholder) */}
-          <Card className="border border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-blue-600">
-                {t("admin.swapHistorySummary")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-24 bg-blue-50 rounded-lg flex items-center justify-center p-4">
-                <p className="text-gray-500 italic">
-                  (Phần này có thể hiển thị biểu đồ hoặc danh sách tóm tắt các
-                  giao dịch gần đây.)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Footer */}
+        <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="border-gray-300 hover:bg-gray-100"
+          >
+            Đóng
+          </Button>
         </div>
       </div>
     </div>
