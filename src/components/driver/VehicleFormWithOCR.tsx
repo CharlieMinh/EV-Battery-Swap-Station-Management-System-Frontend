@@ -50,7 +50,7 @@ export default function VehicleFormWithOCR({
                 setModels(models);
             } catch (error) {
                 console.error("Error loading vehicle models:", error);
-                // ✨ SỬA: Thêm tham số title
+
                 showError(t("driver.cannotLoadModels"), t("driver.errorAddCar"));
             }
         };
@@ -59,12 +59,12 @@ export default function VehicleFormWithOCR({
 
     const handleFileSelect = (file: File, type: 'vehicle' | 'registration') => {
         if (!file.type.startsWith('image/')) {
-            // ✨ SỬA: Thêm tham số title
+
             showError("Vui lòng chọn file ảnh hợp lệ", t("driver.errorAddCar"));
             return;
         }
         if (file.size > 10 * 1024 * 1024) { // 10MB
-            // ✨ SỬA: Thêm tham số title
+
             showError("Kích thước file không được vượt quá 10MB", t("driver.errorAddCar"));
             return;
         }
@@ -212,7 +212,22 @@ export default function VehicleFormWithOCR({
 
                                 {registrationPhotoPreview && (
                                     <div className="mt-2">
-                                        <img src={registrationPhotoPreview} alt="Registration preview" className="w-32 h-24 object-cover rounded border" />
+
+                                        <div className="relative inline-block overflow-hidden rounded border">
+
+                                            <img
+                                                src={registrationPhotoPreview}
+                                                alt="Registration preview"
+                                                className="w-32 h-24 object-cover filter blur-sm"
+                                            />
+
+                                            <img
+                                                src="src/assets/logoEV2.png"
+                                                alt="Logo"
+                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 object-contain opacity-75"
+                                            />
+                                        </div>
+
                                         <Button type="button" onClick={scanRegistrationImage} disabled={isScanning} className="mt-2 bg-blue-500 text-white hover:bg-blue-600">
                                             {isScanning ? (
                                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang quét...</>
@@ -235,11 +250,19 @@ export default function VehicleFormWithOCR({
                 {isEdit && registrationPhotoPreview && (
                     <div>
                         <label className="block text-sm font-medium mb-1">Ảnh cà vẹt xe (không thể thay đổi)</label>
-                        <img
-                            src={registrationPhotoPreview}
-                            alt="Registration preview"
-                            className="w-32 h-24 object-cover rounded border"
-                        />
+
+                        <div className="relative inline-block overflow-hidden rounded border">
+                            <img
+                                src={registrationPhotoPreview}
+                                alt="Registration preview"
+                                className="w-32 h-24 object-cover filter blur-sm"
+                            />
+                            <img
+                                src="src/assets/logoEV2.png"
+                                alt="Logo"
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 object-contain opacity-75"
+                            />
+                        </div>
                     </div>
                 )}
 
