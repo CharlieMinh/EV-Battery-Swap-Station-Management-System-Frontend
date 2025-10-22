@@ -19,6 +19,7 @@ import {
   BatteryCharging,
 } from "lucide-react";
 import { geocodeAddress } from "../map/geocode";
+import { toast } from "react-toastify";
 
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
@@ -128,9 +129,10 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
       await updateStation(stationId, updatedData);
       setStationDetail(updatedData as Station);
       setIsEditing(false);
+      toast.success("Cập nhật trạm thành công!");
     } catch (error) {
       console.error("Lỗi khi cập nhật trạm:", error);
-      alert("Không thể lưu thay đổi, vui lòng thử lại!");
+      toast.error("Không thể lưu thay đổi, vui lòng thử lại!");
     } finally {
       setSaving(false);
     }
