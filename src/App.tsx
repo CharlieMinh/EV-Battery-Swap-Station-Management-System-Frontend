@@ -7,6 +7,9 @@ import { ForgotPassword } from "./components/ForgotPassword";
 import { DriverPortalPage } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
+import { PricingPage } from "./components/PricingPage";
+import { PaymentPage } from "./components/PaymentPage";
+import { PaymentCallback } from "./components/PaymentCallback";
 import {
   BrowserRouter,
   Navigate,
@@ -107,6 +110,22 @@ function App() {
             }
           />
           <Route path="/forgot-password" element={<ForgotPasswordWrapper />} />
+          <Route
+            path="/pricing"
+            element={<PricingPage user={currentUser} onLogout={handleLogout} />}
+          />
+          <Route
+            path="/payment"
+            element={<PaymentPage />}
+          />
+          <Route
+            path="/payment/callback"
+            element={<PaymentCallback />}
+          />
+          <Route
+            path="/payment/return"
+            element={<PaymentCallback />}
+          />
           <Route
             path="/driver"
             element={

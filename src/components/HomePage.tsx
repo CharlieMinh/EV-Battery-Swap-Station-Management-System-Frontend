@@ -40,6 +40,8 @@ import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
 import MapView from "./map/MapView";
 import { fetchStations, Station } from "../services/admin/stationService";
+import { getSubscriptionPlansWithPricing, SubscriptionPlan, SubscriptionPlanPricing } from "../services/subscriptionService";
+import { SubscriptionForm } from "./SubscriptionForm";
 import type { User } from "../App";
 import { get } from "http";
 import {
@@ -66,6 +68,10 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   const location = useGeoLocation();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   const [stations, setStations] = useState<Station[] | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<(SubscriptionPlan & { pricing: SubscriptionPlanPricing })[]>([]);
+  const [pricingLoading, setPricingLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<(SubscriptionPlan & { pricing: SubscriptionPlanPricing }) | null>(null);
+  const [isSubscriptionFormOpen, setIsSubscriptionFormOpen] = useState(false);
 
   const features = [
     {
@@ -90,47 +96,41 @@ export function Homepage({ user, onLogout }: HomepageProps) {
     },
   ];
 
-  const pricingPlans = [
-    {
-      name: t("pricing.payPerSwap"),
-      price: "$25",
-      period: t("pricing.perSwap"),
-      description: t("pricing.payPerSwap.desc"),
-      features: [
-        t("pricing.payPerSwap.feature1"),
-        t("pricing.payPerSwap.feature2"),
-        t("pricing.payPerSwap.feature3"),
-        t("pricing.payPerSwap.feature4"),
-      ],
-      popular: false,
-    },
-    {
-      name: t("pricing.monthlyUnlimited"),
-      price: "$149",
-      period: t("pricing.perMonth"),
-      description: t("pricing.monthlyUnlimited.desc"),
-      features: [
-        t("pricing.monthlyUnlimited.feature1"),
-        t("pricing.monthlyUnlimited.feature2"),
-        t("pricing.monthlyUnlimited.feature3"),
-        t("pricing.monthlyUnlimited.feature4"),
-      ],
-      popular: true,
-    },
-    {
-      name: t("pricing.enterprise"),
-      price: "Custom",
-      period: t("pricing.customPricing"),
-      description: t("pricing.enterprise.desc"),
-      features: [
-        t("pricing.enterprise.feature1"),
-        t("pricing.enterprise.feature2"),
-        t("pricing.enterprise.feature3"),
-        t("pricing.enterprise.feature4"),
-      ],
-      popular: false,
-    },
-  ];
+  // Format price for display
+  const formatPrice = (price: number, currency: string, billingPeriod: string) => {
+    const formattedPrice = new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: currency === 'USD' ? 'USD' : 'VND',
+    }).format(price);
+
+    switch (billingPeriod) {
+      case 'per_swap':
+        return `${formattedPrice}/mỗi lần thay`;
+      case 'monthly':
+        return `${formattedPrice}/mỗi tháng`;
+      case 'custom':
+        return 'Custom/giá tùy chỉnh';
+      default:
+        return formattedPrice;
+    }
+  };
+
+  // Get plan description based on plan name
+  const getPlanDescription = (plan: SubscriptionPlan) => {
+    switch (plan.name.toLowerCase()) {
+      case 'pay per swap':
+      case 'trả theo lần thay':
+        return 'Hoàn hảo cho người dùng thỉnh thoảng';
+      case 'monthly unlimited':
+      case 'không giới hạn hàng tháng':
+        return 'Tốt nhất cho người đi làm thường xuyên';
+      case 'enterprise':
+      case 'doanh nghiệp':
+        return 'Cho đội xe và doanh nghiệp';
+      default:
+        return plan.description;
+    }
+  };
 
   const testimonials = [
     {
@@ -205,6 +205,25 @@ export function Homepage({ user, onLogout }: HomepageProps) {
     getAllStations();
   }, []);
 
+  useEffect(() => {
+    const fetchPricingPlans = async () => {
+      try {
+        setPricingLoading(true);
+        const plans = await getSubscriptionPlansWithPricing();
+        setPricingPlans(plans);
+        console.log('Pricing plans loaded:', plans);
+      } catch (error) {
+        console.error("Error fetching pricing plans:", error);
+        // Don't set empty array, let the service handle fallback
+        console.log('API failed, service should provide fallback data');
+      } finally {
+        setPricingLoading(false);
+      }
+    };
+
+    fetchPricingPlans();
+  }, []);
+
   const handleFineNearestStation = () => {
     if (location.loaded && !location.error) {
       const userLocation = {
@@ -240,6 +259,21 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   } else if (location.error) {
     buttonText = "Lỗi vị trí: Thử lại";
   }
+
+  const handleGetStarted = (plan: SubscriptionPlan & { pricing: SubscriptionPlanPricing }) => {
+    if (!user) {
+      navigate('/register');
+    } else {
+      setSelectedPlan(plan);
+      setIsSubscriptionFormOpen(true);
+    }
+  };
+
+  const handleSubscriptionSuccess = () => {
+    setIsSubscriptionFormOpen(false);
+    setSelectedPlan(null);
+    // Có thể thêm thông báo thành công hoặc redirect
+  };
 
   return (
     <div className="h-screen bg-white">
@@ -560,53 +594,80 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             <p className="text-xl text-gray-600">{t("pricing.subtitle")}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative ${
-                  plan.popular ? "border-orange-500 border-2" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-orange-500 text-white">
-                      {t("pricing.mostPopular")}
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle>{plan.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-4xl text-gray-900">{plan.price}</span>
-                    <span className="text-gray-500">/{plan.period}</span>
-                  </div>
-                  <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-orange-500 mr-2" />
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                        : ""
+          {pricingLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+              <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            </div>
+          ) : pricingPlans.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Không có gói dịch vụ nào</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {pricingPlans.slice(0, 3).map((plan, index) => (
+                  <Card
+                    key={plan.id}
+                    className={`relative flex flex-col ${
+                      plan.isPopular ? "border-orange-500 border-2" : ""
                     }`}
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => navigate("/register")}
                   >
-                    {t("pricing.getStarted")}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    {plan.isPopular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-orange-500 text-white">
+                          {t("pricing.mostPopular")}
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="text-center">
+                      <CardTitle>{plan.name}</CardTitle>
+                      <div className="mt-4">
+                        <span className="text-4xl text-gray-900">
+                          {formatPrice(plan.pricing.price, plan.pricing.currency, plan.pricing.billingPeriod)}
+                        </span>
+                      </div>
+                      <CardDescription>{getPlanDescription(plan)}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
+                      <ul className="space-y-3 flex-1">
+                        {plan.features?.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center">
+                            <CheckCircle className="w-4 h-4 text-orange-500 mr-2" />
+                            <span className="text-gray-600">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        className={`w-full mt-auto ${
+                          plan.isPopular
+                            ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                            : ""
+                        }`}
+                        variant={plan.isPopular ? "default" : "outline"}
+                        onClick={() => handleGetStarted(plan)}
+                      >
+                        {t("pricing.getStarted")}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              {/* View All Plans Button */}
+              <div className="text-center mt-12">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => navigate("/pricing")}
+                  className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                >
+                  Xem Tất Cả Gói Đăng Ký
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -751,6 +812,14 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           </div> */}
         </div>
       </footer>
+      
+      {/* Subscription Form */}
+      <SubscriptionForm
+        isOpen={isSubscriptionFormOpen}
+        onClose={() => setIsSubscriptionFormOpen(false)}
+        plan={selectedPlan}
+        onSuccess={handleSubscriptionSuccess}
+      />
     </div>
   );
 }
