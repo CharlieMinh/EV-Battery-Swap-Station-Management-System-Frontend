@@ -229,12 +229,38 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       value: formatDateTime(staffDetail.lastLogin),
     },
   ];
+  const handleClose = () => {
+    if (isEditing) {
+      // Reset form và tắt chế độ chỉnh sửa trước khi đóng
+      setFormData({
+        name: staffDetail?.name || "",
+        phoneNumber: staffDetail?.phoneNumber || "",
+        role:
+          staffDetail?.role === "Driver"
+            ? "0"
+            : staffDetail?.role === "Staff"
+            ? "1"
+            : "2",
+        status: staffDetail?.status === "Active" ? "0" : "1",
+      });
+
+      // Đặt lại isEditing rồi mới đóng modal
+      setIsEditing(false);
+
+      // Đợi 1 tick để React cập nhật state trước khi unmount modal
+      setTimeout(() => {
+        onClose();
+      }, 0);
+    } else {
+      onClose();
+    }
+  };
 
   return (
     // Modal Overlay (dimming/blur background)
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       {/* Modal Content */}
       <div
