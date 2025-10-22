@@ -1,5 +1,9 @@
-import React, { useEffect } from "react";
-import { fetchStationById, Station } from "@/services/admin/stationService";
+import React, { useEffect, useState } from "react";
+import {
+  fetchStationById,
+  Station,
+  updateStation,
+} from "@/services/admin/stationService";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import {
@@ -14,6 +18,7 @@ import {
   DollarSign,
   BatteryCharging,
 } from "lucide-react";
+import { geocodeAddress } from "../map/geocode";
 
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
@@ -66,6 +71,16 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
   };
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    city: "",
+    lat: 0,
+    lng: 0,
+    isActive: true,
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const getStationDetails = async () => {
@@ -80,6 +95,46 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     };
     getStationDetails();
   }, [stationId]);
+
+  const handleChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    if (isEditing && formData.address && formData.city) {
+      const timeout = setTimeout(async () => {
+        try {
+          const fullAddress = `${formData.address}, ${formData.city}`;
+          const coords = await geocodeAddress(fullAddress);
+          if (coords) {
+            setFormData((prev) => ({
+              ...prev,
+              lat: coords.lat,
+              lng: coords.lng,
+            }));
+          }
+        } catch (error) {
+          console.error("Không thể geocode địa chỉ mới:", error);
+        }
+      }, 800); // debounce tránh spam API
+      return () => clearTimeout(timeout);
+    }
+  }, [formData.address, formData.city, isEditing]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updatedData = { ...stationDetail, ...formData };
+      await updateStation(stationId, updatedData);
+      setStationDetail(updatedData as Station);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạm:", error);
+      alert("Không thể lưu thay đổi, vui lòng thử lại!");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading)
     return (
@@ -124,6 +179,19 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     ? "bg-green-500 text-white"
     : "bg-red-500 text-white";
 
+  const handleEditClick = () => {
+    if (!stationDetail) return;
+    setFormData({
+      name: stationDetail?.name || "",
+      address: stationDetail?.address || "",
+      city: stationDetail?.city || "",
+      isActive: stationDetail?.isActive || true,
+      lat: stationDetail.coordinates?.lat ?? 0,
+      lng: stationDetail.coordinates?.lng ?? 0,
+    });
+    setIsEditing(true);
+  };
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/5 backdrop-blur-sm px-4"
@@ -146,12 +214,42 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
           <div className="flex items-center space-x-4">
             <MapPin className="w-11 h-11 text-orange-600 shrink-0" />
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">
-                {stationDetail.name}
-              </h1>
-              <Badge className={`${statusColor} mt-2 text-sm`}>
-                {statusText}
-              </Badge>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  className="text-3xl font-extrabold text-gray-900 border-b-2 border-orange-400 focus:outline-none bg-transparent"
+                />
+              ) : (
+                <h1 className="text-3xl font-extrabold text-gray-900">
+                  {stationDetail.name}
+                </h1>
+              )}
+              {isEditing ? (
+                <div className="mt-2">
+                  <select
+                    value={formData.isActive ? "1" : "0"}
+                    onChange={(e) =>
+                      handleChange("isActive", e.target.value === "1")
+                    }
+                    className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
+                  >
+                    <option value="1">Hoạt động</option>
+                    <option value="0">Ngừng hoạt động</option>
+                  </select>
+                </div>
+              ) : (
+                <Badge
+                  className={`${
+                    stationDetail.isActive
+                      ? "bg-green-500 text-white"
+                      : "bg-red-500 text-white"
+                  } mt-2 text-sm`}
+                >
+                  {stationDetail.isActive ? "Hoạt động" : "Ngừng hoạt động"}
+                </Badge>
+              )}
             </div>
           </div>
           <div className="flex space-x-3 mt-4 sm:mt-0">
@@ -162,9 +260,44 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
             >
               <List className="w-4 h-4 mr-2" /> Xem Nhật ký ({logCount})
             </Button>
-            <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-              <Settings className="w-4 h-4 mr-2" /> Chỉnh sửa cấu hình
-            </Button>
+            {!isEditing ? (
+              <Button
+                size="sm"
+                className="bg-blue-500 hover:bg-blue-600"
+                onClick={handleEditClick}
+              >
+                <Settings className="w-4 h-4 mr-2" /> Chỉnh sửa cấu hình
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300 hover:bg-gray-100"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      name: stationDetail.name,
+                      address: stationDetail.address,
+                      city: stationDetail.city,
+                      isActive: stationDetail.isActive,
+                      lat: stationDetail.coordinates?.lat,
+                      lng: stationDetail.coordinates?.lng,
+                    });
+                  }}
+                >
+                  Hủy thay đổi
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -206,18 +339,33 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
               <span className="font-semibold text-gray-700 w-32 shrink-0">
                 Thành phố:
               </span>
-              <span className="text-gray-900 text-base">
-                {stationDetail.city || "N/A"}
-              </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleChange("city", e.target.value)}
+                  className="border-b border-gray-400 flex-1 focus:outline-none"
+                />
+              ) : (
+                <span className="text-gray-900">{stationDetail.city}</span>
+              )}
             </div>
             <div className="flex items-start space-x-2 col-span-1 sm:col-span-2">
               <MapPin className="w-5 h-5 text-red-500 mt-1 shrink-0" />
               <span className="font-semibold text-gray-700 w-32 shrink-0 mt-1">
                 Địa chỉ chi tiết:
               </span>
-              <span className="text-gray-900 break-words text-base">
-                {address || stationDetail.address || "Đang cập nhật"}
-              </span>
+              {isEditing ? (
+                <input
+                  value={formData.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className="border-b border-gray-400 flex-1 focus:outline-none"
+                />
+              ) : (
+                <span className="text-gray-900 break-words text-base">
+                  {stationDetail.address}
+                </span>
+              )}
             </div>
           </div>
         </Card>

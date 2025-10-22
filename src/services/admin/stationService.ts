@@ -10,7 +10,7 @@ export interface Station {
     id: string;
     name: string;
     address: string;
-    city?: string;
+    city: string;
     coordinates: {
         lat: number;
         lng: number;
@@ -39,6 +39,15 @@ export interface StationDetail extends Station {
   updatedAt?: string;
   totalChargers?: number;
   availableChargers?: number;
+}
+
+export interface UpdateStationPayload {
+  name: string,
+  address: string,
+  city: string,
+  lat: number,
+  lng: number,
+  isActive: boolean
 }
 
 export async function fetchStations( page: number,
@@ -87,4 +96,23 @@ export async function fetchStationById(id: string): Promise<StationDetail> {
       console.error('Error fetching station by ID:', error);
       throw error;
    }
+}
+
+export async function updateStation(id:string, payload : UpdateStationPayload) {
+  try {
+    const wrappedPayload = {
+      name: payload.name,
+      address: payload.address,
+      city: payload.city,
+      lat: payload.lat,
+      lng: payload.lng,
+      isActive: payload.isActive
+    }
+
+    const response = await api.put(`/api/v1/admin/stations/${id}`, wrappedPayload, {withCredentials: true})
+    return response.data
+  } catch(error) {
+    console.error("Update failed:", error)
+    throw error
+  }
 }
