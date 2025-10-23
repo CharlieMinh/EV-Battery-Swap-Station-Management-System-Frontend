@@ -1,5 +1,6 @@
 import api from '@/configs/axios';
 import React from 'react'
+import { SwapHistoryResponse, SwapTransaction } from '@/types/SwapTransaction';
 
 export interface Coordinates {
   lat: number;
@@ -128,5 +129,50 @@ export async function fetchBatteryCountByStation(stationId: string) {
     return count;
   } catch (error) {
     console.error("Failed to get battery of staion:" , error)
+export async function countHistoryStationByName(
+  stationName: string,
+  page:number,
+  pageSize:number
+): Promise<SwapTransaction[]> {
+  try {
+    const response = await api.get<SwapHistoryResponse>(
+      `/api/v1/swaps/history?page=${page}&pageSize=${pageSize}`
+    );
+
+    // Lọc những giao dịch thuộc trạm và đã hoàn thành
+    const filtered = response.data.transactions.filter(
+      (tx) => tx.stationName === stationName && tx.status === "Completed"
+    );
+
+    console.log(`Tìm thấy ${filtered.length} giao dịch hoàn thành tại ${stationName}`);
+    return filtered;
+  } catch (error) {
+    console.error("Lỗi khi lấy lịch sử đổi pin:", error);
+    return [];
+  }
+}
+
+export async function fetchHistoryStationByName(
+  stationName: string,
+  page: number,
+  pageSize: number
+): Promise<SwapHistoryResponse | null> {
+  try {
+    const response = await api.get<SwapHistoryResponse>(
+      `/api/v1/swaps/history?page=${page}&pageSize=${pageSize}`
+    );
+
+    // Nếu muốn lọc theo tên trạm tại đây (tùy bạn)
+    const filteredTransactions = response.data.transactions.filter(
+      (tx) => tx.stationName === stationName
+    );
+
+    return {
+      ...response.data,
+      transactions: filteredTransactions, // giữ nguyên cấu trúc, chỉ thay phần transactions
+    };
+  } catch (error) {
+    console.error("Lỗi khi lấy lịch sử đổi pin:", error);
+    return null;
   }
 }
