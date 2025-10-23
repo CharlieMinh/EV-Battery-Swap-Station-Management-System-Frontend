@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -44,6 +44,7 @@ import { StaffManagement } from "../components/admin/StaffManagement";
 import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
+import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -126,6 +127,20 @@ export function AdminDashboardPage({
     customerSatisfaction: 4.8,
     batteryEfficiency: 94.2,
   };
+
+  const [totalCustomers, setTotalCustomers] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadCustomers() {
+      try {
+        const count = await fetchTotalCustomers(1, 20);
+        console.log(count);
+        setTotalCustomers(count);
+      } catch (error) {
+        console.log("Failed to load customers", error);
+      }
+    }
+    loadCustomers();
+  }, []);
 
   return (
     <SidebarProvider>
@@ -360,7 +375,7 @@ export function AdminDashboardPage({
                       {t("admin.customers")}
                     </p>
                     <p className="text-2xl font-bold">
-                      {kpiData.totalCustomers.toLocaleString()}
+                      {totalCustomers !== null ? totalCustomers : "..."}
                     </p>
                     {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
