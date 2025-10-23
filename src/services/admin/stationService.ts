@@ -116,3 +116,24 @@ export async function updateStation(id:string, payload : UpdateStationPayload) {
     throw error
   }
 }
+
+export async function fetchActiveStations(page:number, pageSize: number) {
+    try {
+      let activeCount = 0;
+      let totalPage = 1;
+
+      do {
+        const response = await api.get(`/api/v1/Stations?page=${page}&pageSize=${pageSize}`);
+        const items = response.data.items;
+
+        activeCount += items.filter((station: any) => station.isActive).length;
+        totalPage = response.data.totalPages; // API trả về số trang
+        page++;
+      } while(page <= totalPage)
+
+        return activeCount;
+    } catch (error) {
+        console.error('Error fetching active stations:', error);
+    throw error;
+    }
+} 

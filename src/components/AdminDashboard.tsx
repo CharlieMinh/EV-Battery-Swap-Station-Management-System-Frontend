@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -44,6 +44,7 @@ import { StaffManagement } from "../components/admin/StaffManagement";
 import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
+import { fetchActiveStations } from "@/services/admin/stationService";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -127,6 +128,18 @@ export function AdminDashboardPage({
     batteryEfficiency: 94.2,
   };
 
+  const [activeStations, setActiveStations] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadActive() {
+      try {
+        const count = await fetchActiveStations(1, 20);
+        setActiveStations(count);
+      } catch (error) {
+        console.log("Failed to load active stations", error);
+      }
+    }
+    loadActive();
+  }, []);
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
@@ -338,7 +351,7 @@ export function AdminDashboardPage({
                       {t("admin.activeStations")}
                     </p>
                     <p className="text-2xl font-bold">
-                      {kpiData.activeStations}
+                      {activeStations !== null ? activeStations : "…"}
                     </p>
                     {/* <div className="flex items-center mt-1">
                       <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
