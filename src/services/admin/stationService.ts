@@ -152,6 +152,8 @@ export async function fetchBatteryCountByStation(stationId: string) {
     return count;
   } catch (error) {
     console.error("Failed to get battery of staion:" , error)
+  }
+}
 export async function countHistoryStationByName(
   stationName: string,
   page:number,
