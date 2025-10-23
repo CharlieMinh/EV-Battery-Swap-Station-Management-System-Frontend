@@ -124,10 +124,13 @@ export async function fetchActiveStations(page:number, pageSize: number) {
 
       do {
         const response = await api.get(`/api/v1/Stations?page=${page}&pageSize=${pageSize}`);
-        const items = response.data.items;
+        const items = response.data.items || [];
 
         activeCount += items.filter((station: any) => station.isActive).length;
-        totalPage = response.data.totalPages; // API trả về số trang
+
+        const total = response.data.total || 0;
+        totalPage = Math.ceil(total / pageSize);
+        
         page++;
       } while(page <= totalPage)
 
