@@ -5,7 +5,11 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { fetchStations, Station } from "@/services/admin/stationService";
+import {
+  fetchBatteryCountByStation,
+  fetchStations,
+  Station,
+} from "@/services/admin/stationService";
 import AddStationModal from "./AddStationModal";
 import { DetailOfStation } from "./DetailOfStation";
 
@@ -35,6 +39,25 @@ export function StationManagement() {
     };
     getAllStations();
   }, []);
+
+  const [batteryCount, setBatteryCount] = useState<Record<string, number>>({});
+  useEffect(() => {
+    async function loadBatteryCounts() {
+      if (stationPerformance.length === 0) return;
+
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        stationPerformance.map(async (station) => {
+          const count = await fetchBatteryCountByStation(station.id);
+          counts[station.id] = count ?? 0;
+        })
+      );
+      setBatteryCount(counts);
+      console.log("Battery counts loaded:", counts);
+    }
+
+    loadBatteryCounts();
+  }, [stationPerformance]);
 
   return (
     <div className="space-y-6">
@@ -111,7 +134,10 @@ export function StationManagement() {
                       </div>
                       <div>
                         <span className="text-gray-500">Số pin: </span>
-                        <span className="font-medium">17/20</span>
+                        <span className="font-medium">
+                          {" "}
+                          {batteryCount[station.id] ?? 0}
+                        </span>
                       </div>
                     </div>
                   </div>

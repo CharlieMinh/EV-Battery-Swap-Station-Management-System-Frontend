@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  fetchBatteryCountByStation,
   fetchStationById,
   Station,
   updateStation,
@@ -121,6 +122,16 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
       return () => clearTimeout(timeout);
     }
   }, [formData.address, formData.city, isEditing]);
+
+  const [batteryCount, setBatteryCount] = useState<number | 0>(0);
+
+  useEffect(() => {
+    async function loadBatteryCount() {
+      const count = await fetchBatteryCountByStation(stationId);
+      setBatteryCount(count ?? 0);
+    }
+    loadBatteryCount();
+  }, [stationId]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -392,7 +403,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
           <StatItem
             icon={BatteryCharging}
             title="Số pin hiện có"
-            value={`${currentBatteries}/${maxBatteries}`}
+            value={`${batteryCount}`}
             color="text-orange-600"
           />
         </div>
