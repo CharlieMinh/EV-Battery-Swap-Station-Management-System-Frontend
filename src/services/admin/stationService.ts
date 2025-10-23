@@ -118,6 +118,29 @@ export async function updateStation(id:string, payload : UpdateStationPayload) {
   }
 }
 
+export async function fetchActiveStations(page:number, pageSize: number) {
+    try {
+      let activeCount = 0;
+      let totalPage = 1;
+
+      do {
+        const response = await api.get(`/api/v1/Stations?page=${page}&pageSize=${pageSize}`);
+        const items = response.data.items || [];
+
+        activeCount += items.filter((station: any) => station.isActive).length;
+
+        const total = response.data.total || 0;
+        totalPage = Math.ceil(total / pageSize);
+        
+        page++;
+      } while(page <= totalPage)
+
+        return activeCount;
+    } catch (error) {
+        console.error('Error fetching active stations:', error);
+    throw error;
+    }
+} 
 export async function fetchBatteryCountByStation(stationId: string) {
   try {
     let count = 0;

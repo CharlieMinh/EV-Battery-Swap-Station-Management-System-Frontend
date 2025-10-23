@@ -44,6 +44,7 @@ import { StaffManagement } from "../components/admin/StaffManagement";
 import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
+import { fetchActiveStations } from "@/services/admin/stationService";
 import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
 
 interface AdminDashboardPageProps {
@@ -128,6 +129,18 @@ export function AdminDashboardPage({
     batteryEfficiency: 94.2,
   };
 
+  const [activeStations, setActiveStations] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadActive() {
+      try {
+        const count = await fetchActiveStations(1, 20);
+        setActiveStations(count);
+      } catch (error) {
+        console.log("Failed to load active stations", error);
+      }
+    }
+    loadActive();
+  }, []);
   const [totalCustomers, setTotalCustomers] = useState<number | null>(null);
   useEffect(() => {
     async function loadCustomers() {
@@ -353,7 +366,7 @@ export function AdminDashboardPage({
                       {t("admin.activeStations")}
                     </p>
                     <p className="text-2xl font-bold">
-                      {kpiData.activeStations}
+                      {activeStations !== null ? activeStations : "…"}
                     </p>
                     {/* <div className="flex items-center mt-1">
                       <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
