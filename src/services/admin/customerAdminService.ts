@@ -70,3 +70,17 @@ export async function updateUser(id: string, payload: UpdateUserPayload) {
     }
 }
 
+export async function fetchTotalCustomers(  page: number,
+  pageSize: number
+) {
+    try {
+        const response = await api.get(`/api/v1/Users/customers?page=${page}&pageSize=${pageSize}`);
+        const { totalItems = 0 } = response.data;
+        console.log("API send: ", response.data)
+        return totalItems;
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        throw error;
+    }
+}
+

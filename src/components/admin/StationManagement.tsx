@@ -5,7 +5,12 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { MapPin, Filter, Plus, Eye, Edit, Settings } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { fetchStations, Station } from "@/services/admin/stationService";
+import {
+  fetchBatteryCountByStation,
+  countHistoryStationByName,
+  fetchStations,
+  Station,
+} from "@/services/admin/stationService";
 import AddStationModal from "./AddStationModal";
 import { DetailOfStation } from "./DetailOfStation";
 
@@ -20,13 +25,33 @@ export function StationManagement() {
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     null
   );
+  const [swapCounts, setSwapCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     // Simulate fetching data from an API
     const getAllStations = async () => {
       try {
         const response = await fetchStations(1, 20);
-        setStationPerformance(response.items);
+        const stations = response.items;
+        setStationPerformance(stations);
+
+        const counts = await Promise.all(
+          stations.map(async (station: any) => {
+            const res = await countHistoryStationByName(station.name, 1, 20);
+            const count = res.length; // ✅ nằm trong scope này
+            return { name: station.name, count };
+          })
+        );
+
+        // Chuyển kết quả thành object dạng { "Trạm A": 5, "Trạm B": 8 }
+        const countMap = counts.reduce((acc, cur) => {
+          acc[cur.name] = cur.count;
+          return acc;
+        }, {} as Record<string, number>);
+
+        console.log(countMap);
+
+        setSwapCounts(countMap);
         console.log("Fetched stations:", response.items);
       } catch (error) {
         console.error("Error fetching stations:", error);
@@ -35,6 +60,25 @@ export function StationManagement() {
     };
     getAllStations();
   }, []);
+
+  const [batteryCount, setBatteryCount] = useState<Record<string, number>>({});
+  useEffect(() => {
+    async function loadBatteryCounts() {
+      if (stationPerformance.length === 0) return;
+
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        stationPerformance.map(async (station) => {
+          const count = await fetchBatteryCountByStation(station.id);
+          counts[station.id] = count ?? 0;
+        })
+      );
+      setBatteryCount(counts);
+      console.log("Battery counts loaded:", counts);
+    }
+
+    loadBatteryCounts();
+  }, [stationPerformance]);
 
   return (
     <div className="space-y-6">
@@ -99,7 +143,9 @@ export function StationManagement() {
                         <span className="text-gray-500">
                           {t("admin.swaps")}:{" "}
                         </span>
-                        {/* <span className="font-medium">{station.swaps}</span> */}
+                        <span className="font-medium">
+                          {swapCounts[station.name] ?? 0}
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-500">
@@ -111,7 +157,10 @@ export function StationManagement() {
                       </div>
                       <div>
                         <span className="text-gray-500">Số pin: </span>
-                        <span className="font-medium">17/20</span>
+                        <span className="font-medium">
+                          {" "}
+                          {batteryCount[station.id] ?? 0}
+                        </span>
                       </div>
                     </div>
                   </div>

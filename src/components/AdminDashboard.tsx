@@ -45,6 +45,7 @@ import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
 import { fetchActiveStations } from "@/services/admin/stationService";
+import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -140,6 +141,20 @@ export function AdminDashboardPage({
     }
     loadActive();
   }, []);
+  const [totalCustomers, setTotalCustomers] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadCustomers() {
+      try {
+        const count = await fetchTotalCustomers(1, 20);
+        console.log(count);
+        setTotalCustomers(count);
+      } catch (error) {
+        console.log("Failed to load customers", error);
+      }
+    }
+    loadCustomers();
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
@@ -373,7 +388,7 @@ export function AdminDashboardPage({
                       {t("admin.customers")}
                     </p>
                     <p className="text-2xl font-bold">
-                      {kpiData.totalCustomers.toLocaleString()}
+                      {totalCustomers !== null ? totalCustomers : "..."}
                     </p>
                     {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
