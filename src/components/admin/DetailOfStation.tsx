@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  fetchBatteryCountByStation,
   countHistoryStationByName,
   fetchStationById,
   Station,
@@ -123,6 +124,16 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
       return () => clearTimeout(timeout);
     }
   }, [formData.address, formData.city, isEditing]);
+
+  const [batteryCount, setBatteryCount] = useState<number | 0>(0);
+
+  useEffect(() => {
+    async function loadBatteryCount() {
+      const count = await fetchBatteryCountByStation(stationId);
+      setBatteryCount(count ?? 0);
+    }
+    loadBatteryCount();
+  }, [stationId]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -457,6 +468,41 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
               </h2>
             </div>
 
+        {/* Hiệu suất & Dung lượng */}
+        <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
+          Hiệu suất & Dung lượng (Dữ liệu chưa có)
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+          <StatItem
+            icon={Zap}
+            title="Tổng lượt đổi pin"
+            value={swaps.toLocaleString()}
+            color="text-blue-600"
+          />
+          <StatItem
+            icon={DollarSign}
+            title="Doanh thu (tháng)"
+            value={formatCurrency(revenue)}
+            color="text-green-600"
+          />
+          <StatItem
+            icon={BatteryCharging}
+            title="Số pin hiện có"
+            value={`${batteryCount}`}
+            color="text-orange-600"
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-gray-300 hover:bg-gray-100"
+          >
+            Đóng
+          </Button>
+        </div>
             <StationHistoryList stationName={stationDetail.name} />
           </>
         )}

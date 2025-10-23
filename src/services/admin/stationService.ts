@@ -118,6 +118,17 @@ export async function updateStation(id:string, payload : UpdateStationPayload) {
   }
 }
 
+export async function fetchBatteryCountByStation(stationId: string) {
+  try {
+    let count = 0;
+
+    const response = await api.get("/api/BatteryUnits");
+    const batteries = response.data.data
+
+    count = batteries.filter((b: any) => b.stationId === stationId).length;
+    return count;
+  } catch (error) {
+    console.error("Failed to get battery of staion:" , error)
 export async function countHistoryStationByName(
   stationName: string,
   page:number,
