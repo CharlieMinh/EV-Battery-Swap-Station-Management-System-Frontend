@@ -40,7 +40,12 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
       const role = res.data.role;
 
       if (role === "Driver") {
-        navigate("/driver");
+        navigate("/driver", {
+          state: {
+            initialSection: "map",
+            preSelectedStationId: stationId
+          }
+        });
       } else {
         navigate("/login");
       }
@@ -101,9 +106,8 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
 
       {/* Trạng thái mở cửa */}
       <p
-        className={`font-semibold mb-4 ${
-          station.isOpenNow ? "text-green-600" : "text-red-600"
-        }`}
+        className={`font-semibold mb-4 ${station.isOpenNow ? "text-green-600" : "text-red-600"
+          }`}
       >
         {station.isOpenNow ? "Đang mở cửa" : "Đã đóng cửa"}
       </p>
