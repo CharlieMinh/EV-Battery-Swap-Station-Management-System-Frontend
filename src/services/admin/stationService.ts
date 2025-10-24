@@ -202,3 +202,34 @@ export async function fetchHistoryStationByName(
     return null;
   }
 }
+
+export async function getTotalCompletedSwaps(): Promise<number> {
+  let totalSwaps = 0;
+  let page = 0;
+  const pageSize = 50; // số giao dịch mỗi lần lấy
+  let totalPages = 1;  // khởi tạo tạm
+
+  while (page < totalPages) {
+    const response = await api.get(`/api/v1/swaps/history`, {
+      params: {
+        page,
+        pageSize
+      }
+    });
+
+    const data = response.data;
+
+    // Lọc các giao dịch đã hoàn thành
+    const completed = data.transactions.filter(
+      (tx: any) => tx.status === "Completed"
+    );
+
+    totalSwaps += completed.length;
+
+    // Cập nhật tổng số trang
+    totalPages = data.totalPages;
+    page += 1;
+  }
+
+  return totalSwaps;
+}
