@@ -7,12 +7,12 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { 
-  Battery, 
-  Camera, 
+import {
+  Battery,
+  Camera,
   FileText
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
@@ -30,7 +30,7 @@ interface BatteryConditionCheckProps {
   };
   batteryId?: string;
   staffId?: string;
-  stationId?: number;
+  stationId?: number | string;
 }
 
 interface BatteryInspectionData {
@@ -43,7 +43,7 @@ interface BatteryInspectionData {
     temperature: number;
     capacity: number;
     cycles: number;
-    damageLevel: number; // 0-100%
+    damageLevel: number; 
     connectorStatus: 'good' | 'fair' | 'poor';
     exteriorCondition: 'good' | 'fair' | 'poor';
   };
@@ -55,7 +55,6 @@ export function BatteryConditionCheck({
   isOpen,
   onClose,
   onApprove,
-  onReject,
   customerInfo,
   batteryId,
   staffId,
@@ -115,7 +114,7 @@ export function BatteryConditionCheck({
   const handleApprove = async () => {
     try {
       console.log('BatteryConditionCheck: Creating inspection for battery:', batteryId);
-      
+
       if (staffId && stationId) {
         await staffApi.createInspection({
           batteryId: inspectionData.batteryId,
@@ -125,16 +124,14 @@ export function BatteryConditionCheck({
           notes: inspectionData.notes,
           issues: inspectionData.repairRequired ? [inspectionData.repairDescription] : []
         }, staffId, stationId);
-        
+
         console.log('BatteryConditionCheck: Inspection created successfully');
       }
-      
+
       onApprove(inspectionData);
       onClose();
     } catch (error: any) {
       console.error("BatteryConditionCheck: Error creating inspection:", error);
-      
-      // Handle specific error cases
       if (error.response?.status === 401) {
         console.warn('BatteryConditionCheck: Token expired, redirecting to login');
         localStorage.removeItem('token');
@@ -142,13 +139,13 @@ export function BatteryConditionCheck({
         window.location.href = '/login';
         return;
       }
-      
+
       if (error.response?.status === 403) {
         console.warn('BatteryConditionCheck: Access forbidden for battery inspection');
         alert('Không có quyền thực hiện kiểm tra pin này');
         return;
       }
-      
+
       alert('Có lỗi xảy ra khi tạo báo cáo kiểm tra pin');
     }
   };
@@ -167,101 +164,103 @@ export function BatteryConditionCheck({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Customer Information */}
-          <Card className="border border-orange-100 rounded-lg bg-gray-50 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-orange-600 font-bold">
+          <Card className="border border-orange-200 rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-orange-600">
                 📋 Thông Tin Khách Hàng
               </CardTitle>
+              <CardDescription>Thông tin chi tiết về khách hàng và xe</CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-3 gap-3">
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Tên khách hàng</Label>
-                  <p className="font-medium text-sm">{customerInfo?.name || "Alex Chen"}</p>
+                  <Label className="text-gray-600 font-medium text-sm">Tên khách hàng</Label>
+                  <p className="font-semibold text-gray-900 mt-1">{customerInfo?.name || "Alex Chen"}</p>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Xe</Label>
-                  <p className="font-medium text-sm">{customerInfo?.vehicle || "Tesla Model 3"}</p>
+                  <Label className="text-gray-600 font-medium text-sm">Xe</Label>
+                  <p className="font-semibold text-gray-900 mt-1">{customerInfo?.vehicle || "Tesla Model 3"}</p>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Mã đặt lịch</Label>
-                  <p className="font-mono text-sm">{customerInfo?.bookingCode || "SW-2024-001"}</p>
+                  <Label className="text-gray-600 font-medium text-sm">Mã đặt lịch</Label>
+                  <p className="font-mono text-gray-900 mt-1">{customerInfo?.bookingCode || "SW-2024-001"}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Battery Status Parameters */}
-          <Card className="border border-orange-100 rounded-lg shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-orange-600 font-bold">
+          <Card className="border border-orange-200 rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-orange-600">
                 📊 Thông Số Hiện Trạng Pin
               </CardTitle>
+              <CardDescription>Các thông số kỹ thuật và tình trạng pin</CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Điện áp (V)</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Điện áp (V)</Label>
                   <input
                     type="number"
                     value={inspectionData.batteryStatus.voltage}
                     onChange={(e) => handleBatteryStatusChange('voltage', Number(e.target.value))}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="380"
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Nhiệt độ (°C)</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Nhiệt độ (°C)</Label>
                   <input
                     type="number"
                     value={inspectionData.batteryStatus.temperature}
                     onChange={(e) => handleBatteryStatusChange('temperature', Number(e.target.value))}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="25"
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Dung lượng (%)</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Dung lượng (%)</Label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={inspectionData.batteryStatus.capacity}
                     onChange={(e) => handleBatteryStatusChange('capacity', Number(e.target.value))}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="85"
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Số chu kỳ</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Số chu kỳ</Label>
                   <input
                     type="number"
                     value={inspectionData.batteryStatus.cycles}
                     onChange={(e) => handleBatteryStatusChange('cycles', Number(e.target.value))}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="1250"
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Độ hư hỏng (%)</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Độ hư hỏng (%)</Label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={inspectionData.batteryStatus.damageLevel}
                     onChange={(e) => handleBatteryStatusChange('damageLevel', Number(e.target.value))}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     placeholder="10"
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Tình trạng đầu nối</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Tình trạng đầu nối</Label>
                   <select
                     value={inspectionData.batteryStatus.connectorStatus}
                     onChange={(e) => handleBatteryStatusChange('connectorStatus', e.target.value)}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   >
                     <option value="good">Tốt</option>
                     <option value="fair">Khá</option>
@@ -269,11 +268,11 @@ export function BatteryConditionCheck({
                   </select>
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Tình trạng vỏ ngoài</Label>
+                  <Label className="text-gray-600 font-medium text-sm">Tình trạng vỏ ngoài</Label>
                   <select
                     value={inspectionData.batteryStatus.exteriorCondition}
                     onChange={(e) => handleBatteryStatusChange('exteriorCondition', e.target.value)}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded"
+                    className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   >
                     <option value="good">Tốt</option>
                     <option value="fair">Khá</option>
@@ -285,47 +284,48 @@ export function BatteryConditionCheck({
           </Card>
 
           {/* Repair Information */}
-          <Card className="border border-orange-100 rounded-lg shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-orange-600 font-bold">
-                Thông Tin Sửa Chữa
+          <Card className="border border-orange-200 rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-orange-600">
+                🔧 Thông Tin Sửa Chữa
               </CardTitle>
+              <CardDescription>Đánh giá và báo cáo sửa chữa nếu cần thiết</CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
                   <input
                     type="checkbox"
                     id="repairRequired"
                     checked={inspectionData.repairRequired}
                     onChange={(e) => setInspectionData(prev => ({ ...prev, repairRequired: e.target.checked }))}
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                   />
-                  <Label htmlFor="repairRequired" className="text-sm font-medium">
+                  <Label htmlFor="repairRequired" className="text-sm font-medium text-gray-700">
                     Cần sửa chữa
                   </Label>
                 </div>
 
                 {inspectionData.repairRequired && (
-                  <div className="bg-red-50 p-3 rounded-lg border border-red-200">
-                    <div className="space-y-3">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className="space-y-4">
                       <div>
-                        <Label className="text-red-600 font-medium text-xs">Chi phí sửa chữa (VNĐ)</Label>
+                        <Label className="text-red-600 font-medium text-sm">Chi phí sửa chữa (VNĐ)</Label>
                         <input
                           type="number"
                           value={inspectionData.repairCost}
                           onChange={(e) => handleRepairCostChange(Number(e.target.value))}
-                          className="w-full mt-1 px-2 py-1 text-sm border border-red-300 rounded"
+                          className="w-full mt-1 px-3 py-2 text-sm border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           placeholder="Nhập chi phí sửa chữa"
                         />
                       </div>
                       <div>
-                        <Label className="text-red-600 font-medium text-xs">Mô tả sửa chữa</Label>
+                        <Label className="text-red-600 font-medium text-sm">Mô tả sửa chữa</Label>
                         <Textarea
                           value={inspectionData.repairDescription}
                           onChange={(e) => handleRepairDescriptionChange(e.target.value)}
-                          className="mt-1 text-sm"
-                          rows={2}
+                          className="mt-1 text-sm border-red-300 focus:ring-red-500 focus:border-red-500"
+                          rows={3}
                           placeholder="Mô tả chi tiết các hư hỏng cần sửa chữa..."
                         />
                       </div>
@@ -335,36 +335,36 @@ export function BatteryConditionCheck({
               </div>
             </CardContent>
           </Card>
-
-          {/* Notes and Documentation */}
-          <Card className="border border-orange-100 rounded-lg shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-orange-600 font-bold">
+          {/* Notes & Documents */}
+          <Card className="border border-orange-200 rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-orange-600">
                 📝 Ghi Chú & Tài Liệu
               </CardTitle>
+              <CardDescription>Thêm ghi chú và tài liệu đính kèm</CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="notes" className="text-orange-600 font-medium text-xs">Ghi chú kiểm tra</Label>
+                  <Label htmlFor="notes" className="text-gray-600 font-medium text-sm">Ghi chú kiểm tra</Label>
                   <Textarea
                     id="notes"
                     placeholder="Ghi chú về tình trạng pin, các vấn đề phát hiện..."
                     value={inspectionData.notes}
                     onChange={(e) => handleNotesChange(e.target.value)}
-                    className="mt-1 text-sm"
+                    className="mt-1 text-sm border-gray-300 focus:ring-orange-500 focus:border-orange-500"
                     rows={3}
                   />
                 </div>
                 <div>
-                  <Label className="text-orange-600 font-medium text-xs">Tài liệu đính kèm</Label>
-                  <div className="flex space-x-2 mt-1">
-                    <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-                      <Camera className="w-3 h-3 mr-1" />
+                  <Label className="text-gray-600 font-medium text-sm">Tài liệu đính kèm</Label>
+                  <div className="flex space-x-3 mt-2">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Camera className="w-4 h-4" />
                       Chụp ảnh
                     </Button>
-                    <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-                      <FileText className="w-3 h-3 mr-1" />
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <FileText className="w-4 h-4" />
                       Tải lên file
                     </Button>
                   </div>
@@ -374,13 +374,16 @@ export function BatteryConditionCheck({
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-2">
-            <Button variant="outline" size="sm" onClick={onClose} className="text-xs px-3 py-1">
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              className="px-6 py-2"
+            >
               Hủy bỏ
             </Button>
-            <Button 
-              className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1" 
-              size="sm"
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
               onClick={handleApprove}
             >
               Chấp nhận thay pin

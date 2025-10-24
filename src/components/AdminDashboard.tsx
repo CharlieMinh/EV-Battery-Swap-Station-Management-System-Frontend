@@ -416,10 +416,7 @@ export function AdminDashboardPage({
             {activeSection === "stations" && <StationManagement />}
 
             {activeSection === "batteries" && (
-              <BatteryFleetManagement
-                selectedTimeframe={selectedTimeframe}
-                onTimeframeChange={setSelectedTimeframe}
-              />
+              <BatteryFleetManagement />
             )}
 
             {activeSection === "customers" && <CustomerManagement />}
