@@ -34,6 +34,14 @@ export default function MapView() {
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     null
   );
+  const handleBookFromMap = (stationId: string) => {
+    navigate('/driver', {
+      state: {
+        initialSection: 'map',
+        preSelectedStationId: stationId
+      }
+    });
+  };
 
   // kiểm tra nếu không có state (ví dụ reload F5)
   useEffect(() => {

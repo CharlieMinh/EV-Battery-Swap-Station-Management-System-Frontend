@@ -36,6 +36,7 @@ import { useLocation } from "react-router-dom";
 // Import driver components
 import { StationMap } from "../components/driver/StationMap";
 import { StationList } from "../components/driver/StationList";
+import { SubscriptionPlansPage } from "../components/driver/SubscriptionPlansPage";
 import { BookingWizard } from "../components/driver/BookingWizard";
 import { QRCodeDialog } from "../components/driver/QRCodeDialog";
 import { SwapStatus } from "../components/driver/SwapStatus";
@@ -474,6 +475,16 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("subscription")}
+                      isActive={activeSection === "subscription"}
+                      className="h-[60px]"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Đăng ký gói
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("mycar")}
                       isActive={activeSection === "mycar"}
                       className="h-[60px]"
@@ -558,6 +569,7 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                 <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "map" && t("driver.findStations")}
                   {activeSection === "mycar" && t("driver.mycar")}
+                  {activeSection === "subscription" && "Đăng ký gói"}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
                   {activeSection === "profile" && t("driver.profile")}
@@ -597,6 +609,14 @@ export function DriverPortalPage({ user, onLogout }: DriverPortalPageProps) {
                   <MyVehicle
                     vehicles={vehicles}
                     onRefresh={handleRefreshVehicles}
+                  />
+                </div>
+              </div>
+            )}
+            {activeSection === "subscription" && (
+              <div className="space-y-6">
+                <div>
+                  <SubscriptionPlansPage
                   />
                 </div>
               </div>
