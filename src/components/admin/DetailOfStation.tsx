@@ -243,9 +243,9 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
         <button
           onClick={() => {
             if (mode === "history") {
-              setMode("info"); // 👉 chỉ quay lại info thay vì đóng
+              setMode("info");
             } else {
-              onClose(); // 👉 nếu đang ở info thì mới đóng modal
+              onClose();
             }
           }}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
