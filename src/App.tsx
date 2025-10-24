@@ -4,7 +4,7 @@ import { Homepage } from "./components/HomePage";
 import { LoginPage } from "./components/LoginPage";
 import { RegisterPage } from "./components/RegisterPage";
 import { ForgotPassword } from "./components/ForgotPassword";
-import { DriverPortalPage } from "./components/DriverDashboard";
+import { DriverDashboard } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
 import {
@@ -73,7 +73,7 @@ function App() {
   const handleLogout = async () => {
     try {
       await api.post("/api/v1/Auth/logout", {}, { withCredentials: true }); // Xóa cookie trên backend
-    } catch {}
+    } catch { }
     setCurrentUser(null);
   };
 
@@ -91,8 +91,8 @@ function App() {
             element={
               <LoginPage
                 onLogin={handleLogin}
-                onRegister={() => {}}
-                onBackToHome={() => {}}
+                onRegister={() => { }}
+                onBackToHome={() => { }}
               />
             }
           />
@@ -101,8 +101,8 @@ function App() {
             element={
               <RegisterPage
                 onRegister={handleRegister}
-                onBackToHome={() => {}}
-                onBackToLogin={() => {}}
+                onBackToHome={() => { }}
+                onBackToLogin={() => { }}
               />
             }
           />
@@ -111,7 +111,7 @@ function App() {
             path="/driver"
             element={
               currentUser?.role === "Driver" ? (
-                <DriverPortalPage user={currentUser} onLogout={handleLogout} />
+                <DriverDashboard user={currentUser} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" />
               )
