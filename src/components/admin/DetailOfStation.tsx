@@ -5,6 +5,7 @@ import {
   fetchStationById,
   Station,
   updateStation,
+  StationDetail,
 } from "@/services/admin/stationService";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -68,7 +69,9 @@ const formatTime = (timeString: string | null | undefined): string => {
 };
 
 export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
-  const [stationDetail, setStationDetail] = useState<Station | null>(null);
+  const [stationDetail, setStationDetail] = useState<StationDetail | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"info" | "history">("info");
 
@@ -140,7 +143,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     try {
       const updatedData = { ...stationDetail, ...formData };
       await updateStation(stationId, updatedData);
-      setStationDetail(updatedData as Station);
+      setStationDetail(updatedData as StationDetail);
       setIsEditing(false);
       toast.success("Cập nhật trạm thành công!");
     } catch (error) {
@@ -226,8 +229,6 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     });
     setIsEditing(true);
   };
-
-  const toggleMode = (newMode: "info" | "history") => setMode(newMode);
 
   return (
     <div
@@ -359,7 +360,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                     Mã trạm:
                   </span>
                   <span className="text-gray-900 font-mono text-base">
-                    {stationDetail.id}
+                    {stationDetail.displayId}
                   </span>
                 </div>
                 <div className="flex items-center space-x-4 whitespace-nowrap">
