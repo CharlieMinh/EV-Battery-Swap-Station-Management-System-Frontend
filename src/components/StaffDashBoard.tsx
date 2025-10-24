@@ -17,6 +17,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "./ui/sidebar";
+import { StaffCashPaymentManagement } from "./staff/StaffCashPaymentManagement";
+import { CreditCard as CreditCardIcon } from "lucide-react";
 import {
   Clipboard,
   Package,
@@ -50,7 +52,7 @@ interface StaffPortalPageProps {
 
 export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const { t } = useLanguage();
-  
+
   // Debug log
   console.log('StaffPortalPage rendered with user:', user);
   const [activeSection, setActiveSection] = useState("queue-pro");
@@ -59,7 +61,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
   const [posDialog, setPosDialog] = useState(false);
   const [batteryCheckDialog, setBatteryCheckDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  
+
   // State for API data
   const [batteries, setBatteries] = useState<Battery[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -143,27 +145,27 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         console.log('StaffDashBoard: Initializing user session...');
         const sessionData = await staffApi.initializeUserSession();
         console.log('StaffDashBoard: Session initialized:', sessionData);
-        
+
         // Update user object with session data
         user.id = sessionData.user.id;
         user.name = sessionData.user.name;
         user.email = sessionData.user.email;
         user.role = sessionData.user.role;
         user.stationId = typeof sessionData.stationId === 'string' ? parseInt(sessionData.stationId) : sessionData.stationId;
-        
+
         console.log('StaffDashBoard: User updated with session data:', user);
-        
+
         // Load all data after session is initialized
         await Promise.all([
           fetchBatteryInventory(),
           fetchQueueBookings(),
           fetchRecentTransactions()
         ]);
-        
+
       } catch (error) {
         console.error('StaffDashBoard: Error initializing session:', error);
         setError('Unable to initialize user session');
-        
+
         // Fallback: try to get staff profile if user.id exists
         if (user.id && user.id !== 'undefined') {
           try {
@@ -294,6 +296,17 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                       <span>{t("staff.reports")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection("cash-payments")}
+                      isActive={activeSection === "cash-payments"}
+                      className="h-[50px]"
+                    >
+
+                      <CreditCardIcon className="w-4 h-4" />
+                      <span>Xác nhận tiền mặt</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -327,6 +340,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "transactions" && t("staff.transactions")}
+                  {activeSection === "cash-payments" && "Xác nhận tiền mặt"}
                   {activeSection === "revenue" && t("staff.cashier")}
                   {activeSection === "reports" && t("staff.reports")}
                   {activeSection === "queue-pro" && "Quản lý hàng chờ"}
@@ -382,7 +396,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
             )}
 
             {activeSection === "queue-pro" && (
-              <StaffQueueManagement 
+              <StaffQueueManagement
                 bookings={bookings}
                 onRefreshBookings={() => {
                   console.log('Refreshing bookings...');
@@ -392,7 +406,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
             )}
 
             {activeSection === "inventory-monitoring" && (
-              <StaffInventoryMonitoring 
+              <StaffInventoryMonitoring
                 stationId={user.stationId?.toString() || "station-001"}
                 stationName={user.name || "Trạm của bạn"}
               />
@@ -401,6 +415,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
             {activeSection === "profile" && (
               <ProfileSection user={user} dailyStats={dailyStats} />
+            )}
+            {activeSection === "cash-payments" && (
+              <StaffCashPaymentManagement />
             )}
           </main>
         </SidebarInset>
@@ -413,8 +430,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         onSwapConfirmed={() => {
           // Cập nhật trạng thái booking thành swap-confirmed
           if (selectedBooking) {
-            const updatedBookings = bookings.map(b => 
-              b.id === selectedBooking.id 
+            const updatedBookings = bookings.map(b =>
+              b.id === selectedBooking.id
                 ? { ...b, status: 1 } // 1 = CheckedIn (swap confirmed)
                 : b
             );
@@ -433,11 +450,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         onApprove={(inspectionData) => {
           console.log('Battery approved:', inspectionData);
           setBatteryCheckDialog(false);
-          
+
           // Cập nhật trạng thái booking thành ready-to-swap sau khi chấp nhận thay pin
           if (selectedBooking) {
-            const updatedBookings = bookings.map(b => 
-              b.id === selectedBooking.id 
+            const updatedBookings = bookings.map(b =>
+              b.id === selectedBooking.id
                 ? { ...b, status: 1 } // 1 = CheckedIn (ready to swap)
                 : b
             );
