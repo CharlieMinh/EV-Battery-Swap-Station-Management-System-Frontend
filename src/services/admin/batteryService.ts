@@ -16,6 +16,12 @@ export interface Battery {
   updatedAt: string;
 }
 
+export interface AddBatteryPayload {
+  stationId: string;
+  batteryModelId: string;
+  quantity: number;
+}
+
 export async function fetchAllBatteries(): Promise<Battery[]> {
   try {
     const response = await api.get("/api/BatteryUnits"); // ⚙️ Đổi URL thật của bạn
@@ -25,6 +31,17 @@ export async function fetchAllBatteries(): Promise<Battery[]> {
     throw new Error("Invalid response format");
   } catch (error) {
     console.error("Error fetching batteries:", error);
+    throw error;
+  }
+}
+
+export async function addBatteryToStation(payload: AddBatteryPayload) {
+  try {
+    const res = await api.post("/api/BatteryUnits/bulk-create", payload, {withCredentials: true})
+    
+    return res.data
+  }catch (error) {
+    console.error("Error post data: ", error);
     throw error;
   }
 }
