@@ -22,6 +22,14 @@ export interface AddBatteryPayload {
   quantity: number;
 }
 
+export interface BatteryModel {
+  id: string,
+  name: string,
+  voltage: number,
+  capacityWh: number,
+  swapPricePerSession: number,
+}
+
 export async function fetchAllBatteries(): Promise<Battery[]> {
   try {
     const response = await api.get("/api/BatteryUnits"); // ⚙️ Đổi URL thật của bạn
@@ -43,5 +51,15 @@ export async function addBatteryToStation(payload: AddBatteryPayload) {
   }catch (error) {
     console.error("Error post data: ", error);
     throw error;
+  }
+}
+
+export async function fetchModelBattery(): Promise<BatteryModel[]> {
+  try {
+    const response = await api.get("/api/BatteryModels");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data: ", error)
+    throw error
   }
 }

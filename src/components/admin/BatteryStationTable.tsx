@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchAllBatteries, Battery } from "@/services/admin/batteryService";
+import {
+  fetchModelBattery,
+  BatteryModel,
+} from "@/services/admin/batteryService";
+import { fetchStations } from "@/services/admin/stationService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,28 +18,40 @@ import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AddPinToStation } from "./AddPinToStation";
 
-export function BatteryStationTable() {
+interface BatteryStationTableProps {
+  onDataUpdate?: () => void; // callback khi dữ liệu thay đổi
+}
+
+export function BatteryStationTable({
+  onDataUpdate,
+}: BatteryStationTableProps) {
   const [batteries, setBatteries] = useState<Battery[]>([]);
+  const [models, setModels] = useState<BatteryModel[]>([]);
+  const [stations, setStations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState<string>("all");
   const [openModal, setOpenModal] = useState(false);
   const [selectedStation, setSelectedStation] = useState<any>(null);
-  const [selectedModelName, setSelectedModelName] = useState<string | null>(
-    null
-  );
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      const data = await fetchAllBatteries();
-      setBatteries(data);
+      const [batteriesData, modelsData, stationsData] = await Promise.all([
+        fetchAllBatteries(),
+        fetchModelBattery(),
+        fetchStations(1, 1000), // ví dụ lấy page 1, pageSize lớn để lấy tất cả
+      ]);
+
+      setBatteries(batteriesData);
+      setModels(modelsData);
+      setStations(stationsData.items); // mappedItems trong fetchStations
     } catch (err) {
-      console.error("Failed to fetch batteries", err);
+      console.error("Failed to fetch data", err);
     } finally {
       setLoading(false);
     }
@@ -44,57 +61,28 @@ export function BatteryStationTable() {
     loadData();
   }, []);
 
-  // Danh sách model duy nhất
-  const modelOptions = useMemo(() => {
-    return Array.from(new Set(batteries.map((b) => b.batteryModelName)));
-  }, [batteries]);
-
-  // Lọc theo model nếu có chọn
+  // Lọc pin theo model
   const filtered = useMemo(() => {
     if (selectedModel === "all") return batteries;
     return batteries.filter((b) => b.batteryModelName === selectedModel);
   }, [batteries, selectedModel]);
 
-  // Gom nhóm theo trạm
+  // Gom nhóm theo trạm dựa trên stations
   const stationStats = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        stationId: string;
-        stationName: string;
-        total: number;
-        inUse: number;
-        charging: number;
-        full: number;
-        maintenance: number;
-        reserved: number;
-      }
-    >();
-
-    filtered.forEach((b) => {
-      if (!map.has(b.stationId)) {
-        map.set(b.stationId, {
-          stationId: b.stationId,
-          stationName: b.stationName,
-          total: 0,
-          inUse: 0,
-          charging: 0,
-          full: 0,
-          maintenance: 0,
-          reserved: 0,
-        });
-      }
-      const station = map.get(b.stationId)!;
-      station.total += 1;
-      if (b.status === "InUse") station.inUse++;
-      if (b.status === "Charging") station.charging++;
-      if (b.status === "Full") station.full++;
-      if (b.status === "Maintenance") station.maintenance++;
-      if (b.status === "Reserved") station.reserved++;
+    return stations.map((s) => {
+      const pins = filtered.filter((b) => b.stationId === s.id);
+      return {
+        stationId: s.id,
+        stationName: s.name,
+        total: pins.length,
+        inUse: pins.filter((b) => b.status === "InUse").length,
+        charging: pins.filter((b) => b.status === "Charging").length,
+        full: pins.filter((b) => b.status === "Full").length,
+        maintenance: pins.filter((b) => b.status === "Maintenance").length,
+        reserved: pins.filter((b) => b.status === "Reserved").length,
+      };
     });
-
-    return Array.from(map.values());
-  }, [filtered]);
+  }, [stations, filtered]);
 
   if (loading)
     return (
@@ -112,20 +100,16 @@ export function BatteryStationTable() {
             🔋 Thông tin pin các trạm
           </CardTitle>
 
-          {/* Bộ lọc model */}
           <div className="mt-3 sm:mt-0">
-            <Select
-              onValueChange={(val) => setSelectedModel(val)}
-              defaultValue="all"
-            >
+            <Select onValueChange={setSelectedModel} defaultValue="all">
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Tất cả" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả</SelectItem>
-                {modelOptions.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
+                {models.map((m) => (
+                  <SelectItem key={m.id} value={m.name}>
+                    {m.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -195,23 +179,21 @@ export function BatteryStationTable() {
       </Card>
 
       <Dialog open={openModal} onOpenChange={setOpenModal}>
-        {/* 🌫️ Nền mờ nhẹ */}
         <DialogOverlay className="bg-white/50 backdrop-blur-md fixed inset-0" />
-
         <DialogContent
           className="max-w-lg bg-white/90 backdrop-blur-md border border-orange-200 shadow-xl rounded-2xl"
           aria-describedby={undefined}
         >
-          {/* 🧭 Tiêu đề ẩn (để không báo lỗi a11y nữa) */}
           <DialogTitle className="sr-only">Thêm pin vào trạm</DialogTitle>
-
-          {/* 🧩 Nội dung form */}
           <AddPinToStation
             stationId={selectedStation?.stationId}
             stationName={selectedStation?.stationName}
-            batteryModelName={selectedModel === "all" ? null : selectedModel}
+            // batteryModelName={selectedModel === "all" ? null : selectedModel}
             onClose={() => setOpenModal(false)}
-            onSuccess={loadData}
+            onSuccess={() => {
+              loadData();
+              onDataUpdate?.();
+            }}
           />
         </DialogContent>
       </Dialog>

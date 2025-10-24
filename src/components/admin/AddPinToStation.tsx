@@ -1,24 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  fetchAllBatteries,
-  type Battery,
-  addBatteryToStation,
-} from "@/services/admin/batteryService";
+import { fetchModelBattery } from "@/services/admin/batteryService";
+import { addBatteryToStation } from "@/services/admin/batteryService";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 
 interface AddPinToStationProps {
   stationId: string;
   stationName: string;
-  batteryModelName?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -26,72 +15,70 @@ interface AddPinToStationProps {
 export function AddPinToStation({
   stationId,
   stationName,
-  batteryModelName,
   onClose,
   onSuccess,
 }: AddPinToStationProps) {
   const [batteryModels, setBatteryModels] = useState<
     { id: string; name: string }[]
   >([]);
-  const [selectedModelId, setSelectedModelId] = useState<string>("");
-  const [quantity, setQuantity] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [quantities, setQuantities] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loadBatteries = async () => {
+    const loadModels = async () => {
       try {
-        const batteries: Battery[] = await fetchAllBatteries();
+        const models = await fetchModelBattery();
+        const formatted = models.map((m) => ({ id: m.id, name: m.name }));
+        setBatteryModels(formatted);
 
-        // ✅ Lấy danh sách unique mẫu pin từ dữ liệu Battery
-        const uniqueModels = Array.from(
-          new Map(
-            batteries.map((b) => [
-              b.batteryModelId,
-              { id: b.batteryModelId, name: b.batteryModelName },
-            ])
-          ).values()
-        );
-
-        setBatteryModels(uniqueModels);
+        // Khởi tạo số lượng mặc định = ''
+        const initQuantities: { [key: string]: string } = {};
+        formatted.forEach((m) => {
+          initQuantities[m.id] = "";
+        });
+        setQuantities(initQuantities);
       } catch (error) {
-        console.error("Không thể tải danh sách pin:", error);
-        toast.error("Không thể tải danh sách pin");
+        console.error("Không thể tải danh sách mẫu pin:", error);
+        toast.error("Không thể tải danh sách mẫu pin");
       }
     };
-
-    loadBatteries();
+    loadModels();
   }, []);
 
-  useEffect(() => {
-    if (batteryModelName && batteryModels.length > 0) {
-      const foundModel = batteryModels.find((m) => m.name === batteryModelName);
-      if (foundModel) setSelectedModelId(foundModel.id);
+  const handleChangeQuantity = (modelId: string, value: string) => {
+    // Chỉ cho phép nhập số hoặc xóa hết
+    if (/^\d*$/.test(value)) {
+      setQuantities((prev) => ({ ...prev, [modelId]: value }));
     }
-  }, [batteryModelName, batteryModels]);
+  };
 
-  const handleAddBattery = async () => {
-    if (!selectedModelId) {
-      toast.warning("Vui lòng chọn mẫu pin");
+  const handleAddBatteries = async () => {
+    const payload = Object.entries(quantities)
+      .filter(([_, qty]) => qty !== "" && parseInt(qty) > 0)
+      .map(([modelId, qty]) => ({
+        batteryModelId: modelId,
+        quantity: parseInt(qty),
+      }));
+
+    if (payload.length === 0) {
+      toast.warning("Vui lòng nhập số lượng cho ít nhất một loại pin");
       return;
     }
 
-    console.log("Payload gửi lên API:", {
-      stationId,
-      batteryModelId: selectedModelId,
-      quantity,
-    });
-
     setLoading(true);
     try {
-      await addBatteryToStation({
-        stationId,
-        batteryModelId: selectedModelId,
-        quantity,
-      });
-
+      for (const item of payload) {
+        await addBatteryToStation({
+          stationId,
+          batteryModelId: item.batteryModelId,
+          quantity: item.quantity,
+        });
+      }
       toast.success("Thêm pin vào trạm thành công!");
       onClose();
+      onSuccess();
     } catch (error) {
+      console.error(error);
       toast.error("Thêm pin thất bại");
     } finally {
       setLoading(false);
@@ -105,41 +92,27 @@ export function AddPinToStation({
         Trạm: <span className="text-orange-500">{stationName}</span>
       </p>
 
-      {/* Mẫu pin */}
-      <div>
-        <label className="block text-sm font-medium mb-2">Mẫu pin</label>
-        <Select onValueChange={setSelectedModelId} value={selectedModelId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Chọn mẫu pin" />
-          </SelectTrigger>
-          <SelectContent>
-            {batteryModels.map((m) => (
-              <SelectItem key={m.id} value={m.id}>
-                {m.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {batteryModels.map((model) => (
+          <div key={model.id} className="flex items-center justify-between">
+            <span className="font-medium">{model.name}</span>
+            <Input
+              type="text"
+              value={quantities[model.id]}
+              onChange={(e) => handleChangeQuantity(model.id, e.target.value)}
+              className="w-24"
+              placeholder="0"
+            />
+          </div>
+        ))}
       </div>
 
-      {/* Số lượng */}
-      <div>
-        <label className="block text-sm font-medium mb-2">Số lượng</label>
-        <Input
-          type="number"
-          min={1}
-          value={quantity}
-          onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-        />
-      </div>
-
-      {/* Nút hành động */}
       <div className="flex justify-end gap-3 pt-4">
         <Button variant="outline" onClick={onClose}>
           Hủy
         </Button>
         <Button
-          onClick={handleAddBattery}
+          onClick={handleAddBatteries}
           disabled={loading}
           className="bg-orange-500 hover:bg-orange-700"
         >

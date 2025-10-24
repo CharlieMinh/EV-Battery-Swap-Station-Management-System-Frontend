@@ -37,20 +37,24 @@ const BATTERY_STATUS_VN: Record<string, string> = {
 export function BatteryFleetManagement() {
   const [batteries, setBatteries] = useState<Battery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const loadData = async () => {
+    try {
+      const data = await fetchAllBatteries();
+      setBatteries(data);
+    } catch (err) {
+      console.error("Failed to fetch battery data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await fetchAllBatteries();
-        setBatteries(data);
-      } catch (err) {
-        console.error("Failed to fetch battery data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
-  }, []);
+  }, [reloadTrigger]);
+
+  const handleReload = () => setReloadTrigger((prev) => prev + 1);
 
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -161,7 +165,7 @@ export function BatteryFleetManagement() {
       </div>
 
       <div className="col-span-full">
-        <BatteryStationTable />
+        <BatteryStationTable onDataUpdate={handleReload} />
       </div>
     </div>
   );
