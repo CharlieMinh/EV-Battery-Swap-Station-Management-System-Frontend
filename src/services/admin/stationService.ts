@@ -40,6 +40,7 @@ export interface StationDetail extends Station {
   updatedAt?: string;
   totalChargers?: number;
   availableChargers?: number;
+  displayId: string
 }
 
 export interface UpdateStationPayload {
