@@ -1415,7 +1415,7 @@ const translations = {
     "admin.allOnline": "Tất Cả Trực Tuyến",
     "admin.newCustomers": "mới",
     "admin.revenueTrends": "Trends Doanh Thu",
-    "admin.revenueTrendsDesc": "Doanh thu và số lượng thay pin hàng tháng",
+    "admin.revenueTrendsDesc": "Doanh thu hàng tháng",
     "admin.batteryHealthDistribution": "Phân Phối Sức Khỏe Pin",
     "admin.batteryHealthDistributionDesc": "Tình trạng hiện tại của bộ pin",
     "admin.avgSwapTime": "Thời Gian Thay Pin Trung Bình",
@@ -1500,9 +1500,10 @@ const translations = {
     "admin.viewHistory": "Xem lịch sử",
     "admin.Active": "Hoạt động",
     "admin.Blocked": "Bị khóa",
-
+    "admin.totalStationBatteries": "Các loại pin trong hệ thống",
     "admin.updateProfile": "Cập nhật hồ sơ",
-
+    "admin.totalStationBatteriesDesc":
+      "Biểu đồ thể hiện tổng số lượng pin tại tất cả các trạm",
     "admin.phone": "Số điện thoại",
 
     "admin.revenueSummary": "Tổng kết Doanh thu & Hiệu suất",

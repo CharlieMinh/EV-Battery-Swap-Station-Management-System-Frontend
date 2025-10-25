@@ -32,7 +32,7 @@ export interface BatteryModel {
 
 export async function fetchAllBatteries(): Promise<Battery[]> {
   try {
-    const response = await api.get("/api/BatteryUnits"); // ⚙️ Đổi URL thật của bạn
+    const response = await api.get("/api/BatteryUnits"); 
     if (response.data.success && Array.isArray(response.data.data)) {
       return response.data.data;
     }
