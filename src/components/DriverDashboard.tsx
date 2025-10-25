@@ -492,6 +492,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             setBookingResult(result);
             setActiveReservation(result);
             setBookingStep(5);
+            getReservation();
             setIsBooking(false); // Tắt loading khi thành công
           } else {
             console.error("Failed to create Cash reservation or Success is false:", result);

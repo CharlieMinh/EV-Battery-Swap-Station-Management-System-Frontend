@@ -7,9 +7,7 @@ import { Calendar } from '../ui/calendar';
 import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2, Info, CreditCard, Landmark } from 'lucide-react'; // Giữ lại icons
 import { useLanguage } from '../LanguageContext';
 import { Badge } from '../ui/badge';
-// ❌ Xóa imports: RadioGroup, RadioGroupItem, Label
 
-// --- Interfaces (Giữ nguyên) ---
 interface Vehicle {
   id: string;
   vin: string;
@@ -76,7 +74,7 @@ interface BookingWizardProps {
   onVehicleSelect: (vehicle: Vehicle | null) => void;
   onDateChange: (date: Date | undefined) => void;
   onSlotSelect: (slot: Slot | null) => void;
-  // SỬA LẠI PROP ONCONFIRM: Nhận thêm paymentMethod (có thể là null nếu dùng sub)
+
   onConfirm: (isUsingSubscription: boolean, price: number | null, paymentMethod: number | null) => void;
   onQRDialog: () => void;
   subscriptionInfoList: SubscriptionInfo[];
@@ -107,7 +105,7 @@ export function BookingWizard({
   const { t } = useLanguage();
   const selectedStationData = stations?.find(s => s.id === selectedStation);
 
-  // States (Giữ nguyên)
+
   const [isUsingSubscription, setIsUsingSubscription] = useState(false);
   const [swapPrice, setSwapPrice] = useState<number | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
@@ -115,10 +113,10 @@ export function BookingWizard({
 
   const totalSteps = 5;
 
-  // Hàm handleVehicleSelect (Giữ nguyên)
+
   const handleVehicleSelect = async (vehicle: Vehicle | null) => {
     onVehicleSelect(vehicle);
-    setSelectedPayMethod(null); // Reset phương thức thanh toán
+    setSelectedPayMethod(null);
 
     if (!vehicle) {
       setIsUsingSubscription(false);
@@ -157,16 +155,15 @@ export function BookingWizard({
     }
   };
 
-  // Logic cảnh báo (Giữ nguyên)
+
   const selectedVehicleSub = selectedVehicle
     ? subscriptionInfoList.find(s => s.vehicleId === selectedVehicle.id && s.isActive)
     : null;
   const showWarning = selectedVehicle && selectedVehicleSub && !isUsingSubscription;
 
-  // ✅ HÀM XỬ LÝ KHI CHỌN RADIO BUTTON HTML (Giữ nguyên)
   const handlePaymentMethodChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value); // Lấy value (string) và chuyển thành number
-    if (!isNaN(value)) { // Kiểm tra nếu parse thành công
+    const value = parseInt(event.target.value);
+    if (!isNaN(value)) {
       setSelectedPayMethod(value);
     }
   };
@@ -174,7 +171,6 @@ export function BookingWizard({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
-        {/* Header và Thanh tiến trình (Giữ nguyên) */}
         <DialogHeader>
           <DialogTitle>{t('driver.bookBatterySwap')}</DialogTitle>
           {bookingStep < totalSteps && (
@@ -193,8 +189,6 @@ export function BookingWizard({
             </React.Fragment>
           ))}
         </div>
-
-        {/* BƯỚC 1: CHỌN XE (Giữ nguyên) */}
         {bookingStep === 1 && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{t('driver.selectVehicle')}</h3>
@@ -258,7 +252,7 @@ export function BookingWizard({
           </div>
         )}
 
-        {/* BƯỚC 2: CHỌN NGÀY (Giữ nguyên) */}
+        {/* BƯỚC 2: CHỌN NGÀY  */}
         {bookingStep === 2 && (
           <div className="space-y-6 flex flex-col items-center">
             <h3 className="text-lg font-medium">{t('driver.booking.selectDateTitle')}</h3>
@@ -297,7 +291,7 @@ export function BookingWizard({
           </div>
         )}
 
-        {/* BƯỚC 3: CHỌN GIỜ (Giữ nguyên) */}
+        {/* BƯỚC 3: CHỌN GIỜ  */}
         {bookingStep === 3 && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{t('driver.chooseTimeSlot')}</h3>
@@ -318,7 +312,6 @@ export function BookingWizard({
                   return (
                     <Button key={slot.slotStartTime} variant={selectedSlot?.slotStartTime === slot.slotStartTime ? "default" : "outline"} className={`h-12 ${selectedSlot?.slotStartTime === slot.slotStartTime ? 'bg-orange-500' : ''}`} onClick={() => onSlotSelect(slot)} disabled={isSlotDisabled}>
                       {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)} <br />
-                      {/* Sửa lại hiển thị số slot */}
                       {slot.currentReservations}/{slot.totalCapacity}
                     </Button>
                   );
@@ -332,14 +325,11 @@ export function BookingWizard({
           </div>
         )}
 
-        {/* BƯỚC 4: XÁC NHẬN (✅ THAY THẾ RadioGroup bằng HTML) */}
         {bookingStep === 4 && (
           <div className="space-y-6">
             <h3 className="text-lg font-medium">{t('driver.confirmBooking')}</h3>
-            {/* Card thông tin (Giữ nguyên) */}
             <Card>
               <CardContent className="p-6 space-y-4 text-sm">
-                {/* ... Hiển thị thông tin trạm, xe, giờ, hình thức, giá ... */}
                 <div className="flex justify-between">
                   <span className="text-gray-500">{t('driver.station')}</span>
                   <span className="font-semibold text-right">{selectedStationData?.name}</span>
@@ -372,7 +362,7 @@ export function BookingWizard({
                 <h4 className="text-md font-medium">Chọn phương thức thanh toán:</h4>
                 <div className="space-y-2"> {/* Bọc các label trong div */}
                   {/* Lựa chọn VNPay */}
-                  <label htmlFor="pay-vnpay" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 1 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
+                  <label htmlFor="pay-vnpay" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
                     <input
                       type="radio"
                       id="pay-vnpay"
@@ -387,7 +377,7 @@ export function BookingWizard({
                   </label>
 
                   {/* Lựa chọn Cash */}
-                  <label htmlFor="pay-cash" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
+                  <label htmlFor="pay-cash" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 1 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
                     <input
                       type="radio"
                       id="pay-cash"
