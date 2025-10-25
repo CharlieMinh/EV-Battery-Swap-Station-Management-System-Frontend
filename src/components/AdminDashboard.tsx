@@ -419,7 +419,9 @@ export function AdminDashboardPage({
 
             {activeSection === "stations" && <StationManagement />}
 
-            {activeSection === "batteries" && <BatteryFleetManagement />}
+            {activeSection === "batteries" && (
+              <BatteryFleetManagement />
+            )}
 
             {activeSection === "customers" && <CustomerManagement />}
 

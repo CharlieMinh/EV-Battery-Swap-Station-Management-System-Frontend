@@ -27,7 +27,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
-  stationId?: number;
+  stationId?: number | string;
 }
 
 // Wrapper component to use navigate in ForgotPassword
@@ -46,11 +46,16 @@ function App() {
         const response = await api.get("/api/v1/Auth/me", {
           withCredentials: true,
         });
+        console.log('🔍 User from /me:', response.data);
         setCurrentUser(response.data);
       } catch (error: any) {
         if (error.response?.status === 401) {
           // Không có JWT trong cookie → user chưa đăng nhập → KHÔNG PHẢI lỗi nặng
           console.warn("Chưa đăng nhập (401). Bỏ qua, set user = null.");
+          setCurrentUser(null);
+        } else if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
+          // Backend không chạy hoặc không kết nối được
+          console.warn("Backend không khả dụng. Chạy ứng dụng ở chế độ offline.");
           setCurrentUser(null);
         } else {
           console.error("Lỗi khác khi gọi /me:", error);
@@ -60,7 +65,17 @@ function App() {
       }
     };
 
+    // Set a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("API call timeout. Setting loading to false.");
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     fetchUser();
+
+    return () => clearTimeout(timeout);
   }, []);
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -77,7 +92,14 @@ function App() {
     setCurrentUser(null);
   };
 
-  if (loading) return <p>Loading...</p>; // chờ xác thực xong mới render
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Đang tải ứng dụng...</p>
+      </div>
+    </div>
+  );
   return (
     <LanguageProvider>
       <BrowserRouter>
