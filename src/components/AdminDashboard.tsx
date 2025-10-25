@@ -49,6 +49,7 @@ import {
   getTotalCompletedSwaps,
 } from "@/services/admin/stationService";
 import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
+import { getTotalRevenue } from "@/services/admin/payment";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -159,6 +160,20 @@ export function AdminDashboardPage({
       }
     }
     loadSwaps();
+  }, []);
+
+  const [totalRevenue, setTotalRevenue] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadTotals() {
+      try {
+        const total = await getTotalRevenue({ page: 1, pageSize: 20 });
+        console.log(total);
+        setTotalRevenue(total);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    loadTotals();
   }, []);
 
   return (
@@ -332,14 +347,13 @@ export function AdminDashboardPage({
                       {t("admin.totalRevenue")}
                     </p>
                     <p className="text-2xl font-bold">
-                      ${kpiData.totalRevenue.toLocaleString()}
+                      {totalRevenue?.toLocaleString("vi-VN")}₫
                     </p>
-                    {/* <div className="flex items-center mt-1">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">+12.5%</span>
-                    </div> */}
                   </div>
-                  <DollarSign className="w-8 h-8 text-green-500" />
+                  {/* Thay biểu tượng bằng chữ VND */}
+                  <span className="text-green-500 font-semibold text-lg">
+                    VND
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -410,18 +424,12 @@ export function AdminDashboardPage({
           {/* Main Content */}
           <main className="flex-1 p-6">
             {activeSection === "overview" && (
-              <AdminOverview
-                revenueData={revenueData}
-                batteryHealth={batteryHealth}
-                kpiData={kpiData}
-              />
+              <AdminOverview batteryHealth={batteryHealth} kpiData={kpiData} />
             )}
 
             {activeSection === "stations" && <StationManagement />}
 
-            {activeSection === "batteries" && (
-              <BatteryFleetManagement />
-            )}
+            {activeSection === "batteries" && <BatteryFleetManagement />}
 
             {activeSection === "customers" && <CustomerManagement />}
 

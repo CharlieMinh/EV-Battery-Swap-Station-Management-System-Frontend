@@ -1,64 +1,78 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { getMonthlyRevenue } from "@/services/admin/payment";
+import { useLanguage } from "../LanguageContext";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import {
+  ResponsiveContainer,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
-import { Clock, Activity, Users, Gauge } from "lucide-react";
-import { useLanguage } from "../LanguageContext";
 
-interface RevenueData {
-  month: string;
+interface RevenueMonth {
+  month: string; // "YYYY-MM"
   revenue: number;
-  swaps: number;
-  growth: number;
-}
-
-interface BatteryHealth {
-  range: string;
-  count: number;
-  color: string;
-}
-
-interface KPIData {
-  avgSwapTime: number;
-  systemUptime: number;
-  customerSatisfaction: number;
-  batteryEfficiency: number;
 }
 
 interface AdminOverviewProps {
-  revenueData: RevenueData[];
-  batteryHealth: BatteryHealth[];
-  kpiData: KPIData;
+  batteryHealth: any[];
+  kpiData: any;
 }
 
-export function AdminOverview({
-  revenueData,
-  batteryHealth,
-  kpiData,
-}: AdminOverviewProps) {
+export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
   const { t } = useLanguage();
+  const [revenueData, setRevenueData] = useState<RevenueMonth[]>([]);
 
-  const pieData = batteryHealth.map((b) => ({
-    name: b.range,
-    value: b.count,
-    color: b.color,
-  }));
+  useEffect(() => {
+    async function fetchRevenue() {
+      const data = await getMonthlyRevenue(); // API trả về [{month: "YYYY-MM", revenue: number}, ...]
+
+      const monthNames = [
+        "Tháng 1",
+        "Tháng 2",
+        "Tháng 3",
+        "Tháng 4",
+        "Tháng 5",
+        "Tháng 6",
+        "Tháng 7",
+        "Tháng 8",
+        "Tháng 9",
+        "Tháng 10",
+        "Tháng 11",
+        "Tháng 12",
+      ];
+
+      const currentYear = new Date().getFullYear();
+
+      // Tạo object map để dễ lookup
+      const revenueMap: Record<number, number> = {};
+      data.forEach((d) => {
+        const date = new Date(d.month);
+        if (date.getFullYear() === currentYear) {
+          revenueMap[date.getMonth()] = d.revenue;
+        }
+      });
+
+      // Tạo mảng đầy đủ 12 tháng, nếu không có dữ liệu = 0
+      const fullData = monthNames.map((name, index) => ({
+        month: name,
+        revenue: revenueMap[index] || 0,
+      }));
+
+      setRevenueData(fullData);
+    }
+
+    fetchRevenue();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -76,12 +90,20 @@ export function AdminOverview({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis
-                  tickFormatter={(value) => `$${value.toLocaleString("en-US")}`}
+                  tickFormatter={(value) =>
+                    value.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })
+                  }
                 />
                 <Tooltip
                   formatter={(value) => [
-                    `$${(value as number).toLocaleString("en-US")}`,
-                    "Revenue",
+                    (value as number).toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }),
+                    "Doanh thu",
                   ]}
                 />
                 <Area
@@ -95,7 +117,7 @@ export function AdminOverview({
           </CardContent>
         </Card>
 
-        <Card className="border border-orange-200 rounded-lg">
+        {/* <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
             <CardTitle className="text-orange-600">
               {t("admin.batteryHealthDistribution")}
@@ -136,7 +158,7 @@ export function AdminOverview({
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
