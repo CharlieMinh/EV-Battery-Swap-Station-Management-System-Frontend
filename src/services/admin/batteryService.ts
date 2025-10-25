@@ -45,7 +45,7 @@ export async function fetchAllBatteries(): Promise<Battery[]> {
 
 export async function addBatteryToStation(payload: AddBatteryPayload) {
   try {
-    const res = await api.post("/api/BatteryUnits/bulk-create", payload, {withCredentials: true})
+    const res = await api.post("/api/bulk-create-requests/request", payload, {withCredentials: true})
     
     return res.data
   }catch (error) {

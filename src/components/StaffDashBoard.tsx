@@ -22,7 +22,17 @@ import { ProfileManagement } from "./staff/ProfileManagement";
 import { TransactionManagement } from "./staff/TransactionManagement";
 import { RevenueTracking } from "./staff/RevenueTracking";
 import { BatteryConditionCheck } from "./staff/BatteryConditionCheck";
-import staffApi, { Battery, Booking, Transaction, DailyStats } from "../services/staffApi";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import staffApi, {
+  Battery,
+  Booking,
+  Transaction,
+  DailyStats,
+} from "../services/staffApi";
 import {
   Sidebar,
   SidebarContent,
@@ -37,6 +47,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "./ui/sidebar";
+import {
+  fetchNotifications,
+  getUnreadCount,
+  markAsRead,
+  markMultipleAsRead,
+  Notification,
+} from "@/services/admin/notifications";
 
 interface StaffPortalPageProps {
   user: User;
@@ -60,7 +77,10 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
     const fetchDailyStats = async () => {
       try {
         if (user.stationId) {
-          const stats = await staffApi.getDailyStats(user.id, user.stationId.toString());
+          const stats = await staffApi.getDailyStats(
+            user.id,
+            user.stationId.toString()
+          );
           setDailyStats(stats);
         }
       } catch (error) {
@@ -100,6 +120,45 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
     },
   ];
 
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchNotifications(1, 10);
+        setNotifications(data.items);
+        const count = await getUnreadCount(1, 10);
+        setUnreadCount(count);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleMarkAsRead = async (notification: Notification) => {
+    try {
+      const idsToMark = notification.mergedIds?.length
+        ? notification.mergedIds
+        : [notification.id];
+      await markMultipleAsRead(idsToMark);
+
+      // Cập nhật local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.message === notification.message ? { ...n, isRead: true } : n
+        )
+      );
+
+      // Giảm số lượng unread
+      setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -114,15 +173,25 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
     switch (activeSection) {
       case "profile":
-        return <ProfileManagement userId={user.id} stationId={user.stationId?.toString()} />;
+        return (
+          <ProfileManagement
+            userId={user.id}
+            stationId={user.stationId?.toString()}
+          />
+        );
       case "queue":
-        return <QueueManagement stationId={user.stationId?.toString() || ""} userId={user.id} />;
+        return (
+          <QueueManagement
+            stationId={user.stationId?.toString() || ""}
+            userId={user.id}
+          />
+        );
       case "inventory":
         return <InventoryManagement stationId={user.stationId?.toString()} />;
-       case "transaction":
-         return <TransactionManagement recentTransactions={[]} />;
-       case "revenue":
-         return <RevenueTracking stationId={Number(user.stationId) || 1} />;
+      case "transaction":
+        return <TransactionManagement recentTransactions={[]} />;
+      case "revenue":
+        return <RevenueTracking stationId={Number(user.stationId) || 1} />;
       default:
         return <StaffDashboard dailyStats={dailyStats} />;
     }
@@ -141,7 +210,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 <span className="text-lg text-white font-semibold">
                   Staff Portal
                 </span>
-                <span className="text-sm font-medium text-gray-100">EVBSS Staff</span>
+                <span className="text-sm font-medium text-gray-100">
+                  EVBSS Staff
+                </span>
               </div>
             </div>
           </SidebarHeader>
@@ -168,7 +239,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           <SidebarFooter>
             <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {user.name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
@@ -199,13 +272,55 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-4 h-4" />
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
-                    3
-                  </Badge>
-                </Button>
-                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="w-4 h-4" />
+                      {unreadCount > 0 && (
+                        <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-80 p-2">
+                    <h3 className="text-sm font-semibold text-orange-600 mb-2">
+                      Thông báo
+                    </h3>
+                    {notifications.length === 0 ? (
+                      <p className="text-gray-500 text-sm">
+                        Không có thông báo nào
+                      </p>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => handleMarkAsRead(n)}
+                            className={`p-2 rounded-lg cursor-pointer mb-1 ${
+                              n.isRead
+                                ? "bg-gray-100 hover:bg-gray-200"
+                                : "bg-orange-100 hover:bg-orange-200"
+                            }`}
+                          >
+                            <p className="text-sm font-medium text-gray-800">
+                              {n.message}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
+                <Badge
+                  variant="outline"
+                  className="text-orange-600 border-orange-300"
+                >
                   Trạm #{user.stationId}
                 </Badge>
               </div>
@@ -213,9 +328,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-6">
-            {renderContent()}
-          </main>
+          <main className="flex-1 p-6">{renderContent()}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>
