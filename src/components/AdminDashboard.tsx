@@ -44,7 +44,10 @@ import { StaffManagement } from "../components/admin/StaffManagement";
 import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
-import { fetchActiveStations } from "@/services/admin/stationService";
+import {
+  fetchActiveStations,
+  getTotalCompletedSwaps,
+} from "@/services/admin/stationService";
 import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
 
 interface AdminDashboardPageProps {
@@ -58,8 +61,6 @@ export function AdminDashboardPage({
 }: AdminDashboardPageProps) {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("overview");
-  const [selectedTimeframe, setSelectedTimeframe] = useState("30");
-  const [customerSearchQuery, setCustomerSearchQuery] = useState<string>("");
 
   // Mock data
   const revenueData = [
@@ -76,15 +77,6 @@ export function AdminDashboardPage({
     { range: "70-89%", count: 87, color: "#f59e0b" },
     { range: "50-69%", count: 23, color: "#ef4444" },
     { range: "Below 50%", count: 8, color: "#991b1b" },
-  ];
-
-  const demandForecast = [
-    { time: "6AM", predicted: 12, actual: 10, confidence: 85 },
-    { time: "9AM", predicted: 45, actual: 43, confidence: 92 },
-    { time: "12PM", predicted: 67, actual: 71, confidence: 88 },
-    { time: "3PM", predicted: 89, actual: 85, confidence: 90 },
-    { time: "6PM", predicted: 134, actual: 128, confidence: 94 },
-    { time: "9PM", predicted: 78, actual: 82, confidence: 87 },
   ];
 
   const alerts = [
@@ -153,6 +145,20 @@ export function AdminDashboardPage({
       }
     }
     loadCustomers();
+  }, []);
+
+  const [totalSwaps, setTotalSwaps] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadSwaps() {
+      try {
+        const total = await getTotalCompletedSwaps();
+        console.log(total);
+        setTotalSwaps(total);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    loadSwaps();
   }, []);
 
   return (
@@ -345,9 +351,7 @@ export function AdminDashboardPage({
                     <p className="text-sm text-orange-600">
                       {t("admin.totalSwaps")}
                     </p>
-                    <p className="text-2xl font-bold">
-                      {kpiData.totalSwaps.toLocaleString()}
-                    </p>
+                    <p className="text-2xl font-bold">{totalSwaps}</p>
                     {/* <div className="flex items-center mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm text-green-600">+8.3%</span>

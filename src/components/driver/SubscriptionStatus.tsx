@@ -16,8 +16,10 @@ interface SubscriptionInfo {
   endDate: string | null;
   isActive: boolean;
   isBlocked: boolean;
+  currentMonthSwapCount: number;
   subscriptionPlan: {
     name: string;
+    maxSwapsPerMonth?: number;
   };
 }
 interface MonthlyUsage {
@@ -25,31 +27,16 @@ interface MonthlyUsage {
   month: number;
   swapCount: number;
 }
-interface SubscriptionUsage {
-  monthlyUsage: MonthlyUsage[];
-}
+
 interface SubscriptionStatusProps {
   subscriptionInfo: SubscriptionInfo | null;
-  subscriptionUsage: SubscriptionUsage | null;
+  currentMonthSwapCount?: number;
 }
 
 export function SubscriptionStatus({
-  subscriptionInfo, subscriptionUsage
+  subscriptionInfo, currentMonthSwapCount
 }: SubscriptionStatusProps) {
   const { t } = useLanguage();
-
-  const getCurrentMonthSwaps = () => {
-    if (!subscriptionUsage) return 0;
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-
-    const currentUsage = subscriptionUsage.monthlyUsage.find(
-      (usage) => usage.year === currentYear && usage.month === currentMonth
-    );
-
-    return currentUsage ? currentUsage.swapCount : 0;
-  };
 
   const getStatus = () => {
     if (!subscriptionInfo) {
@@ -72,7 +59,6 @@ export function SubscriptionStatus({
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  const swapsUsed = getCurrentMonthSwaps();
   const status = getStatus();
 
   if (!subscriptionInfo) {
@@ -137,7 +123,7 @@ export function SubscriptionStatus({
             <span className="font-semibold text-gray-600 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-yellow-500" /> {t("driver.subscription.monthlySwaps")}
             </span>
-            <span className="font-bold text-lg text-blue-600">{swapsUsed}</span>
+            <span className="font-bold text-lg text-blue-600">{currentMonthSwapCount}/{subscriptionInfo.subscriptionPlan.maxSwapsPerMonth}</span>
           </div>
 
         </CardContent>

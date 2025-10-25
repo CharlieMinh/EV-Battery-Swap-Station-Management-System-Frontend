@@ -4,7 +4,7 @@ import { Homepage } from "./components/HomePage";
 import { LoginPage } from "./components/LoginPage";
 import { RegisterPage } from "./components/RegisterPage";
 import { ForgotPassword } from "./components/ForgotPassword";
-import { DriverPortalPage } from "./components/DriverDashboard";
+import { DriverDashboard } from "./components/DriverDashboard";
 import { StaffPortalPage } from "./components/StaffDashBoard";
 import { AdminDashboardPage } from "./components/AdminDashboard";
 import {
@@ -133,7 +133,7 @@ function App() {
             path="/driver"
             element={
               currentUser?.role === "Driver" ? (
-                <DriverPortalPage user={currentUser} onLogout={handleLogout} />
+                <DriverDashboard user={currentUser} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" />
               )

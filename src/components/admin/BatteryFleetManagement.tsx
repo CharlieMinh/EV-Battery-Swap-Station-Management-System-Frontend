@@ -25,23 +25,36 @@ const ALL_STATUSES = [
   "Maintenance",
 ];
 
+const BATTERY_STATUS_VN: Record<string, string> = {
+  Full: "Sẵn sàng",
+  Reserved: "Đặt trước",
+  InUse: "Đang sử dụng",
+  Charging: "Đang sạc",
+  Depleted: "Cạn pin",
+  Maintenance: "Bảo trì",
+};
+
 export function BatteryFleetManagement() {
   const [batteries, setBatteries] = useState<Battery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const loadData = async () => {
+    try {
+      const data = await fetchAllBatteries();
+      setBatteries(data);
+    } catch (err) {
+      console.error("Failed to fetch battery data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await fetchAllBatteries();
-        setBatteries(data);
-      } catch (err) {
-        console.error("Failed to fetch battery data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
-  }, []);
+  }, [reloadTrigger]);
+
+  const handleReload = () => setReloadTrigger((prev) => prev + 1);
 
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -90,14 +103,23 @@ export function BatteryFleetManagement() {
                       dataKey="value"
                       nameKey="name"
                       outerRadius={100}
-                      label={({ name, value }) => `${name} (${value})`}
+                      label={({ name, value }) =>
+                        `${
+                          BATTERY_STATUS_VN[name as string] || name
+                        } (${value})`
+                      }
                       labelLine={false}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        value,
+                        BATTERY_STATUS_VN[name as string] || name,
+                      ]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -128,7 +150,9 @@ export function BatteryFleetManagement() {
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: item.color }}
                     ></span>
-                    <span className="font-medium">{item.name}</span>
+                    <span className="font-medium">
+                      {BATTERY_STATUS_VN[item.name] || item.name}
+                    </span>
                   </div>
                   <span className="font-semibold text-gray-800">
                     {item.value} pin
@@ -141,7 +165,7 @@ export function BatteryFleetManagement() {
       </div>
 
       <div className="col-span-full">
-        <BatteryStationTable />
+        <BatteryStationTable onDataUpdate={handleReload} />
       </div>
     </div>
   );
