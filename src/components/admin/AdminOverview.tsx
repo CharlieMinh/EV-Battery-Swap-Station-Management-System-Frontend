@@ -16,7 +16,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Pie,
+  Cell,
+  PieChart,
 } from "recharts";
+import { fetchAllBatteries } from "@/services/admin/batteryService";
 
 interface RevenueMonth {
   month: string; // "YYYY-MM"
@@ -74,6 +78,41 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
     fetchRevenue();
   }, []);
 
+  const [batteryData, setBatteryData] = useState<
+    { name: string; count: number; color: string }[]
+  >([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const allBatteries = await fetchAllBatteries();
+
+        // Đếm số lượng pin theo batteryModelName
+        const modelCount: Record<string, number> = {};
+        allBatteries.forEach((b) => {
+          modelCount[b.batteryModelName] =
+            (modelCount[b.batteryModelName] || 0) + 1;
+        });
+
+        // Gán màu ngẫu nhiên hoặc theo danh sách cố định
+        const colors = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6"];
+
+        const pieData = Object.entries(modelCount).map(
+          ([name, count], index) => ({
+            name,
+            count,
+            color: colors[index % colors.length],
+          })
+        );
+
+        setBatteryData(pieData);
+      } catch (error) {
+        console.error("Error loading battery data:", error);
+      }
+    }
+    loadData();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -117,48 +156,53 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
           </CardContent>
         </Card>
 
-        {/* <Card className="border border-orange-200 rounded-lg">
+        <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
             <CardTitle className="text-orange-600">
-              {t("admin.batteryHealthDistribution")}
+              {t("admin.totalStationBatteries") || "Tổng pin các trạm"}
             </CardTitle>
             <CardDescription>
-              {t("admin.batteryHealthDistributionDesc")}
+              {t("admin.totalStationBatteriesDesc") ||
+                "Biểu đồ thể hiện tổng số lượng pin tại tất cả các trạm"}
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={batteryData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
                   outerRadius={100}
                   dataKey="count"
+                  label={(entry) => entry.name}
                 >
-                  {batteryHealth.map((entry, index) => (
+                  {batteryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: number) => [`${value} pin`, "Số lượng"]}
+                />
               </PieChart>
             </ResponsiveContainer>
+
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {batteryHealth.map((entry, index) => (
+              {batteryData.map((entry, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <div
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   ></div>
                   <span className="text-sm">
-                    {entry.range}: {entry.count}
+                    {entry.name}: {entry.count} pin
                   </span>
                 </div>
               ))}
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
 
       {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
