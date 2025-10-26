@@ -7,6 +7,7 @@ import {
   BarChart2,
   LogOut,
   Save,
+  Bell,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
@@ -26,7 +27,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "../components/ui/sidebar";
-import { Bell } from "lucide-react";
 
 import ProfileManagement from "./staff/ProfileManagement";
 import QueueManagement from "./staff/QueueManagement";

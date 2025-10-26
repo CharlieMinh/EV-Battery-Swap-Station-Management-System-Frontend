@@ -30,6 +30,7 @@ import {
   HeadphonesIcon,
   Car,
   Pen,
+  CreditCardIcon,
 } from "lucide-react";
 import { User } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -48,6 +49,7 @@ import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
 import { toast } from "react-toastify";
 import { showError, showSuccess } from "./ui/alert";
+import { MyPaymentsPage } from "./driver/MyPaymentsPage";
 
 interface DriverDashboardProps {
   user: User;
@@ -68,6 +70,8 @@ interface SubscriptionInfo {
     name: string;
     maxSwapsPerMonth?: number;
   };
+  vehicles: { id: string; plate: string; model: string; }[] | null;
+  vehicle: { id: string; plate: string; model: string; } | null;
 }
 
 // Các interface này giữ nguyên
@@ -567,6 +571,16 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("my-payments")}
+                      isActive={activeSection === "my-payments"}
+                      className="h-[60px]"
+                    >
+                      <CreditCardIcon className="w-4 h-4" />
+                      <span>Hóa đơn chờ</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("mycar")}
                       isActive={activeSection === "mycar"}
                       className="h-[60px]"
@@ -650,6 +664,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                 <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "map" && t("driver.findStations")}
                   {activeSection === "mycar" && t("driver.mycar")}
+                  {activeSection === "my-payments" && "Hóa đơn chờ"}
                   {activeSection === "subscription" && "Đăng ký gói"}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
@@ -693,6 +708,9 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                 </div>
               </div>
             )}
+            {activeSection === "my-payments" && (
+              <MyPaymentsPage />
+            )}
             {activeSection === "subscription" && (
               <div className="space-y-6">
                 <div>
@@ -732,8 +750,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                 />
                 {/* Sửa lại cách truyền prop, chỉ lấy sub active đầu tiên (nếu có) */}
                 <SubscriptionStatus
-                  subscriptionInfo={subscriptionInfoList.find(s => s.isActive) || null}
-                  currentMonthSwapCount={subscriptionInfoList.find(s => s.isActive)?.currentMonthSwapCount}
+                  subscriptionInfoList={subscriptionInfoList} // Truyền toàn bộ danh sách
                 />
               </div>
             )}

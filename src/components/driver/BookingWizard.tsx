@@ -225,7 +225,11 @@ export function BookingWizard({
                             vehicleSubInfo.isLimitReached ? (
                               <Badge variant="destructive">{vehicleSubInfo.planName} ({vehicleSubInfo.usageText})</Badge>
                             ) : (
-                              <Badge className="bg-orange-500 text-white">{vehicleSubInfo.planName} ({vehicleSubInfo.usageText})</Badge>
+                              <Badge className="bg-orange-500 text-white"><>
+                                {vehicleSubInfo.planName}
+                                <br />
+                                ({vehicleSubInfo.usageText})
+                              </></Badge>
                             )
                           ) : (
                             <Badge variant="secondary">Không có gói thuê</Badge>
