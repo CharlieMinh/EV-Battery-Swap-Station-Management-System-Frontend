@@ -8,6 +8,7 @@ import {
   LogOut,
   User as UserIcon,
   Bell,
+  CreditCardIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -37,6 +38,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "./ui/sidebar";
+import { StaffCashPaymentManagement } from "./staff/StaffCashPaymentManagement";
 
 interface StaffPortalPageProps {
   user: User;
@@ -98,6 +100,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       label: "Theo dõi doanh thu",
       icon: DollarSign,
     },
+    {
+      id: "cash-payments",
+      label: "Xác nhận tiền mặt",
+      icon: CreditCardIcon,
+    },
   ];
 
   const renderContent = () => {
@@ -119,10 +126,12 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         return <QueueManagement stationId={user.stationId?.toString() || ""} userId={user.id} />;
       case "inventory":
         return <InventoryManagement stationId={user.stationId?.toString()} />;
-       case "transaction":
-         return <TransactionManagement recentTransactions={[]} />;
-       case "revenue":
-         return <RevenueTracking stationId={Number(user.stationId) || 1} />;
+      case "transaction":
+        return <TransactionManagement recentTransactions={[]} />;
+      case "revenue":
+        return <RevenueTracking stationId={Number(user.stationId) || 1} />;
+      case "cash-payments":
+        return <StaffCashPaymentManagement />;
       default:
         return <StaffDashboard dailyStats={dailyStats} />;
     }
