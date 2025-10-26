@@ -20,18 +20,21 @@ import {
   SidebarTrigger,
 } from "../components/ui/sidebar";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import {
   BarChart3,
   MapPin,
   Battery,
   Users,
   UserCheck,
-  Brain,
   Bell,
   LogOut,
   Zap,
   DollarSign,
-  ArrowUpRight,
-  CheckCircle,
+  Package,
 } from "lucide-react";
 import { User } from "../App";
 
@@ -41,19 +44,36 @@ import { StationManagement } from "../components/admin/StationManagement";
 import { BatteryFleetManagement } from "../components/admin/BatteryFleetManagement";
 import { CustomerManagement } from "../components/admin/CustomerManagement";
 import { StaffManagement } from "../components/admin/StaffManagement";
-import { AIInsights } from "../components/admin/AIInsights";
 import { AlertsManagement } from "../components/admin/AlertsManagement";
 import AddUser from "./admin/AddUser";
+import { RequestForStation } from "./admin/RequestForStation";
+
 import {
   fetchActiveStations,
   getTotalCompletedSwaps,
 } from "@/services/admin/stationService";
 import { fetchTotalCustomers } from "@/services/admin/customerAdminService";
 import { getTotalRevenue } from "@/services/admin/payment";
+import {
+  fetchNotifications,
+  markMultipleAsRead,
+  Notification,
+} from "@/services/admin/notifications";
+import { fetchBatteryRequests } from "@/services/admin/batteryService";
 
 interface AdminDashboardPageProps {
   user: User;
   onLogout: () => void;
+}
+
+interface BatteryRequest {
+  id: string;
+  stationId: string;
+  stationName: string;
+  quantity: number;
+  status: number;
+  batteryModelName: string;
+  updatedAt: string;
 }
 
 export function AdminDashboardPage({
@@ -62,6 +82,12 @@ export function AdminDashboardPage({
 }: AdminDashboardPageProps) {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("overview");
+
+  // Notification states
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [batteryRequests, setBatteryRequests] = useState<BatteryRequest[]>([]);
 
   // Mock data
   const revenueData = [
@@ -122,7 +148,11 @@ export function AdminDashboardPage({
     batteryEfficiency: 94.2,
   };
 
+  // KPI states
   const [activeStations, setActiveStations] = useState<number | null>(null);
+  const [totalCustomers, setTotalCustomers] = useState<number | null>(null);
+  const [totalSwaps, setTotalSwaps] = useState<number | null>(null);
+
   useEffect(() => {
     async function loadActive() {
       try {
@@ -134,12 +164,11 @@ export function AdminDashboardPage({
     }
     loadActive();
   }, []);
-  const [totalCustomers, setTotalCustomers] = useState<number | null>(null);
+
   useEffect(() => {
     async function loadCustomers() {
       try {
         const count = await fetchTotalCustomers(1, 20);
-        console.log(count);
         setTotalCustomers(count);
       } catch (error) {
         console.log("Failed to load customers", error);
@@ -148,12 +177,10 @@ export function AdminDashboardPage({
     loadCustomers();
   }, []);
 
-  const [totalSwaps, setTotalSwaps] = useState<number | null>(null);
   useEffect(() => {
     async function loadSwaps() {
       try {
         const total = await getTotalCompletedSwaps();
-        console.log(total);
         setTotalSwaps(total);
       } catch (error) {
         console.error(error);
@@ -176,6 +203,167 @@ export function AdminDashboardPage({
     loadTotals();
   }, []);
 
+  // Load battery requests
+  useEffect(() => {
+    async function loadBatteryRequests() {
+      try {
+        const requests = await fetchBatteryRequests();
+        setBatteryRequests(requests);
+      } catch (error) {
+        console.error("Error loading battery requests:", error);
+      }
+    }
+    loadBatteryRequests();
+  }, []);
+
+  // Load notifications
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchNotifications(1, 10);
+        setNotifications(data.items);
+
+        // Count unread
+        const unread = data.items.filter((n: Notification) => !n.isRead).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Format notification message với thông tin từ battery request
+  const formatNotificationMessage = (
+    notification: Notification,
+    totalQuantity?: number
+  ): string => {
+    if (notification.type !== 2 || !notification.relatedEntityId) {
+      return notification.message;
+    }
+
+    const batteryRequest = batteryRequests.find(
+      (req) => req.id === notification.relatedEntityId
+    );
+
+    if (!batteryRequest) {
+      return notification.message;
+    }
+
+    const quantity = totalQuantity || batteryRequest.quantity;
+
+    // Format message theo status
+    if (batteryRequest.status === 1) {
+      return `Nhân viên trạm ${batteryRequest.stationName} đã xác nhận đủ ${quantity} pin được gửi tới`;
+    } else if (batteryRequest.status === 2) {
+      return `Nhân viên trạm ${batteryRequest.stationName} đã từ chối ${quantity} pin`;
+    } else {
+      return `Yêu cầu gửi ${quantity} pin đến ${batteryRequest.stationName} đang chờ xử lý`;
+    }
+  };
+
+  // Gộp notifications theo thời gian và status
+  const groupNotificationsByTime = (
+    notifications: Notification[]
+  ): Notification[] => {
+    const grouped: Record<
+      string,
+      Notification & {
+        totalQuantity?: number;
+        stationName?: string;
+        status?: number;
+      }
+    > = {};
+
+    notifications.forEach((item) => {
+      const batteryReq = batteryRequests.find(
+        (r) => r.id === item.relatedEntityId
+      );
+
+      if (!batteryReq) return;
+
+      // Sử dụng updatedAt của battery request để gộp (khi staff confirm/reject)
+      const updatedAtSecond = new Date(batteryReq.updatedAt);
+      updatedAtSecond.setMilliseconds(0);
+
+      // Key gộp: thời gian + trạm + status (để gộp đúng các request cùng trạm, cùng status, cùng thời điểm)
+      const timeKey = `${updatedAtSecond.toISOString()}-${
+        batteryReq.stationId
+      }-${batteryReq.status}`;
+
+      if (!grouped[timeKey]) {
+        // Tạo nhóm mới
+        grouped[timeKey] = {
+          ...item,
+          mergedIds: [item.id],
+          totalQuantity: batteryReq.quantity,
+          stationName: batteryReq.stationName,
+          status: batteryReq.status,
+          createdAt: batteryReq.updatedAt, // Dùng updatedAt để sort đúng
+        };
+      } else {
+        // Gộp vào nhóm đã có
+        grouped[timeKey].mergedIds = [
+          ...(grouped[timeKey].mergedIds || []),
+          item.id,
+        ];
+
+        // Cộng dồn số lượng pin
+        if (grouped[timeKey].totalQuantity !== undefined) {
+          grouped[timeKey].totalQuantity! += batteryReq.quantity;
+        }
+      }
+    });
+
+    return Object.values(grouped)
+      .map((n) => {
+        if (
+          n.type === 2 &&
+          n.totalQuantity &&
+          n.stationName &&
+          n.status !== undefined
+        ) {
+          if (n.status === 1) {
+            return {
+              ...n,
+              message: `Nhân viên trạm ${n.stationName} đã xác nhận đủ ${n.totalQuantity} pin được gửi tới`,
+            };
+          } else if (n.status === 2) {
+            return {
+              ...n,
+              message: `Nhân viên trạm ${n.stationName} đã từ chối ${n.totalQuantity} pin`,
+            };
+          } else {
+            return {
+              ...n,
+              message: `Yêu cầu gửi ${n.totalQuantity} pin đến ${n.stationName} đang chờ xử lý`,
+            };
+          }
+        }
+        return n;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+  };
+
+  // Handle mark as read
+  const handleMarkAsRead = async (notification: Notification) => {
+    try {
+      const idsToMark = notification.mergedIds || [notification.id];
+      await markMultipleAsRead(idsToMark);
+
+      setNotifications((prev) =>
+        prev.map((n) => (idsToMark.includes(n.id) ? { ...n, isRead: true } : n))
+      );
+
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
@@ -184,7 +372,7 @@ export function AdminDashboardPage({
             <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
                 <img
-                  src="src/assets/logoEV2.png "
+                  src="src/assets/logoEV2.png"
                   alt="FPTFAST Logo"
                   className="w-10 h-9 rounded-lg"
                 />
@@ -251,7 +439,6 @@ export function AdminDashboardPage({
                       <span>{t("admin.staff")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("add-account")}
@@ -262,26 +449,16 @@ export function AdminDashboardPage({
                       <span>Thêm người dùng</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {/* <SidebarMenuItem>
+                  <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => setActiveSection("ai-insights")}
-                      isActive={activeSection === "ai-insights"}
+                      onClick={() => setActiveSection("request-history")}
+                      isActive={activeSection === "request-history"}
                       className="h-[50px]"
                     >
-                      <Brain className="w-4 h-4" />
-                      <span>{t("admin.aiInsights")}</span>
+                      <Package className="w-4 h-4" />
+                      <span>Lịch sử yêu cầu</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem> */}
-                  {/* <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("alerts")}
-                      isActive={activeSection === "alerts"}
-                      className="h-[50px]"
-                    >
-                      <Bell className="w-4 h-4" />
-                      <span>{t("admin.alerts")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem> */}
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -319,20 +496,65 @@ export function AdminDashboardPage({
                   {activeSection === "batteries" && t("admin.batteries")}
                   {activeSection === "customers" && t("admin.customers")}
                   {activeSection === "staff" && t("admin.staff")}
-                  {activeSection === "ai-insights" && t("admin.aiInsights")}
-                  {activeSection === "alerts" && t("admin.alerts")}
-                  {activeSection === "add-account" && "Add Account"}
+                  {activeSection === "add-account" && "Thêm người dùng"}
+                  {activeSection === "request-history" &&
+                    "Lịch sử yêu cầu gửi pin"}
                 </h1>
               </div>
 
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-4 h-4" />
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
-                    3
-                  </Badge>
-                </Button>
+
+                {/* Notification Bell */}
+                <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="w-4 h-4" />
+                      {unreadCount > 0 && (
+                        <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-80 p-2">
+                    <h3 className="text-sm font-semibold text-orange-600 mb-2">
+                      Thông báo
+                    </h3>
+                    {notifications.length === 0 ? (
+                      <p className="text-gray-500 text-sm">
+                        Không có thông báo nào
+                      </p>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {groupNotificationsByTime(notifications).map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => handleMarkAsRead(n)}
+                            className={`p-2 rounded-lg cursor-pointer mb-1 ${
+                              n.isRead
+                                ? "bg-gray-100 hover:bg-gray-200"
+                                : "bg-orange-100 hover:bg-orange-200"
+                            }`}
+                          >
+                            <p className="text-sm font-medium text-gray-800">
+                              {n.message}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(n.createdAt).toLocaleString("vi-VN")}
+                            </p>
+                            {n.mergedIds && n.mergedIds.length > 1 && (
+                              <p className="text-xs text-orange-600 mt-1">
+                                Gộp {n.mergedIds.length} thông báo
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </header>
@@ -366,10 +588,6 @@ export function AdminDashboardPage({
                       {t("admin.totalSwaps")}
                     </p>
                     <p className="text-2xl font-bold">{totalSwaps}</p>
-                    {/* <div className="flex items-center mt-1">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">+8.3%</span>
-                    </div> */}
                   </div>
                   <Battery className="w-8 h-8 text-blue-500" />
                 </div>
@@ -386,12 +604,6 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       {activeStations !== null ? activeStations : "…"}
                     </p>
-                    {/* <div className="flex items-center mt-1">
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">
-                        {t("admin.allOnline")}
-                      </span>
-                    </div> */}
                   </div>
                   <MapPin className="w-8 h-8 text-purple-500" />
                 </div>
@@ -408,12 +620,6 @@ export function AdminDashboardPage({
                     <p className="text-2xl font-bold">
                       {totalCustomers !== null ? totalCustomers : "..."}
                     </p>
-                    {/* <div className="flex items-center mt-1">
-                      <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">
-                        +156 {t("admin.newCustomers")}
-                      </span>
-                    </div> */}
                   </div>
                   <Users className="w-8 h-8 text-orange-500" />
                 </div>
@@ -435,13 +641,11 @@ export function AdminDashboardPage({
 
             {activeSection === "staff" && <StaffManagement />}
 
-            {/* {activeSection === "ai-insights" && (
-              <AIInsights demandForecast={demandForecast} />
-            )} */}
-
             {activeSection === "alerts" && <AlertsManagement alerts={alerts} />}
 
             {activeSection === "add-account" && <AddUser />}
+
+            {activeSection === "request-history" && <RequestForStation />}
           </main>
         </SidebarInset>
       </div>
