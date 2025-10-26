@@ -125,7 +125,10 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
     {
       id: "battery-request",
       label: "Yêu cầu nhập pin",
-      icon: Inbox, // Sử dụng icon Inbox để phân biệt với Quản lý pin
+      icon: Inbox,
+    },
+    {
+      // Sử dụng icon Inbox để phân biệt với Quản lý pin
       id: "cash-payments",
       label: "Xác nhận tiền mặt",
       icon: CreditCardIcon,

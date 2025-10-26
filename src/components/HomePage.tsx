@@ -400,7 +400,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => handleNavigateToDashboard('map')}
+                  onClick={() => handleNavigateToDashboard("map")}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   {"Đặt lịch"}
@@ -447,7 +447,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      {/* <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -460,7 +460,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Features Section */}
       <section id="features" className="py-15 bg-gray-50">
