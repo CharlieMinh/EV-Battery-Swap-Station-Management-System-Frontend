@@ -1,413 +1,276 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Users,
-  QrCode,
-  Search,
-  RefreshCw,
-  AlertCircle,
-  Calendar,
-  MapPin,
-  Battery,
-  User as UserIcon,
-  Car,
-  DollarSign,
-  Star,
-  Receipt,
-} from 'lucide-react';
-import { toast } from 'react-toastify';
-import {
-  getSlotReservations,
-  getReservationById,
-  checkInReservation,
-  cancelReservation,
-  getCurrentSwap,
-  getSwapHistory,
-  type SlotReservation,
-  type SwapTransaction,
-  type CheckInRequest,
-  type CancelReservationRequest,
-} from '../../services/staff/queueApi';
-import { format } from 'date-fns';
+// src/components/staff/QueueManagement.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { listReservations, checkInReservation, type Reservation } from "../../services/staff/staffApi";
+import CheckInManagement from "./CheckInManagement";
+import InspectionPanel from "./InspectionPanel";
+import SwapPanel from "./SwapPanel";
+import { ClipboardCheck, RefreshCw } from "lucide-react";
 
-interface QueueManagementProps {
-  stationId?: number | string;
-  userId?: string;
-}
+type Stage = "idle" | "checking" | "readyToSwap";
 
-export function QueueManagement({ stationId, userId }: QueueManagementProps) {
-  // ✅ Xử lý userId an toàn
-  const resolvedUserId =
-    userId && userId !== 'temp-id' && userId !== 'undefined'
-      ? userId
-      : localStorage.getItem('userId') || '';
+const STATUS_OPTIONS = [
+  { label: "Tất cả", value: "" },
+  { label: "Đang chờ", value: "Pending" },
+  { label: "Đã check-in", value: "CheckedIn" },
+  { label: "Đã hoàn tất", value: "Completed" },
+  { label: "Đã hủy", value: "Cancelled" },
+  { label: "Hết hạn", value: "Expired" },
+];
 
-  if (!resolvedUserId) {
-    console.warn('⚠️ userId is missing! API calls will be skipped.');
+const statusToVi = (s?: string) => {
+  switch ((s || "").toLowerCase()) {
+    case "pending": return "Đang chờ";
+    case "checkedin": return "Đã check-in";
+    case "completed": return "Đã hoàn tất";
+    case "cancelled": return "Đã hủy";
+    case "expired": return "Hết hạn";
+    default: return s || "—";
+  }
+};
+
+/** Ghép slotDate (YYYY-MM-DD) + slotStartTime/slotEndTime (HH:mm:ss)
+ *  Fallback: checkInWindow.earliestTime/latestTime (ISO) → startTime/endTime (ISO).
+ */
+function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
+  const date = r?.slotDate;                  // "2025-10-26"
+  const startStr = r?.slotStartTime;         // "11:38:00"
+  const endStr = r?.slotEndTime;             // "12:08:00"
+
+  const makeISO = (d: string, t: string) => {
+    // đảm bảo HH:mm:ss
+    const time = /^\d{2}:\d{2}:\d{2}$/.test(t) ? t : (t ? `${t}:00` : "");
+    return time ? `${d}T${time}` : "";
+  };
+
+  if (date && startStr && endStr) {
+    const s = makeISO(date, startStr);
+    const e = makeISO(date, endStr);
+    const sd = s ? new Date(s) : null;
+    const ed = e ? new Date(e) : null;
+    if (sd && !isNaN(+sd) && ed && !isNaN(+ed)) return { start: sd, end: ed };
   }
 
-  console.log('🔍 QueueManagement using:', {
-    stationId,
-    userId,
-    resolvedUserId,
-  });
+  const cw = r?.checkInWindow;
+  if (cw?.earliestTime && cw?.latestTime) {
+    const sd = new Date(cw.earliestTime);
+    const ed = new Date(cw.latestTime);
+    if (!isNaN(+sd) && !isNaN(+ed)) return { start: sd, end: ed };
+  }
 
-  const [activeTab, setActiveTab] = useState('queue');
-  const [reservations, setReservations] = useState<SlotReservation[]>([]);
-  const [currentSwap, setCurrentSwap] = useState<SwapTransaction | null>(null);
-  const [swapHistory, setSwapHistory] = useState<SwapTransaction[]>([]);
+  if (r?.startTime && r?.endTime) {
+    const sd = new Date(r.startTime);
+    const ed = new Date(r.endTime);
+    if (!isNaN(+sd) && !isNaN(+ed)) return { start: sd, end: ed };
+  }
+
+  return { start: null, end: null };
+}
+
+export default function QueueManagement({ stationId }: { stationId: string | number }) {
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [status, setStatus] = useState<string>(""); // '' = Tất cả
+  const [list, setList] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedReservation, setSelectedReservation] =
-    useState<SlotReservation | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [showCheckInDialog, setShowCheckInDialog] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [qrCodeData, setQrCodeData] = useState('');
-  const [cancelReason, setCancelReason] = useState<0 | 1 | 2 | 3>(1);
-  const [cancelNote, setCancelNote] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    if (!resolvedUserId) return; // ❌ tránh gọi API khi userId rỗng
-    fetchReservations();
-    fetchCurrentSwap();
-    fetchSwapHistory();
-  }, [stationId, filterStatus]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("idle");
+  const [oldSerial, setOldSerial] = useState("");
 
-  const fetchReservations = async () => {
-    if (!resolvedUserId) {
-      console.warn('❌ Skipped fetchReservations: Missing valid userId');
-      return;
-    }
+  const selected = useMemo(
+    () => list.find((x) => x.reservationId === selectedId) || null,
+    [list, selectedId]
+  );
 
+  const fetchList = async () => {
+    if (!stationId) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      const today = format(new Date(), 'yyyy-MM-dd');
-
-      let statusFilter: string | undefined;
-      if (filterStatus !== 'all') {
-        const statusMap: Record<string, string> = {
-          Pending: '0',
-          CheckedIn: '1',
-          Completed: '2',
-          Cancelled: '3',
-          Expired: '4',
-        };
-        statusFilter = statusMap[filterStatus];
-      }
-
-      console.log('📦 Fetching reservations:', {
-        date: today,
-        stationId: stationId?.toString(),
-        status: statusFilter,
-        userId: resolvedUserId,
-      });
-
-      const data = await getSlotReservations(
-        today,
-        stationId?.toString(),
-        statusFilter,
-        resolvedUserId
-      );
-      setReservations(data);
-    } catch (error: any) {
-      toast.error(
-        'Không thể tải danh sách hàng chờ: ' +
-          (error.response?.data?.message || error.message)
-      );
-      console.error('Fetch reservations error:', error);
+      const params = { stationId, date, status: status || undefined };
+      const { data } = await listReservations(params);
+      setList(data || []);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCurrentSwap = async () => {
-    try {
-      const data = await getCurrentSwap();
-      setCurrentSwap(data);
-    } catch (error: any) {
-      console.error('Error fetching current swap:', error);
-    }
+  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [stationId, date, status]);
+
+  const doCheckInByQr = async (id: string) => {
+    await checkInReservation(id, { bayCode: "AUTO", notes: "" });
+    alert("Check-in thành công: " + id);
+    setScannerOpen(false);
+    setStatus("CheckedIn");
+    await fetchList();
+    setSelectedId(id);
+    setStage("checking");
+    setOldSerial("");
   };
 
-  const fetchSwapHistory = async (page: number = 1) => {
-    try {
-      const data = await getSwapHistory(page, 10);
-      setSwapHistory(data.transactions);
-      setTotalPages(data.totalPages);
-      setCurrentPage(page);
-    } catch (error: any) {
-      toast.error(
-        'Không thể tải lịch sử: ' +
-          (error.response?.data?.message || error.message)
-      );
-    }
+  const startChecking = (id: string) => {
+    setSelectedId(id);
+    setStage("checking");
+    setOldSerial("");
   };
 
-  const handleViewDetail = (reservation: SlotReservation) => {
-    setSelectedReservation(reservation);
-    setShowDetailDialog(true);
+  const onInspectionDone = (serial: string) => {
+    setOldSerial(serial);
+    setStage("readyToSwap");
   };
 
-  const handleCheckIn = (reservation: SlotReservation) => {
-    setSelectedReservation(reservation);
-    setShowCheckInDialog(true);
+  const closePanel = () => {
+    setSelectedId(null);
+    setStage("idle");
+    setOldSerial("");
   };
 
-  const handleCancelReservation = (reservation: SlotReservation) => {
-    setSelectedReservation(reservation);
-    setShowCancelDialog(true);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusMap = {
-      'Pending': { label: 'Chờ xử lý', color: 'bg-yellow-100 text-yellow-800' },
-      'CheckedIn': { label: 'Đã check-in', color: 'bg-blue-100 text-blue-800' },
-      'Completed': { label: 'Hoàn thành', color: 'bg-green-100 text-green-800' },
-      'Cancelled': { label: 'Đã hủy', color: 'bg-red-100 text-red-800' },
-      'Expired': { label: 'Hết hạn', color: 'bg-gray-100 text-gray-800' },
-    };
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap['Pending'];
-    return (
-      <Badge className={statusInfo.color}>
-        {statusInfo.label}
-      </Badge>
-    );
-  };
-
-  const getSwapStatusBadge = (status: string) => {
-    const statusMap = {
-      'CheckedIn': { label: 'Đã check-in', color: 'bg-blue-100 text-blue-800' },
-      'BatteryIssued': { label: 'Đã cấp pin', color: 'bg-yellow-100 text-yellow-800' },
-      'BatteryReturned': { label: 'Đã trả pin', color: 'bg-purple-100 text-purple-800' },
-      'Completed': { label: 'Hoàn thành', color: 'bg-green-100 text-green-800' },
-      'Cancelled': { label: 'Đã hủy', color: 'bg-red-100 text-red-800' },
-    };
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap['CheckedIn'];
-    return (
-      <Badge className={statusInfo.color}>
-        {statusInfo.label}
-      </Badge>
-    );
+  const badgeClass = (s?: string) => {
+    const key = (s || "").toLowerCase();
+    if (key === "checkedin") return "bg-emerald-100 text-emerald-700";
+    if (key === "pending") return "bg-amber-100 text-amber-700";
+    if (key === "completed") return "bg-blue-100 text-blue-700";
+    if (key === "cancelled") return "bg-rose-100 text-rose-700";
+    if (key === "expired") return "bg-gray-200 text-gray-600";
+    return "bg-gray-100 text-gray-700";
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-orange-600">Quản lý hàng chờ</h2>
-        <Button
-          onClick={fetchReservations}
-          disabled={loading}
-          className="gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+    <div className="grid gap-4">
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="text-xs block">Ngày</label>
+          <input
+            type="date"
+            className="border rounded px-3 py-2 w-44"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs block">Trạng thái</label>
+          <select
+            className="border rounded px-3 py-2 w-56"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value || "ALL"} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button onClick={fetchList} className="border rounded px-3 py-2 inline-flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
           Làm mới
-        </Button>
+        </button>
+
+        <button
+          onClick={() => setScannerOpen(true)}
+          className="bg-black text-white rounded px-3 py-2 inline-flex items-center gap-2"
+        >
+          <ClipboardCheck className="h-4 w-4" />
+          Check-in bằng camera
+        </button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="queue">Hàng chờ</TabsTrigger>
-          <TabsTrigger value="current">Giao dịch hiện tại</TabsTrigger>
-          <TabsTrigger value="history">Lịch sử</TabsTrigger>
-        </TabsList>
+      <div className="overflow-x-auto rounded-lg border bg-white">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left">
+            <tr>
+              <th className="px-3 py-2">Reservation</th>
+              <th className="px-3 py-2">Khách</th>
+              <th className="px-3 py-2">Xe</th>
+              <th className="px-3 py-2">Model pin</th>
+              <th className="px-3 py-2">Khung giờ</th>
+              <th className="px-3 py-2">Trạng thái</th>
+              <th className="px-3 py-2 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && (
+              <tr><td colSpan={7} className="px-3 py-6 text-center">Đang tải...</td></tr>
+            )}
+            {!loading && list.length === 0 && (
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-500">Không có lượt nào</td></tr>
+            )}
 
-        <TabsContent value="queue" className="space-y-4">
-          <Card className="border border-orange-200 rounded-lg">
-            <CardHeader>
-              <CardTitle className="text-orange-600">Danh sách đặt lịch</CardTitle>
-              <CardDescription>
-                Quản lý các đặt lịch thay pin tại trạm
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-gray-400" />
-                  <p className="text-gray-500">Đang tải dữ liệu...</p>
-                </div>
-              ) : reservations.length === 0 ? (
-                <div className="text-center py-8">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">Không có đặt lịch nào</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {reservations.map((reservation) => (
-                    <Card key={reservation.id} className="border border-gray-200">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium">{reservation.reservationId}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Car className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm text-gray-600">{reservation.batteryModelName}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm text-gray-600">
-                                {format(new Date(reservation.slotDate + 'T' + reservation.slotStartTime), 'dd/MM/yyyy HH:mm')}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {getStatusBadge(reservation.status)}
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewDetail(reservation)}
-                              >
-                                Xem chi tiết
-                              </Button>
-                              {reservation.status === 'Pending' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleCheckIn(reservation)}
-                                >
-                                  Check-in
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            {list.map((r) => {
+              const isSel = selectedId === r.reservationId;
+              const canStart = (r as any).status === "CheckedIn";
 
-        <TabsContent value="current" className="space-y-4">
-          <Card className="border border-orange-200 rounded-lg">
-            <CardHeader>
-              <CardTitle className="text-orange-600">Giao dịch hiện tại</CardTitle>
-              <CardDescription>
-                Theo dõi giao dịch thay pin đang diễn ra
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {currentSwap ? (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold">{currentSwap.userEmail}</h3>
-                      <p className="text-sm text-gray-600">{currentSwap.vehicleModel}</p>
-                    </div>
-                    {getSwapStatusBadge(currentSwap.status)}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-gray-600">Trạm</Label>
-                      <p className="font-medium">{currentSwap.stationName}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-600">Biển số xe</Label>
-                      <p className="font-medium">{currentSwap.vehicleLicensePlate}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">Không có giao dịch nào đang diễn ra</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              const { start, end } = resolveSlotRange(r);
+              const startLabel = start ? start.toLocaleString() : "—";
+              const endLabel = end ? end.toLocaleString() : "—";
 
-        <TabsContent value="history" className="space-y-4">
-          <Card className="border border-orange-200 rounded-lg">
-            <CardHeader>
-              <CardTitle className="text-orange-600">Lịch sử giao dịch</CardTitle>
-              <CardDescription>
-                Xem lịch sử các giao dịch thay pin đã hoàn thành
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {swapHistory.length === 0 ? (
-                <div className="text-center py-8">
-                  <Receipt className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">Chưa có lịch sử giao dịch</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {swapHistory.map((transaction) => (
-                    <Card key={transaction.id} className="border border-gray-200">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium">{transaction.userEmail}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Car className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm text-gray-600">{transaction.vehicleModel}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm text-gray-600">
-                                {transaction.issuedBatterySerial || 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {getSwapStatusBadge(transaction.status)}
-                            <div className="text-right">
-                              <p className="text-sm text-gray-600">Trạm</p>
-                              <p className="font-medium">{transaction.stationName}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              const userLabel = (r as any).userName || r.userId || "—";
+              const vehicleLabel = (r as any).vehiclePlate || (r as any).vehicleModelName || (r as any).vehicleId || "—";
+
+              return (
+                <React.Fragment key={r.reservationId}>
+                  <tr className="border-t align-top">
+                    <td className="px-3 py-2">{r.reservationId}</td>
+                    <td className="px-3 py-2">{userLabel}</td>
+                    <td className="px-3 py-2">{vehicleLabel}</td>
+                    <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId}</td>
+                    <td className="px-3 py-2">
+                      <div className="text-xs">{startLabel}</div>
+                      <div className="text-xs text-gray-500">→ {endLabel}</div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-1 text-xs ${badgeClass((r as any).status)}`}>
+                        {statusToVi((r as any).status)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {canStart ? (
+                        <button
+                          onClick={() => startChecking(r.reservationId)}
+                          className={`${isSel ? "bg-black text-white" : "border"} rounded px-3 py-2`}
+                        >
+                          {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">Hãy check-in trước</span>
+                      )}
+                    </td>
+                  </tr>
+
+                  {isSel && (
+                    <tr className="bg-gray-50/50">
+                      <td colSpan={7} className="p-3">
+                        {stage === "checking" && selected && (
+                          <InspectionPanel
+                            reservation={selected}
+                            onDone={(s) => onInspectionDone(s)}
+                            onCancel={closePanel}
+                          />
+                        )}
+                        {stage === "readyToSwap" && selected && (
+                          <SwapPanel
+                            reservation={selected}
+                            oldBatterySerial={oldSerial}
+                            onSwapped={() => closePanel()}
+                            onCancel={closePanel}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <CheckInManagement
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onDetected={doCheckInByQr}
+      />
     </div>
   );
 }

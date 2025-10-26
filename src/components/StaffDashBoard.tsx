@@ -1,28 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  BarChart3,
+  UserCircle,
   ClipboardList,
-  Package,
-  DollarSign,
-  FileText,
+  CreditCard,
+  Warehouse,
+  BarChart2,
   LogOut,
-  User as UserIcon,
-  Bell,
+  Save,
 } from "lucide-react";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { LanguageSwitcher } from "./LanguageSwitcher";
-import { useLanguage } from "./LanguageContext";
-import { Avatar, AvatarFallback } from "./ui/avatar";
-import { User } from "../App";
-import { StaffDashboard } from "./staff/StaffDashboard";
-import { QueueManagement } from "./staff/QueueManagement";
-import { InventoryManagement } from "./staff/InventoryManagement";
-import { ProfileManagement } from "./staff/ProfileManagement";
-import { TransactionManagement } from "./staff/TransactionManagement";
-import { RevenueTracking } from "./staff/RevenueTracking";
-import { BatteryConditionCheck } from "./staff/BatteryConditionCheck";
-import staffApi, { Battery, Booking, Transaction, DailyStats } from "../services/staffApi";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -36,96 +25,82 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "./ui/sidebar";
+} from "../components/ui/sidebar";
+import { Bell } from "lucide-react";
 
-interface StaffPortalPageProps {
-  user: User;
+import ProfileManagement from "./staff/ProfileManagement";
+import QueueManagement from "./staff/QueueManagement";
+import Transactions from "./staff/Transactions";
+import InventoryManagement from "./staff/InventoryManagement";
+import Revenue from "./staff/Revenue";
+
+import { getMe, type UserMe } from "../services/staff/staffApi";
+
+type TabKey = "profile" | "queue" | "transactions" | "inventory" | "revenue";
+const STATION_OVERRIDE_KEY = "staffStationIdOverride";
+
+interface StaffDashboardPageProps {
+  user: { name: string; email: string };
   onLogout: () => void;
 }
 
-export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
-  const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState("profile");
-  const [dailyStats, setDailyStats] = useState<DailyStats>({
-    totalSwaps: 0,
-    revenue: 0,
-    avgSwapTime: 0,
-    customerRating: 0,
-    lowBatteryAlerts: 0,
-    maintenanceNeeded: 0,
-  });
+export default function StaffDashboard({ user, onLogout }: StaffDashboardPageProps) {
+  const [active, setActive] = useState<TabKey>("queue");
+  const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const [overrideInput, setOverrideInput] = useState(
+    localStorage.getItem(STATION_OVERRIDE_KEY) || ""
+  );
 
   useEffect(() => {
-    const fetchDailyStats = async () => {
+    (async () => {
       try {
-        if (user.stationId) {
-          const stats = await staffApi.getDailyStats(user.id, user.stationId.toString());
-          setDailyStats(stats);
-        }
-      } catch (error) {
-        console.error("Error fetching daily stats:", error);
+        const { data } = await getMe();
+        setMe(data);
+      } catch (e) {
+        console.error("Lỗi tải người dùng:", e);
+        setErr("Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.");
       } finally {
         setLoading(false);
       }
-    };
-    fetchDailyStats();
-  }, [user.id, user.stationId]);
+    })();
+  }, []);
 
-  const menuItems = [
-    {
-      id: "profile",
-      label: "Thông tin cá nhân",
-      icon: UserIcon,
-    },
-    {
-      id: "queue",
-      label: "Quản lý hàng chờ",
-      icon: ClipboardList,
-    },
-    {
-      id: "inventory",
-      label: "Quản lý pin",
-      icon: Package,
-    },
-    {
-      id: "transaction",
-      label: "Quản lý giao dịch",
-      icon: FileText,
-    },
-    {
-      id: "revenue",
-      label: "Theo dõi doanh thu",
-      icon: DollarSign,
-    },
-  ];
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem(STATION_OVERRIDE_KEY);
+    onLogout();
+  };
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      );
-    }
+  const stationIdFromMe = me?.stationId || null;
+  const stationIdOverride = localStorage.getItem(STATION_OVERRIDE_KEY);
+  const stationId = stationIdFromMe ?? stationIdOverride ?? null;
 
-    switch (activeSection) {
-      case "profile":
-        return <ProfileManagement userId={user.id} stationId={user.stationId?.toString()} />;
-      case "queue":
-        return <QueueManagement stationId={user.stationId?.toString() || ""} userId={user.id} />;
-      case "inventory":
-        return <InventoryManagement stationId={user.stationId?.toString()} />;
-       case "transaction":
-         return <TransactionManagement recentTransactions={[]} />;
-       case "revenue":
-         return <RevenueTracking stationId={Number(user.stationId) || 1} />;
-      default:
-        return <StaffDashboard dailyStats={dailyStats} />;
-    }
+  const menu = useMemo(
+    () => [
+      { key: "profile", label: "Thông tin cá nhân", icon: UserCircle },
+      { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
+      { key: "transactions", label: "Giao dịch", icon: CreditCard },
+      { key: "inventory", label: "Kho pin", icon: Warehouse },
+      { key: "revenue", label: "Doanh thu", icon: BarChart2 },
+    ],
+    []
+  );
+
+  const saveOverride = () => {
+    const v = overrideInput.trim();
+    if (!v) return alert("Vui lòng nhập StationId hợp lệ.");
+    localStorage.setItem(STATION_OVERRIDE_KEY, v);
+    alert("Đã lưu StationId, các tab sẽ dùng giá trị này.");
+  };
+
+  const clearOverride = () => {
+    localStorage.removeItem(STATION_OVERRIDE_KEY);
+    setOverrideInput("");
+    alert("Đã xoá StationId nhập tay.");
   };
 
   return (
@@ -135,13 +110,17 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           <SidebarHeader>
             <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
-                <UserIcon className="w-6 h-6 text-white" />
+                <img
+                  src="src/assets/logoEV2.png "
+                  alt="FPTFAST Logo"
+                  className="w-10 h-9 rounded-lg"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-lg text-white font-semibold">
-                  Staff Portal
+                  F P T F A S T
                 </span>
-                <span className="text-sm font-medium text-gray-100">EVBSS Staff</span>
+                <span className="text-sm font-medium text-gray-100">Staff</span>
               </div>
             </div>
           </SidebarHeader>
@@ -149,15 +128,15 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
+                  {menu.map((m) => (
+                    <SidebarMenuItem key={m.key}>
                       <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
+                        onClick={() => setActive(m.key as TabKey)}
+                        isActive={active === m.key}
                         className="h-[50px]"
                       >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.label}</span>
+                        <m.icon className="w-4 h-4" />
+                        <span>{m.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -168,7 +147,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
           <SidebarFooter>
             <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
@@ -178,7 +157,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                 variant="ghost"
                 size="sm"
                 className="shrink-0"
-                onClick={onLogout}
+                onClick={logout}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -193,7 +172,7 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {menuItems.find((i) => i.id === activeSection)?.label}
+                  {menu.find((m) => m.key === active)?.label || "Bảng điều khiển"}
                 </h1>
               </div>
 
@@ -205,16 +184,66 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
                     3
                   </Badge>
                 </Button>
-                <Badge variant="outline" className="text-orange-600 border-orange-300">
-                  Trạm #{user.stationId}
-                </Badge>
               </div>
             </div>
           </header>
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {renderContent()}
+            {loading && (
+              <div className="rounded-2xl bg-white shadow-lg p-5 text-sm text-gray-500">
+                Đang tải…
+              </div>
+            )}
+
+            {!loading && err && (
+              <div className="rounded-2xl bg-white shadow-lg p-5 text-sm text-rose-600">
+                {err}
+              </div>
+            )}
+
+            {!loading && !err && me?.role === "Staff" && !stationIdFromMe && (
+              <div className="rounded-2xl border bg-white shadow-lg p-5 mb-6">
+                <div className="text-amber-700 text-lg font-semibold mb-2">
+                  Không xác định được <b>stationId</b>.
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  /auth/me chưa trả về stationId. Nhập thủ công để tiếp tục:
+                </p>
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="flex-1 min-w-[260px]">
+                    <label className="text-xs block mb-1">StationId</label>
+                    <input
+                      value={overrideInput}
+                      onChange={(e) => setOverrideInput(e.target.value)}
+                      placeholder="VD: 8B3E423D-7EB1-4559-B6FE-2974CC64ABDE"
+                      className="border rounded px-3 py-2 w-full"
+                    />
+                  </div>
+                  <button
+                    onClick={saveOverride}
+                    className="inline-flex items-center gap-2 bg-black text-white rounded px-3 py-2"
+                  >
+                    <Save className="h-4 w-4" /> Lưu StationId
+                  </button>
+                  {stationIdOverride && (
+                    <button onClick={clearOverride} className="border rounded px-3 py-2">
+                      Xoá
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!loading && !err && (
+              <>
+                {active === "profile" && <ProfileManagement />}
+                {active === "queue" && <QueueManagement stationId={stationId || ""} />}
+                {active === "transactions" && <Transactions />}
+                {active === "inventory" && <InventoryManagement stationId={stationId || ""} />}
+                {active === "revenue" && <Revenue />}
+              </>
+            )}
           </main>
         </SidebarInset>
       </div>
