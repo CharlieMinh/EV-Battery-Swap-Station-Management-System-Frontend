@@ -9,6 +9,7 @@ import {
   User as UserIcon,
   Bell,
   Inbox,
+  CreditCardIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -56,6 +57,7 @@ import {
   Notification,
 } from "@/services/admin/notifications";
 import RequestBattery from "./staff/RequestBattery";
+import { StaffCashPaymentManagement } from "./staff/StaffCashPaymentManagement";
 
 interface StaffPortalPageProps {
   user: User;
@@ -124,6 +126,9 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       id: "battery-request",
       label: "Yêu cầu nhập pin",
       icon: Inbox, // Sử dụng icon Inbox để phân biệt với Quản lý pin
+      id: "cash-payments",
+      label: "Xác nhận tiền mặt",
+      icon: CreditCardIcon,
     },
   ];
 
@@ -205,6 +210,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         return <RevenueTracking stationId={Number(user.stationId) || 1} />;
       case "battery-request":
         return <RequestBattery />;
+      case "cash-payments":
+        return <StaffCashPaymentManagement />;
       default:
         return <StaffDashboard dailyStats={dailyStats} />;
     }
