@@ -88,7 +88,9 @@ export async function fetchModelBattery(): Promise<BatteryModel[]> {
 export async function fetchBatteryRequests(): Promise<BatteryRequest[]> {
   try {
     const response = await api.get("/api/bulk-create-requests");
-    return response.data;
+    const data = response.data;
+    const sortedData = [...data].sort((a, b) => a.quantity - b.quantity);
+    return sortedData;
   } catch (error) {
     console.error("Error fetching battery requests:", error);
     throw error;

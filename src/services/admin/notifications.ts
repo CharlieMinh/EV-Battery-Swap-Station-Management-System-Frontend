@@ -87,6 +87,3 @@ export async function markMultipleAsRead(ids: string[]): Promise<void> {
   await Promise.all(ids.map((id) => api.post(`/api/notifications/${id}/mark-as-read`)));
 }
 
-export async function fetchRequest() {
-    
-}
