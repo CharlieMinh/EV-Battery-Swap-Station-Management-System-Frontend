@@ -1,64 +1,117 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { getMonthlyRevenue } from "@/services/admin/payment";
+import { useLanguage } from "../LanguageContext";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import {
+  ResponsiveContainer,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
+  Pie,
+  Cell,
+  PieChart,
 } from "recharts";
-import { Clock, Activity, Users, Gauge } from "lucide-react";
-import { useLanguage } from "../LanguageContext";
+import { fetchAllBatteries } from "@/services/admin/batteryService";
 
-interface RevenueData {
-  month: string;
+interface RevenueMonth {
+  month: string; // "YYYY-MM"
   revenue: number;
-  swaps: number;
-  growth: number;
-}
-
-interface BatteryHealth {
-  range: string;
-  count: number;
-  color: string;
-}
-
-interface KPIData {
-  avgSwapTime: number;
-  systemUptime: number;
-  customerSatisfaction: number;
-  batteryEfficiency: number;
 }
 
 interface AdminOverviewProps {
-  revenueData: RevenueData[];
-  batteryHealth: BatteryHealth[];
-  kpiData: KPIData;
+  batteryHealth: any[];
+  kpiData: any;
 }
 
-export function AdminOverview({
-  revenueData,
-  batteryHealth,
-  kpiData,
-}: AdminOverviewProps) {
+export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
   const { t } = useLanguage();
+  const [revenueData, setRevenueData] = useState<RevenueMonth[]>([]);
 
-  const pieData = batteryHealth.map((b) => ({
-    name: b.range,
-    value: b.count,
-    color: b.color,
-  }));
+  useEffect(() => {
+    async function fetchRevenue() {
+      const data = await getMonthlyRevenue(); // API trả về [{month: "YYYY-MM", revenue: number}, ...]
+
+      const monthNames = [
+        "Tháng 1",
+        "Tháng 2",
+        "Tháng 3",
+        "Tháng 4",
+        "Tháng 5",
+        "Tháng 6",
+        "Tháng 7",
+        "Tháng 8",
+        "Tháng 9",
+        "Tháng 10",
+        "Tháng 11",
+        "Tháng 12",
+      ];
+
+      const currentYear = new Date().getFullYear();
+
+      // Tạo object map để dễ lookup
+      const revenueMap: Record<number, number> = {};
+      data.forEach((d) => {
+        const date = new Date(d.month);
+        if (date.getFullYear() === currentYear) {
+          revenueMap[date.getMonth()] = d.revenue;
+        }
+      });
+
+      // Tạo mảng đầy đủ 12 tháng, nếu không có dữ liệu = 0
+      const fullData = monthNames.map((name, index) => ({
+        month: name,
+        revenue: revenueMap[index] || 0,
+      }));
+
+      setRevenueData(fullData);
+    }
+
+    fetchRevenue();
+  }, []);
+
+  const [batteryData, setBatteryData] = useState<
+    { name: string; count: number; color: string }[]
+  >([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const allBatteries = await fetchAllBatteries();
+
+        // Đếm số lượng pin theo batteryModelName
+        const modelCount: Record<string, number> = {};
+        allBatteries.forEach((b) => {
+          modelCount[b.batteryModelName] =
+            (modelCount[b.batteryModelName] || 0) + 1;
+        });
+
+        // Gán màu ngẫu nhiên hoặc theo danh sách cố định
+        const colors = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6"];
+
+        const pieData = Object.entries(modelCount).map(
+          ([name, count], index) => ({
+            name,
+            count,
+            color: colors[index % colors.length],
+          })
+        );
+
+        setBatteryData(pieData);
+      } catch (error) {
+        console.error("Error loading battery data:", error);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -76,12 +129,20 @@ export function AdminOverview({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis
-                  tickFormatter={(value) => `$${value.toLocaleString("en-US")}`}
+                  tickFormatter={(value) =>
+                    value.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })
+                  }
                 />
                 <Tooltip
                   formatter={(value) => [
-                    `$${(value as number).toLocaleString("en-US")}`,
-                    "Revenue",
+                    (value as number).toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }),
+                    "Doanh thu",
                   ]}
                 />
                 <Area
@@ -98,39 +159,44 @@ export function AdminOverview({
         <Card className="border border-orange-200 rounded-lg">
           <CardHeader>
             <CardTitle className="text-orange-600">
-              {t("admin.batteryHealthDistribution")}
+              {t("admin.totalStationBatteries") || "Tổng pin các trạm"}
             </CardTitle>
             <CardDescription>
-              {t("admin.batteryHealthDistributionDesc")}
+              {t("admin.totalStationBatteriesDesc") ||
+                "Biểu đồ thể hiện tổng số lượng pin tại tất cả các trạm"}
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={batteryData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
                   outerRadius={100}
                   dataKey="count"
+                  label={(entry) => entry.name}
                 >
-                  {batteryHealth.map((entry, index) => (
+                  {batteryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: number) => [`${value} pin`, "Số lượng"]}
+                />
               </PieChart>
             </ResponsiveContainer>
+
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {batteryHealth.map((entry, index) => (
+              {batteryData.map((entry, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <div
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   ></div>
                   <span className="text-sm">
-                    {entry.range}: {entry.count}
+                    {entry.name}: {entry.count} pin
                   </span>
                 </div>
               ))}
