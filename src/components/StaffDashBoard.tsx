@@ -8,6 +8,7 @@ import {
   LogOut,
   User as UserIcon,
   Bell,
+  Inbox,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -54,6 +55,7 @@ import {
   markMultipleAsRead,
   Notification,
 } from "@/services/admin/notifications";
+import RequestBattery from "./staff/RequestBattery";
 
 interface StaffPortalPageProps {
   user: User;
@@ -118,6 +120,11 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
       label: "Theo dõi doanh thu",
       icon: DollarSign,
     },
+    {
+      id: "battery-request",
+      label: "Yêu cầu nhập pin",
+      icon: Inbox, // Sử dụng icon Inbox để phân biệt với Quản lý pin
+    },
   ];
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -154,6 +161,10 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
 
       // Giảm số lượng unread
       setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
+
+      // 👉 Đóng popover & chuyển sang tab "Yêu cầu nhập pin"
+      setNotifOpen(false);
+      setActiveSection("battery-request");
     } catch (error) {
       console.error("Error marking notifications as read:", error);
     }
@@ -192,6 +203,8 @@ export function StaffPortalPage({ user, onLogout }: StaffPortalPageProps) {
         return <TransactionManagement recentTransactions={[]} />;
       case "revenue":
         return <RevenueTracking stationId={Number(user.stationId) || 1} />;
+      case "battery-request":
+        return <RequestBattery />;
       default:
         return <StaffDashboard dailyStats={dailyStats} />;
     }
