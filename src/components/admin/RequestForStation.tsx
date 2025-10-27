@@ -17,6 +17,7 @@ import {
   BatteryRequest,
 } from "@/services/admin/batteryService";
 import { RequestDetailModal } from "./RequestDetailModal";
+import { fetchStations } from "@/services/admin/stationService";
 
 interface GroupedRequest {
   createdAt: string;
@@ -53,6 +54,25 @@ export const RequestForStation: React.FC = () => {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const [stations, setStations] = useState<{ id: string; name: string }[]>([]);
+  const [selectedStation, setSelectedStation] = useState<string>("Tất cả");
+  useEffect(() => {
+    const loadStations = async () => {
+      try {
+        const data = await fetchStations(1, 100); // lấy tối đa 100 trạm
+        setStations(data.items);
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+      }
+    };
+    loadStations();
+  }, []);
+
+  const filteredGroups =
+    selectedStation === "Tất cả"
+      ? groupedRequests
+      : groupedRequests.filter((g) => g.stationName === selectedStation);
 
   // Gộp các requests có cùng createdAt (làm tròn đến giây)
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
@@ -178,15 +198,18 @@ export const RequestForStation: React.FC = () => {
             Theo dõi các lô hàng pin đã gửi đến các trạm
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={fetchRequests}
-          disabled={loading}
-          className="border-orange-600 text-orange-600 hover:bg-orange-50"
+        <select
+          value={selectedStation}
+          onChange={(e) => setSelectedStation(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        </Button>
+          <option value="Tất cả">Tất cả trạm</option>
+          {stations.map((station) => (
+            <option key={station.id} value={station.name}>
+              {station.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Statistics Cards */}
@@ -249,7 +272,7 @@ export const RequestForStation: React.FC = () => {
       </div>
 
       {/* Request List */}
-      {groupedRequests.length === 0 ? (
+      {filteredGroups.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
@@ -263,7 +286,7 @@ export const RequestForStation: React.FC = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {groupedRequests.map((group, index) => (
+          {filteredGroups.map((group, index) => (
             <Card
               key={index}
               className="hover:shadow-lg transition-shadow border border-orange-300"
@@ -272,7 +295,7 @@ export const RequestForStation: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Lô hàng #{groupedRequests.length - index}
+                      Lô hàng #{filteredGroups.length - index}
                     </CardTitle>
                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">

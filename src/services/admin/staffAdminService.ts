@@ -9,6 +9,8 @@ export interface Staff {
     status: string;
     createdAt: Date;
     lastLogin: Date;
+    stationName: string
+    stationId: string,
 }
 
 export interface StaffDetails extends Staff {

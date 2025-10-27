@@ -28,6 +28,7 @@ import {
 } from "@/services/admin/customerAdminService";
 import { toast } from "react-toastify";
 import { set } from "date-fns";
+import { fetchStations } from "@/services/admin/stationService";
 
 const StatItem: React.FC<{
   icon: React.ElementType;
@@ -108,6 +109,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
     phoneNumber: "",
     role: "0",
     status: "0",
+    stationId: "",
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -130,6 +132,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
           phoneNumber: data.phoneNumber || "",
           role: roleValue,
           status: statusValue,
+          stationId: data.stationId || "",
         });
       } catch (error) {
         console.error("Error fetching staff detail:", error);
@@ -151,6 +154,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         phoneNumber: formData.phoneNumber,
         role: formData.role,
         status: formData.status,
+        stationId: formData.stationId,
       };
       const updateStaff = await updateUser(staffDetail.id, payload);
       toast.success(t("admin.updateSuccess"));
@@ -169,6 +173,20 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
     }
     setIsEditing(false);
   };
+
+  const [stations, setStations] = useState<any[]>([]);
+  useEffect(() => {
+    async function getStationList() {
+      try {
+        const stationList = await fetchStations(1, 20);
+        setStations(stationList.items || stationList);
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
+    getStationList();
+  }, []);
 
   if (!staff) return;
 
@@ -241,6 +259,15 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       value: formatDateTime(staffDetail.createdAt),
     },
     {
+      key: "stationId",
+      icon: Truck,
+      label: t("admin.station"),
+      value:
+        stations.find((s) => s.id === formData.stationId)?.name ||
+        "Chưa có trạm",
+      editable: true,
+    },
+    {
       icon: Clock,
       label: t("admin.lastLogin"),
       value: formatDateTime(staffDetail.lastLogin),
@@ -259,6 +286,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
             ? "1"
             : "2",
         status: staffDetail?.status === "Active" ? "0" : "1",
+        stationId: staffDetail?.stationId || "",
       });
 
       // Đặt lại isEditing rồi mới đóng modal
@@ -342,6 +370,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                           ? "1"
                           : "2",
                       status: staffDetail.status === "Active" ? "0" : "1",
+                      stationId: staffDetail.stationId || "",
                     });
                   }}
                   className="border-gray-300 hover:bg-gray-100"
@@ -358,6 +387,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
           <h2 className="text-2xl font-bold mb-5 text-orange-700 border-b pb-3 border-orange-100">
             {t("admin.personalInfo")}
           </h2>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5 text-sm">
             {data.map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -385,6 +415,21 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                     >
                       <option value={"0"}>Đang hoạt động</option>
                       <option value={"1"}>Ngừng hoạt động</option>
+                    </select>
+                  ) : item.key === "stationId" ? (
+                    <select
+                      value={formData.stationId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stationId: e.target.value })
+                      }
+                      className="border rounded-md p-1 text-gray-700 w-full"
+                    >
+                      <option value="">Chọn trạm</option>
+                      {stations.map((st) => (
+                        <option key={st.id} value={st.id}>
+                          {st.name}
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <input

@@ -54,20 +54,45 @@ const RequestBattery = () => {
 
   // Gộp các requests có cùng createdAt (làm tròn đến giây để gộp chính xác)
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
-    const grouped = data.reduce(
-      (acc: { [key: string]: BatteryRequest[] }, request) => {
-        // Làm tròn thời gian đến giây (bỏ milliseconds) để gộp chính xác các request cùng lúc
-        const dateKey = new Date(request.createdAt).toISOString().split(".")[0];
+    if (!data || data.length === 0) return;
 
-        if (!acc[dateKey]) {
-          acc[dateKey] = [];
-        }
-        acc[dateKey].push(request);
-        return acc;
-      },
-      {}
+    // Sắp xếp theo thời gian tăng dần để việc kiểm tra lệch 3 giây chính xác
+    const sorted = [...data].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
+    const grouped: { [key: string]: BatteryRequest[] } = {};
+
+    sorted.forEach((request) => {
+      const requestTime = new Date(request.createdAt).getTime();
+
+      // Tìm xem có nhóm nào gần nhất trong vòng 3 giây, cùng admin và station chưa
+      const existingKey = Object.keys(grouped).find((key) => {
+        const group = grouped[key];
+        const first = group[0];
+        const timeDiff = Math.abs(
+          requestTime - new Date(first.createdAt).getTime()
+        );
+
+        const sameAdmin =
+          request.requestedByAdminName === first.requestedByAdminName;
+        const sameStation = request.stationName === first.stationName;
+
+        return timeDiff <= 3000 && sameAdmin && sameStation;
+      });
+
+      // Nếu tìm thấy nhóm phù hợp → thêm vào nhóm đó
+      if (existingKey) {
+        grouped[existingKey].push(request);
+      } else {
+        // Ngược lại tạo nhóm mới (vẫn giữ key là ISO time cắt đến giây)
+        const dateKey = new Date(request.createdAt).toISOString().split(".")[0];
+        grouped[dateKey] = [request];
+      }
+    });
+
+    // Tạo danh sách nhóm
     const groupedArray: GroupedRequest[] = Object.keys(grouped).map(
       (dateKey) => {
         const items = grouped[dateKey];
@@ -79,12 +104,12 @@ const RequestBattery = () => {
         );
 
         return {
-          createdAt: items[0].createdAt, // Giữ nguyên createdAt gốc để hiển thị
+          createdAt: items[0].createdAt,
           requests: items,
           adminName: items[0].requestedByAdminName,
           stationName: items[0].stationName,
           totalItems,
-          status: allSameStatus ? items[0].status : 0, // Nếu status khác nhau thì mặc định là pending
+          status: allSameStatus ? items[0].status : 0,
         };
       }
     );
@@ -94,6 +119,7 @@ const RequestBattery = () => {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+
     setGroupedRequests(groupedArray);
   };
 
