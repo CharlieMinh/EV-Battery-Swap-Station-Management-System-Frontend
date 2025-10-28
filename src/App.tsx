@@ -50,7 +50,16 @@ function App() {
           withCredentials: true,
         });
         console.log("🔍 User from /me:", response.data);
-        setCurrentUser(response.data);
+        // Map API response to User type
+        const userData = {
+          id: response.data.id || response.data.userId || '',
+          name: response.data.name || response.data.fullName || '',
+          email: response.data.email || '',
+          role: response.data.role || null,
+          avatar: response.data.avatarUrl,
+          stationId: response.data.stationId,
+        };
+        setCurrentUser(userData);
       } catch (error: any) {
         if (error.response?.status === 401) {
           console.warn("Chưa đăng nhập (401). Bỏ qua, set user = null.");

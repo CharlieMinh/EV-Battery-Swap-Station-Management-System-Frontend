@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// src/components/staff/CheckInManagement.tsx
+import React, { useRef, useState } from "react";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
 export default function CheckInManagement({
@@ -8,24 +9,24 @@ export default function CheckInManagement({
 }: {
   open: boolean;
   onClose: () => void;
-  onDetected: (reservationId: string) => void;
+  onDetected: (rawQrOrText: string) => void;
 }) {
   const [manual, setManual] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const lockRef = useRef<number>(0); // chống gọi liên tục
 
   if (!open) return null;
 
+  const triggerOnce = (text: string) => {
+    const now = Date.now();
+    if (now - lockRef.current < 1000) return; // 1s chống spam
+    lockRef.current = now;
+    onDetected(text);
+  };
+
   const handleText = (txt?: string | null) => {
     if (!txt) return;
-    let id = "";
-    try {
-      const p = JSON.parse(txt);
-      id = p.reservationId || p.id || p.code || "";
-    } catch {
-      id = txt.trim();
-    }
-    if (id) onDetected(id);
-    else setErr("QR/Barcode không hợp lệ");
+    triggerOnce(txt.trim());
   };
 
   return (
@@ -43,13 +44,15 @@ export default function CheckInManagement({
             width={640}
             height={360}
             facingMode="environment"
-            onUpdate={(err: any, result: any) => {
-              // react-qr-barcode-scanner API
-              // result.getText() chứa nội dung mã nếu đọc được
-              if (result && typeof result.getText === "function") {
-                const text = result.getText();
-                if (text) handleText(text);
-              } else if (err && err.name !== "NotFoundException") {
+            onUpdate={(errObj: any, result: any) => {
+              try {
+                if (result && typeof result.getText === "function") {
+                  const text = result.getText();
+                  if (text) handleText(text);
+                } else if (errObj && errObj.name !== "NotFoundException") {
+                  setErr("Không thể đọc mã.");
+                }
+              } catch {
                 setErr("Không thể đọc mã.");
               }
             }}
@@ -61,7 +64,7 @@ export default function CheckInManagement({
           <div className="flex gap-2">
             <input
               className="w-full rounded border px-3 py-2"
-              placeholder="Nhập Reservation ID (fallback)"
+              placeholder="Dán chuỗi QR (base64) hoặc nhập ReservationId"
               value={manual}
               onChange={(e) => setManual(e.target.value)}
             />

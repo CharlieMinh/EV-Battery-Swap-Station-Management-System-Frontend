@@ -1,3 +1,4 @@
+// src/components/staff/SwapPanel.tsx
 import React, { useState } from "react";
 import {
   finalizeSwapFromReservation,
@@ -24,8 +25,7 @@ export default function SwapPanel({
   const [serial, setSerial] = useState(oldBatterySerial || "");
 
   const doSwap = async () => {
-    const s = serial.trim();
-    if (!s) {
+    if (!serial.trim()) {
       alert("Vui lòng nhập serial pin cũ.");
       return;
     }
@@ -33,20 +33,19 @@ export default function SwapPanel({
     try {
       const { data } = await finalizeSwapFromReservation({
         reservationId: reservation.reservationId,
-        oldBatterySerial: s, // 👈 giữ camelCase
+        oldBatterySerial: serial.trim(),
       });
       setResult(data);
-      alert("✅ Đã xác nhận thay pin — hệ thống đã chọn pin mới.");
+      alert("✅ Đã xác nhận thay pin.");
       onSwapped({ swapId: data.swapId });
-    } catch (err: any) {
+    } catch (e: any) {
+      console.error("Swap error:", e);
       const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        err?.message ||
+        e?.response?.data?.error?.message ||
+        e?.response?.data?.message ||
+        e?.message ||
         "Thao tác thất bại. Vui lòng thử lại.";
-      alert(`❌ ${msg}`);
-      console.error("finalize swap error:", err?.response || err);
+      alert("❌ " + msg);
     } finally {
       setLoading(false);
     }
@@ -54,7 +53,7 @@ export default function SwapPanel({
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      {/* LEFT: thao tác thay pin */}
+      {/* LEFT */}
       <section className="rounded-2xl bg-white shadow-lg p-5">
         <header className="mb-3">
           <p className="text-xs text-gray-500">
@@ -68,10 +67,10 @@ export default function SwapPanel({
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
             value={serial}
             onChange={(e) => setSerial(e.target.value)}
-            placeholder="Nhập serial pin cũ (đã gợi ý sẵn ở bước kiểm tra)"
+            placeholder="Nhập serial pin cũ"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Hệ thống sẽ tra cứu tương thích & tự chọn pin mới phù hợp với xe/đặt lịch.
+            Hệ thống sẽ kiểm tra tương thích và tự chọn pin mới phù hợp.
           </p>
         </div>
 
@@ -93,17 +92,16 @@ export default function SwapPanel({
               </>
             )}
           </button>
-          <button className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition" onClick={onCancel}>
+          <button
+            className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
+            onClick={onCancel}
+          >
             Đóng
           </button>
         </div>
-
-        <p className="mt-3 text-xs text-gray-500">
-          Sau khi thay pin xong, phần thanh toán sẽ hiển thị trong <b>Quản lý giao dịch</b>.
-        </p>
       </section>
 
-      {/* RIGHT: kết quả hệ thống (pin cũ / pin mới) */}
+      {/* RIGHT */}
       <section className="rounded-2xl bg-white shadow-lg p-5">
         <h4 className="text-sm font-semibold mb-3">Kết quả hệ thống</h4>
 
@@ -119,45 +117,30 @@ export default function SwapPanel({
                 <Battery className="h-4 w-4" />
                 Pin cũ
               </div>
-              <div>
-                <b>Serial:</b> {result.oldBattery?.serialNumber || "—"}
-              </div>
-              <div>
-                <b>Model:</b> {result.oldBattery?.modelName || "—"}
-              </div>
-              <div>
-                <b>Trạng thái:</b> {result.oldBattery?.status || "—"}
-              </div>
+              <div><b>Serial:</b> {result.oldBattery?.serialNumber || "—"}</div>
+              <div><b>Model:</b> {result.oldBattery?.modelName || "—"}</div>
+              <div><b>Trạng thái:</b> {result.oldBattery?.status || "—"}</div>
             </div>
 
             {/* Pin mới */}
             <div className="rounded-xl border p-3 bg-emerald-50/60">
               <div className="mb-1 flex items-center gap-2 text-xs text-emerald-700">
                 <BadgeCheck className="h-4 w-4" />
-                Pin mới (hệ thống đã chọn)
+                Pin mới
               </div>
-              <div>
-                <b>Serial:</b> {result.newBattery?.serialNumber || "—"}
-              </div>
-              <div>
-                <b>Model:</b> {result.newBattery?.modelName || "—"}
-              </div>
-              <div>
-                <b>Trạng thái:</b> {result.newBattery?.status || "—"}
-              </div>
+              <div><b>Serial:</b> {result.newBattery?.serialNumber || "—"}</div>
+              <div><b>Model:</b> {result.newBattery?.modelName || "—"}</div>
+              <div><b>Trạng thái:</b> {result.newBattery?.status || "—"}</div>
             </div>
 
             {/* Thông tin chung */}
             <div className="rounded-xl border p-3 bg-white">
+              <div><b>Mã swap:</b> {result.swapId || "—"}</div>
               <div>
-                <b>Mã swap:</b> {result.swapId || "—"}
+                <b>Thời gian:</b>{" "}
+                {result.timestamp ? new Date(result.timestamp).toLocaleString() : "—"}
               </div>
-              <div>
-                <b>Thời gian:</b> {result.timestamp ? new Date(result.timestamp).toLocaleString() : "—"}
-              </div>
-              <div>
-                <b>Khách hàng:</b> {result.driverName || "—"}
-              </div>
+              <div><b>Khách hàng:</b> {result.driverName || "—"}</div>
             </div>
           </div>
         )}

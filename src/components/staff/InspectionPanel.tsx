@@ -1,10 +1,5 @@
-import React, { useEffect, useMemo, useState, ChangeEvent } from "react";
-import {
-  uploadFile,
-  listStationBatteries,
-  type Reservation,
-  type BatteryUnit,
-} from "../../services/staff/staffApi";
+import React, { useMemo, useState, useEffect, ChangeEvent } from "react";
+import { uploadFile, type Reservation } from "../../services/staff/staffApi";
 import { CheckCircle, Upload, X, Image as ImageIcon, AlertTriangle } from "lucide-react";
 
 type Props = {
@@ -13,14 +8,31 @@ type Props = {
   onCancel: () => void;
 };
 
+// Tạo serial ổn định theo reservationId (tự sinh, không cần nút)
+function makeStableSerial(seed: string) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = (h ^ seed.charCodeAt(i)) * 16777619;
+  const n1 = Math.abs(h % 1000000);
+  const n2 = Math.abs(((h >>> 1) ^ 0x9e3779b9) % 1000000);
+  return `OLD-${n1.toString().padStart(6, "0")}-${n2.toString().padStart(6, "0")}`;
+}
+
 export default function InspectionPanel({ reservation, onDone, onCancel }: Props) {
   const [appearance, setAppearance] = useState<"OK" | "Damaged">("OK");
   const [notes, setNotes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [serial, setSerial] = useState("");
-  const [loadingSerial, setLoadingSerial] = useState(false);
 
-  // ✅ Thông số ngẫu nhiên (tham khảo)
+  // Tự sinh serial khi mở panel (một lần)
+  useEffect(() => {
+    if (!serial) {
+      const seed = reservation?.reservationId || crypto.randomUUID();
+      setSerial(makeStableSerial(seed));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservation?.reservationId]);
+
+  // Thông số tham khảo (ngẫu nhiên)
   const metrics = useMemo(
     () => ({
       voltage: Number((50 + Math.random() * 4).toFixed(2)),
@@ -30,43 +42,9 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
     [reservation.reservationId]
   );
 
-  // ✅ Tự động chọn serial (ngẫu nhiên trong kho hoặc tạo DEMO)
-  useEffect(() => {
-    const prefill = async () => {
-      if (!reservation?.stationId) return;
-      setLoadingSerial(true);
-      try {
-        const { data } = await listStationBatteries(reservation.stationId);
-        const base = Array.isArray(data) ? data : [];
-        const sameModel = base.filter(
-          (b) =>
-            b.batteryModelId === reservation.batteryModelId ||
-            (reservation.batteryModelName &&
-              b.batteryModelName?.toLowerCase() ===
-                reservation.batteryModelName.toLowerCase())
-        );
-
-        if (sameModel.length > 0) {
-          const pick = sameModel[Math.floor(Math.random() * sameModel.length)];
-          setSerial(pick.serialNumber || "");
-        } else {
-          const tail = reservation.reservationId.slice(-4).replace(/-/g, "").toUpperCase();
-          setSerial(`DEMO-${tail}`);
-        }
-      } catch {
-        const tail = reservation.reservationId.slice(-4).replace(/-/g, "").toUpperCase();
-        setSerial(`DEMO-${tail}`);
-      } finally {
-        setLoadingSerial(false);
-      }
-    };
-    prefill();
-  }, [reservation]);
-
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-
     for (const f of files) {
       try {
         const url = await uploadFile(f);
@@ -78,13 +56,11 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
     e.currentTarget.value = "";
   };
 
-  const removeImage = (url: string) => {
-    setImages((prev) => prev.filter((x) => x !== url));
-  };
+  const removeImage = (url: string) => setImages((prev) => prev.filter((x) => x !== url));
 
   const finish = () => {
     if (!serial.trim()) {
-      alert("Vui lòng nhập serial pin cũ.");
+      alert("Vui lòng nhập hoặc giữ serial pin cũ.");
       return;
     }
     onDone(serial.trim());
@@ -100,18 +76,16 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
           </p>
         </header>
 
-        {/* Serial pin cũ */}
+        {/* Serial */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Serial pin cũ</label>
           <input
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
             value={serial}
             onChange={(e) => setSerial(e.target.value)}
-            placeholder={loadingSerial ? "Đang gợi ý serial..." : "Nhập serial pin cũ"}
+            placeholder="Nhập serial pin cũ"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Hệ thống tự động gợi ý serial ngẫu nhiên từ kho pin của trạm (cùng model).
-          </p>
+          <p className="mt-1 text-xs text-gray-500">Đã tự điền ngẫu nhiên. Bạn có thể sửa nếu cần.</p>
         </div>
 
         {/* Ngoại hình */}
@@ -200,7 +174,7 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={finish}
@@ -221,41 +195,17 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
         <dl className="space-y-2 text-sm text-gray-700">
           <div className="flex justify-between">
             <dt className="text-gray-500">Khách</dt>
-            <dd className="font-medium">{(reservation as any).userName || reservation.userId || "—"}</dd>
+            <dd className="font-medium">{reservation.userName || "—"}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-500">Xe</dt>
             <dd className="font-medium">
-              {(reservation as any).vehiclePlate || (reservation as any).vehicleModelName || "—"}
+              {reservation.vehiclePlate || reservation.vehicleModelName || "—"}
             </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-500">Model pin</dt>
-            <dd className="font-medium">
-              {reservation.batteryModelName || reservation.batteryModelId || "—"}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-gray-500">Khung giờ</dt>
-            <dd className="font-medium text-right">
-              {(() => {
-                const start =
-                  (reservation as any).checkInWindow?.earliestTime ||
-                  (reservation as any).slotStartTime ||
-                  (reservation as any).startTime;
-                const end =
-                  (reservation as any).checkInWindow?.latestTime ||
-                  (reservation as any).slotEndTime ||
-                  (reservation as any).endTime;
-                const s = start ? new Date(start).toLocaleString() : "—";
-                const e = end ? new Date(end).toLocaleString() : "—";
-                return (
-                  <>
-                    {s} <span className="text-gray-400">→</span> {e}
-                  </>
-                );
-              })()}
-            </dd>
+            <dd className="font-medium">{reservation.batteryModelName || reservation.batteryModelId || "—"}</dd>
           </div>
         </dl>
       </aside>

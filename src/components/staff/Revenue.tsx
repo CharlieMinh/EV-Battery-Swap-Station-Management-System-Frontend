@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { listPayments, type Payment } from "../../services/staff/staffApi";
+import { listAllPayments, type Payment } from "../../services/staff/staffApi";
 import { RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -15,7 +15,7 @@ export default function Revenue() {
     setLoading(true);
     setErr("");
     try {
-      const { data } = await listPayments({
+      const { data } = await listAllPayments({
         fromDate: from || undefined,
         toDate: to || undefined,
         page: 1,

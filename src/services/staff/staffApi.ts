@@ -9,7 +9,6 @@ function buildBaseURL() {
     "http://localhost:5194";
   const trimmed = raw.replace(/\/+$/, "");
   const hasApiPrefix = /\/api(\/|$)/i.test(trimmed);
-  // Nếu raw đã là .../api/... thì dùng luôn; nếu chưa thì thêm /api/v1
   return hasApiPrefix ? trimmed : `${trimmed}/api/v1`;
 }
 export const API_BASE_URL: string = buildBaseURL();
@@ -20,8 +19,7 @@ export const API_BASE_URL: string = buildBaseURL();
 export const api = axios.create({ baseURL: API_BASE_URL });
 
 api.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("token") || localStorage.getItem("authToken");
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
   if (token) {
     config.headers = config.headers ?? {};
     (config.headers as any).Authorization = `Bearer ${token}`;
@@ -44,79 +42,16 @@ api.interceptors.response.use(
 );
 
 /* =========================
- *  Types (đủ cho tất cả màn hình)
+ *  Types
  * ========================= */
-export type UserMe = {
-  id?: string;
-  userId?: string;
-  fullName?: string;
-  name?: string;
-  email: string;
-  phone?: string;
-  avatarUrl?: string;
-  role: "Admin" | "Staff" | "Driver";
-  stationId?: string | null;
-  station?: { stationId: string; name?: string; address?: string };
-};
-
 export type Reservation = {
   reservationId: string;
-  userId?: string;
-  userName?: string;         // để hiển thị tên khách hàng (nếu BE trả)
-  vehicleId?: string;
-  vehiclePlate?: string;     // để hiển thị biển số (nếu BE trả)
-  vehicleModelName?: string; // phòng khi BE trả tên model xe
+  userName?: string;
+  vehiclePlate?: string;
+  vehicleModelName?: string;
   batteryModelId?: string;
   batteryModelName?: string;
-  // 2 schema thời gian có thể xuất hiện — FE đã fallback rồi
-  startTime?: string;
-  endTime?: string;
-  slotStartTime?: string;
-  slotEndTime?: string;
-  checkInWindow?: { earliestTime?: string; latestTime?: string };
-  status?:
-    | "Pending"
-    | "CheckedIn"
-    | "Completed"
-    | "Cancelled"
-    | "Expired"
-    | string;
-  stationId?: string;
-};
-
-export type BatteryUnit = {
-  batteryId: string;
-  serialNumber: string;
-  batteryModelId: string;
-  batteryModelName?: string;
-  status?: string;     // FE sẽ map sang tiếng Việt
-  stationId?: string;
-  soh?: number;
-  updatedAt?: string;
-  isReserved?: boolean;
-};
-
-export type StationBatteryStats = {
-  total?: number;
-  totalBatteries?: number;
-  available?: number;
-  availableBatteries?: number;
-  inUse?: number;
-  charging?: number;
-  maintenance?: number;
-  reserved?: number;
-  faulty?: number;
-  exportedToday?: number;
-};
-
-export type Payment = {
-  paymentId: string;
-  swapId?: string;
-  amount: number;
-  method: "Cash" | "VnPay" | string;
-  status: "Pending" | "Paid" | "Failed";
-  createdAt: string;
-  paidAt?: string;
+  status?: string;
 };
 
 export type SwapFinalizeResponse = {
@@ -128,9 +63,32 @@ export type SwapFinalizeResponse = {
   driverName?: string;
 };
 
-/* =========================
- *  Nhãn trạng thái PIN (TV)
+/** =========================
+ *  Inventory Types
  * ========================= */
+export type StationBatteryStats = {
+  total?: number; // preferred
+  available?: number;
+  inUse?: number;
+  charging?: number;
+  maintenance?: number;
+  reserved?: number;
+  exportedToday?: number;
+  // alternative BE field names we may encounter
+  totalBatteries?: number;
+  availableBatteries?: number;
+};
+
+export type BatteryUnit = {
+  batteryId: string;
+  serialNumber?: string;
+  batteryModelId?: string;
+  batteryModelName?: string;
+  status?: string;
+  isReserved?: boolean;
+  updatedAt?: string;
+};
+
 export const STATUS_LABELS_VI: Record<string, string> = {
   Available: "Sẵn sàng",
   InUse: "Đang sử dụng",
@@ -141,69 +99,171 @@ export const STATUS_LABELS_VI: Record<string, string> = {
 };
 
 /* =========================
- *  Auth / User
+ *  Auth/User for Staff
  * ========================= */
-export const getMe = async () => {
-  const { data } = await api.get<UserMe>("auth/me");
-  // Chuẩn hóa stationId cho chắc
-  const stationId =
-    (data as any).stationId ??
-    (data as any).StationId ??
-    (data as any).stationID ??
-    null;
-  return { data: { ...data, stationId } as UserMe };
+export type UserMe = {
+  userId?: string;
+  id?: string;
+  name?: string;
+  fullName?: string;
+  email?: string;
+  role?: string;
+  stationId?: string | number;
+  station?: { id?: string | number; name?: string };
+  phone?: string;
+  avatarUrl?: string;
 };
 
-export const updateUser = (userId: string, payload: Partial<UserMe>) =>
-  api.put<UserMe>(`users/${userId}`, payload);
+export const getMe = () => api.get<UserMe>("Auth/me", { withCredentials: true });
 
-export const resetPassword = (payload: {
+/** Update current user profile; tries common backend variants */
+export const updateUser = async (
+  userId: string,
+  body: { fullName?: string; phone?: string; avatarUrl?: string }
+) => {
+  const candidates = [
+    { method: "put", url: `users/${userId}` },
+    { method: "patch", url: `users/${userId}` },
+    { method: "put", url: `staff/users/${userId}` },
+    { method: "post", url: `users/update-profile` },
+    { method: "post", url: `Auth/update-profile` },
+    { method: "post", url: `me` },
+  ] as const;
+
+  let lastErr: any = null;
+  for (const c of candidates) {
+    try {
+      if (c.method === "put") return await api.put(c.url, body);
+      if (c.method === "patch") return await api.patch(c.url, body);
+      return await api.post(c.url, body);
+    } catch (e: any) {
+      if (e?.response?.status && e.response.status < 500) {
+        lastErr = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr || new Error("Update profile failed");
+};
+
+/** Change password for current user; tries common endpoints */
+export const resetPassword = async (payload: {
   oldPassword?: string;
   newPassword: string;
-}) => api.post("auth/reset-password", payload);
-
-/* =========================
- *  Upload (ảnh kiểm tra/xe)
- * ========================= */
-export const uploadFile = async (file: File) => {
-  const form = new FormData();
-  form.append("file", file);
-  const { data } = await api.post("fileupload/vehicle-photo", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return (data && (data.url || data.path)) || data;
+}) => {
+  const bodies = [
+    { oldPassword: payload.oldPassword, newPassword: payload.newPassword },
+    { currentPassword: payload.oldPassword, newPassword: payload.newPassword },
+    { oldPwd: payload.oldPassword, newPwd: payload.newPassword },
+  ];
+  const urls = [
+    "Auth/change-password",
+    "users/change-password",
+    "me/change-password",
+  ];
+  let lastErr: any = null;
+  for (const url of urls) {
+    for (const body of bodies) {
+      try {
+        return await api.post(url, body, { withCredentials: true });
+      } catch (e: any) {
+        if (e?.response?.status && e.response.status < 500) {
+          lastErr = e;
+          continue;
+        }
+        throw e;
+      }
+    }
+  }
+  throw lastErr || new Error("Change password failed");
 };
 
 /* =========================
- *  Queue / Reservations
+ *  Queue APIs (giữ nguyên phần của bạn)
  * ========================= */
 export const listReservations = (params: {
   stationId: string | number;
-  date?: string;      // 'YYYY-MM-DD'
-  status?: string;    // '' (Tất cả) hoặc Pending/CheckedIn/...
+  date?: string;
+  status?: string;
 }) => api.get<Reservation[]>("slot-reservations", { params });
 
-export const checkInReservation = (
-  reservationId: string,
-  body: { bayCode?: string; notes?: string }
-) => api.post(`slot-reservations/${reservationId}/check-in`, body);
+/** BE đã hỗ trợ check-in full-time; gửi raw QR (base64 hoặc string) */
+export const checkInReservation = (reservationId: string, qrCodeData: string) =>
+  api.post(`slot-reservations/${reservationId}/check-in`, { qrCodeData });
 
 /* =========================
- *  Swap
+ *  Swap APIs — phiên bản "smart"
  * ========================= */
-export const finalizeSwapFromReservation = (payload: {
+/**
+ * Một số BE đặt tên field khác nhau. Hàm này sẽ thử lần lượt nhiều biến thể payload
+ * cho đến khi thành công; nếu vẫn lỗi sẽ ném ra lỗi cuối cùng (và FE sẽ show message BE).
+ */
+export const finalizeSwapFromReservation = async (payload: {
   reservationId: string;
   oldBatterySerial: string;
-}) => api.post<SwapFinalizeResponse>("swaps/finalize-from-reservation", payload);
+  stationId?: string | number; // nếu BE yêu cầu, bạn có thể truyền thêm
+}) => {
+  const { reservationId, oldBatterySerial, stationId } = payload;
 
-export const completeSwap = (swapId: string) =>
-  api.put(`swaps/${swapId}/complete`);
+  const bodies: any[] = [
+    // tên phổ biến
+    { reservationId, oldBatterySerial, stationId },
+    // các biến thể hay gặp
+    { reservationId, oldSerial: oldBatterySerial, stationId },
+    { reservationId, serial: oldBatterySerial, stationId },
+    { reservationId, oldBatteryCode: oldBatterySerial, stationId },
+    { reservationId, oldBatterySn: oldBatterySerial, stationId },
+    { reservationId, batterySerial: oldBatterySerial, stationId },
+  ];
+
+  let lastErr: any = null;
+  for (const body of bodies) {
+    try {
+      const res = await api.post<SwapFinalizeResponse>("swaps/finalize-from-reservation", body);
+      return res;
+    } catch (e: any) {
+      // Nếu là lỗi “có thể do tên field” (400/422), thử biến thể tiếp theo
+      if (e?.response?.status === 400 || e?.response?.status === 422) {
+        lastErr = e;
+        continue;
+      }
+      // Lỗi khác (403/404/500) thì dừng luôn
+      throw e;
+    }
+  }
+  // đã thử hết mà vẫn lỗi -> ném lỗi cuối
+  throw lastErr || new Error("Finalize swap failed.");
+};
 
 /* =========================
- *  Payments
+ *  Inventory APIs
  * ========================= */
-export const listPayments = (params?: {
-  status?: "Pending" | "Paid";
+export const stationBatteryStats = (stationId: string | number) =>
+  api.get<StationBatteryStats>(`stations/${stationId}/battery-stats`);
+
+export const listStationBatteries = (stationId: string | number) =>
+  api.get<BatteryUnit[]>(`stations/${stationId}/batteries`);
+
+export const createReplenishmentRequest = (payload: {
+  stationId: string | number;
+  reason?: string;
+  items: Array<{ batteryModelId: string; quantityRequested: number }>;
+}) => api.post(`stations/${payload.stationId}/replenishment-requests`, payload);
+
+/* =========================
+ *  Payments APIs & Types
+ * ========================= */
+export type Payment = {
+  paymentId: string;
+  swapId?: string;
+  amount?: number;
+  method?: "Cash" | "Card" | string;
+  status?: "Pending" | "Paid" | string;
+  paidAt?: string;
+};
+
+export const listAllPayments = (params: {
   fromDate?: string;
   toDate?: string;
   page?: number;
@@ -211,76 +271,40 @@ export const listPayments = (params?: {
 }) => api.get<Payment[]>("payments", { params });
 
 export const completeCashPayment = (paymentId: string) =>
-  api.post(`payments/${paymentId}/complete-cash`, {});
+  api.post(`payments/${paymentId}/complete-cash`);
+
+export const completeSwap = (swapId: string) =>
+  api.post(`swaps/${swapId}/complete`);
 
 /* =========================
- *  Inventory
+ *  File Upload (utility)
  * ========================= */
-export const stationBatteryStats = (stationId: string | number) =>
-  api.get<StationBatteryStats>(`stations/${stationId}/battery-stats`);
-
-/** Lấy danh sách pin, chuẩn hóa field cho UI (không hiển thị voltage vì DB không có) */
-export const listStationBatteries = async (
-  stationId: string | number
-): Promise<{ data: BatteryUnit[] }> => {
-  const { data } = await api.get<any[]>(`stations/${stationId}/batteries`);
-
-  const normalizeStatus = (val: any): string => {
-    const v = String(val || "").toLowerCase();
-    if (v.includes("sẵn") || v.includes("available")) return "Available";
-    if (v.includes("sử dụng") || v.includes("inuse")) return "InUse";
-    if (v.includes("sạc") || v.includes("charging")) return "Charging";
-    if (v.includes("bảo trì") || v.includes("maintenance")) return "Maintenance";
-    if (v.includes("đặt") || v.includes("reserved")) return "Reserved";
-    if (v.includes("lỗi") || v.includes("faulty")) return "Faulty";
-    return "Available";
-  };
-
-  const normalized: BatteryUnit[] = (Array.isArray(data) ? data : []).map(
-    (raw) => ({
-      batteryId: raw?.batteryId ?? raw?.BatteryId ?? raw?.id ?? "N/A",
-      serialNumber:
-        raw?.serialNumber ??
-        raw?.SerialNumber ??
-        raw?.serial ??
-        raw?.Serial ??
-        raw?.code ?? // phòng khi DB lưu code
-        raw?.Code ??
-        "N/A",
-      batteryModelId:
-        raw?.batteryModelId ??
-        raw?.BatteryModelId ??
-        raw?.batteryModel?.id ??
-        "N/A",
-      batteryModelName:
-        raw?.batteryModelName ??
-        raw?.BatteryModelName ??
-        raw?.batteryModel?.name ??
-        undefined,
-      status: normalizeStatus(raw?.status ?? raw?.Status),
-      stationId:
-        raw?.stationId ?? raw?.StationId ?? raw?.station?.id ?? undefined,
-      updatedAt:
-        raw?.updatedAt ??
-        raw?.UpdatedAt ??
-        raw?.lastUpdated ??
-        raw?.LastUpdated ??
-        raw?.modifiedAt ??
-        raw?.ModifiedAt ??
-        undefined,
-      isReserved: Boolean(
-        raw?.isReserved ?? raw?.IsReserved ?? raw?.reserved ?? raw?.Reserved ?? false
-      ),
-    })
-  );
-
-  return { data: normalized };
+export const uploadFile = async (file: File): Promise<string> => {
+  const form = new FormData();
+  form.append("file", file);
+  const candidates = [
+    "files/upload",
+    "upload",
+    "media/upload",
+  ];
+  let lastErr: any = null;
+  for (const url of candidates) {
+    try {
+      const res = await api.post<{ url?: string; path?: string }>(url, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
+      const u = (res.data.url || res.data.path || "").toString();
+      if (u) return u;
+    } catch (e: any) {
+      if (e?.response?.status && e.response.status < 500) {
+        lastErr = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr || new Error("Upload failed");
 };
-
-export const createReplenishmentRequest = (payload: {
-  stationId: string | number;
-  reason?: string;
-  items: { batteryModelId: string; quantityRequested: number }[];
-}) => api.post("replenishment-requests", payload);
 
 export default api;
