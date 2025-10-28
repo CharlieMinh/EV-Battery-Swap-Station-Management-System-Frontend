@@ -187,3 +187,5 @@ export function StaffCashPaymentManagement() {
         </div>
     );
 }
+
+export default StaffCashPaymentManagement;

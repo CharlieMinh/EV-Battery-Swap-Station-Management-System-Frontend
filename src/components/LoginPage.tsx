@@ -113,7 +113,8 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
         else if (response.data.role === "Admin") navigate("/admin");
       }
     } catch (error) {
-      console.error("Login error details:", error);
+        localStorage.removeItem("token"); localStorage.removeItem("authToken");
+console.error("Login error details:", error);
       if (axios.isAxiosError(error)) {
         console.error("Axios error:", {
           message: error.message,
