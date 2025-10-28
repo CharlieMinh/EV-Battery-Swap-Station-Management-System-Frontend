@@ -60,6 +60,7 @@ import {
   Notification,
 } from "@/services/admin/notifications";
 import { fetchBatteryRequests } from "@/services/admin/batteryService";
+import UserProfile from "./admin/UserProfile";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -459,6 +460,17 @@ export function AdminDashboardPage({
                       <span>Lịch sử yêu cầu</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setActiveSection("profile")}
+                      isActive={activeSection === "profile"}
+                      className="h-[50px]"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>Thông tin cá nhân</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -499,6 +511,7 @@ export function AdminDashboardPage({
                   {activeSection === "add-account" && "Thêm người dùng"}
                   {activeSection === "request-history" &&
                     "Lịch sử yêu cầu gửi pin"}
+                  {activeSection === "profile" && "Thông tin cá nhân"}
                 </h1>
               </div>
 
@@ -646,6 +659,8 @@ export function AdminDashboardPage({
             {activeSection === "add-account" && <AddUser />}
 
             {activeSection === "request-history" && <RequestForStation />}
+
+            {activeSection === "profile" && <UserProfile />}
           </main>
         </SidebarInset>
       </div>
