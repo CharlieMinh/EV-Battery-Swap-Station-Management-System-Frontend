@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Camera, Upload, FileImage, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { vehicleService, VehicleRegistrationScanResult } from "../../services/vehicleService";
+import { vehicleService, VehicleRegistrationScanResult } from "../../services/driver/vehicleService";
 import { showError, showSuccess } from "../ui/alert";
 
 export default function OCRDemo() {

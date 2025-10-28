@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { Edit, Car, Delete } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import VehicleFormWithOCR from "./VehicleFormWithOCR";
-import { vehicleService } from "../../services/vehicleService";
+import { vehicleService } from "../../services/driver/vehicleService";
 import { showError, showSuccess, showConfirm } from "../ui/alert";
 
 interface Vehicle {

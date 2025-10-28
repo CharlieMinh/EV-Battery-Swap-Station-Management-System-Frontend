@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useLanguage } from "../LanguageContext";
 import { showError, showSuccess } from "../ui/alert";
 import { Upload, FileImage, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { vehicleService, VehicleModel, VehicleRegistrationScanResult } from "../../services/vehicleService";
+import { vehicleService, VehicleModel, VehicleRegistrationScanResult } from "../../services/driver/vehicleService";
 
 interface VehicleFormWithOCRProps {
     onSubmit: (data: any) => Promise<void>;
