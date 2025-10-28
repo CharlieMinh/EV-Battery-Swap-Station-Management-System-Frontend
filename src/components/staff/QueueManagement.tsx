@@ -4,6 +4,7 @@ import {
   listReservations,
   checkInReservation,
   type Reservation,
+  getUserNamesBatch,  // ⭐ dùng để map userId → userName
 } from "../../services/staff/staffApi";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
@@ -93,6 +94,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const [stage, setStage] = useState<Stage>("idle");
   const [oldSerial, setOldSerial] = useState("");
 
+  // ⭐ map userId → userName
+  const [nameMap, setNameMap] = useState<Record<string, string>>({});
+
   const selected = useMemo(
     () => list.find((x) => x.reservationId === selectedId) || null,
     [list, selectedId]
@@ -113,11 +117,21 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     }
   };
 
+  // nạp danh sách
   useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [stationId, date, status]);
 
-  /** Nhận RAW QR; gọi BE thật. Không mock. */
+  // khi list đổi, resolve tên khách (batch + cache)
+  useEffect(() => {
+    const ids = Array.from(new Set((list.map((r) => r.userId).filter(Boolean) as string[])));
+    if (ids.length === 0) return;
+    (async () => {
+      const map = await getUserNamesBatch(ids);
+      setNameMap((prev) => ({ ...prev, ...map }));
+    })();
+  }, [list]);
+
+  /** Nhận RAW QR; gọi BE thật */
   const doCheckInByQr = async (raw: string) => {
-    // Nếu user chưa chọn dòng nào, thử lấy id từ QR để tự chọn
     const maybeId = tryExtractReservationIdFromQR(raw);
     const targetId = selectedId || maybeId;
 
@@ -127,7 +141,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     }
 
     try {
-      // nếu không phải base64 thì encode (đề phòng scanner trả plain text)
       const looksLikeBase64 = /^[A-Za-z0-9+/=]+$/.test(raw) && raw.length >= 24;
       const qrCodeData = looksLikeBase64 ? raw : btoa(raw);
 
@@ -248,27 +261,31 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               const startLabel = start ? start.toLocaleString() : "—";
               const endLabel = end ? end.toLocaleString() : "—";
 
-              const userLabel = (r as any).userName || (r as any).userId || "—";
+              // ⭐ tên khách ưu tiên từ nameMap; fallback userName; cuối cùng Khách #xxxx
+              const displayName =
+                (r.userId && nameMap[r.userId]) ||
+                r.userName ||
+                (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
+
               const vehicleLabel =
-                (r as any).vehiclePlate ||
-                (r as any).vehicleModelName ||
-                (r as any).vehicleId ||
+                r.vehiclePlate ||
+                r.vehicleModelName ||
                 "—";
 
               return (
                 <React.Fragment key={r.reservationId}>
                   <tr className="border-t align-top">
-                    <td className="px-3 py-2">{r.reservationId}</td>
-                    <td className="px-3 py-2">{userLabel}</td>
+                    <td className="px-3 py-2 font-mono">{r.reservationId}</td>
+                    <td className="px-3 py-2">{displayName}</td>
                     <td className="px-3 py-2">{vehicleLabel}</td>
-                    <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId}</td>
+                    <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId || "—"}</td>
                     <td className="px-3 py-2">
                       <div className="text-xs">{startLabel}</div>
                       <div className="text-xs text-gray-500">→ {endLabel}</div>
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`rounded-full px-2 py-1 text-xs ${badgeClass((r as any).status)}`}>
-                        {statusToVi((r as any).status)}
+                      <span className={`rounded-full px-2 py-1 text-xs ${badgeClass(r.status)}`}>
+                        {statusToVi(r.status)}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right">

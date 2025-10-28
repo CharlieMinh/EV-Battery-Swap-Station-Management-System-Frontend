@@ -9,7 +9,8 @@ import {
   LogOut,
   Save,
   Bell,
-  BadgeCheck, // icon tab Xác nhận gói
+  BadgeCheck, // tab Xác nhận gói
+  Package, // ⬅ icon cho tab Yêu cầu nhập pin
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -37,8 +38,10 @@ import InventoryManagement from "./staff/InventoryManagement";
 import Revenue from "./staff/Revenue";
 import CashPaymentManagement from "./staff/CashPaymentManagement";
 
-import logo from "../assets/LogoEV2.png";
+// 👇 Thêm import màn hình yêu cầu nhập pin
+import RequestBattery from "../components/staff/RequestBattery";
 
+import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
 
 type TabKey =
@@ -46,8 +49,10 @@ type TabKey =
   | "queue"
   | "transactions"
   | "inventory"
+  | "requests" // ⬅ THÊM tab mới
   | "revenue"
   | "approvals";
+
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
 interface StaffDashboardPageProps {
@@ -99,8 +104,9 @@ export default function StaffDashboard({
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
       { key: "transactions", label: "Giao dịch", icon: CreditCard },
       { key: "inventory", label: "Kho pin", icon: Warehouse },
+      { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
-      { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck }, // ⬅ tab mới
+      { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck },
     ],
     []
   ) as { key: TabKey; label: string; icon: any }[];
@@ -162,10 +168,14 @@ export default function StaffDashboard({
           <SidebarFooter>
             <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
+                <AvatarFallback>
+                  {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name || user.email}</p>
+                <p className="text-sm font-medium truncate">
+                  {user.name || user.email}
+                </p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
               <Button
@@ -256,6 +266,7 @@ export default function StaffDashboard({
                 {active === "queue" && <QueueManagement stationId={stationId || ""} />}
                 {active === "transactions" && <Transactions />}
                 {active === "inventory" && <InventoryManagement stationId={stationId || ""} />}
+                {active === "requests" && <RequestBattery />} {/* ⬅ THÊM tab mới */}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
               </>

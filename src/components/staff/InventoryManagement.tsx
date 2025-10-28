@@ -26,7 +26,7 @@ const STATUS_OPTIONS = [
 export default function InventoryManagement({ stationId }: Props) {
   const [stats, setStats] = useState<StationBatteryStats | null>(null);
   const [list, setList] = useState<BatteryUnit[]>([]);
-  const [status, setStatus] = useState<string>(""); 
+  const [status, setStatus] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const [reqOpen, setReqOpen] = useState(false);
@@ -35,6 +35,27 @@ export default function InventoryManagement({ stationId }: Props) {
   ]);
   const [reason, setReason] = useState("");
 
+  /* ---------- Helpers ---------- */
+  const toNum = (v: unknown) => (typeof v === "number" && !isNaN(v) ? v : 0);
+
+  /** Map trạng thái hiển thị: Reserved -> Available (để không lẫn với cột Đặt trước) */
+  const displayStatus = (b: BatteryUnit) => {
+    const raw = b.status || "";
+    if (raw === "Reserved") return STATUS_LABELS_VI["Available"] || "Sẵn sàng";
+    return STATUS_LABELS_VI[raw as keyof typeof STATUS_LABELS_VI] ?? raw ?? "—";
+  };
+
+  /** Điều kiện lọc theo status người dùng chọn */
+  const matchesStatus = (b: BatteryUnit, s: string) => {
+    if (!s) return true;
+    if (s === "Reserved") return Boolean(b.isReserved || b.status === "Reserved");
+    return (b.status || "") === s;
+  };
+
+  /** Flag đặt trước dùng cho cột riêng */
+  const isReservedFlag = (b: BatteryUnit) => Boolean(b.isReserved || b.status === "Reserved");
+
+  /* ---------- Fetchers ---------- */
   const fetchStats = async () => {
     if (!stationId) return;
     try {
@@ -51,11 +72,7 @@ export default function InventoryManagement({ stationId }: Props) {
     try {
       const { data } = await listStationBatteries(stationId);
       const base = Array.isArray(data) ? data : [];
-      const filtered =
-        status && status !== ""
-          ? base.filter((b) => (b.status || "") === status)
-          : base;
-      setList(filtered);
+      setList(base.filter((b) => matchesStatus(b, status)));
     } catch {
       setList([]);
     } finally {
@@ -69,18 +86,19 @@ export default function InventoryManagement({ stationId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId, status]);
 
-  const toNum = (v: unknown) => (typeof v === "number" && !isNaN(v) ? v : 0);
-
+  /* ---------- Derived numbers ---------- */
   const total = toNum(stats?.total ?? stats?.totalBatteries ?? 0);
   const available = toNum(stats?.available ?? stats?.availableBatteries ?? 0);
   const inUse = toNum(stats?.inUse ?? 0);
   const charging = toNum(stats?.charging ?? 0);
   const maintenance = toNum(stats?.maintenance ?? 0);
   const reserved = toNum(stats?.reserved ?? 0);
-  const exportedToday = typeof stats?.exportedToday === "number" ? stats.exportedToday : undefined;
+  const exportedToday =
+    typeof stats?.exportedToday === "number" ? stats.exportedToday : undefined;
 
   const lowStock = useMemo(() => available + charging < 20, [available, charging]);
 
+  /* ---------- Replenishment request ---------- */
   const addReqItem = () =>
     setReqItems((x) => [...x, { batteryModelId: "", quantityRequested: 0 }]);
 
@@ -89,7 +107,10 @@ export default function InventoryManagement({ stationId }: Props) {
 
   const submitRequest = async () => {
     const items = reqItems
-      .map((x) => ({ batteryModelId: x.batteryModelId, quantityRequested: Number(x.quantityRequested) }))
+      .map((x) => ({
+        batteryModelId: x.batteryModelId,
+        quantityRequested: Number(x.quantityRequested),
+      }))
       .filter((x) => x.batteryModelId && x.quantityRequested > 0);
 
     if (items.length === 0) {
@@ -105,6 +126,7 @@ export default function InventoryManagement({ stationId }: Props) {
     fetchStats();
   };
 
+  /* ---------- UI ---------- */
   return (
     <div className="grid gap-6">
       {/* Tổng quan kho */}
@@ -186,24 +208,37 @@ export default function InventoryManagement({ stationId }: Props) {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center">Đang tải...</td>
+                  <td colSpan={5} className="px-3 py-6 text-center">
+                    Đang tải...
+                  </td>
                 </tr>
               )}
 
               {!loading && list.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-gray-500">Không có dữ liệu</td>
+                  <td colSpan={5} className="px-3 py-6 text-center text-gray-500">
+                    Không có dữ liệu
+                  </td>
                 </tr>
               )}
 
-              {list.map((b) => (
-                <tr key={b.batteryId} className="border-t">
-                  <td className="px-3 py-2 font-mono">{b.serialNumber || "—"}</td>
-                  <td className="px-3 py-2">{b.batteryModelName || b.batteryModelId || "—"}</td>
-                  <td className="px-3 py-2">
-                    {STATUS_LABELS_VI[(b.status as keyof typeof STATUS_LABELS_VI)] ?? b.status ?? "—"}
+              {list.map((b, idx) => (
+                <tr
+                  key={b.batteryId || b.serialNumber || `row-${idx}`}
+                  className="border-t"
+                >
+                  <td className="px-3 py-2 font-mono">
+                    {b.serialNumber || "—"}
                   </td>
-                  <td className="px-3 py-2">{b.isReserved ? "✅" : "—"}</td>
+                  <td className="px-3 py-2">
+                    {b.batteryModelName || b.batteryModelId || "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {displayStatus(b)}
+                  </td>
+                  <td className="px-3 py-2">
+                    {isReservedFlag(b) ? "✅" : "—"}
+                  </td>
                   <td className="px-3 py-2">
                     {b.updatedAt ? new Date(b.updatedAt).toLocaleString() : "—"}
                   </td>
@@ -240,7 +275,9 @@ export default function InventoryManagement({ stationId }: Props) {
             </div>
 
             <div className="mb-4">
-              <div className="mb-2 text-sm font-medium">Danh sách model & số lượng</div>
+              <div className="mb-2 text-sm font-medium">
+                Danh sách model & số lượng
+              </div>
               <div className="flex flex-col gap-2">
                 {reqItems.map((it, idx) => (
                   <div key={idx} className="flex gap-2">
