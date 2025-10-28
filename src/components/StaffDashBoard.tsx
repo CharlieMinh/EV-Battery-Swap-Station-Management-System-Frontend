@@ -43,6 +43,15 @@ import RequestBattery from "../components/staff/RequestBattery";
 
 import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
+import {
+  fetchNotifications,
+  getUnreadCount,
+  markMultipleAsRead,
+  Notification,
+  NotificationResponse,
+} from "@/services/admin/notifications";
+import { useLanguage } from "./LanguageContext";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 type TabKey =
   | "profile"
@@ -72,6 +81,9 @@ export default function StaffDashboard({
   const [overrideInput, setOverrideInput] = useState(
     localStorage.getItem(STATION_OVERRIDE_KEY) || ""
   );
+
+  const { t } = useLanguage();
+  const [activeSection, setActiveSection] = useState("profile");
 
   useEffect(() => {
     (async () => {
@@ -122,6 +134,44 @@ export default function StaffDashboard({
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     setOverrideInput("");
     alert("Đã xoá StationId nhập tay.");
+  };
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchNotifications(1, 10);
+        setNotifications(data.items);
+        const count = await getUnreadCount(1, 10);
+        setUnreadCount(count);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleMarkAsRead = async (notification: Notification) => {
+    try {
+      const idsToMark = notification.mergedIds?.length
+        ? notification.mergedIds
+        : [notification.id];
+      await markMultipleAsRead(idsToMark);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.message === notification.message ? { ...n, isRead: true } : n
+        )
+      );
+
+      setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
+      setNotifOpen(false);
+      setActiveSection("battery-request");
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
   };
 
   return (
@@ -197,7 +247,8 @@ export default function StaffDashboard({
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {menu.find((m) => m.key === active)?.label || "Bảng điều khiển"}
+                  {menu.find((m) => m.key === active)?.label ||
+                    "Bảng điều khiển"}
                 </h1>
               </div>
 
@@ -247,13 +298,13 @@ export default function StaffDashboard({
                     )}
                   </PopoverContent>
                 </Popover>
-
+                {/* 
                 <Badge
                   variant="outline"
                   className="text-orange-600 border-orange-300"
                 >
                   Trạm #{user.stationId}
-                </Badge>
+                </Badge> */}
               </div>
             </div>
           </header>
@@ -297,8 +348,11 @@ export default function StaffDashboard({
                     <Save className="h-4 w-4" /> Lưu StationId
                   </button>
                   {stationIdOverride && (
-                    <button onClick={clearOverride} className="border rounded px-3 py-2">
-                      Xoá
+                    <button
+                      onClick={clearOverride}
+                      className="border rounded px-3 py-2"
+                    >
+                      Xoági
                     </button>
                   )}
                 </div>
@@ -308,10 +362,15 @@ export default function StaffDashboard({
             {!loading && !err && (
               <>
                 {active === "profile" && <ProfileManagement />}
-                {active === "queue" && <QueueManagement stationId={stationId || ""} />}
+                {active === "queue" && (
+                  <QueueManagement stationId={stationId || ""} />
+                )}
                 {active === "transactions" && <Transactions />}
-                {active === "inventory" && <InventoryManagement stationId={stationId || ""} />}
-                {active === "requests" && <RequestBattery />} {/* ⬅ THÊM tab mới */}
+                {active === "inventory" && (
+                  <InventoryManagement stationId={stationId || ""} />
+                )}
+                {active === "requests" && <RequestBattery />}{" "}
+                {/* ⬅ THÊM tab mới */}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
               </>
