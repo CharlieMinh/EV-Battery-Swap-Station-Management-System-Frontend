@@ -79,12 +79,10 @@ function SubscriptionCard({ subscriptionInfo }: { subscriptionInfo: Subscription
   return (
     <Card className="border-none shadow-xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6">
       <CardHeader className="p-0 mb-4">
-        <CardTitle className="text-xl font-bold text-gray-800 tracking-tight">
+        <CardTitle className="text-xl font-bold text-gray-800 tracking-tight text-center">
           {subscriptionInfo.subscriptionPlan.name}
         </CardTitle>
-        <CardDescription className="text-center text-gray-500 pt-2">
-          {t("driver.subscription.description")}
-        </CardDescription>
+
       </CardHeader>
 
       <CardContent className="space-y-3 p-0">
@@ -167,7 +165,7 @@ export function SubscriptionStatus({ subscriptionInfoList }: SubscriptionStatusP
       </h2>
 
       {/* Tạo lưới cho các Card gói thuê */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {activeSubscriptions.map(subInfo => (
           <SubscriptionCard key={subInfo.id} subscriptionInfo={subInfo} />
         ))}

@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
 import api from "@/configs/axios";
-import { el } from "date-fns/locale";
 
 interface AccountPayload {
   email: string;
@@ -12,6 +11,7 @@ interface AccountPayload {
   phoneNumber: string;
   role: number;
   status: number;
+  stationId?: string; // ✅ thêm field này
 }
 
 interface FormUserData {
@@ -21,6 +21,13 @@ interface FormUserData {
   phoneNumber: string;
   role: string; // '0', '1', '2'
   status: number;
+  stationId?: string; // ✅ thêm field này
+}
+
+interface Station {
+  id: string;
+  name: string;
+  address: string;
 }
 
 const ROLE_OPTIONS = [
@@ -36,12 +43,36 @@ const initialUserData: FormUserData = {
   phoneNumber: "",
   role: "0",
   status: 0,
+  stationId: "",
 };
 
 export function AddUser() {
   const { t } = useLanguage();
   const [formData, setFormData] = useState<FormUserData>(initialUserData);
   const [isLoading, setIsLoading] = useState(false);
+  const [stations, setStations] = useState<Station[]>([]); // ✅ lưu danh sách trạm
+
+  // ✅ Lấy danh sách trạm khi role = "1" (Staff)
+  useEffect(() => {
+    if (formData.role === "1") {
+      fetchStations();
+    }
+  }, [formData.role]);
+
+  const fetchStations = async () => {
+    try {
+      const response = await api.get("/api/v1/Stations?page=1&pageSize=100");
+      const mappedItems = response.data.items.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        address: s.address,
+      }));
+      setStations(mappedItems);
+    } catch (error) {
+      console.error("Error fetching stations:", error);
+      toast.error("Không thể tải danh sách trạm.");
+    }
+  };
 
   // ✅ Xử lý thay đổi dữ liệu nhập
   const handleChange = (
@@ -62,7 +93,7 @@ export function AddUser() {
     const phoneRegex = /^(0|\+84)\d{9,10}$/;
 
     if (!formData.email.trim() || !emailRegex.test(formData.email)) {
-      return "Email không hợp lệ. Vui lòng nhập đúng định dạng (ví dụ: ten@gmail.com)";
+      return "Email không hợp lệ.";
     }
 
     if (!passwordRegex.test(formData.password)) {
@@ -74,77 +105,50 @@ export function AddUser() {
     }
 
     if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      return "Số điện thoại không hợp lệ (phải bắt đầu bằng 0 hoặc +84 và có 10–11 số).";
+      return "Số điện thoại không hợp lệ.";
+    }
+
+    if (formData.role === "1" && !formData.stationId) {
+      return "Vui lòng chọn trạm cho nhân viên Staff.";
     }
 
     return null;
   };
 
-  // ✅ Xử lý submit
+  // ✅ Submit form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Kiểm tra frontend trước khi gửi
     const validationError = validateForm();
     if (validationError) {
-      toast.error(validationError, { position: "top-right", autoClose: 4000 });
+      toast.error(validationError);
       return;
     }
 
     setIsLoading(true);
 
     const payload: AccountPayload = {
-      ...formData,
+      email: formData.email,
+      password: formData.password,
+      name: formData.name,
+      phoneNumber: formData.phoneNumber,
       role: Number(formData.role),
       status: 0,
+      stationId: formData.role === "1" ? formData.stationId : undefined, // ✅ chỉ gửi khi là staff
     };
 
-    console.log("Payload gửi lên:", payload);
-
     try {
-      const response = await api.post("/api/v1/Users", payload, {
-        withCredentials: true,
-      });
-
-      const accountId = response.data?.id || "N/A";
-      toast.success(`Thêm người dùng thành công!`, {
-        position: "top-right",
-        autoClose: 3000,
-      });
-
+      const response = await api.post("/api/v1/Users", payload);
+      toast.success("Thêm người dùng thành công!");
       setFormData(initialUserData);
     } catch (error) {
       let errorMessage = "Đã xảy ra lỗi không xác định.";
-
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
-
-        if (status === 400 || status === 422) {
-          // Nếu backend trả về ModelState (C#)
-          const backendMessage =
-            error.response?.data?.message ||
-            error.response?.data?.errors ||
-            "Dữ liệu không hợp lệ.";
-
-          if (typeof backendMessage === "object") {
-            // Nếu backend trả về object lỗi (ModelState)
-            errorMessage = Object.values(backendMessage).join(", ");
-          } else {
-            errorMessage = backendMessage;
-          }
-        } else if (status === 500) {
-          errorMessage = "Lỗi máy chủ (500). Vui lòng thử lại sau.";
-        } else if (status === 409) {
+        if (status === 409)
           errorMessage = error.response?.data?.message || errorMessage;
-        } else {
-          errorMessage = `Lỗi kết nối (${status}). Vui lòng thử lại.`;
-        }
       }
-
-      toast.error(`Lỗi: ${errorMessage}`, {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -160,10 +164,7 @@ export function AddUser() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EMAIL */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <input
@@ -172,7 +173,7 @@ export function AddUser() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+              className="w-full px-4 py-2 border rounded-lg"
               placeholder="Nhập email..."
             />
           </div>
@@ -181,7 +182,7 @@ export function AddUser() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Mật khẩu <span className="text-red-500">*</span>
             </label>
@@ -191,20 +192,14 @@ export function AddUser() {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+              className="w-full px-4 py-2 border rounded-lg"
               placeholder="Nhập mật khẩu..."
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
-            </p>
           </div>
 
           {/* NAME */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="name" className="block text-sm font-medium mb-1">
               Họ và tên <span className="text-red-500">*</span>
             </label>
             <input
@@ -213,7 +208,7 @@ export function AddUser() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+              className="w-full px-4 py-2 border rounded-lg"
               placeholder="Nhập họ và tên..."
             />
           </div>
@@ -222,7 +217,7 @@ export function AddUser() {
           <div>
             <label
               htmlFor="phoneNumber"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Số điện thoại
             </label>
@@ -231,25 +226,21 @@ export function AddUser() {
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+              className="w-full px-4 py-2 border rounded-lg"
               placeholder="Nhập số điện thoại..."
             />
           </div>
 
           {/* ROLE */}
           <div>
-            <label
-              htmlFor="role"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="role" className="block text-sm font-medium mb-1">
               Vai trò <span className="text-red-500">*</span>
             </label>
             <select
               id="role"
               value={formData.role}
               onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer transition duration-150"
+              className="w-full px-4 py-2 border rounded-lg"
             >
               {ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -259,12 +250,35 @@ export function AddUser() {
             </select>
           </div>
 
+          {/* ✅ STATION SELECT — chỉ hiện nếu role = Staff */}
+          {formData.role === "1" && (
+            <div>
+              <label
+                htmlFor="stationId"
+                className="block text-sm font-medium mb-1"
+              >
+                Chọn trạm <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="stationId"
+                value={formData.stationId}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border rounded-lg"
+              >
+                <option value="">-- Chọn trạm --</option>
+                {stations.map((station) => (
+                  <option key={station.id} value={station.id}>
+                    {station.name} - {station.address}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* STATUS */}
           <div>
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="status" className="block text-sm font-medium mb-1">
               Trạng thái
             </label>
             <input
@@ -272,7 +286,7 @@ export function AddUser() {
               id="status"
               value={formData.status === 0 ? "Hoạt động" : "Ngưng hoạt động"}
               readOnly
-              className="w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 cursor-not-allowed"
+              className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
           </div>
 
@@ -280,10 +294,10 @@ export function AddUser() {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full bg-orange-500 hover:bg-orange-600 py-3 px-4 rounded-lg text-white font-semibold shadow-md transition duration-200 ${
+            className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
               isLoading
-                ? "bg-indigo-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-orange-500 hover:bg-orange-600"
             }`}
           >
             {isLoading ? "Đang xử lý..." : "Thêm người dùng"}

@@ -1,4 +1,4 @@
-import api from "../configs/axios";
+import api from "../../configs/axios";
 
 export interface VehicleRegistrationScanResult {
     vin?: string;

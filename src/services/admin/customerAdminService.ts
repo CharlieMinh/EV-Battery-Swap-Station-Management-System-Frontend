@@ -25,6 +25,7 @@ export interface UpdateUserPayload {
     phoneNumber?: string;
     role: string;
     status: string;
+    stationId: string
 }
 
 export async function fetchCustomers(  page: number,
@@ -57,7 +58,8 @@ export async function updateUser(id: string, payload: UpdateUserPayload) {
             name: payload.name,
             phoneNumber: payload.phoneNumber,
             role: parseInt(payload.role),
-            status: parseInt(payload.status) // Có thể backend cần số thay vì string
+            status: parseInt(payload.status),
+            stationId: payload.stationId // Có thể backend cần số thay vì string
         };
 
         const response = await api.put(`/api/v1/Users/${id}`, wrappedPayload, {

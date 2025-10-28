@@ -51,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { PricingSection } from "./PricingSection";
 
 interface HomepageProps {
   user: User | null;
@@ -90,47 +91,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
     },
   ];
 
-  const pricingPlans = [
-    {
-      name: t("pricing.payPerSwap"),
-      price: "$25",
-      period: t("pricing.perSwap"),
-      description: t("pricing.payPerSwap.desc"),
-      features: [
-        t("pricing.payPerSwap.feature1"),
-        t("pricing.payPerSwap.feature2"),
-        t("pricing.payPerSwap.feature3"),
-        t("pricing.payPerSwap.feature4"),
-      ],
-      popular: false,
-    },
-    {
-      name: t("pricing.monthlyUnlimited"),
-      price: "$149",
-      period: t("pricing.perMonth"),
-      description: t("pricing.monthlyUnlimited.desc"),
-      features: [
-        t("pricing.monthlyUnlimited.feature1"),
-        t("pricing.monthlyUnlimited.feature2"),
-        t("pricing.monthlyUnlimited.feature3"),
-        t("pricing.monthlyUnlimited.feature4"),
-      ],
-      popular: true,
-    },
-    {
-      name: t("pricing.enterprise"),
-      price: "Custom",
-      period: t("pricing.customPricing"),
-      description: t("pricing.enterprise.desc"),
-      features: [
-        t("pricing.enterprise.feature1"),
-        t("pricing.enterprise.feature2"),
-        t("pricing.enterprise.feature3"),
-        t("pricing.enterprise.feature4"),
-      ],
-      popular: false,
-    },
-  ];
+
 
   const testimonials = [
     {
@@ -400,7 +361,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => handleNavigateToDashboard('map')}
+                  onClick={() => handleNavigateToDashboard("map")}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   {"Đặt lịch"}
@@ -447,7 +408,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      {/* <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -460,7 +421,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Features Section */}
       <section id="features" className="py-15 bg-gray-50">
@@ -551,64 +512,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-15 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
-              {t("pricing.title")}
-            </h2>
-            <p className="text-xl text-gray-600">{t("pricing.subtitle")}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative ${
-                  plan.popular ? "border-orange-500 border-2" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-orange-500 text-white">
-                      {t("pricing.mostPopular")}
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle>{plan.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-4xl text-gray-900">{plan.price}</span>
-                    <span className="text-gray-500">/{plan.period}</span>
-                  </div>
-                  <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-orange-500 mr-2" />
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                        : ""
-                    }`}
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => navigate("/register")}
-                  >
-                    {t("pricing.getStarted")}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection></PricingSection>
 
       {/* Testimonials Section */}
       <section className="py-15 bg-white">

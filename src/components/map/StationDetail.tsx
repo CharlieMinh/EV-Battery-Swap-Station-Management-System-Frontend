@@ -38,12 +38,12 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
       // Gọi API /api/v1/Auth/me để kiểm tra role hiện tại
       const res = await api.get("/api/v1/Auth/me", { withCredentials: true });
       const role = res.data.role;
-
       if (role === "Driver") {
         navigate("/driver", {
           state: {
             initialSection: "map",
-            preSelectedStationId: stationId
+            selectedStation: stationId,
+            triggerAction: "setBooking"
           }
         });
       } else {
