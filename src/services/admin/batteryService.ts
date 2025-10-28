@@ -1,5 +1,6 @@
 import api from "@/configs/axios";
 import axios from "axios";
+import { getCurrentUser } from "../authApi";
 
 export interface Battery {
   id: string;
@@ -87,9 +88,25 @@ export async function fetchModelBattery(): Promise<BatteryModel[]> {
 
 export async function fetchBatteryRequests(): Promise<BatteryRequest[]> {
   try {
+    // Lấy thông tin người dùng hiện tại
+    const user = await getCurrentUser();
+
+    // Gọi API lấy danh sách yêu cầu
     const response = await api.get("/api/bulk-create-requests");
-    const data = response.data;
+    const data: BatteryRequest[] = response.data;
+
+    // Sắp xếp theo số lượng
     const sortedData = [...data].sort((a, b) => a.quantity - b.quantity);
+
+    // Nếu là Staff → lọc theo stationId
+    if (user.role === "Staff") {
+      const filteredData = sortedData.filter(
+        (req) => req.stationId === user.stationId
+      );
+      return filteredData;
+    }
+
+    // Nếu là Admin → trả về toàn bộ
     return sortedData;
   } catch (error) {
     console.error("Error fetching battery requests:", error);
@@ -170,3 +187,4 @@ export async function rejectMultipleBatteryRequests(
     throw error;
   }
 }
+

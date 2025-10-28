@@ -93,7 +93,9 @@ export function StaffManagement() {
                   </div>
                   <div>
                     <p className="font-medium">{member.name}</p>
-                    <p className="text-sm text-gray-500">{member.role}</p>
+                    <p className="text-sm text-gray-500">
+                      {member.stationName}
+                    </p>
                     {/* <p className="text-xs text-gray-400">{member.station}</p> */}
                     <Badge
                       className={
