@@ -1,6 +1,10 @@
 // src/components/staff/QueueManagement.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { listReservations, checkInReservation, type Reservation } from "../../services/staff/staffApi";
+import {
+  listReservations,
+  checkInReservation,
+  type Reservation,
+} from "../../services/staff/staffApi";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
@@ -28,26 +32,26 @@ const statusToVi = (s?: string) => {
   }
 };
 
-/** Ghép slotDate (YYYY-MM-DD) + slotStartTime/slotEndTime (HH:mm:ss)
- *  Fallback: checkInWindow.earliestTime/latestTime (ISO) → startTime/endTime (ISO).
- */
+/** Ghép slotDate + slotStartTime/slotEndTime; fallback các field ISO */
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
-  const date = r?.slotDate;                  // "2025-10-26"
-  const startStr = r?.slotStartTime;         // "11:38:00"
-  const endStr = r?.slotEndTime;             // "12:08:00"
+  const date = r?.slotDate;
+  const startStr = r?.slotStartTime;
+  const endStr = r?.slotEndTime;
 
-  const makeISO = (d: string, t: string) => {
-    // đảm bảo HH:mm:ss
-    const time = /^\d{2}:\d{2}:\d{2}$/.test(t) ? t : (t ? `${t}:00` : "");
-    return time ? `${d}T${time}` : "";
+  const toHHmmss = (t: string) => {
+    if (!t) return "";
+    if (/^\d{2}:\d{2}:\d{2}$/.test(t)) return t;
+    if (/^\d{2}:\d{2}$/.test(t)) return `${t}:00`;
+    const m = t.match(/^(\d{2}:\d{2}:\d{2})/);
+    return m ? m[1] : "";
   };
 
   if (date && startStr && endStr) {
-    const s = makeISO(date, startStr);
-    const e = makeISO(date, endStr);
-    const sd = s ? new Date(s) : null;
-    const ed = e ? new Date(e) : null;
-    if (sd && !isNaN(+sd) && ed && !isNaN(+ed)) return { start: sd, end: ed };
+    const sISO = `${date}T${toHHmmss(String(startStr))}`;
+    const eISO = `${date}T${toHHmmss(String(endStr))}`;
+    const sd = new Date(sISO);
+    const ed = new Date(eISO);
+    if (!isNaN(+sd) && !isNaN(+ed)) return { start: sd, end: ed };
   }
 
   const cw = r?.checkInWindow;
@@ -64,6 +68,18 @@ function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   }
 
   return { start: null, end: null };
+}
+
+/** Thử trích reservationId từ chuỗi QR (base64(JSON|sig)) để tự chọn hàng */
+function tryExtractReservationIdFromQR(raw: string): string | null {
+  try {
+    const txt = atob(raw);
+    const [json] = txt.split("|");
+    const obj = JSON.parse(json);
+    return obj.rid || obj.reservationId || null;
+  } catch {
+    return null;
+  }
 }
 
 export default function QueueManagement({ stationId }: { stationId: string | number }) {
@@ -89,6 +105,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
+    } catch (e) {
+      console.error("load reservations error:", e);
+      setList([]);
     } finally {
       setLoading(false);
     }
@@ -96,15 +115,39 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
   useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [stationId, date, status]);
 
-  const doCheckInByQr = async (id: string) => {
-    await checkInReservation(id, { bayCode: "AUTO", notes: "" });
-    alert("Check-in thành công: " + id);
-    setScannerOpen(false);
-    setStatus("CheckedIn");
-    await fetchList();
-    setSelectedId(id);
-    setStage("checking");
-    setOldSerial("");
+  /** Nhận RAW QR; gọi BE thật. Không mock. */
+  const doCheckInByQr = async (raw: string) => {
+    // Nếu user chưa chọn dòng nào, thử lấy id từ QR để tự chọn
+    const maybeId = tryExtractReservationIdFromQR(raw);
+    const targetId = selectedId || maybeId;
+
+    if (!targetId) {
+      alert("Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR.");
+      return;
+    }
+
+    try {
+      // nếu không phải base64 thì encode (đề phòng scanner trả plain text)
+      const looksLikeBase64 = /^[A-Za-z0-9+/=]+$/.test(raw) && raw.length >= 24;
+      const qrCodeData = looksLikeBase64 ? raw : btoa(raw);
+
+      await checkInReservation(targetId, qrCodeData);
+      alert("✅ Check-in thành công!");
+      setScannerOpen(false);
+      setStatus("CheckedIn");
+      await fetchList();
+      setSelectedId(targetId);
+      setStage("checking");
+      setOldSerial("");
+    } catch (err: any) {
+      console.error("check-in error:", err);
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Check-in thất bại.";
+      alert("❌ " + msg);
+    }
   };
 
   const startChecking = (id: string) => {
@@ -205,8 +248,12 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               const startLabel = start ? start.toLocaleString() : "—";
               const endLabel = end ? end.toLocaleString() : "—";
 
-              const userLabel = (r as any).userName || r.userId || "—";
-              const vehicleLabel = (r as any).vehiclePlate || (r as any).vehicleModelName || (r as any).vehicleId || "—";
+              const userLabel = (r as any).userName || (r as any).userId || "—";
+              const vehicleLabel =
+                (r as any).vehiclePlate ||
+                (r as any).vehicleModelName ||
+                (r as any).vehicleId ||
+                "—";
 
               return (
                 <React.Fragment key={r.reservationId}>

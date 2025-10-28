@@ -1,3 +1,4 @@
+// src/pages/StaffDashboard.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   UserCircle,
@@ -8,11 +9,12 @@ import {
   LogOut,
   Save,
   Bell,
+  BadgeCheck, // icon tab Xác nhận gói
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -26,25 +28,37 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "../components/ui/sidebar";
+} from "./ui/sidebar";
 
 import ProfileManagement from "./staff/ProfileManagement";
 import QueueManagement from "./staff/QueueManagement";
 import Transactions from "./staff/Transactions";
 import InventoryManagement from "./staff/InventoryManagement";
 import Revenue from "./staff/Revenue";
+import CashPaymentManagement from "./staff/CashPaymentManagement";
+
+import logo from "../assets/LogoEV2.png";
 
 import { getMe, type UserMe } from "../services/staff/staffApi";
 
-type TabKey = "profile" | "queue" | "transactions" | "inventory" | "revenue";
+type TabKey =
+  | "profile"
+  | "queue"
+  | "transactions"
+  | "inventory"
+  | "revenue"
+  | "approvals";
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
 interface StaffDashboardPageProps {
-  user: { name: string; email: string };
+  user: { name?: string; email: string };
   onLogout: () => void;
 }
 
-export default function StaffDashboard({ user, onLogout }: StaffDashboardPageProps) {
+export default function StaffDashboard({
+  user,
+  onLogout,
+}: StaffDashboardPageProps) {
   const [active, setActive] = useState<TabKey>("queue");
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,9 +100,10 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
       { key: "transactions", label: "Giao dịch", icon: CreditCard },
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
+      { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck }, // ⬅ tab mới
     ],
     []
-  );
+  ) as { key: TabKey; label: string; icon: any }[];
 
   const saveOverride = () => {
     const v = overrideInput.trim();
@@ -111,7 +126,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
             <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
                 <img
-                  src="src/assets/logoEV2.png "
+                  src={logo}
                   alt="FPTFAST Logo"
                   className="w-10 h-9 rounded-lg"
                 />
@@ -131,7 +146,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
                   {menu.map((m) => (
                     <SidebarMenuItem key={m.key}>
                       <SidebarMenuButton
-                        onClick={() => setActive(m.key as TabKey)}
+                        onClick={() => setActive(m.key)}
                         isActive={active === m.key}
                         className="h-[50px]"
                       >
@@ -147,10 +162,10 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
           <SidebarFooter>
             <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-sm font-medium truncate">{user.name || user.email}</p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
               <Button
@@ -242,6 +257,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
                 {active === "transactions" && <Transactions />}
                 {active === "inventory" && <InventoryManagement stationId={stationId || ""} />}
                 {active === "revenue" && <Revenue />}
+                {active === "approvals" && <CashPaymentManagement />}
               </>
             )}
           </main>
