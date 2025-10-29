@@ -12,6 +12,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Props = {
   reservation: Reservation;
@@ -33,12 +34,15 @@ export default function SwapPanel({
 
   const handleSwap = async () => {
     if (!serial.trim()) {
-      alert("⚠️ Vui lòng nhập serial pin cũ.");
+      toast.warning("⚠️ Vui lòng nhập serial pin cũ.");
       return;
     }
 
     setLoading(true);
     setMessage("");
+
+    // Hiển thị toast loading, rồi update theo kết quả
+    const tId = toast.loading("Đang xác nhận thay pin...");
 
     try {
       const res = await finalizeSwapFromReservation({
@@ -46,32 +50,54 @@ export default function SwapPanel({
         oldBatterySerial: serial.trim(),
       });
 
-      if (res.success) {
-        alert("✅ Đã xác nhận thay pin thành công.");
+      if (res?.success) {
+        toast.update(tId, {
+          render: "✅ Đã xác nhận thay pin thành công.",
+          type: "success",
+          isLoading: false,
+          autoClose: 2000,
+        });
         setResult(res);
         onSwapped({ swapId: res.swapTransactionId });
       } else {
-        // Xử lý fallback lỗi
-        const code = res.code;
+        // Fallback lỗi
+        const code = (res as any)?.code;
         const msg =
-          res.message ||
+          (res as any)?.message ||
           "Đã có lỗi xảy ra khi hoàn tất giao dịch. Vui lòng kiểm tra lại.";
 
         if (code === 500 || code === 409 || code === 422) {
-          alert(
-            "⚠️ Đã có lỗi xảy ra khi hoàn tất giao dịch.\n" +
-              "Tuy nhiên hệ thống có thể đã giữ chỗ pin (kho báo Reserved).\n" +
-              "Mình sẽ đóng bảng này. Vui lòng kiểm tra tab Giao dịch/Doanh thu."
-          );
+          toast.update(tId, {
+            render:
+              "⚠️ Hoàn tất giao dịch thất bại, nhưng kho có thể đã giữ chỗ (Reserved). Vui lòng kiểm tra tab Giao dịch/Doanh thu.",
+            type: "warning",
+            isLoading: false,
+            autoClose: 4000,
+          });
           onSwapped({});
         } else {
-          alert(`❌ ${msg}`);
+          toast.update(tId, {
+            render: `❌ ${msg}`,
+            type: "error",
+            isLoading: false,
+            autoClose: 3000,
+          });
           setMessage(msg);
         }
       }
     } catch (err: any) {
       console.error("SwapPanel error:", err);
-      alert("❌ Không thể hoàn tất thay pin. Vui lòng thử lại.");
+      const apiMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        "Không thể hoàn tất thay pin. Vui lòng thử lại.";
+      toast.update(tId, {
+        render: `❌ ${apiMsg}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -184,12 +210,13 @@ export default function SwapPanel({
             {/* Thông tin chung */}
             <div className="rounded-xl border p-3 bg-white">
               <div>
-                <b>Mã swap:</b> {result.swapTransactionId || result.swapId || "—"}
+                <b>Mã swap:</b>{" "}
+                {result.swapTransactionId || (result as any).swapId || "—"}
               </div>
               <div>
                 <b>Thời gian:</b>{" "}
                 {result.timestamp
-                  ? new Date(result.timestamp).toLocaleString()
+                  ? new Date(result.timestamp).toLocaleString("vi-VN")
                   : "—"}
               </div>
               <div>

@@ -1,6 +1,8 @@
+// src/components/staff/InspectionPanel.tsx
 import React, { useMemo, useState, useEffect, ChangeEvent } from "react";
 import { uploadFile, type Reservation } from "../../services/staff/staffApi";
 import { CheckCircle, Upload, X, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Props = {
   reservation: Reservation;
@@ -22,6 +24,8 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
   const [notes, setNotes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [serial, setSerial] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [finishing, setFinishing] = useState(false);
 
   // Tự sinh serial khi mở panel (một lần)
   useEffect(() => {
@@ -44,26 +48,90 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
 
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    e.currentTarget.value = ""; // reset input
     if (!files.length) return;
-    for (const f of files) {
-      try {
-        const url = await uploadFile(f);
-        setImages((prev) => [...prev, url]);
-      } catch {
-        alert("Tải ảnh thất bại. Vui lòng thử lại.");
+
+    setUploading(true);
+    const loadingId = toast.loading(`Đang tải ${files.length} ảnh...`);
+
+    try {
+      const results = await Promise.allSettled(
+        files.map(async (f) => {
+          const url = await uploadFile(f);
+          return url as string;
+        })
+      );
+
+      const ok: string[] = [];
+      let fail = 0;
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) ok.push(r.value);
+        else fail++;
       }
+
+      if (ok.length) {
+        setImages((prev) => [...prev, ...ok]);
+      }
+
+      // Cập nhật toast theo kết quả
+      if (fail === 0) {
+        toast.update(loadingId, {
+          render: `Đã tải thành công ${ok.length}/${files.length} ảnh.`,
+          type: "success",
+          isLoading: false,
+          autoClose: 2000,
+        });
+      } else if (ok.length > 0) {
+        toast.update(loadingId, {
+          render: `Tải xong: ${ok.length} thành công, ${fail} thất bại.`,
+          type: "warning",
+          isLoading: false,
+          autoClose: 3000,
+        });
+      } else {
+        toast.update(loadingId, {
+          render: "Tải ảnh thất bại. Vui lòng thử lại.",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
+      }
+    } catch (err: any) {
+      // Phòng hờ nếu Promise.allSettled ném lỗi (hiếm)
+      toast.update(loadingId, {
+        render: err?.response?.data?.message || "Tải ảnh thất bại. Vui lòng thử lại.",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } finally {
+      setUploading(false);
     }
-    e.currentTarget.value = "";
   };
 
-  const removeImage = (url: string) => setImages((prev) => prev.filter((x) => x !== url));
+  const removeImage = (url: string) => {
+    setImages((prev) => prev.filter((x) => x !== url));
+    toast.info("Đã xoá 1 ảnh.", { autoClose: 1200 });
+  };
 
   const finish = () => {
-    if (!serial.trim()) {
-      alert("Vui lòng nhập hoặc giữ serial pin cũ.");
+    if (finishing) return;
+
+    const s = serial.trim();
+    if (!s) {
+      toast.warning("Vui lòng nhập hoặc giữ serial pin cũ.");
       return;
     }
-    onDone(serial.trim());
+    if (appearance === "Damaged" && images.length === 0) {
+      toast.warning("Pin hư hỏng cần đính kèm ít nhất 1 ảnh.");
+      return;
+    }
+
+    setFinishing(true);
+    // Nếu cần gửi dữ liệu inspection lên BE, chỗ này có thể toast.promise(...)
+    toast.success("Đã lưu kết quả kiểm tra pin cũ.");
+    onDone(s);
+    setFinishing(false);
   };
 
   return (
@@ -85,7 +153,7 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
             onChange={(e) => setSerial(e.target.value)}
             placeholder="Nhập serial pin cũ"
           />
-          <p className="mt-1 text-xs text-gray-500">Đã tự điền ngẫu nhiên. Bạn có thể sửa nếu cần.</p>
+          <p className="mt-1 text-xs text-gray-500">Đã tự điền ổn định theo đặt lịch. Bạn có thể sửa nếu cần.</p>
         </div>
 
         {/* Ngoại hình */}
@@ -127,9 +195,9 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
           </div>
 
           <label className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer hover:bg-gray-50">
-            <Upload className="h-4 w-4" />
-            <span className="text-sm">Tải ảnh (có thể chọn nhiều)</span>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
+            <Upload className={`h-4 w-4 ${uploading ? "animate-pulse" : ""}`} />
+            <span className="text-sm">{uploading ? "Đang tải..." : "Tải ảnh (có thể chọn nhiều)"}</span>
+            <input type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
 
           {images.length ? (
@@ -178,10 +246,11 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={finish}
-            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition"
+            disabled={finishing}
+            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition disabled:opacity-60"
           >
             <CheckCircle className="h-4 w-4" />
-            Hoàn tất kiểm tra
+            {finishing ? "Đang lưu..." : "Hoàn tất kiểm tra"}
           </button>
           <button onClick={onCancel} className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition">
             Đóng
@@ -205,7 +274,9 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-500">Model pin</dt>
-            <dd className="font-medium">{reservation.batteryModelName || reservation.batteryModelId || "—"}</dd>
+            <dd className="font-medium">
+              {reservation.batteryModelName || reservation.batteryModelId || "—"}
+            </dd>
           </div>
         </dl>
       </aside>

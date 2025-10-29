@@ -4,12 +4,13 @@ import {
   listReservations,
   checkInReservation,
   type Reservation,
-  getUserNamesBatch,  // ⭐ dùng để map userId → userName
+  getUserNamesBatch, // ⭐ map userId → userName
 } from "../../services/staff/staffApi";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
 import { ClipboardCheck, RefreshCw } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Stage = "idle" | "checking" | "readyToSwap";
 
@@ -24,12 +25,18 @@ const STATUS_OPTIONS = [
 
 const statusToVi = (s?: string) => {
   switch ((s || "").toLowerCase()) {
-    case "pending": return "Đang chờ";
-    case "checkedin": return "Đã check-in";
-    case "completed": return "Đã hoàn tất";
-    case "cancelled": return "Đã hủy";
-    case "expired": return "Hết hạn";
-    default: return s || "—";
+    case "pending":
+      return "Đang chờ";
+    case "checkedin":
+      return "Đã check-in";
+    case "completed":
+      return "Đã hoàn tất";
+    case "cancelled":
+      return "Đã hủy";
+    case "expired":
+      return "Hết hạn";
+    default:
+      return s || "—";
   }
 };
 
@@ -71,7 +78,7 @@ function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   return { start: null, end: null };
 }
 
-/** Thử trích reservationId từ chuỗi QR (base64(JSON|sig)) để tự chọn hàng */
+/** Trích reservationId từ chuỗi QR (base64(JSON|sig)) để tự chọn hàng */
 function tryExtractReservationIdFromQR(raw: string): string | null {
   try {
     const txt = atob(raw);
@@ -83,8 +90,14 @@ function tryExtractReservationIdFromQR(raw: string): string | null {
   }
 }
 
-export default function QueueManagement({ stationId }: { stationId: string | number }) {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+export default function QueueManagement({
+  stationId,
+}: {
+  stationId: string | number;
+}) {
+  const [date, setDate] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
   const [status, setStatus] = useState<string>(""); // '' = Tất cả
   const [list, setList] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,69 +110,138 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   // ⭐ map userId → userName
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
 
+  // chặn double-checkin
+  const [checkingIn, setCheckingIn] = useState(false);
+
   const selected = useMemo(
     () => list.find((x) => x.reservationId === selectedId) || null,
     [list, selectedId]
   );
 
-  const fetchList = async () => {
+  const fetchList = async (withToast = false) => {
     if (!stationId) return;
     setLoading(true);
+    const params = { stationId, date, status: status || undefined };
+    const promise = listReservations(params);
+
     try {
-      const params = { stationId, date, status: status || undefined };
-      const { data } = await listReservations(params);
-      setList(data || []);
-    } catch (e) {
-      console.error("load reservations error:", e);
+      if (withToast) {
+        const res = await toast.promise(
+          promise,
+          {
+            pending: "Đang tải danh sách lượt...",
+            success: {
+              render({ data }) {
+                const n = Array.isArray(data?.data) ? data.data.length : 0;
+                return `Tải thành công ${n} lượt.`;
+              },
+            },
+            error: {
+              render({ data }) {
+                const err: any = data;
+                return (
+                  err?.response?.data?.message ||
+                  err?.message ||
+                  "Không thể tải danh sách lượt."
+                );
+              },
+            },
+          },
+          { autoClose: 1800 }
+        );
+        setList(res.data || []);
+      } else {
+        const { data } = await promise;
+        setList(data || []);
+      }
+    } catch (e: any) {
       setList([]);
+      if (!withToast) {
+        toast.error(
+          e?.response?.data?.message ||
+            "Không thể tải danh sách lượt. Vui lòng thử lại."
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // nạp danh sách
-  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [stationId, date, status]);
+  // nạp danh sách (load đầu im lặng để đỡ ồn toast)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchList(false);
+  }, [stationId, date, status]);
 
   // khi list đổi, resolve tên khách (batch + cache)
   useEffect(() => {
-    const ids = Array.from(new Set((list.map((r) => r.userId).filter(Boolean) as string[])));
+    const ids = Array.from(
+      new Set(list.map((r) => r.userId).filter(Boolean) as string[])
+    );
     if (ids.length === 0) return;
     (async () => {
-      const map = await getUserNamesBatch(ids);
-      setNameMap((prev) => ({ ...prev, ...map }));
+      try {
+        const map = await getUserNamesBatch(ids);
+        setNameMap((prev) => ({ ...prev, ...map }));
+      } catch (e) {
+        // không chặn UI, chỉ log + toast nhẹ
+        console.warn("getUserNamesBatch error:", e);
+      }
     })();
   }, [list]);
 
-  /** Nhận RAW QR; gọi BE thật */
+  /** Nhận RAW QR; gọi BE thật (toast hóa) */
   const doCheckInByQr = async (raw: string) => {
+    if (checkingIn) return;
+
     const maybeId = tryExtractReservationIdFromQR(raw);
     const targetId = selectedId || maybeId;
 
     if (!targetId) {
-      alert("Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR.");
+      toast.warning(
+        "Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR."
+      );
       return;
     }
 
+    setCheckingIn(true);
+
     try {
-      const looksLikeBase64 = /^[A-Za-z0-9+/=]+$/.test(raw) && raw.length >= 24;
+      const looksLikeBase64 =
+        /^[A-Za-z0-9+/=]+$/.test(raw) && raw.length >= 24;
       const qrCodeData = looksLikeBase64 ? raw : btoa(raw);
 
-      await checkInReservation(targetId, qrCodeData);
-      alert("✅ Check-in thành công!");
+      await toast.promise(
+        checkInReservation(targetId, qrCodeData),
+        {
+          pending: "Đang check-in...",
+          success: "✅ Check-in thành công!",
+          error: {
+            render({ data }) {
+              const err: any = data;
+              return (
+                err?.response?.data?.error?.message ||
+                err?.response?.data?.message ||
+                err?.message ||
+                "Check-in thất bại."
+              );
+            },
+          },
+        },
+        { autoClose: 2000 }
+      );
+
       setScannerOpen(false);
       setStatus("CheckedIn");
-      await fetchList();
+      await fetchList(false);
       setSelectedId(targetId);
       setStage("checking");
       setOldSerial("");
-    } catch (err: any) {
+    } catch (err) {
+      // lỗi đã hiện toast.promise
       console.error("check-in error:", err);
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Check-in thất bại.";
-      alert("❌ " + msg);
+    } finally {
+      setCheckingIn(false);
     }
   };
 
@@ -218,8 +300,13 @@ export default function QueueManagement({ stationId }: { stationId: string | num
           </select>
         </div>
 
-        <button onClick={fetchList} className="border rounded px-3 py-2 inline-flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
+        <button
+          onClick={() => fetchList(true)}
+          className="border rounded px-3 py-2 inline-flex items-center gap-2 disabled:opacity-60"
+          disabled={loading}
+          title="Làm mới"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Làm mới
         </button>
 
@@ -247,10 +334,21 @@ export default function QueueManagement({ stationId }: { stationId: string | num
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center">Đang tải...</td></tr>
+              <tr>
+                <td colSpan={7} className="px-3 py-6 text-center">
+                  Đang tải...
+                </td>
+              </tr>
             )}
             {!loading && list.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-500">Không có lượt nào</td></tr>
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-3 py-6 text-center text-gray-500"
+                >
+                  Không có lượt nào
+                </td>
+              </tr>
             )}
 
             {list.map((r) => {
@@ -268,9 +366,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
 
               const vehicleLabel =
-                r.vehiclePlate ||
-                r.vehicleModelName ||
-                "—";
+                r.vehiclePlate || r.vehicleModelName || "—";
 
               return (
                 <React.Fragment key={r.reservationId}>
@@ -278,13 +374,19 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                     <td className="px-3 py-2 font-mono">{r.reservationId}</td>
                     <td className="px-3 py-2">{displayName}</td>
                     <td className="px-3 py-2">{vehicleLabel}</td>
-                    <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId || "—"}</td>
+                    <td className="px-3 py-2">
+                      {r.batteryModelName || r.batteryModelId || "—"}
+                    </td>
                     <td className="px-3 py-2">
                       <div className="text-xs">{startLabel}</div>
                       <div className="text-xs text-gray-500">→ {endLabel}</div>
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`rounded-full px-2 py-1 text-xs ${badgeClass(r.status)}`}>
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs ${badgeClass(
+                          r.status
+                        )}`}
+                      >
                         {statusToVi(r.status)}
                       </span>
                     </td>
@@ -292,12 +394,16 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       {canStart ? (
                         <button
                           onClick={() => startChecking(r.reservationId)}
-                          className={`${isSel ? "bg-black text-white" : "border"} rounded px-3 py-2`}
+                          className={`${
+                            isSel ? "bg-black text-white" : "border"
+                          } rounded px-3 py-2`}
                         >
                           {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
                         </button>
                       ) : (
-                        <span className="text-xs text-gray-400">Hãy check-in trước</span>
+                        <span className="text-xs text-gray-400">
+                          Hãy check-in trước
+                        </span>
                       )}
                     </td>
                   </tr>

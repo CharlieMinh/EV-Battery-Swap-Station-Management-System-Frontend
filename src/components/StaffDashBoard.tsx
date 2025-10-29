@@ -10,7 +10,7 @@ import {
   Save,
   Bell,
   BadgeCheck, // tab Xác nhận gói
-  Package, // ⬅ icon cho tab Yêu cầu nhập pin
+  Package, // icon cho tab Yêu cầu nhập pin
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -38,7 +38,7 @@ import InventoryManagement from "./staff/InventoryManagement";
 import Revenue from "./staff/Revenue";
 import CashPaymentManagement from "./staff/CashPaymentManagement";
 
-// 👇 Thêm import màn hình yêu cầu nhập pin
+// Thêm import màn hình yêu cầu nhập pin
 import RequestBattery from "../components/staff/RequestBattery";
 
 import logo from "../assets/LogoEV2.png";
@@ -48,17 +48,17 @@ import {
   getUnreadCount,
   markMultipleAsRead,
   Notification,
-  NotificationResponse,
 } from "@/services/admin/notifications";
 import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { toast } from "react-toastify";
 
 type TabKey =
   | "profile"
   | "queue"
   | "transactions"
   | "inventory"
-  | "requests" // ⬅ THÊM tab mới
+  | "requests" // tab mới
   | "revenue"
   | "approvals";
 
@@ -69,10 +69,7 @@ interface StaffDashboardPageProps {
   onLogout: () => void;
 }
 
-export default function StaffDashboard({
-  user,
-  onLogout,
-}: StaffDashboardPageProps) {
+export default function StaffDashboard({ user, onLogout }: StaffDashboardPageProps) {
   const [active, setActive] = useState<TabKey>("queue");
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,9 +87,14 @@ export default function StaffDashboard({
       try {
         const { data } = await getMe();
         setMe(data);
-      } catch (e) {
+      } catch (e: any) {
         console.error("Lỗi tải người dùng:", e);
         setErr("Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.");
+        toast.error(
+          e?.response?.data?.message ||
+            e?.message ||
+            "Không thể tải thông tin người dùng. Vui lòng đăng nhập lại."
+        );
       } finally {
         setLoading(false);
       }
@@ -103,6 +105,7 @@ export default function StaffDashboard({
     localStorage.removeItem("token");
     localStorage.removeItem("authToken");
     localStorage.removeItem(STATION_OVERRIDE_KEY);
+    toast.info("Bạn đã đăng xuất.");
     onLogout();
   };
 
@@ -116,7 +119,7 @@ export default function StaffDashboard({
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
       { key: "transactions", label: "Giao dịch", icon: CreditCard },
       { key: "inventory", label: "Kho pin", icon: Warehouse },
-      { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
+      { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // tab mới
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
       { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck },
     ],
@@ -125,15 +128,18 @@ export default function StaffDashboard({
 
   const saveOverride = () => {
     const v = overrideInput.trim();
-    if (!v) return alert("Vui lòng nhập StationId hợp lệ.");
+    if (!v) {
+      toast.warning("Vui lòng nhập StationId hợp lệ.");
+      return;
+    }
     localStorage.setItem(STATION_OVERRIDE_KEY, v);
-    alert("Đã lưu StationId, các tab sẽ dùng giá trị này.");
+    toast.success("Đã lưu StationId, các tab sẽ dùng giá trị này.");
   };
 
   const clearOverride = () => {
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     setOverrideInput("");
-    alert("Đã xoá StationId nhập tay.");
+    toast.info("Đã xoá StationId nhập tay.");
   };
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -147,8 +153,13 @@ export default function StaffDashboard({
         setNotifications(data.items);
         const count = await getUnreadCount(1, 10);
         setUnreadCount(count);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching notifications:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Không thể tải thông báo."
+        );
       }
     };
     fetchData();
@@ -169,8 +180,15 @@ export default function StaffDashboard({
       setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
       setNotifOpen(false);
       setActiveSection("battery-request");
-    } catch (error) {
+      setActive("requests");
+      toast.info("Mở tab Yêu cầu nhập pin.");
+    } catch (error: any) {
       console.error("Error marking notifications as read:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Không thể cập nhật trạng thái thông báo."
+      );
     }
   };
 
@@ -233,6 +251,7 @@ export default function StaffDashboard({
                 size="sm"
                 className="shrink-0"
                 onClick={logout}
+                title="Đăng xuất"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -247,8 +266,7 @@ export default function StaffDashboard({
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {menu.find((m) => m.key === active)?.label ||
-                    "Bảng điều khiển"}
+                  {menu.find((m) => m.key === active)?.label || "Bảng điều khiển"}
                 </h1>
               </div>
 
@@ -256,7 +274,7 @@ export default function StaffDashboard({
                 <LanguageSwitcher />
                 <Popover open={notifOpen} onOpenChange={setNotifOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
+                    <Button variant="ghost" size="icon" className="relative" title="Thông báo">
                       <Bell className="w-4 h-4" />
                       {unreadCount > 0 && (
                         <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
@@ -290,7 +308,7 @@ export default function StaffDashboard({
                               {n.message}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {new Date(n.createdAt).toLocaleString()}
+                              {new Date(n.createdAt).toLocaleString("vi-VN")}
                             </p>
                           </div>
                         ))}
@@ -298,13 +316,6 @@ export default function StaffDashboard({
                     )}
                   </PopoverContent>
                 </Popover>
-                {/* 
-                <Badge
-                  variant="outline"
-                  className="text-orange-600 border-orange-300"
-                >
-                  Trạm #{user.stationId}
-                </Badge> */}
               </div>
             </div>
           </header>
@@ -352,7 +363,7 @@ export default function StaffDashboard({
                       onClick={clearOverride}
                       className="border rounded px-3 py-2"
                     >
-                      Xoági
+                      Xoá
                     </button>
                   )}
                 </div>
@@ -362,15 +373,10 @@ export default function StaffDashboard({
             {!loading && !err && (
               <>
                 {active === "profile" && <ProfileManagement />}
-                {active === "queue" && (
-                  <QueueManagement stationId={stationId || ""} />
-                )}
+                {active === "queue" && <QueueManagement stationId={stationId || ""} />}
                 {active === "transactions" && <Transactions />}
-                {active === "inventory" && (
-                  <InventoryManagement stationId={stationId || ""} />
-                )}
-                {active === "requests" && <RequestBattery />}{" "}
-                {/* ⬅ THÊM tab mới */}
+                {active === "inventory" && <InventoryManagement stationId={stationId || ""} />}
+                {active === "requests" && <RequestBattery />} {/* tab mới */}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
               </>

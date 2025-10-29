@@ -1,6 +1,7 @@
 // src/components/staff/CheckInManagement.tsx
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
+import { toast, Id } from "react-toastify"; // ✅ dùng Id thay cho React.ReactText
 
 export default function CheckInManagement({
   open,
@@ -13,20 +14,70 @@ export default function CheckInManagement({
 }) {
   const [manual, setManual] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const lockRef = useRef<number>(0); // chống gọi liên tục
+
+  // Chặn gọi liên tục khi camera đọc liên tiếp
+  const fireLockRef = useRef<number>(0);
+  // Chặn spam toast lỗi liên tục
+  const lastErrAtRef = useRef<number>(0);
+  // Lưu toast id để đóng khi đóng modal
+  const openTipsToastIdRef = useRef<Id | null>(null); // ✅ sửa kiểu
+
+  // Khi modal mở, nhắc người dùng về HTTPS/quyền camera
+  useEffect(() => {
+    if (!open) return;
+
+    const tips =
+      typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.protocol !== "https:"
+        ? "⚠️ Hãy chạy trên HTTPS (hoặc localhost) để mở camera."
+        : "📷 Đang mở camera… nếu trình duyệt hỏi quyền, hãy bấm Cho phép.";
+
+    openTipsToastIdRef.current = toast.info(tips, { autoClose: 3500 });
+
+    return () => {
+      if (openTipsToastIdRef.current != null) {
+        toast.dismiss(openTipsToastIdRef.current);
+        openTipsToastIdRef.current = null;
+      }
+    };
+  }, [open]);
 
   if (!open) return null;
 
-  const triggerOnce = (text: string) => {
+  const triggerOnce = (text: string, source: "auto" | "manual") => {
     const now = Date.now();
-    if (now - lockRef.current < 1000) return; // 1s chống spam
-    lockRef.current = now;
+    if (now - fireLockRef.current < 1000) return; // 1s chống spam
+    fireLockRef.current = now;
+
+    const preview =
+      text.length > 36 ? `${text.slice(0, 16)}…${text.slice(-12)}` : text;
+    toast.success(
+      source === "auto"
+        ? `Đã đọc mã: ${preview}`
+        : `Đã gửi mã nhập tay: ${preview}`,
+      { autoClose: 1800 }
+    );
+
     onDetected(text);
   };
 
-  const handleText = (txt?: string | null) => {
-    if (!txt) return;
-    triggerOnce(txt.trim());
+  const handleText = (
+    txt?: string | null,
+    source: "auto" | "manual" = "auto"
+  ) => {
+    const val = (txt ?? "").trim();
+    if (!val) return;
+    triggerOnce(val, source);
+  };
+
+  const pushErrorOnce = (message: string) => {
+    setErr(message);
+    const now = Date.now();
+    if (now - lastErrAtRef.current > 3000) {
+      lastErrAtRef.current = now;
+      toast.error(message, { autoClose: 2200 });
+    }
   };
 
   return (
@@ -34,7 +85,16 @@ export default function CheckInManagement({
       <div className="w-full max-w-xl rounded-xl bg-white p-4 shadow-lg">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-semibold">📷 Quét mã Check-in</h3>
-          <button onClick={onClose} className="border px-3 py-1 rounded-lg">
+          <button
+            onClick={() => {
+              onClose();
+              if (openTipsToastIdRef.current != null) {
+                toast.dismiss(openTipsToastIdRef.current);
+                openTipsToastIdRef.current = null;
+              }
+            }}
+            className="border px-3 py-1 rounded-lg"
+          >
             Đóng
           </button>
         </div>
@@ -48,12 +108,33 @@ export default function CheckInManagement({
               try {
                 if (result && typeof result.getText === "function") {
                   const text = result.getText();
-                  if (text) handleText(text);
-                } else if (errObj && errObj.name !== "NotFoundException") {
-                  setErr("Không thể đọc mã.");
+                  if (text) {
+                    handleText(text, "auto");
+                    return;
+                  }
+                }
+
+                if (errObj) {
+                  const name = String(errObj?.name || "");
+                  // "NotFoundException" xuất hiện liên tục khi mỗi frame không thấy mã — bỏ qua
+                  if (name === "NotFoundException") return;
+
+                  if (name === "NotAllowedError") {
+                    pushErrorOnce(
+                      "Truy cập camera bị từ chối. Hãy cho phép quyền camera."
+                    );
+                  } else if (name === "NotReadableError") {
+                    pushErrorOnce(
+                      "Không truy cập được camera. Thiết bị đang bận?"
+                    );
+                  } else if (name === "NotSupportedError") {
+                    pushErrorOnce("Trình duyệt không hỗ trợ camera.");
+                  } else {
+                    pushErrorOnce("Không thể đọc mã. Thử lại hoặc nhập tay.");
+                  }
                 }
               } catch {
-                setErr("Không thể đọc mã.");
+                pushErrorOnce("Không thể đọc mã. Thử lại hoặc nhập tay.");
               }
             }}
           />
@@ -67,10 +148,15 @@ export default function CheckInManagement({
               placeholder="Dán chuỗi QR (base64) hoặc nhập ReservationId"
               value={manual}
               onChange={(e) => setManual(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && manual.trim()) {
+                  handleText(manual, "manual");
+                }
+              }}
             />
             <button
               className="rounded border px-3 py-2"
-              onClick={() => manual.trim() && handleText(manual.trim())}
+              onClick={() => manual.trim() && handleText(manual, "manual")}
             >
               Xác nhận
             </button>
