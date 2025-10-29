@@ -1,3 +1,4 @@
+// src/components/admin/CheckRequest.tsx
 import React, { useState } from "react";
 import {
   CheckCircle,
@@ -24,7 +25,7 @@ interface GroupedRequest {
   adminName: string;
   stationName: string;
   totalItems: number;
-  status: number;
+  status: number; // 0: pending, 1: confirmed, 2: rejected (ví dụ)
 }
 
 interface CheckRequestProps {
@@ -50,61 +51,91 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
     });
   };
 
-  // Xác nhận tất cả requests trong group
+  const isEditing = group.status !== 0;
+
+  const getErrMsg = (err: any, fallback: string) =>
+    err?.response?.data?.message ||
+    err?.message ||
+    (typeof err === "string" ? err : "") ||
+    fallback;
+
+  // ✅ Xác nhận tất cả requests trong group (toast.promise)
   const handleConfirmAll = async () => {
+    if (isEditing) return;
     if (!notes.trim()) {
       toast.warning("Vui lòng nhập ghi chú xác nhận!");
       return;
     }
+    if (loading) return;
 
     setActionType("confirm");
     setLoading(true);
 
-    try {
-      const requestIds = group.requests.map((req) => req.id);
-      await confirmMultipleBatteryRequests(requestIds, notes.trim());
+    const requestIds = group.requests.map((r) => r.id);
+    const promise = confirmMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(`Đã xác nhận thành công ${group.requests.length} yêu cầu!`);
-      onClose();
-    } catch (error: any) {
-      console.error("Error confirming requests:", error);
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra khi xác nhận!"
+    try {
+      await toast.promise(
+        promise,
+        {
+          pending: "Đang xác nhận lô hàng...",
+          success: `Đã xác nhận thành công ${group.requests.length} yêu cầu!`,
+          error: {
+            render({ data }) {
+              return getErrMsg(data, "Có lỗi xảy ra khi xác nhận!");
+            },
+          },
+        },
+        { autoClose: 2200 }
       );
+      onClose();
+    } catch (err) {
+      // lỗi đã toast ở trên
+      console.error("Error confirming requests:", err);
     } finally {
       setLoading(false);
       setActionType(null);
     }
   };
 
-  // Từ chối tất cả requests trong group
+  // ✅ Từ chối tất cả requests trong group (toast.promise)
   const handleRejectAll = async () => {
+    if (isEditing) return;
     if (!notes.trim()) {
       toast.warning("Vui lòng nhập lý do từ chối!");
       return;
     }
+    if (loading) return;
 
     setActionType("reject");
     setLoading(true);
 
-    try {
-      const requestIds = group.requests.map((req) => req.id);
-      await rejectMultipleBatteryRequests(requestIds, notes.trim());
+    const requestIds = group.requests.map((r) => r.id);
+    const promise = rejectMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(`Đã từ chối ${group.requests.length} yêu cầu!`);
-      onClose();
-    } catch (error: any) {
-      console.error("Error rejecting requests:", error);
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra khi từ chối!"
+    try {
+      await toast.promise(
+        promise,
+        {
+          pending: "Đang từ chối lô hàng...",
+          success: `Đã từ chối ${group.requests.length} yêu cầu!`,
+          error: {
+            render({ data }) {
+              return getErrMsg(data, "Có lỗi xảy ra khi từ chối!");
+            },
+          },
+        },
+        { autoClose: 2200 }
       );
+      onClose();
+    } catch (err) {
+      // lỗi đã toast ở trên
+      console.error("Error rejecting requests:", err);
     } finally {
       setLoading(false);
       setActionType(null);
     }
   };
-
-  const isEditing = group.status !== 0;
 
   return (
     <div
@@ -144,9 +175,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           {/* Thông tin chung */}
           <Card className="border border-orange-200">
             <CardHeader>
-              <CardTitle className="text-orange-600">
-                Thông Tin Lô Hàng
-              </CardTitle>
+              <CardTitle className="text-orange-600">Thông Tin Lô Hàng</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,9 +190,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   <Calendar className="w-5 h-5 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Thời gian gửi</p>
-                    <p className="font-semibold">
-                      {formatDateTime(group.createdAt)}
-                    </p>
+                    <p className="font-semibold">{formatDateTime(group.createdAt)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -305,7 +332,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
               {isEditing ? "Đóng" : "Hủy"}
             </Button>
 
-            {/* Chỉ hiển thị nút Confirm/Reject khi chưa xử lý (status = 0) */}
+            {/* Chỉ hiển thị Confirm/Reject khi còn pending */}
             {!isEditing && (
               <>
                 <Button

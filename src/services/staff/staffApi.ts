@@ -1,4 +1,3 @@
-// src/services/staff/staffApi.ts
 import axios from "axios";
 
 /* =========================
@@ -48,18 +47,16 @@ api.interceptors.response.use(
  * ========================= */
 export type Reservation = {
   reservationId: string;
-  userId?: string;          // ⭐ thêm để map tên
-  userName?: string;        // nếu BE có sẵn thì dùng luôn
+  userId?: string;
+  userName?: string;
   vehiclePlate?: string;
   vehicleModelName?: string;
   batteryModelId?: string;
   batteryModelName?: string;
   status?: string;
-
-  // thông tin slot (để hiển thị khung giờ)
-  slotDate?: string;        // yyyy-MM-dd
-  slotStartTime?: string;   // HH:mm:ss
-  slotEndTime?: string;     // HH:mm:ss
+  slotDate?: string;
+  slotStartTime?: string;
+  slotEndTime?: string;
   checkInWindow?: { earliestTime?: string; latestTime?: string };
 };
 
@@ -128,35 +125,14 @@ export type UserMe = {
 export const getMe = () =>
   api.get<UserMe>("Auth/me", { withCredentials: true });
 
-export const updateUser = async (
+/**
+ * CHỈ dành cho Admin. FE đã chặn Staff trước khi gọi.
+ * Dùng endpoint chuẩn: PUT /users/{id}
+ */
+export const updateUser = (
   userId: string,
   body: { fullName?: string; phone?: string; avatarUrl?: string }
-) => {
-  const candidates = [
-    { method: "put", url: `users/${userId}` },
-    { method: "patch", url: `users/${userId}` },
-    { method: "put", url: `staff/users/${userId}` },
-    { method: "post", url: `users/update-profile` },
-    { method: "post", url: `Auth/update-profile` },
-    { method: "post", url: `me` },
-  ] as const;
-
-  let lastErr: any = null;
-  for (const c of candidates) {
-    try {
-      if (c.method === "put") return await api.put(c.url, body);
-      if (c.method === "patch") return await api.patch(c.url, body);
-      return await api.post(c.url, body);
-    } catch (e: any) {
-      if (e?.response?.status && e.response.status < 500) {
-        lastErr = e;
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw lastErr || new Error("Update profile failed");
-};
+) => api.put(`users/${userId}`, body);
 
 export const resetPassword = async (payload: {
   oldPassword?: string;
@@ -192,8 +168,6 @@ export const resetPassword = async (payload: {
 /* =========================
  *  Queue APIs
  * ========================= */
-
-/** Chuẩn hoá response để luôn có userId/userName và các field slot */
 export const listReservations = async (params: {
   stationId: string | number;
   date?: string;
@@ -283,7 +257,6 @@ export async function finalizeSwapFromReservation(payload: {
 export const stationBatteryStats = (stationId: string | number) =>
   api.get<StationBatteryStats>(`stations/${stationId}/battery-stats`);
 
-/** Chuẩn hoá dữ liệu pin để luôn có serialNumber & batteryId */
 export const listStationBatteries = async (stationId: string | number) => {
   const res = await api.get<any>(`stations/${stationId}/batteries`);
   const raw = Array.isArray(res.data)
@@ -445,7 +418,6 @@ function pickName(u: any): string | undefined {
   );
 }
 
-/** Gọi đúng endpoint có sẵn: GET /api/v1/Users/{id} */
 async function fetchUserById(id: string): Promise<string | null> {
   try {
     const res = await api.get(`/Users/${id}`);
@@ -456,7 +428,6 @@ async function fetchUserById(id: string): Promise<string | null> {
   }
 }
 
-/** Lấy tên 1 userId (có cache). Nếu không lấy được → fallback "Khách #xxxx" */
 export async function getUserNameById(userId?: string): Promise<string> {
   const id = (userId || "").trim();
   if (!id) return "";
@@ -469,12 +440,10 @@ export async function getUserNameById(userId?: string): Promise<string> {
   return finalName;
 }
 
-/** Lấy tên theo mảng userId. Thử batch /Users?ids=...; nếu fail thì gọi từng id */
 export async function getUserNamesBatch(userIds: (string | undefined)[]): Promise<Record<string, string>> {
   const ids = Array.from(new Set(userIds.filter((x): x is string => !!x)));
   const result: Record<string, string> = {};
 
-  // cache trước
   const need: string[] = [];
   for (const id of ids) {
     if (__USER_NAME_CACHE[id]) result[id] = __USER_NAME_CACHE[id];
@@ -482,7 +451,6 @@ export async function getUserNamesBatch(userIds: (string | undefined)[]): Promis
   }
   if (need.length === 0) return result;
 
-  // thử batch
   try {
     const res = await api.get(`/Users`, { params: { ids: need.join(",") } });
     const data = Array.isArray(res.data)
@@ -511,7 +479,6 @@ export async function getUserNamesBatch(userIds: (string | undefined)[]): Promis
     saveUserNameCache();
     return result;
   } catch {
-    // fallback: gọi từng id
     await Promise.all(
       need.map(async (id) => {
         const n = await fetchUserById(id);
