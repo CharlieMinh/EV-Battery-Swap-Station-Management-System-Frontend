@@ -62,7 +62,8 @@ type TabKey =
   | "inventory"
   | "requests" // ⬅ THÊM tab mới
   | "revenue"
-  | "approvals";
+  | "approvals"
+  | "complaint";
 
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
@@ -120,8 +121,12 @@ export default function StaffDashboard({
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
-      { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck },
-      { key: "complaints", label: "Khiếu nại", icon: MessageCircle },
+      { key: "approvals", label: "Xác nhận thanh toán", icon: BadgeCheck },
+      {
+        key: "complaint",
+        label: "Khiếu nại và phản hồi",
+        icon: MessageCircle,
+      },
     ],
     []
   ) as { key: TabKey; label: string; icon: any }[];
@@ -376,7 +381,7 @@ export default function StaffDashboard({
                 {/* ⬅ THÊM tab mới */}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
-                {activeSection === "complaint" && <ComplaintsOfCustomer />}
+                {active === "complaint" && <ComplaintsOfCustomer />}
               </>
             )}
           </main>
