@@ -1,36 +1,17 @@
-import React, { useMemo, useState, useEffect, ChangeEvent } from "react";
+import React, { useMemo, useState, ChangeEvent } from "react";
 import { uploadFile, type Reservation } from "../../services/staff/staffApi";
-import { CheckCircle, Upload, X, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { CheckCircle, Upload, X, Image as ImageIcon } from "lucide-react";
 
 type Props = {
   reservation: Reservation;
-  onDone: (oldSerial: string) => void;
+  onDone: (batteryHealth: number) => void;
   onCancel: () => void;
 };
 
-// Tạo serial ổn định theo reservationId (tự sinh, không cần nút)
-function makeStableSerial(seed: string) {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) h = (h ^ seed.charCodeAt(i)) * 16777619;
-  const n1 = Math.abs(h % 1000000);
-  const n2 = Math.abs(((h >>> 1) ^ 0x9e3779b9) % 1000000);
-  return `OLD-${n1.toString().padStart(6, "0")}-${n2.toString().padStart(6, "0")}`;
-}
-
 export default function InspectionPanel({ reservation, onDone, onCancel }: Props) {
-  const [appearance, setAppearance] = useState<"OK" | "Damaged">("OK");
+  const [batteryHealth, setBatteryHealth] = useState<number>(85); // % pin cũ
   const [notes, setNotes] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [serial, setSerial] = useState("");
-
-  // Tự sinh serial khi mở panel (một lần)
-  useEffect(() => {
-    if (!serial) {
-      const seed = reservation?.reservationId || crypto.randomUUID();
-      setSerial(makeStableSerial(seed));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reservation?.reservationId]);
 
   // Thông số tham khảo (ngẫu nhiên)
   const metrics = useMemo(
@@ -59,11 +40,11 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
   const removeImage = (url: string) => setImages((prev) => prev.filter((x) => x !== url));
 
   const finish = () => {
-    if (!serial.trim()) {
-      alert("Vui lòng nhập hoặc giữ serial pin cũ.");
+    if (batteryHealth < 0 || batteryHealth > 100) {
+      alert("⚠️ Vui lòng nhập % pin cũ trong khoảng 0-100.");
       return;
     }
-    onDone(serial.trim());
+    onDone(batteryHealth);
   };
 
   return (
@@ -76,35 +57,19 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
           </p>
         </header>
 
-        {/* Serial */}
+        {/* % Pin cũ */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Serial pin cũ</label>
+          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
           <input
+            type="number"
+            min="0"
+            max="100"
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={serial}
-            onChange={(e) => setSerial(e.target.value)}
-            placeholder="Nhập serial pin cũ"
+            value={batteryHealth}
+            onChange={(e) => setBatteryHealth(Number(e.target.value))}
+            placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
-          <p className="mt-1 text-xs text-gray-500">Đã tự điền ngẫu nhiên. Bạn có thể sửa nếu cần.</p>
-        </div>
-
-        {/* Ngoại hình */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Ngoại hình</label>
-          <select
-            className="w-full rounded-lg border px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={appearance}
-            onChange={(e) => setAppearance(e.target.value as "OK" | "Damaged")}
-          >
-            <option value="OK">OK</option>
-            <option value="Damaged">Damaged</option>
-          </select>
-          {appearance === "Damaged" && (
-            <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm">
-              <AlertTriangle className="h-4 w-4" />
-              Vui lòng chụp ảnh rõ khu vực hư hỏng và ghi chú chi tiết.
-            </div>
-          )}
+          <p className="mt-1 text-xs text-gray-500">Nhập % dung lượng pin còn lại (0-100%).</p>
         </div>
 
         {/* Ghi chú */}
@@ -115,7 +80,7 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ví dụ: Trầy nhẹ ở cạnh phải, chụp ảnh kèm theo"
+            placeholder="Ghi chú thêm về tình trạng pin (nếu có)"
           />
         </div>
 

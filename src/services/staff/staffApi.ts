@@ -55,6 +55,7 @@ export type Reservation = {
   batteryModelId?: string;
   batteryModelName?: string;
   status?: string;
+  qrCode?: string;          // ⭐ QR code từ BE (đã có signature)
 
   // thông tin slot (để hiển thị khung giờ)
   slotDate?: string;        // yyyy-MM-dd
@@ -217,6 +218,7 @@ export const listReservations = async (params: {
     batteryModelId: x?.batteryModelId ?? "",
     batteryModelName: x?.batteryModelName ?? "",
     status: x?.status ?? "",
+    qrCode: x?.qrCode ?? "",  // ⭐ Lấy QR code từ BE
     slotDate: x?.slotDate ?? "",
     slotStartTime: x?.slotStartTime ?? "",
     slotEndTime: x?.slotEndTime ?? "",
@@ -234,47 +236,30 @@ export const checkInReservation = (reservationId: string, qrCodeData: string) =>
  * ========================= */
 export async function finalizeSwapFromReservation(payload: {
   reservationId: string;
-  oldBatterySerial: string;
-  stationId?: string | number;
+  oldBatteryHealth: number;  // ⭐ % pin cũ (0-100)
 }): Promise<SwapFinalizeResponse & { code?: number }> {
-  const { reservationId, oldBatterySerial, stationId } = payload;
+  const { reservationId, oldBatteryHealth } = payload;
 
-  const bodies = [
-    { reservationId, oldBatterySerial, stationId },
-    { reservationId, oldSerial: oldBatterySerial, stationId },
-    { reservationId, serial: oldBatterySerial, stationId },
-    { reservationId, oldBatteryCode: oldBatterySerial, stationId },
-    { reservationId, oldBatterySn: oldBatterySerial, stationId },
-    { reservationId, batterySerial: oldBatterySerial, stationId },
-  ];
-
-  for (const body of bodies) {
-    try {
-      const res = await api.post<SwapFinalizeResponse>(
-        "swaps/finalize-from-reservation",
-        body
-      );
-      return { success: true, ...res.data, code: 200 };
-    } catch (e: any) {
-      const code = e?.response?.status;
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data?.error ||
-        e?.message ||
-        "Đã có lỗi xảy ra.";
-      if (code === 400 || code === 422) continue;
-      if (code === 500) {
-        console.warn("⚠️ BE 500; FE cho phép demo tiếp.");
-        return { success: false, code, message: msg };
-      }
+  try {
+    const res = await api.post<SwapFinalizeResponse>(
+      "swaps/finalize-from-reservation",
+      { reservationId, oldBatteryHealth }
+    );
+    return { success: true, ...res.data, code: 200 };
+  } catch (e: any) {
+    const code = e?.response?.status;
+    const msg =
+      e?.response?.data?.message ||
+      e?.response?.data?.error ||
+      e?.message ||
+      "Đã có lỗi xảy ra.";
+    
+    if (code === 500) {
+      console.warn("⚠️ BE 500; FE cho phép demo tiếp.");
       return { success: false, code, message: msg };
     }
+    return { success: false, code, message: msg };
   }
-  return {
-    success: false,
-    code: 400,
-    message: "Không thể finalize swap — các biến thể payload đều lỗi.",
-  };
 }
 
 /* =========================
@@ -426,6 +411,43 @@ let __USER_NAME_CACHE: Record<string, string> = (() => {
   }
 })();
 
+// ⭐ Cache toàn bộ danh sách customers
+let __CUSTOMERS_LOADED = false;
+let __LOADING_CUSTOMERS: Promise<void> | null = null;
+
+/** Pre-load toàn bộ customers vào cache (chỉ gọi 1 lần) */
+async function preloadCustomers() {
+  if (__CUSTOMERS_LOADED) return;
+  if (__LOADING_CUSTOMERS) return __LOADING_CUSTOMERS;
+  
+  __LOADING_CUSTOMERS = (async () => {
+    try {
+      console.log("🔄 Pre-loading customers list...");
+      const res = await api.get('/Users/customers', { 
+        params: { page: 1, pageSize: 1000 } // Lấy tối đa 1000 customers
+      });
+      
+      const customers = res.data?.data || [];
+      console.log(`✅ Loaded ${customers.length} customers`);
+      
+      for (const user of customers) {
+        const id = user?.id || user?.Id;
+        const name = pickName(user);
+        if (id && name) {
+          __USER_NAME_CACHE[id] = name;
+        }
+      }
+      
+      saveUserNameCache();
+      __CUSTOMERS_LOADED = true;
+    } catch (err) {
+      console.error("❌ Failed to preload customers:", err);
+    }
+  })();
+  
+  return __LOADING_CUSTOMERS;
+}
+
 function saveUserNameCache() {
   try {
     localStorage.setItem(USERNAME_CACHE_KEY, JSON.stringify(__USER_NAME_CACHE));
@@ -445,13 +467,43 @@ function pickName(u: any): string | undefined {
   );
 }
 
-/** Gọi đúng endpoint có sẵn: GET /api/v1/Users/{id} */
+/** Gọi API lấy tên user - Staff dùng /Users/customers */
 async function fetchUserById(id: string): Promise<string | null> {
   try {
-    const res = await api.get(`/Users/${id}`);
-    const name = pickName(res.data);
-    return name || null;
-  } catch {
+    console.log(`🌐 Calling GET /Users/customers (search by ID ${id})`);
+    
+    // Thử gọi /Users/{id} trước (nếu Staff có quyền)
+    try {
+      const res = await api.get(`/Users/${id}`);
+      console.log(`📥 Response for ${id}:`, res.data);
+      const name = pickName(res.data);
+      if (name) return name;
+    } catch (err: any) {
+      if (err?.response?.status === 403) {
+        console.warn(`⚠️ Staff không có quyền GET /Users/${id}, thử dùng /Users/customers`);
+      }
+    }
+    
+    // Fallback: Dùng /Users/customers với pagination lớn
+    // Lấy tất cả customers và filter theo ID
+    const customersRes = await api.get('/Users/customers', { 
+      params: { page: 1, pageSize: 100 } 
+    });
+    console.log(`📥 Customers response:`, customersRes.data);
+    
+    const customers = customersRes.data?.data || [];
+    const user = customers.find((u: any) => u.id === id || u.Id === id);
+    
+    if (user) {
+      const name = pickName(user);
+      console.log(`✅ Found user ${id} from customers:`, name);
+      return name || null;
+    }
+    
+    console.warn(`⚠️ User ${id} not found in customers list`);
+    return null;
+  } catch (err) {
+    console.error(`❌ Failed to fetch user ${id}:`, err);
     return null;
   }
 }
@@ -469,58 +521,27 @@ export async function getUserNameById(userId?: string): Promise<string> {
   return finalName;
 }
 
-/** Lấy tên theo mảng userId. Thử batch /Users?ids=...; nếu fail thì gọi từng id */
+/** Lấy tên theo mảng userId. Pre-load customers trước, rồi lấy từ cache */
 export async function getUserNamesBatch(userIds: (string | undefined)[]): Promise<Record<string, string>> {
   const ids = Array.from(new Set(userIds.filter((x): x is string => !!x)));
   const result: Record<string, string> = {};
 
-  // cache trước
-  const need: string[] = [];
+  console.log("📞 getUserNamesBatch - Input IDs:", ids);
+
+  // ⭐ Pre-load customers nếu chưa load
+  await preloadCustomers();
+
+  // Lấy từ cache
   for (const id of ids) {
-    if (__USER_NAME_CACHE[id]) result[id] = __USER_NAME_CACHE[id];
-    else need.push(id);
-  }
-  if (need.length === 0) return result;
-
-  // thử batch
-  try {
-    const res = await api.get(`/Users`, { params: { ids: need.join(",") } });
-    const data = Array.isArray(res.data)
-      ? res.data
-      : res.data?.items ?? res.data?.data ?? res.data?.results ?? [];
-
-    for (const u of data) {
-      const id = u?.id ?? u?.userId;
-      const name = pickName(u);
-      if (id && name) {
-        __USER_NAME_CACHE[id] = name;
-        result[id] = name;
-      }
+    if (__USER_NAME_CACHE[id]) {
+      result[id] = __USER_NAME_CACHE[id];
+    } else {
+      // Fallback nếu không tìm thấy
+      result[id] = `Khách #${id.slice(-4)}`;
+      console.warn(`⚠️ User ${id} not found in cache`);
     }
-    saveUserNameCache();
-
-    const still = need.filter((id) => !result[id]);
-    await Promise.all(
-      still.map(async (id) => {
-        const n = await fetchUserById(id);
-        const finalName = n || `Khách #${id.slice(-4)}`;
-        __USER_NAME_CACHE[id] = finalName;
-        result[id] = finalName;
-      })
-    );
-    saveUserNameCache();
-    return result;
-  } catch {
-    // fallback: gọi từng id
-    await Promise.all(
-      need.map(async (id) => {
-        const n = await fetchUserById(id);
-        const finalName = n || `Khách #${id.slice(-4)}`;
-        __USER_NAME_CACHE[id] = finalName;
-        result[id] = finalName;
-      })
-    );
-    saveUserNameCache();
-    return result;
   }
+  
+  console.log("✅ getUserNamesBatch - Final result:", result);
+  return result;
 }
