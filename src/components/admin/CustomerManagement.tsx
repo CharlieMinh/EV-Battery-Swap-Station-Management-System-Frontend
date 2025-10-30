@@ -89,9 +89,6 @@ export function CustomerManagement() {
           <Button variant="outline" size="sm">
             <Filter className="w-10 h-4" /> {t("admin.filter")}
           </Button>
-          <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
-            <Plus className="w-4 h-4" /> {t("admin.addCustomer")}
-          </Button>
         </div>
       </div>
 

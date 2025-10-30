@@ -35,6 +35,8 @@ import {
   Zap,
   DollarSign,
   Package,
+  UserCircle,
+  MessageCircle,
 } from "lucide-react";
 import { User } from "../App";
 
@@ -61,6 +63,7 @@ import {
 } from "@/services/admin/notifications";
 import { fetchBatteryRequests } from "@/services/admin/batteryService";
 import UserProfile from "./admin/UserProfile";
+import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -463,11 +466,22 @@ export function AdminDashboardPage({
 
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("complaint")}
+                      isActive={activeSection === "complaint"}
+                      className="h-[50px]"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Phản hồi và khiếu nại</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("profile")}
                       isActive={activeSection === "profile"}
                       className="h-[50px]"
                     >
-                      <Package className="w-4 h-4" />
+                      <UserCircle className="w-4 h-4" />
                       <span>Thông tin cá nhân</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -511,6 +525,7 @@ export function AdminDashboardPage({
                   {activeSection === "add-account" && "Thêm người dùng"}
                   {activeSection === "request-history" &&
                     "Lịch sử yêu cầu gửi pin"}
+                  {activeSection === "complaint" && "Phản hồi và khiếu nại"}
                   {activeSection === "profile" && "Thông tin cá nhân"}
                 </h1>
               </div>
@@ -659,6 +674,8 @@ export function AdminDashboardPage({
             {activeSection === "add-account" && <AddUser />}
 
             {activeSection === "request-history" && <RequestForStation />}
+
+            {activeSection === "complaint" && <ComplaintsOfCustomer />}
 
             {activeSection === "profile" && <UserProfile />}
           </main>
