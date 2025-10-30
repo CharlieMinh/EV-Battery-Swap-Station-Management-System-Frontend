@@ -169,8 +169,7 @@ export function SwapHistory({ }: SwapHistoryProps) { // 👈 Xóa props khỏi h
                   </p>
                   <p className="text-sm">{t("driver.licensePlate")}: {swap.vehicleLicensePlate}</p>
                   <p className="text-sm">
-                    {t("driver.batteryHealth")}: {swap.batteryHealthIssued}% →{" "}
-                    {swap.batteryHealthReturned}%
+                    {t("driver.batteryHealth")}: {swap.batteryHealthReturned}%
                   </p>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">

@@ -92,7 +92,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
-  const [oldSerial, setOldSerial] = useState("");
+  const [batteryHealthFromInspection, setBatteryHealthFromInspection] = useState<number>(85); // ⭐ Lưu % pin từ inspection
 
   // ⭐ map userId → userName
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
@@ -151,9 +151,36 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       await fetchList();
       setSelectedId(targetId);
       setStage("checking");
-      setOldSerial("");
     } catch (err: any) {
       console.error("check-in error:", err);
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Check-in thất bại.";
+      alert("❌ " + msg);
+    }
+  };
+
+  /** Check-in thủ công bằng nút bấm */
+  const doManualCheckIn = async (reservation: Reservation) => {
+    try {
+      // ⭐ Ưu tiên dùng QR code thật từ BE (đã có signature)
+      const qrCodeData = reservation.qrCode || "";
+
+      if (!qrCodeData) {
+        alert("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
+        return;
+      }
+
+      await checkInReservation(reservation.reservationId, qrCodeData);
+      alert("✅ Check-in thành công!");
+      setStatus("CheckedIn");
+      await fetchList();
+      setSelectedId(reservation.reservationId);
+      setStage("checking");
+    } catch (err: any) {
+      console.error("manual check-in error:", err);
       const msg =
         err?.response?.data?.error?.message ||
         err?.response?.data?.message ||
@@ -166,18 +193,19 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const startChecking = (id: string) => {
     setSelectedId(id);
     setStage("checking");
-    setOldSerial("");
   };
 
-  const onInspectionDone = (serial: string) => {
-    setOldSerial(serial);
+  const onInspectionDone = (batteryHealth: number) => {
+    // ⭐ Lưu lại batteryHealth để truyền cho SwapPanel
+    console.log("✅ InspectionPanel done - batteryHealth:", batteryHealth);
+    setBatteryHealthFromInspection(batteryHealth);
     setStage("readyToSwap");
   };
 
   const closePanel = () => {
     setSelectedId(null);
     setStage("idle");
-    setOldSerial("");
+    fetchList(); // ⭐ Refresh lại danh sách sau khi hoàn tất
   };
 
   const badgeClass = (s?: string) => {
@@ -236,30 +264,30 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left">
             <tr>
-              <th className="px-3 py-2">Reservation</th>
-              <th className="px-3 py-2">Khách</th>
-              <th className="px-3 py-2">Xe</th>
+              <th className="px-3 py-2">Reservation ID</th>
+              <th className="px-3 py-2">Tên khách hàng</th>
               <th className="px-3 py-2">Model pin</th>
-              <th className="px-3 py-2">Khung giờ</th>
               <th className="px-3 py-2">Trạng thái</th>
+              <th className="px-3 py-2">Slot Start - End</th>
               <th className="px-3 py-2 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center">Đang tải...</td></tr>
+              <tr><td colSpan={6} className="px-3 py-6 text-center">Đang tải...</td></tr>
             )}
             {!loading && list.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-500">Không có lượt nào</td></tr>
+              <tr><td colSpan={6} className="px-3 py-6 text-center text-gray-500">Không có lượt nào</td></tr>
             )}
 
             {list.map((r) => {
               const isSel = selectedId === r.reservationId;
               const canStart = (r as any).status === "CheckedIn";
+              const isPending = (r as any).status === "Pending";
 
               const { start, end } = resolveSlotRange(r);
-              const startLabel = start ? start.toLocaleString() : "—";
-              const endLabel = end ? end.toLocaleString() : "—";
+              const startLabel = start ? start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : "—";
+              const endLabel = end ? end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : "—";
 
               // ⭐ tên khách ưu tiên từ nameMap; fallback userName; cuối cùng Khách #xxxx
               const displayName =
@@ -267,55 +295,59 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 r.userName ||
                 (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
 
-              const vehicleLabel =
-                r.vehiclePlate ||
-                r.vehicleModelName ||
-                "—";
-
               return (
                 <React.Fragment key={r.reservationId}>
-                  <tr className="border-t align-top">
-                    <td className="px-3 py-2 font-mono">{r.reservationId}</td>
-                    <td className="px-3 py-2">{displayName}</td>
-                    <td className="px-3 py-2">{vehicleLabel}</td>
+                  <tr className="border-t align-top hover:bg-gray-50">
+                    <td className="px-3 py-2 font-mono text-xs">{r.reservationId}</td>
+                    <td className="px-3 py-2 font-medium">{displayName}</td>
                     <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId || "—"}</td>
-                    <td className="px-3 py-2">
-                      <div className="text-xs">{startLabel}</div>
-                      <div className="text-xs text-gray-500">→ {endLabel}</div>
-                    </td>
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-1 text-xs ${badgeClass(r.status)}`}>
                         {statusToVi(r.status)}
                       </span>
                     </td>
+                    <td className="px-3 py-2">
+                      <div className="text-sm">{startLabel} - {endLabel}</div>
+                    </td>
                     <td className="px-3 py-2 text-right">
-                      {canStart ? (
-                        <button
-                          onClick={() => startChecking(r.reservationId)}
-                          className={`${isSel ? "bg-black text-white" : "border"} rounded px-3 py-2`}
-                        >
-                          {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-gray-400">Hãy check-in trước</span>
-                      )}
+                      <div className="flex gap-2 justify-end">
+                        {isPending && (
+                          <button
+                            onClick={() => doManualCheckIn(r)}
+                            className="border rounded px-3 py-1 text-sm hover:bg-gray-100"
+                          >
+                            Check-in
+                          </button>
+                        )}
+                        {canStart && (
+                          <button
+                            onClick={() => startChecking(r.reservationId)}
+                            className={`${isSel ? "bg-black text-white" : "border"} rounded px-3 py-1 text-sm`}
+                          >
+                            {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
+                          </button>
+                        )}
+                        {!isPending && !canStart && (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
 
                   {isSel && (
                     <tr className="bg-gray-50/50">
-                      <td colSpan={7} className="p-3">
+                      <td colSpan={6} className="p-3">
                         {stage === "checking" && selected && (
                           <InspectionPanel
                             reservation={selected}
-                            onDone={(s) => onInspectionDone(s)}
+                            onDone={(health) => onInspectionDone(health)}
                             onCancel={closePanel}
                           />
                         )}
                         {stage === "readyToSwap" && selected && (
                           <SwapPanel
                             reservation={selected}
-                            oldBatterySerial={oldSerial}
+                            initialBatteryHealth={batteryHealthFromInspection}
                             onSwapped={() => closePanel()}
                             onCancel={closePanel}
                           />
