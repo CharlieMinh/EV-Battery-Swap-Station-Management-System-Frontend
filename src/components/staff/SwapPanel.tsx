@@ -15,35 +15,37 @@ import {
 
 type Props = {
   reservation: Reservation;
-  oldBatterySerial: string;
+  initialBatteryHealth?: number; // ⭐ Nhận % pin từ InspectionPanel
   onSwapped: (info: { swapId?: string }) => void;
   onCancel: () => void;
 };
 
 export default function SwapPanel({
   reservation,
-  oldBatterySerial,
+  initialBatteryHealth = 85, // ⭐ Default 85 nếu không truyền vào
   onSwapped,
   onCancel,
 }: Props) {
-  const [serial, setSerial] = useState(oldBatterySerial || "");
+  const [health, setHealth] = useState<number>(initialBatteryHealth); // ⭐ Dùng giá trị từ props
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SwapFinalizeResponse | null>(null);
   const [message, setMessage] = useState("");
 
   const handleSwap = async () => {
-    if (!serial.trim()) {
-      alert("⚠️ Vui lòng nhập serial pin cũ.");
+    if (health < 0 || health > 100) {
+      alert("⚠️ Vui lòng nhập % pin cũ trong khoảng 0-100.");
       return;
     }
 
     setLoading(true);
     setMessage("");
 
+    console.log("🔋 Sending to BE - oldBatteryHealth:", health); // ⭐ Debug log
+
     try {
       const res = await finalizeSwapFromReservation({
         reservationId: reservation.reservationId,
-        oldBatterySerial: serial.trim(),
+        oldBatteryHealth: health,
       });
 
       if (res.success) {
@@ -60,8 +62,8 @@ export default function SwapPanel({
         if (code === 500 || code === 409 || code === 422) {
           alert(
             "⚠️ Đã có lỗi xảy ra khi hoàn tất giao dịch.\n" +
-              "Tuy nhiên hệ thống có thể đã giữ chỗ pin (kho báo Reserved).\n" +
-              "Mình sẽ đóng bảng này. Vui lòng kiểm tra tab Giao dịch/Doanh thu."
+            "Tuy nhiên hệ thống có thể đã giữ chỗ pin (kho báo Reserved).\n" +
+            "Mình sẽ đóng bảng này. Vui lòng kiểm tra tab Giao dịch/Doanh thu."
           );
           onSwapped({});
         } else {
@@ -89,16 +91,19 @@ export default function SwapPanel({
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">
-            Serial pin cũ
+            % Pin cũ (0-100)
           </label>
           <input
+            type="number"
+            min="0"
+            max="100"
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={serial}
-            onChange={(e) => setSerial(e.target.value)}
-            placeholder="Nhập serial pin cũ"
+            value={health}
+            onChange={(e) => setHealth(Number(e.target.value))}
+            placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Hệ thống sẽ kiểm tra tương thích và tự chọn pin mới phù hợp.
+            Nhập % pin cũ mà staff đo được (0-100). Hệ thống sẽ tự chọn pin mới phù hợp.
           </p>
         </div>
 

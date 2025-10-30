@@ -306,6 +306,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             slotDate: formatDateForApi(bookingDate),
             slotStartTime: selectedSlot.slotStartTime,
             slotEndTime: selectedSlot.slotEndTime,
+            vehicleId: selectedVehicle.id
           },
           { withCredentials: true }
         );
@@ -343,6 +344,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             batteryModelId: selectedVehicle.compatibleBatteryModelId,
             slotDate: formatDateForApi(bookingDate),
             slotStartTime: selectedSlot.slotStartTime,
+            vehicleId: selectedVehicle.id,
             slotEndTime: selectedSlot.slotEndTime,
             amount: price,
             paymentMethod: methodToUse // 0=VNPay, 1=Cash
