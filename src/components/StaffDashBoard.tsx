@@ -118,7 +118,7 @@ export default function StaffDashboard({
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
-      { key: "approvals", label: "Xác nhận gói", icon: BadgeCheck },
+      { key: "approvals", label: "Xác nhận thanh toán tiền mặt", icon: BadgeCheck },
     ],
     []
   ) as { key: TabKey; label: string; icon: any }[];
@@ -280,11 +280,10 @@ export default function StaffDashboard({
                           <div
                             key={n.id}
                             onClick={() => handleMarkAsRead(n)}
-                            className={`p-2 rounded-lg cursor-pointer mb-1 ${
-                              n.isRead
+                            className={`p-2 rounded-lg cursor-pointer mb-1 ${n.isRead
                                 ? "bg-gray-100 hover:bg-gray-200"
                                 : "bg-orange-100 hover:bg-orange-200"
-                            }`}
+                              }`}
                           >
                             <p className="text-sm font-medium text-gray-800">
                               {n.message}
