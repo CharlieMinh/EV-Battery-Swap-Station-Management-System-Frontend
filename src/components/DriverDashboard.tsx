@@ -32,6 +32,7 @@ import {
   Pen,
   CreditCardIcon,
   Home,
+  AlertCircle,
 } from "lucide-react";
 import { User } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -51,6 +52,7 @@ import { MyVehicle } from "../components/driver/MyVehicle";
 import { toast } from "react-toastify";
 // ❌ Xóa showError, showSuccess (Đã chuyển sang DriverProfile)
 import { MyPaymentsPage } from "./driver/MyPaymentsPage";
+import { ComplaintsList } from "./driver/ComplaintsList";
 
 interface DriverDashboardProps {
   user: User;
@@ -107,7 +109,7 @@ interface Station {
   primaryImageUrl: string | null;
   isOpenNow: boolean;
 }
-// ❌ XÓA interface UserData (Đã chuyển qua DriverProfile.tsx)
+
 
 
 export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
@@ -116,20 +118,13 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("swap");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
-  // ❌ XÓA state isCancelling
   const [qrDialog, setQrDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // State dùng chung (Giữ lại)
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [subscriptionInfoList, setSubscriptionInfoList] = useState<SubscriptionInfo[]>([]);
   const [stations, setStations] = useState<Station[] | null>(null);
 
-  // ❌ XÓA state userData
-  // ❌ XÓA state swapHistory
-  // ❌ XÓA state recentSwaps
-
-  // Booking states (Giữ lại)
   const [bookingDialog, setBookingDialog] = useState(false);
   const [bookingStep, setBookingStep] = useState(1);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -157,7 +152,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
   }, [location.state]);
 
-  // (useEffect fetchSubscriptionData không đổi)
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       try {
@@ -483,6 +477,16 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("complaints")}
+                      isActive={activeSection === "complaints"}
+                      className="h-[60px]"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Khiếu nại của tôi</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("profile")}
                       isActive={activeSection === "profile"}
                       className="h-[60px]"
@@ -540,6 +544,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                   {activeSection === "subscription" && "Đăng ký gói"}
                   {activeSection === "swap" && t("driver.swap")}
                   {activeSection === "history" && t("driver.history")}
+                  {activeSection === "complaints" && "Khiếu nại của tôi"}
                   {activeSection === "profile" && t("driver.profile")}
                   {activeSection === "support" && t("driver.support")}
                 </h1>
@@ -602,6 +607,12 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             {activeSection === "history" && (
               <div className="space-y-6">
                 <SwapHistory /> {/* 👈 Đã xóa props */}
+              </div>
+            )}
+
+            {activeSection === "complaints" && (
+              <div className="space-y-6">
+                <ComplaintsList />
               </div>
             )}
 

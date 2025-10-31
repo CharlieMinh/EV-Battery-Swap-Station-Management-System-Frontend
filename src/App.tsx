@@ -92,7 +92,7 @@ function App() {
   const handleLogout = async () => {
     try {
       await api.post("/api/v1/Auth/logout", {}, { withCredentials: true });
-    } catch {}
+    } catch { }
     setCurrentUser(null);
   };
 
@@ -120,8 +120,8 @@ function App() {
             element={
               <LoginPage
                 onLogin={handleLogin}
-                onRegister={() => {}}
-                onBackToHome={() => {}}
+                onRegister={() => { }}
+                onBackToHome={() => { }}
               />
             }
           />
@@ -131,8 +131,8 @@ function App() {
             element={
               <RegisterPage
                 onRegister={handleRegister}
-                onBackToHome={() => {}}
-                onBackToLogin={() => {}}
+                onBackToHome={() => { }}
+                onBackToLogin={() => { }}
               />
             }
           />
