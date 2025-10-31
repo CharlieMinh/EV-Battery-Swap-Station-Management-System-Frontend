@@ -3,6 +3,23 @@ import { uploadFile, type Reservation } from "../../services/staff/staffApi";
 import { CheckCircle, Upload, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "react-toastify";
 
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2200,
+  closeOnClick: true,
+};
+const TOAST_ID = {
+  fetchOk: "q-f-ok",
+  fetchErr: "q-f-err",
+  namesErr: "q-names-err",
+  noTargetWarn: "q-no-target",
+  checkinOk: "q-ci-ok",
+  checkinErr: "q-ci-err",
+  refreshInfo: "q-refresh",
+  afterInspectOk: "q-inspect-ok",
+  closeInfo: "q-close-info",
+};
+
 type Props = {
   reservation: Reservation;
   onDone: (batteryHealth: number) => void;
@@ -211,7 +228,10 @@ export default function InspectionPanel({
           <button
             onClick={() => {
               onCancel();
-              toast.info("Đã đóng kiểm tra pin.", { ...toastOpts, toastId: "insp-cancel" });
+              toast.info("Đã đóng kiểm tra pin.", {
+                ...toastOpts,
+                toastId: "insp-cancel",
+              });
             }}
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
           >
@@ -237,7 +257,9 @@ export default function InspectionPanel({
           <div className="flex justify-between">
             <dt className="text-gray-500">Model pin</dt>
             <dd className="font-medium">
-              {reservation.batteryModelName || reservation.batteryModelId || "—"}
+              {reservation.batteryModelName ||
+                reservation.batteryModelId ||
+                "—"}
             </dd>
           </div>
         </dl>

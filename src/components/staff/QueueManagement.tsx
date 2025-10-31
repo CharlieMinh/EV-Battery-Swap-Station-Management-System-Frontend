@@ -13,6 +13,23 @@ import { ClipboardCheck, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify"; // ⭐ UPDATED: dùng toast thay alert
 import { fetchReservationDetail } from "@/services/swaps";
 
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2200,
+  closeOnClick: true,
+};
+const TOAST_ID = {
+  fetchOk: "q-f-ok",
+  fetchErr: "q-f-err",
+  namesErr: "q-names-err",
+  noTargetWarn: "q-no-target",
+  checkinOk: "q-ci-ok",
+  checkinErr: "q-ci-err",
+  refreshInfo: "q-refresh",
+  afterInspectOk: "q-inspect-ok",
+  closeInfo: "q-close-info",
+};
+
 type Stage =
   | "idle" // Chưa chọn lượt
   | "checking" // Đang kiểm tra pin
@@ -169,7 +186,10 @@ export default function QueueManagement({
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
-      toast.success("Đã tải danh sách lượt đặt.", { ...toastOpts, toastId: TOAST_ID.fetchOk });
+      toast.success("Đã tải danh sách lượt đặt.", {
+        ...toastOpts,
+        toastId: TOAST_ID.fetchOk,
+      });
     } catch (e: any) {
       console.error("load reservations error:", e);
       setList([]);
@@ -193,7 +213,10 @@ export default function QueueManagement({
         const map = await getUserNamesBatch(ids);
         setNameMap((prev) => ({ ...prev, ...map }));
       } catch (err: any) {
-        const msg = err?.response?.data?.message || err?.message || "Không thể lấy tên khách hàng.";
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Không thể lấy tên khách hàng.";
         toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
       }
     })();
@@ -334,7 +357,10 @@ export default function QueueManagement({
 
         <button
           onClick={() => {
-            toast.info("Đang làm mới danh sách...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
+            toast.info("Đang làm mới danh sách...", {
+              ...toastOpts,
+              toastId: TOAST_ID.refreshInfo,
+            });
             fetchList();
           }}
           className="border rounded px-3 py-2 inline-flex items-center gap-2"
@@ -386,10 +412,16 @@ export default function QueueManagement({
 
               const { start, end } = resolveSlotRange(r);
               const startLabel = start
-                ? start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                ? start.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "—";
               const endLabel = end
-                ? end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                ? end.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "—";
 
               const displayName =
