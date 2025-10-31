@@ -1,6 +1,7 @@
 // src/components/staff/CheckInManagement.tsx
 import React, { useRef, useState } from "react";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
+import { toast } from "react-toastify";
 
 export default function CheckInManagement({
   open,
@@ -13,15 +14,33 @@ export default function CheckInManagement({
 }) {
   const [manual, setManual] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const lockRef = useRef<number>(0); // chống gọi liên tục
+  const lockRef = useRef<number>(0);           // chống gọi liên tục
+  const lastErrorMsgRef = useRef<string | null>(null); // tránh spam toast lỗi giống nhau
 
   if (!open) return null;
+
+  const toastOpts = {
+    position: "top-right" as const,
+    autoClose: 2200,
+    closeOnClick: true,
+  };
 
   const triggerOnce = (text: string) => {
     const now = Date.now();
     if (now - lockRef.current < 1000) return; // 1s chống spam
     lockRef.current = now;
+
+    // ✅ Giữ nguyên: chỉ gọi onDetected
     onDetected(text);
+
+    // ✅ Thông báo quét thành công (chỉ hiển thị 1 lần nhờ toastId)
+    const preview = text.length > 48 ? text.slice(0, 45).trim() + "..." : text.trim();
+    toast.success(`Đã quét mã: ${preview}`, {
+      ...toastOpts,
+      toastId: `qr-success-${preview}`, // cùng preview => không bị hiển thị trùng
+    });
+
+    if (err) setErr(null);
   };
 
   const handleText = (txt?: string | null) => {
@@ -29,12 +48,26 @@ export default function CheckInManagement({
     triggerOnce(txt.trim());
   };
 
+  const setErrorWithToast = (msg: string) => {
+    setErr(msg);
+    if (lastErrorMsgRef.current !== msg) {
+      lastErrorMsgRef.current = msg;
+      toast.error(msg, { ...toastOpts, toastId: `qr-error-${msg}` });
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
       <div className="w-full max-w-xl rounded-xl bg-white p-4 shadow-lg">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-semibold">📷 Quét mã Check-in</h3>
-          <button onClick={onClose} className="border px-3 py-1 rounded-lg">
+          <button
+            onClick={() => {
+              onClose();
+              toast.info("Đã đóng cửa sổ quét.", { ...toastOpts, toastId: "qr-close" });
+            }}
+            className="border px-3 py-1 rounded-lg"
+          >
             Đóng
           </button>
         </div>
@@ -48,12 +81,25 @@ export default function CheckInManagement({
               try {
                 if (result && typeof result.getText === "function") {
                   const text = result.getText();
-                  if (text) handleText(text);
-                } else if (errObj && errObj.name !== "NotFoundException") {
-                  setErr("Không thể đọc mã.");
+                  if (text) {
+                    handleText(text);
+                  }
+                } else if (errObj) {
+                  // "Không thấy mã" sẽ lặp liên tục khi camera chưa nhìn thấy gì — bỏ qua
+                  if (errObj.name === "NotFoundException") return;
+
+                  if (errObj.name === "NotAllowedError") {
+                    setErrorWithToast("Trình duyệt bị chặn quyền camera. Hãy cấp quyền và thử lại.");
+                  } else if (errObj.name === "NotReadableError") {
+                    setErrorWithToast("Không truy cập được camera. Kiểm tra ứng dụng khác đang dùng camera.");
+                  } else if (errObj.name === "OverconstrainedError") {
+                    setErrorWithToast("Không tìm thấy thiết bị camera phù hợp. Thử chuyển sang camera khác.");
+                  } else {
+                    setErrorWithToast("Không thể đọc mã.");
+                  }
                 }
               } catch {
-                setErr("Không thể đọc mã.");
+                setErrorWithToast("Không thể đọc mã.");
               }
             }}
           />
@@ -70,7 +116,21 @@ export default function CheckInManagement({
             />
             <button
               className="rounded border px-3 py-2"
-              onClick={() => manual.trim() && handleText(manual.trim())}
+              onClick={() => {
+                const v = manual.trim();
+                if (!v) {
+                  toast.warn("Vui lòng nhập nội dung để xác nhận.", {
+                    ...toastOpts,
+                    toastId: "qr-manual-empty",
+                  });
+                  return;
+                }
+                handleText(v);
+                toast.success("Đã xác nhận thủ công nội dung quét.", {
+                  ...toastOpts,
+                  toastId: "qr-manual-ok",
+                });
+              }}
             >
               Xác nhận
             </button>

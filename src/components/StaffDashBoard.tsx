@@ -11,7 +11,7 @@ import {
   Bell,
   BadgeCheck, // tab Xác nhận gói
   Package,
-  MessageCircle, // ⬅ icon cho tab Yêu cầu nhập pin
+  MessageCircle, // icon cho tab Yêu cầu nhập pin
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -38,8 +38,6 @@ import Transactions from "./staff/Transactions";
 import InventoryManagement from "./staff/InventoryManagement";
 import Revenue from "./staff/Revenue";
 import CashPaymentManagement from "./staff/CashPaymentManagement";
-
-// 👇 Thêm import màn hình yêu cầu nhập pin
 import RequestBattery from "../components/staff/RequestBattery";
 
 import logo from "../assets/LogoEV2.png";
@@ -49,18 +47,18 @@ import {
   getUnreadCount,
   markMultipleAsRead,
   Notification,
-  NotificationResponse,
 } from "@/services/admin/notifications";
 import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
+import { toast } from "react-toastify";
 
 type TabKey =
   | "profile"
   | "queue"
   | "transactions"
   | "inventory"
-  | "requests" // ⬅ THÊM tab mới
+  | "requests"
   | "revenue"
   | "approvals"
   | "complaint";
@@ -72,10 +70,7 @@ interface StaffDashboardPageProps {
   onLogout: () => void;
 }
 
-export default function StaffDashboard({
-  user,
-  onLogout,
-}: StaffDashboardPageProps) {
+export default function StaffDashboard({ user, onLogout }: StaffDashboardPageProps) {
   const [active, setActive] = useState<TabKey>("queue");
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,21 +80,38 @@ export default function StaffDashboard({
     localStorage.getItem(STATION_OVERRIDE_KEY) || ""
   );
 
-  const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState("profile");
+  const { t } = useLanguage(); // (chưa dùng nhưng giữ nguyên logic cũ)
+  const [activeSection, setActiveSection] = useState("profile"); // (chưa dùng nhưng giữ nguyên)
+
+  const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+
+  // ✅ Mỗi hành động chỉ hiện 1 toast (toastId)
+  const TOAST_ID = {
+    loadMe: "sd-loadMe",
+    logout: "sd-logout",
+    saveOverride: "sd-saveOverride",
+    clearOverride: "sd-clearOverride",
+    notifFetch: "sd-notifFetch",
+    notifMark: "sd-notifMark",
+  } as const;
 
   useEffect(() => {
     (async () => {
       try {
         const { data } = await getMe();
         setMe(data);
-      } catch (e) {
-        console.error("Lỗi tải người dùng:", e);
+      } catch (e: any) {
+        const msg =
+          e?.response?.data?.message ||
+          e?.message ||
+          "Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.";
         setErr("Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.");
+        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.loadMe });
       } finally {
         setLoading(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logout = () => {
@@ -107,6 +119,7 @@ export default function StaffDashboard({
     localStorage.removeItem("authToken");
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     onLogout();
+    toast.info("Đã đăng xuất.", { ...toastOpts, toastId: TOAST_ID.logout });
   };
 
   const stationIdFromMe = me?.stationId || null;
@@ -119,29 +132,37 @@ export default function StaffDashboard({
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
       { key: "transactions", label: "Giao dịch", icon: CreditCard },
       { key: "inventory", label: "Kho pin", icon: Warehouse },
-      { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
+      { key: "requests", label: "Yêu cầu nhập pin", icon: Package },
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
       { key: "approvals", label: "Xác nhận thanh toán", icon: BadgeCheck },
-      {
-        key: "complaint",
-        label: "Khiếu nại và phản hồi",
-        icon: MessageCircle,
-      },
+      { key: "complaint", label: "Khiếu nại và phản hồi", icon: MessageCircle },
     ],
     []
   ) as { key: TabKey; label: string; icon: any }[];
 
   const saveOverride = () => {
     const v = overrideInput.trim();
-    if (!v) return alert("Vui lòng nhập StationId hợp lệ.");
+    if (!v) {
+      toast.warning("Vui lòng nhập StationId hợp lệ.", {
+        ...toastOpts,
+        toastId: TOAST_ID.saveOverride,
+      });
+      return;
+    }
     localStorage.setItem(STATION_OVERRIDE_KEY, v);
-    alert("Đã lưu StationId, các tab sẽ dùng giá trị này.");
+    toast.success("Đã lưu StationId, các tab sẽ dùng giá trị này.", {
+      ...toastOpts,
+      toastId: TOAST_ID.saveOverride,
+    });
   };
 
   const clearOverride = () => {
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     setOverrideInput("");
-    alert("Đã xoá StationId nhập tay.");
+    toast.info("Đã xoá StationId nhập tay.", {
+      ...toastOpts,
+      toastId: TOAST_ID.clearOverride,
+    });
   };
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -155,12 +176,16 @@ export default function StaffDashboard({
         setNotifications(data.items);
         const count = await getUnreadCount(1, 10);
         setUnreadCount(count);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
+      } catch (error: any) {
+        const msg =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể tải thông báo.";
+        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.notifFetch });
       }
     };
     fetchData();
-  }, []);
+  }, []); // giữ nguyên logic
 
   const handleMarkAsRead = async (notification: Notification) => {
     try {
@@ -173,12 +198,19 @@ export default function StaffDashboard({
           n.message === notification.message ? { ...n, isRead: true } : n
         )
       );
-
       setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
       setNotifOpen(false);
       setActiveSection("battery-request");
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
+      toast.success("Đã đánh dấu đã đọc.", {
+        ...toastOpts,
+        toastId: TOAST_ID.notifMark,
+      });
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể đánh dấu đã đọc.";
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.notifMark });
     }
   };
 
@@ -189,16 +221,10 @@ export default function StaffDashboard({
           <SidebarHeader>
             <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
-                <img
-                  src={logo}
-                  alt="FPTFAST Logo"
-                  className="w-10 h-9 rounded-lg"
-                />
+                <img src={logo} alt="FPTFAST Logo" className="w-10 h-9 rounded-lg" />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg text-white font-semibold">
-                  F P T F A S T
-                </span>
+                <span className="text-lg text-white font-semibold">F P T F A S T</span>
                 <span className="text-sm font-medium text-gray-100">Staff</span>
               </div>
             </div>
@@ -236,12 +262,7 @@ export default function StaffDashboard({
                 </p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0"
-                onClick={logout}
-              >
+              <Button variant="ghost" size="sm" className="shrink-0" onClick={logout}>
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -255,11 +276,11 @@ export default function StaffDashboard({
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {menu.find((m) => m.key === active)?.label ||
-                    "Bảng điều khiển"}
+                  {menu.find((m) => m.key === active)?.label || "Bảng điều khiển"}
                 </h1>
               </div>
 
+              {/* ✅ Sửa lỗi câu className ở đây */}
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
                 <Popover open={notifOpen} onOpenChange={setNotifOpen}>
@@ -279,19 +300,18 @@ export default function StaffDashboard({
                       Thông báo
                     </h3>
                     {notifications.length === 0 ? (
-                      <p className="text-gray-500 text-sm">
-                        Không có thông báo nào
-                      </p>
+                      <p className="text-gray-500 text-sm">Không có thông báo nào</p>
                     ) : (
                       <div className="max-h-64 overflow-y-auto">
                         {notifications.map((n) => (
                           <div
                             key={n.id}
                             onClick={() => handleMarkAsRead(n)}
-                            className={`p-2 rounded-lg cursor-pointer mb-1 ${n.isRead
+                            className={`p-2 rounded-lg cursor-pointer mb-1 ${
+                              n.isRead
                                 ? "bg-gray-100 hover:bg-gray-200"
                                 : "bg-orange-100 hover:bg-orange-200"
-                              }`}
+                            }`}
                           >
                             <p className="text-sm font-medium text-gray-800">
                               {n.message}
@@ -305,13 +325,6 @@ export default function StaffDashboard({
                     )}
                   </PopoverContent>
                 </Popover>
-                {/* 
-                <Badge
-                  variant="outline"
-                  className="text-orange-600 border-orange-300"
-                >
-                  Trạm #{user.stationId}
-                </Badge> */}
               </div>
             </div>
           </header>
@@ -355,11 +368,8 @@ export default function StaffDashboard({
                     <Save className="h-4 w-4" /> Lưu StationId
                   </button>
                   {stationIdOverride && (
-                    <button
-                      onClick={clearOverride}
-                      className="border rounded px-3 py-2"
-                    >
-                      Xoági
+                    <button onClick={clearOverride} className="border rounded px-3 py-2">
+                      Xóa
                     </button>
                   )}
                 </div>
@@ -369,15 +379,12 @@ export default function StaffDashboard({
             {!loading && !err && (
               <>
                 {active === "profile" && <ProfileManagement />}
-                {active === "queue" && (
-                  <QueueManagement stationId={stationId || ""} />
-                )}
+                {active === "queue" && <QueueManagement stationId={stationId || ""} />}
                 {active === "transactions" && <Transactions />}
                 {active === "inventory" && (
                   <InventoryManagement stationId={stationId || ""} />
                 )}
-                {active === "requests" && <RequestBattery />}{" "}
-                {/* ⬅ THÊM tab mới */}
+                {active === "requests" && <RequestBattery />}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
                 {active === "complaint" && <ComplaintsOfCustomer />}

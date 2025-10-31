@@ -5,13 +5,8 @@ import {
   type Reservation,
   type SwapFinalizeResponse,
 } from "../../services/staff/staffApi";
-import {
-  CheckCircle,
-  Battery,
-  BadgeCheck,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
+import { CheckCircle, Battery, BadgeCheck, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Props = {
   reservation: Reservation;
@@ -20,27 +15,44 @@ type Props = {
   onCancel: () => void;
 };
 
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+// ✅ Bảo đảm MỖI hành động chỉ hiển thị 1 toast (dùng toastId cố định)
+const TOAST_ID = {
+  swap: "swap-action-toast",
+  close: "swap-close-toast",
+};
+
 export default function SwapPanel({
   reservation,
   initialBatteryHealth = 85, // ⭐ Default 85 nếu không truyền vào
   onSwapped,
   onCancel,
 }: Props) {
-  const [health, setHealth] = useState<number>(initialBatteryHealth); // ⭐ Dùng giá trị từ props
+  const [health, setHealth] = useState<number>(initialBatteryHealth);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SwapFinalizeResponse | null>(null);
   const [message, setMessage] = useState("");
 
+  // Helper: luôn thay thế toast cũ của hành động hiện tại thay vì tạo toast mới
+  const oneToast = {
+    success: (msg: string) =>
+      toast.success(msg, { ...toastOpts, toastId: TOAST_ID.swap }),
+    error: (msg: string) =>
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.swap }),
+    info: (msg: string, extra?: Partial<typeof toastOpts>) =>
+      toast.info(msg, { ...toastOpts, toastId: TOAST_ID.swap, ...extra }),
+    warn: (msg: string) =>
+      toast.warn(msg, { ...toastOpts, toastId: TOAST_ID.swap }),
+  };
+
   const handleSwap = async () => {
     if (health < 0 || health > 100) {
-      alert("⚠️ Vui lòng nhập % pin cũ trong khoảng 0-100.");
+      oneToast.warn("Vui lòng nhập % pin cũ trong khoảng 0-100.");
       return;
     }
 
     setLoading(true);
     setMessage("");
-
-    console.log("🔋 Sending to BE - oldBatteryHealth:", health); // ⭐ Debug log
 
     try {
       const res = await finalizeSwapFromReservation({
@@ -49,31 +61,32 @@ export default function SwapPanel({
       });
 
       if (res.success) {
-        alert("✅ Đã xác nhận thay pin thành công.");
+        oneToast.success("Đã xác nhận thay pin thành công.");
         setResult(res);
         onSwapped({ swapId: res.swapTransactionId });
       } else {
-        // Xử lý fallback lỗi
         const code = res.code;
         const msg =
           res.message ||
           "Đã có lỗi xảy ra khi hoàn tất giao dịch. Vui lòng kiểm tra lại.";
 
         if (code === 500 || code === 409 || code === 422) {
-          alert(
-            "⚠️ Đã có lỗi xảy ra khi hoàn tất giao dịch.\n" +
-            "Tuy nhiên hệ thống có thể đã giữ chỗ pin (kho báo Reserved).\n" +
-            "Mình sẽ đóng bảng này. Vui lòng kiểm tra tab Giao dịch/Doanh thu."
+          oneToast.info(
+            "Đã có lỗi khi hoàn tất giao dịch. Hệ thống có thể đã giữ chỗ pin (kho báo Reserved). Vui lòng kiểm tra tab Giao dịch/Doanh thu.",
+            { autoClose: 3500 }
           );
           onSwapped({});
         } else {
-          alert(`❌ ${msg}`);
+          oneToast.error(msg.startsWith("❌") ? msg : `❌ ${msg}`);
           setMessage(msg);
         }
       }
     } catch (err: any) {
-      console.error("SwapPanel error:", err);
-      alert("❌ Không thể hoàn tất thay pin. Vui lòng thử lại.");
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể hoàn tất thay pin. Vui lòng thử lại.";
+      oneToast.error(`❌ ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -90,9 +103,7 @@ export default function SwapPanel({
         </header>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            % Pin cũ (0-100)
-          </label>
+          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
           <input
             type="number"
             min="0"
@@ -134,7 +145,14 @@ export default function SwapPanel({
           </button>
           <button
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
-            onClick={onCancel}
+            onClick={() => {
+              onCancel();
+              // dùng toastId khác cho hành động đóng panel để không đè lên toast của swap
+              toast.info("Đã đóng panel thay pin.", {
+                ...toastOpts,
+                toastId: TOAST_ID.close,
+              });
+            }}
             disabled={loading}
           >
             Đóng
@@ -193,9 +211,7 @@ export default function SwapPanel({
               </div>
               <div>
                 <b>Thời gian:</b>{" "}
-                {result.timestamp
-                  ? new Date(result.timestamp).toLocaleString()
-                  : "—"}
+                {result.timestamp ? new Date(result.timestamp).toLocaleString() : "—"}
               </div>
               <div>
                 <b>Khách hàng:</b> {result.driverName || "—"}

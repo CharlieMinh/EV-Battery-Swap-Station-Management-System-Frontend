@@ -4,12 +4,13 @@ import {
   listReservations,
   checkInReservation,
   type Reservation,
-  getUserNamesBatch,  // ⭐ dùng để map userId → userName
+  getUserNamesBatch, // ⭐ dùng để map userId → userName
 } from "../../services/staff/staffApi";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
 import { ClipboardCheck, RefreshCw } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Stage = "idle" | "checking" | "readyToSwap";
 
@@ -83,6 +84,19 @@ function tryExtractReservationIdFromQR(raw: string): string | null {
   }
 }
 
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+const TOAST_ID = {
+  fetchOk: "q-f-ok",
+  fetchErr: "q-f-err",
+  namesErr: "q-names-err",
+  noTargetWarn: "q-no-target",
+  checkinOk: "q-ci-ok",
+  checkinErr: "q-ci-err",
+  refreshInfo: "q-refresh",
+  afterInspectOk: "q-inspect-ok",
+  closeInfo: "q-close-info",
+};
+
 export default function QueueManagement({ stationId }: { stationId: string | number }) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [status, setStatus] = useState<string>(""); // '' = Tất cả
@@ -109,24 +123,35 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
-    } catch (e) {
+      toast.success("Đã tải danh sách lượt đặt.", { ...toastOpts, toastId: TOAST_ID.fetchOk });
+    } catch (e: any) {
       console.error("load reservations error:", e);
       setList([]);
+      const msg = e?.response?.data?.message || e?.message || "Không thể tải danh sách.";
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
     }
   };
 
   // nạp danh sách
-  useEffect(() => { fetchList(); /* eslint-disable-next-line */ }, [stationId, date, status]);
+  useEffect(() => {
+    fetchList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stationId, date, status]);
 
   // khi list đổi, resolve tên khách (batch + cache)
   useEffect(() => {
-    const ids = Array.from(new Set((list.map((r) => r.userId).filter(Boolean) as string[])));
+    const ids = Array.from(new Set(list.map((r) => r.userId).filter(Boolean) as string[]));
     if (ids.length === 0) return;
     (async () => {
-      const map = await getUserNamesBatch(ids);
-      setNameMap((prev) => ({ ...prev, ...map }));
+      try {
+        const map = await getUserNamesBatch(ids);
+        setNameMap((prev) => ({ ...prev, ...map }));
+      } catch (err: any) {
+        const msg = err?.response?.data?.message || err?.message || "Không thể lấy tên khách hàng.";
+        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
+      }
     })();
   }, [list]);
 
@@ -136,7 +161,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     const targetId = selectedId || maybeId;
 
     if (!targetId) {
-      alert("Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR.");
+      toast.warning("Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR.", {
+        ...toastOpts,
+        toastId: TOAST_ID.noTargetWarn,
+      });
       return;
     }
 
@@ -145,7 +173,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const qrCodeData = looksLikeBase64 ? raw : btoa(raw);
 
       await checkInReservation(targetId, qrCodeData);
-      alert("✅ Check-in thành công!");
+      toast.success("Check-in thành công!", { ...toastOpts, toastId: TOAST_ID.checkinOk });
       setScannerOpen(false);
       setStatus("CheckedIn");
       await fetchList();
@@ -158,7 +186,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         err?.response?.data?.message ||
         err?.message ||
         "Check-in thất bại.";
-      alert("❌ " + msg);
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.checkinErr });
     }
   };
 
@@ -169,12 +197,15 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const qrCodeData = reservation.qrCode || "";
 
       if (!qrCodeData) {
-        alert("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
+        toast.error("Không tìm thấy QR code hợp lệ cho reservation này.", {
+          ...toastOpts,
+          toastId: TOAST_ID.checkinErr,
+        });
         return;
       }
 
       await checkInReservation(reservation.reservationId, qrCodeData);
-      alert("✅ Check-in thành công!");
+      toast.success("Check-in thành công!", { ...toastOpts, toastId: TOAST_ID.checkinOk });
       setStatus("CheckedIn");
       await fetchList();
       setSelectedId(reservation.reservationId);
@@ -186,7 +217,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         err?.response?.data?.message ||
         err?.message ||
         "Check-in thất bại.";
-      alert("❌ " + msg);
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.checkinErr });
     }
   };
 
@@ -200,12 +231,17 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     console.log("✅ InspectionPanel done - batteryHealth:", batteryHealth);
     setBatteryHealthFromInspection(batteryHealth);
     setStage("readyToSwap");
+    toast.success("Đã lưu kết quả kiểm tra, chuyển sang bước thay pin.", {
+      ...toastOpts,
+      toastId: TOAST_ID.afterInspectOk,
+    });
   };
 
   const closePanel = () => {
     setSelectedId(null);
     setStage("idle");
     fetchList(); // ⭐ Refresh lại danh sách sau khi hoàn tất
+    toast.info("Đã đóng panel.", { ...toastOpts, toastId: TOAST_ID.closeInfo });
   };
 
   const badgeClass = (s?: string) => {
@@ -246,7 +282,13 @@ export default function QueueManagement({ stationId }: { stationId: string | num
           </select>
         </div>
 
-        <button onClick={fetchList} className="border rounded px-3 py-2 inline-flex items-center gap-2">
+        <button
+          onClick={() => {
+            toast.info("Đang làm mới danh sách...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
+            fetchList();
+          }}
+          className="border rounded px-3 py-2 inline-flex items-center gap-2"
+        >
           <RefreshCw className="h-4 w-4" />
           Làm mới
         </button>
@@ -274,10 +316,18 @@ export default function QueueManagement({ stationId }: { stationId: string | num
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center">Đang tải...</td></tr>
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center">
+                  Đang tải...
+                </td>
+              </tr>
             )}
             {!loading && list.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-gray-500">Không có lượt nào</td></tr>
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                  Không có lượt nào
+                </td>
+              </tr>
             )}
 
             {list.map((r) => {
@@ -286,8 +336,12 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               const isPending = (r as any).status === "Pending";
 
               const { start, end } = resolveSlotRange(r);
-              const startLabel = start ? start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : "—";
-              const endLabel = end ? end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : "—";
+              const startLabel = start
+                ? start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                : "—";
+              const endLabel = end
+                ? end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                : "—";
 
               // ⭐ tên khách ưu tiên từ nameMap; fallback userName; cuối cùng Khách #xxxx
               const displayName =

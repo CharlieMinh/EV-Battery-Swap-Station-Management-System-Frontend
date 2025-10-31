@@ -1,13 +1,14 @@
+// src/components/staff/Revenue.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { listAllPayments, type Payment } from "../../services/staff/staffApi";
 import { RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
+import { toast } from "react-toastify";
 
 function normalizePayments(payload: any): Payment[] {
-  // Chấp nhận nhiều dạng gói dữ liệu phổ biến
+  // Chấp nhận nhiều dạng gói dữ liệu phổ biến (GIỮ NGUYÊN)
   if (Array.isArray(payload)) return payload as Payment[];
-
   if (payload && typeof payload === "object") {
     if (Array.isArray(payload.items)) return payload.items as Payment[];
     if (Array.isArray(payload.data)) return payload.data as Payment[];
@@ -17,6 +18,14 @@ function normalizePayments(payload: any): Payment[] {
   }
   return [];
 }
+
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+// ✅ Mỗi hành động chỉ 1 toast: dùng toastId để tránh trùng lặp
+const TOAST_ID = {
+  fetchOk: "rev-fetch-ok",
+  fetchErr: "rev-fetch-err",
+  refreshInfo: "rev-refresh-info",
+};
 
 export default function Revenue() {
   const [from, setFrom] = useState<string>("");
@@ -37,16 +46,28 @@ export default function Revenue() {
       });
 
       const list = normalizePayments(data);
-
       const paidOnly = list.filter(
         (p) => (p?.status ?? "").toString().toLowerCase() === "paid"
       );
 
       setPaid(paidOnly);
-    } catch (e) {
+
+      // ✅ Chỉ 1 thông báo thành công
+      toast.success(
+        paidOnly.length
+          ? `Đã tải ${paidOnly.length} giao dịch đã thanh toán.`
+          : "Không có giao dịch đã thanh toán trong khoảng ngày đã chọn.",
+        { ...toastOpts, toastId: TOAST_ID.fetchOk }
+      );
+    } catch (e: any) {
       console.error("Load revenue error:", e);
       setErr("Không tải được dữ liệu doanh thu.");
       setPaid([]);
+
+      // ❌ Chỉ 1 thông báo lỗi
+      const msg =
+        e?.response?.data?.message || e?.message || "Không tải được dữ liệu doanh thu.";
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
     }
@@ -96,12 +117,23 @@ export default function Revenue() {
                 onChange={(e) => setTo(e.target.value)}
               />
             </div>
-            <Button onClick={fetchPaid} className="inline-flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
+            <Button
+              onClick={() => {
+                toast.info("Đang làm mới dữ liệu...", {
+                  ...toastOpts,
+                  toastId: TOAST_ID.refreshInfo,
+                });
+                fetchPaid();
+              }}
+              className="inline-flex items-center gap-2"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Làm mới
             </Button>
           </div>
 
+          {/* UI báo lỗi cũ giữ nguyên (không phát thêm toast ở đây) */}
           {err && (
             <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-sm">
               {err}
