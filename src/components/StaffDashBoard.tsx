@@ -10,7 +10,8 @@ import {
   Save,
   Bell,
   BadgeCheck, // tab Xác nhận gói
-  Package, // ⬅ icon cho tab Yêu cầu nhập pin
+  Package,
+  MessageCircle, // ⬅ icon cho tab Yêu cầu nhập pin
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -52,6 +53,7 @@ import {
 } from "@/services/admin/notifications";
 import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 
 type TabKey =
   | "profile"
@@ -60,7 +62,8 @@ type TabKey =
   | "inventory"
   | "requests" // ⬅ THÊM tab mới
   | "revenue"
-  | "approvals";
+  | "approvals"
+  | "complaint";
 
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
@@ -118,7 +121,12 @@ export default function StaffDashboard({
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "requests", label: "Yêu cầu nhập pin", icon: Package }, // ⬅ THÊM
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
-      { key: "approvals", label: "Xác nhận thanh toán tiền mặt", icon: BadgeCheck },
+      { key: "approvals", label: "Xác nhận thanh toán", icon: BadgeCheck },
+      {
+        key: "complaint",
+        label: "Khiếu nại và phản hồi",
+        icon: MessageCircle,
+      },
     ],
     []
   ) as { key: TabKey; label: string; icon: any }[];
@@ -372,6 +380,7 @@ export default function StaffDashboard({
                 {/* ⬅ THÊM tab mới */}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
+                {active === "complaint" && <ComplaintsOfCustomer />}
               </>
             )}
           </main>
