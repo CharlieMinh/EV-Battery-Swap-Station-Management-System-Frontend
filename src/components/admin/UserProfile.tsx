@@ -117,12 +117,6 @@ export default function UserProfile() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Thông tin cá nhân</h1>
-        <p className="text-gray-500 mt-1">
-          Quản lý thông tin tài khoản của bạn
-        </p>
-      </div>
 
       {/* Profile Card */}
       <Card className="shadow-lg">

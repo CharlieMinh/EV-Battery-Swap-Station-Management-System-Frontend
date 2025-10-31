@@ -93,16 +93,6 @@ export function AdminDashboardPage({
   const [unreadCount, setUnreadCount] = useState(0);
   const [batteryRequests, setBatteryRequests] = useState<BatteryRequest[]>([]);
 
-  // Mock data
-  const revenueData = [
-    { month: "Jan", revenue: 45_000, swaps: 1800, growth: 5.2 },
-    { month: "Feb", revenue: 52_000, swaps: 2080, growth: 15.6 },
-    { month: "Mar", revenue: 48_000, swaps: 1920, growth: -7.7 },
-    { month: "Apr", revenue: 61_000, swaps: 2440, growth: 27.1 },
-    { month: "May", revenue: 58_000, swaps: 2320, growth: -4.9 },
-    { month: "Jun", revenue: 67_000, swaps: 2680, growth: 15.5 },
-  ];
-
   const batteryHealth = [
     { range: "90-100%", count: 145, color: "#22c55e" },
     { range: "70-89%", count: 87, color: "#f59e0b" },
@@ -588,72 +578,74 @@ export function AdminDashboardPage({
           </header>
 
           {/* System Overview KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-0">
-            <Card className="border border-orange-200 rounded-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-600">
-                      {t("admin.totalRevenue")}
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {totalRevenue?.toLocaleString("vi-VN")}₫
-                    </p>
+          {/* System Overview KPIs — chỉ hiển thị khi KHÔNG phải trang UserProfile */}
+          {activeSection !== "profile" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-0">
+              <Card className="border border-orange-200 rounded-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-600">
+                        {t("admin.totalRevenue")}
+                      </p>
+                      <p className="text-2xl font-bold">
+                        {totalRevenue?.toLocaleString("vi-VN")}₫
+                      </p>
+                    </div>
+                    <span className="text-green-500 font-semibold text-lg">
+                      VND
+                    </span>
                   </div>
-                  {/* Thay biểu tượng bằng chữ VND */}
-                  <span className="text-green-500 font-semibold text-lg">
-                    VND
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-6 border border-orange-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-600">
-                      {t("admin.totalSwaps")}
-                    </p>
-                    <p className="text-2xl font-bold">{totalSwaps}</p>
+              <Card>
+                <CardContent className="p-6 border border-orange-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-600">
+                        {t("admin.totalSwaps")}
+                      </p>
+                      <p className="text-2xl font-bold">{totalSwaps}</p>
+                    </div>
+                    <Battery className="w-8 h-8 text-blue-500" />
                   </div>
-                  <Battery className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-6 border border-orange-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-600">
-                      {t("admin.activeStations")}
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {activeStations !== null ? activeStations : "…"}
-                    </p>
+              <Card>
+                <CardContent className="p-6 border border-orange-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-600">
+                        {t("admin.activeStations")}
+                      </p>
+                      <p className="text-2xl font-bold">
+                        {activeStations !== null ? activeStations : "…"}
+                      </p>
+                    </div>
+                    <MapPin className="w-8 h-8 text-purple-500" />
                   </div>
-                  <MapPin className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-6 border border-orange-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-600">
-                      {t("admin.customers")}
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {totalCustomers !== null ? totalCustomers : "..."}
-                    </p>
+              <Card>
+                <CardContent className="p-6 border border-orange-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-600">
+                        {t("admin.customers")}
+                      </p>
+                      <p className="text-2xl font-bold">
+                        {totalCustomers !== null ? totalCustomers : "..."}
+                      </p>
+                    </div>
+                    <Users className="w-8 h-8 text-orange-500" />
                   </div>
-                  <Users className="w-8 h-8 text-orange-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Main Content */}
           <main className="flex-1 p-6">
