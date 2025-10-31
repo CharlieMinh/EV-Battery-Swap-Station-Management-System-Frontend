@@ -86,6 +86,8 @@ export type StationBatteryStats = {
   charging?: number;
   maintenance?: number;
   reserved?: number;
+  faulty?: number;
+  depleted?: number;
   exportedToday?: number;
   totalBatteries?: number;
   availableBatteries?: number;
@@ -99,6 +101,7 @@ export type BatteryUnit = {
   status?: string;
   isReserved?: boolean;
   updatedAt?: string;
+  stationId?: string | number; // ⭐ cần cho lọc đúng trạm
 };
 
 export const STATUS_LABELS_VI: Record<string, string> = {
@@ -108,6 +111,7 @@ export const STATUS_LABELS_VI: Record<string, string> = {
   Maintenance: "Bảo trì",
   Reserved: "Đã đặt trước",
   Faulty: "Lỗi",
+  Depleted: "Hết pin",
 };
 
 /* =========================
@@ -218,7 +222,7 @@ export const listReservations = async (params: {
     batteryModelId: x?.batteryModelId ?? "",
     batteryModelName: x?.batteryModelName ?? "",
     status: x?.status ?? "",
-    qrCode: x?.qrCode ?? "",  // ⭐ Lấy QR code từ BE
+    qrCode: x?.qrCode ?? "",
     slotDate: x?.slotDate ?? "",
     slotStartTime: x?.slotStartTime ?? "",
     slotEndTime: x?.slotEndTime ?? "",
@@ -262,93 +266,159 @@ export async function finalizeSwapFromReservation(payload: {
   }
 }
 
-/* =========================
- *  Inventory APIs
- * ========================= */
-export const stationBatteryStats = (stationId: string | number) =>
-  api.get<StationBatteryStats>(`stations/${stationId}/battery-stats`);
+/* =========================================================
+ *  Inventory APIs (đã thay đổi theo yêu cầu)
+ *  - Loại bỏ stationBatteryStats
+ *  - Chỉ dùng /BatteryUnits và đảm bảo lọc đúng stationId
+ * ========================================================= */
 
-/** Chuẩn hoá dữ liệu pin để luôn có serialNumber & batteryId */
+/** Helper: so sánh stationId an toàn */
+function sameStation(a?: string | number, b?: string | number) {
+  if (a == null || b == null) return false;
+  return String(a).toLowerCase() === String(b).toLowerCase();
+}
+
+/** Chuẩn hoá 1 record BatteryUnit */
+function normalizeBatteryItem(x: any, i: number): BatteryUnit {
+  const batteryId =
+    x?.batteryId ?? x?.id ?? x?.batteryUnitId ?? x?.unitId ?? x?.guid ?? "";
+
+  const serialNumber =
+    x?.serialNumber ??
+    x?.serial ??
+    x?.batterySerial ??
+    x?.sn ??
+    x?.serial_no ??
+    x?.serial_code ??
+    "";
+
+  const modelId =
+    x?.batteryModelId ?? x?.modelId ?? x?.battery_model_id ?? x?.model;
+
+  const modelName =
+    x?.batteryModelName ??
+    x?.modelName ??
+    x?.battery_model_name ??
+    x?.model ??
+    "";
+
+  const status =
+    x?.status ??
+    x?.batteryStatus ??
+    x?.state ??
+    x?.battery_state ??
+    x?.battery_status ??
+    "";
+
+  const isReserved = Boolean(x?.isReserved ?? x?.reserved ?? x?.is_booked);
+
+  const updatedAt =
+    x?.updatedAt ??
+    x?.lastUpdatedAt ??
+    x?.modifiedAt ??
+    x?.updated_at ??
+    x?.last_update_at ??
+    x?.timestamp ??
+    undefined;
+
+  const stationId =
+    x?.stationId ??
+    x?.station_id ??
+    x?.station?.id ??
+    x?.station?.stationId ??
+    x?.locationId ??
+    undefined;
+
+  return {
+    batteryId: batteryId || serialNumber || `row-${i}`,
+    serialNumber,
+    batteryModelId: modelId,
+    batteryModelName: modelName,
+    status,
+    isReserved,
+    updatedAt,
+    stationId,
+  };
+}
+
+/** Gọi /BatteryUnits (thử nhiều biến thể đường dẫn) */
+async function fetchBatteryUnitsRaw(stationId: string | number): Promise<any[]> {
+  const paths: Array<{ url: string; withParam?: boolean }> = [
+    { url: "BatteryUnits", withParam: true },     // /api/v1/BatteryUnits?stationId=...
+    { url: "battery-units", withParam: true },    // /api/v1/battery-units?stationId=...
+    { url: "batteryunits", withParam: true },     // fallback
+    // fallback rất cũ: vẫn để dưới station
+    { url: `stations/${stationId}/batteries`, withParam: false },
+  ];
+
+  let lastErr: any = null;
+  for (const p of paths) {
+    try {
+      const res = await api.get<any>(p.url, p.withParam ? { params: { stationId } } : undefined);
+      const raw = Array.isArray(res.data)
+        ? res.data
+        : res.data?.items ?? res.data?.data ?? res.data?.results ?? res.data?.value ?? [];
+      if (Array.isArray(raw)) return raw;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("Không tải được danh sách BatteryUnits");
+}
+
+/** ⭐ Danh sách pin của ĐÚNG trạm staff đang hoạt động */
 export const listStationBatteries = async (stationId: string | number) => {
-  const res = await api.get<any>(`stations/${stationId}/batteries`);
-  const raw = Array.isArray(res.data)
-    ? res.data
-    : res.data?.items ??
-      res.data?.data ??
-      res.data?.results ??
-      res.data?.value ??
-      [];
+  const raw = await fetchBatteryUnitsRaw(stationId);
+  const normalized = raw.map(normalizeBatteryItem);
 
-  const data: BatteryUnit[] = (raw as any[]).map((x, i) => {
-    const batteryId =
-      x?.batteryId ??
-      x?.id ??
-      x?.batteryUnitId ??
-      x?.unitId ??
-      x?.guid ??
-      "";
+  // Nếu BE chưa filter → lọc client theo stationId
+  const filtered = normalized.filter((b) =>
+    b.stationId ? sameStation(b.stationId, stationId) : true
+  );
 
-    const serialNumber =
-      x?.serialNumber ??
-      x?.serial ??
-      x?.batterySerial ??
-      x?.sn ??
-      x?.serial_no ??
-      x?.serial_code ??
-      "";
-
-    const modelId =
-      x?.batteryModelId ?? x?.modelId ?? x?.battery_model_id ?? x?.model;
-
-    const modelName =
-      x?.batteryModelName ??
-      x?.modelName ??
-      x?.battery_model_name ??
-      x?.model ??
-      "";
-
-    const status =
-      x?.status ??
-      x?.batteryStatus ??
-      x?.state ??
-      x?.battery_state ??
-      x?.battery_status ??
-      "";
-
-    const isReserved = Boolean(x?.isReserved ?? x?.reserved ?? x?.is_booked);
-
-    const updatedAt =
-      x?.updatedAt ??
-      x?.lastUpdatedAt ??
-      x?.modifiedAt ??
-      x?.updated_at ??
-      x?.last_update_at ??
-      x?.timestamp ??
-      undefined;
-
-    return {
-      batteryId: batteryId || serialNumber || `row-${i}`,
-      serialNumber,
-      batteryModelId: modelId,
-      batteryModelName: modelName,
-      status,
-      isReserved,
-      updatedAt,
-    };
-  });
-
-  return { data };
+  return { data: filtered };
 };
 
+/** Map nhóm trạng thái (phục vụ thống kê) */
+function normStatus(raw?: string) {
+  const s = (raw || "").trim().toLowerCase();
+  if (["available", "ready", "full", "sẵn sàng", "đầy"].includes(s)) return "Available";
+  if (["inuse", "in use", "đang sử dụng"].includes(s)) return "InUse";
+  if (["charging", "đang sạc"].includes(s)) return "Charging";
+  if (["maintenance", "bảo trì"].includes(s)) return "Maintenance";
+  if (["reserved", "đã đặt trước"].includes(s)) return "Reserved";
+  if (["faulty", "lỗi"].includes(s)) return "Faulty";
+  if (["depleted", "empty", "hết pin"].includes(s)) return "Depleted";
+  return "";
+}
+
+/** ⭐ Thống kê trực tiếp từ BatteryUnits (đúng trạm) */
+export async function getStationInventory(stationId: string | number): Promise<{
+  list: BatteryUnit[];
+  stats: StationBatteryStats;
+}> {
+  const { data: list } = await listStationBatteries(stationId);
+  const by = (v: string) => list.filter((b) => normStatus(b.status) === v).length;
+
+  const stats: StationBatteryStats = {
+    total: list.length,
+    available: by("Available"),
+    inUse: by("InUse"),
+    charging: by("Charging"),
+    maintenance: by("Maintenance"),
+    reserved: by("Reserved"),
+    faulty: by("Faulty"),
+    depleted: by("Depleted"),
+  };
+
+  return { list, stats };
+}
+/** Gửi yêu cầu nhập pin cho trạm */
 export const createReplenishmentRequest = (payload: {
   stationId: string | number;
   reason?: string;
   items: Array<{ batteryModelId: string; quantityRequested: number }>;
-}) =>
-  api.post(
-    `stations/${payload.stationId}/replenishment-requests`,
-    payload
-  );
+}) => api.post(`stations/${payload.stationId}/replenishment-requests`, payload);
 
 /* =========================
  *  Payments APIs & Types
@@ -400,6 +470,9 @@ export const uploadFile = async (file: File): Promise<string> => {
 
 export default api;
 
+/* =========================
+ *  User name cache helpers
+ * ========================= */
 export type UserLite = { id: string; fullName?: string; name?: string; email?: string };
 
 const USERNAME_CACHE_KEY = "userNameCache.v1";
@@ -424,7 +497,7 @@ async function preloadCustomers() {
     try {
       console.log("🔄 Pre-loading customers list...");
       const res = await api.get('/Users/customers', { 
-        params: { page: 1, pageSize: 1000 } // Lấy tối đa 1000 customers
+        params: { page: 1, pageSize: 1000 }
       });
       
       const customers = res.data?.data || [];
@@ -485,7 +558,6 @@ async function fetchUserById(id: string): Promise<string | null> {
     }
     
     // Fallback: Dùng /Users/customers với pagination lớn
-    // Lấy tất cả customers và filter theo ID
     const customersRes = await api.get('/Users/customers', { 
       params: { page: 1, pageSize: 100 } 
     });

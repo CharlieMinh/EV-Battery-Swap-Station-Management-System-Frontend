@@ -1,13 +1,6 @@
+// src/components/staff/RequestBattery.tsx
 import React, { useEffect, useState } from "react";
-import {
-  Calendar,
-  Package,
-  User,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Edit,
-} from "lucide-react";
+import { Calendar, Package, User, CheckCircle, Edit } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import CheckRequest from "./CheckRequest";
@@ -15,6 +8,7 @@ import {
   fetchBatteryRequests,
   BatteryRequest,
 } from "@/services/admin/batteryService";
+import { toast } from "react-toastify";
 
 interface GroupedRequest {
   createdAt: string;
@@ -25,24 +19,43 @@ interface GroupedRequest {
   status: number;
 }
 
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2200,
+  closeOnClick: true,
+};
+
+// 🔔 đảm bảo 1 action = 1 thông báo
+const TOAST_ID = {
+  fetchOk: "rb-fetch-ok",
+  fetchErr: "rb-fetch-err",
+  openInfo: "rb-open-modal",
+  closeInfo: "rb-close-modal",
+};
+
 const RequestBattery = () => {
   const [requests, setRequests] = useState<BatteryRequest[]>([]);
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<GroupedRequest | null>(
-    null
-  );
+  const [selectedGroup, setSelectedGroup] = useState<GroupedRequest | null>(null);
   const [showCheckModal, setShowCheckModal] = useState(false);
 
-  // Fetch requests từ API
+  // Fetch requests từ API (giữ nguyên luồng)
   const fetchRequests = async () => {
     try {
       setLoading(true);
       const data = await fetchBatteryRequests();
       setRequests(data);
       groupRequestsByCreatedAt(data);
-    } catch (error) {
+
+      toast.success(
+        data?.length ? `Đã tải ${data.length} yêu cầu nhập pin.` : "Không có yêu cầu nhập pin.",
+        { ...toastOpts, toastId: TOAST_ID.fetchOk }
+      );
+    } catch (error: any) {
       console.error("Error fetching requests:", error);
+      const msg = error?.response?.data?.message || error?.message || "Không thể tải yêu cầu.";
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
     }
@@ -52,14 +65,15 @@ const RequestBattery = () => {
     fetchRequests();
   }, []);
 
-  // Gộp các requests có cùng createdAt (làm tròn đến giây để gộp chính xác)
+  // Gộp các requests có cùng createdAt (±3s), cùng admin & station (giữ nguyên thuật toán)
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0) {
+      setGroupedRequests([]);
+      return;
+    }
 
-    // Sắp xếp theo thời gian tăng dần để việc kiểm tra lệch 3 giây chính xác
     const sorted = [...data].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
     const grouped: { [key: string]: BatteryRequest[] } = {};
@@ -67,57 +81,40 @@ const RequestBattery = () => {
     sorted.forEach((request) => {
       const requestTime = new Date(request.createdAt).getTime();
 
-      // Tìm xem có nhóm nào gần nhất trong vòng 3 giây, cùng admin và station chưa
       const existingKey = Object.keys(grouped).find((key) => {
         const group = grouped[key];
         const first = group[0];
-        const timeDiff = Math.abs(
-          requestTime - new Date(first.createdAt).getTime()
-        );
-
-        const sameAdmin =
-          request.requestedByAdminName === first.requestedByAdminName;
+        const timeDiff = Math.abs(requestTime - new Date(first.createdAt).getTime());
+        const sameAdmin = request.requestedByAdminName === first.requestedByAdminName;
         const sameStation = request.stationName === first.stationName;
-
         return timeDiff <= 3000 && sameAdmin && sameStation;
       });
 
-      // Nếu tìm thấy nhóm phù hợp → thêm vào nhóm đó
       if (existingKey) {
         grouped[existingKey].push(request);
       } else {
-        // Ngược lại tạo nhóm mới (vẫn giữ key là ISO time cắt đến giây)
         const dateKey = new Date(request.createdAt).toISOString().split(".")[0];
         grouped[dateKey] = [request];
       }
     });
 
-    // Tạo danh sách nhóm
-    const groupedArray: GroupedRequest[] = Object.keys(grouped).map(
-      (dateKey) => {
-        const items = grouped[dateKey];
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const groupedArray: GroupedRequest[] = Object.keys(grouped).map((dateKey) => {
+      const items = grouped[dateKey];
+      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+      const allSameStatus = items.every((item) => item.status === items[0].status);
 
-        // Kiểm tra xem tất cả requests trong group có cùng status không
-        const allSameStatus = items.every(
-          (item) => item.status === items[0].status
-        );
+      return {
+        createdAt: items[0].createdAt,
+        requests: items,
+        adminName: items[0].requestedByAdminName,
+        stationName: items[0].stationName,
+        totalItems,
+        status: allSameStatus ? items[0].status : 0,
+      };
+    });
 
-        return {
-          createdAt: items[0].createdAt,
-          requests: items,
-          adminName: items[0].requestedByAdminName,
-          stationName: items[0].stationName,
-          totalItems,
-          status: allSameStatus ? items[0].status : 0,
-        };
-      }
-    );
-
-    // Sắp xếp theo thời gian mới nhất
     groupedArray.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     setGroupedRequests(groupedArray);
@@ -162,12 +159,17 @@ const RequestBattery = () => {
   const handleCheckRequest = (group: GroupedRequest) => {
     setSelectedGroup(group);
     setShowCheckModal(true);
+    toast.info(group.status === 0 ? "Mở kiểm tra lô hàng." : "Mở chi tiết lô hàng.", {
+      ...toastOpts,
+      toastId: TOAST_ID.openInfo,
+    });
   };
 
   const handleCloseModal = () => {
     setShowCheckModal(false);
     setSelectedGroup(null);
-    fetchRequests(); // Refresh danh sách sau khi xong
+    toast.info("Đã đóng cửa sổ.", { ...toastOpts, toastId: TOAST_ID.closeInfo });
+    fetchRequests(); // Refresh danh sách sau khi xong (giữ nguyên ý định)
   };
 
   if (loading) {
@@ -185,9 +187,7 @@ const RequestBattery = () => {
     <div className="container mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-orange-600">Yêu Cầu Nhập Pin</h1>
-        <p className="text-gray-600 mt-2">
-          Quản lý các yêu cầu nhập pin từ Admin
-        </p>
+        <p className="text-gray-600 mt-2">Quản lý các yêu cầu nhập pin từ Admin</p>
       </div>
 
       {groupedRequests.length === 0 ? (

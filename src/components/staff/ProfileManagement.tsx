@@ -5,16 +5,21 @@ import {
   resetPassword,
   type UserMe,
 } from "../../services/staff/staffApi";
-import {
-  UserCircle2,
-  Save,
-  Shield,
-  Phone,
-  Mail,
-  Image as ImageIcon,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { User, Mail, Phone, Lock, Pencil } from "lucide-react";
 import { Button } from "../ui/button";
+import { toast } from "react-toastify";
+
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+const TOAST_ID = {
+  loadError: "prof-load-error",
+  saveWarnName: "prof-save-warn-name",
+  saveSuccess: "prof-save-success",
+  saveError: "prof-save-error",
+  pwdWarnNew: "prof-pwd-warn-new",
+  pwdMismatch: "prof-pwd-mismatch",
+  pwdSuccess: "prof-pwd-success",
+  pwdError: "prof-pwd-error",
+};
 
 export default function ProfileManagement() {
   const [me, setMe] = useState<UserMe | null>(null);
@@ -39,12 +44,18 @@ export default function ProfileManagement() {
       try {
         const { data } = await getMe();
         setMe(data);
-        const fullName = (data.fullName || data.name) || "";
+        const fullName = (data.fullName || (data as any).name) || "";
         setForm({
           fullName,
-          phone: data.phone || "",
-          avatarUrl: data.avatarUrl || "",
+          phone: (data as any).phone || (data as any).phoneNumber || "",
+          avatarUrl: (data as any).avatarUrl || (data as any).avatar || "",
         });
+      } catch (e) {
+        toast.error("Không thể tải hồ sơ. Vui lòng thử lại!", {
+          ...toastOpts,
+          toastId: TOAST_ID.loadError,
+        });
+        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -52,12 +63,17 @@ export default function ProfileManagement() {
   }, []);
 
   const onSaveProfile = async () => {
-    const id = (me?.userId || me?.id) as string;
+    const id = (me?.userId || (me as any)?.id) as string;
     if (!id) return;
+
     if (!form.fullName.trim()) {
-      alert("Vui lòng nhập họ tên.");
+      toast.warn("Vui lòng nhập họ tên.", {
+        ...toastOpts,
+        toastId: TOAST_ID.saveWarnName,
+      });
       return;
     }
+
     setSaving(true);
     try {
       await updateUser(id, {
@@ -65,9 +81,16 @@ export default function ProfileManagement() {
         phone: form.phone.trim(),
         avatarUrl: form.avatarUrl.trim(),
       });
-      alert("✅ Đã lưu hồ sơ.");
+      toast.success("Đã lưu hồ sơ ✅", {
+        ...toastOpts,
+        toastId: TOAST_ID.saveSuccess,
+      });
     } catch (e) {
-      alert("❌ Lưu hồ sơ thất bại. Vui lòng thử lại.");
+      toast.error("Lưu hồ sơ thất bại. Vui lòng thử lại!", {
+        ...toastOpts,
+        toastId: TOAST_ID.saveError,
+      });
+      console.error(e);
     } finally {
       setSaving(false);
     }
@@ -75,11 +98,17 @@ export default function ProfileManagement() {
 
   const onChangePassword = async () => {
     if (!pwd.newPassword) {
-      alert("Vui lòng nhập mật khẩu mới.");
+      toast.warn("Vui lòng nhập mật khẩu mới.", {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdWarnNew,
+      });
       return;
     }
     if (pwd.newPassword !== pwd.confirm) {
-      alert("❌ Xác nhận mật khẩu không khớp.");
+      toast.error("Xác nhận mật khẩu không khớp.", {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdMismatch,
+      });
       return;
     }
     setChangingPwd(true);
@@ -88,10 +117,17 @@ export default function ProfileManagement() {
         oldPassword: pwd.oldPassword,
         newPassword: pwd.newPassword,
       });
-      alert("✅ Đã đổi mật khẩu.");
+      toast.success("Đổi mật khẩu thành công ✅", {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdSuccess,
+      });
       setPwd({ oldPassword: "", newPassword: "", confirm: "" });
     } catch (e) {
-      alert("❌ Đổi mật khẩu thất bại. Vui lòng kiểm tra lại.");
+      toast.error("Đổi mật khẩu thất bại. Vui lòng kiểm tra lại!", {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdError,
+      });
+      console.error(e);
     } finally {
       setChangingPwd(false);
     }
@@ -99,176 +135,127 @@ export default function ProfileManagement() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl bg-white shadow-lg p-5 text-sm text-gray-500">
-        Đang tải hồ sơ…
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {/* Hồ sơ cá nhân */}
-      <Card className="border border-orange-200 rounded-lg">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <UserCircle2 className="h-5 w-5" />
-            Hồ sơ cá nhân
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="flex justify-center items-center">
+      <div className="w-full max-w-3xl bg-[#FFF3E5] rounded-2xl shadow-xl p-8">
+        <h1 className="text-2xl font-bold text-center text-[#FF7A00] mb-8">
+          Hồ sơ cá nhân
+        </h1>
 
-        {/* Avatar + Preview */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Avatar URL</label>
-          <div className="flex items-center gap-3">
-            <input
-              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-              value={form.avatarUrl}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, avatarUrl: e.target.value }))
-              }
-              placeholder="https://…"
-            />
-            <div className="h-12 w-12 overflow-hidden rounded-full border bg-gray-50 grid place-items-center">
-              {form.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={form.avatarUrl}
-                  alt="avatar"
-                  className="h-12 w-12 object-cover"
-                />
-              ) : (
-                <ImageIcon className="h-5 w-5 text-gray-400" />
-              )}
-            </div>
+        {/* Avatar + Tên */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-24 h-24 rounded-full border-4 border-[#FF7A00] flex items-center justify-center text-3xl font-bold text-[#FF7A00] bg-white">
+            {(form.fullName || (me as any)?.name || "S").toString().charAt(0).toUpperCase()}
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mt-4">
+            {form.fullName || (me as any)?.name || "—"}
+          </h2>
+          <div className="bg-[#FF7A00] text-white px-4 py-1 rounded-md mt-2 text-sm font-semibold">
+            {(me as any)?.role || "Staff"}
           </div>
         </div>
 
-        {/* Họ tên */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Họ tên</label>
-          <input
-            className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={form.fullName}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, fullName: e.target.value }))
-            }
-            placeholder="Nguyễn Văn A"
-          />
-        </div>
-
-        {/* SĐT */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-          <div className="flex items-center gap-2">
-            <div className="grid place-items-center h-9 w-9 rounded-lg border bg-gray-50">
-              <Phone className="h-4 w-4 text-gray-600" />
-            </div>
+        {/* Form */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              <User className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
+              Tên Đầy Đủ
+            </label>
             <input
-              className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
+              value={form.fullName}
+              onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
+              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              <Mail className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
+              Email
+            </label>
+            <input
+              value={me?.email || ""}
+              disabled
+              className="w-full border-2 border-[#FF7A00]/40 bg-gray-50 rounded-lg px-3 py-2 text-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              <Phone className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
+              Số Điện Thoại
+            </label>
+            <input
               value={form.phone}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, phone: e.target.value }))
-              }
-              placeholder="090…"
+              onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
+              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
             />
           </div>
         </div>
 
-        {/* Thông tin chỉ xem */}
-        <div className="mb-5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-          <div className="rounded-xl border p-3 bg-gray-50">
-            <div className="text-xs text-gray-500 mb-1">Email</div>
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gray-500" />
-              <span className="font-medium break-all">{me?.email}</span>
-            </div>
-          </div>
-          <div className="rounded-xl border p-3 bg-gray-50">
-            <div className="text-xs text-gray-500 mb-1">Role</div>
-            <div className="font-medium">{me?.role || "—"}</div>
-          </div>
-          <div className="rounded-xl border p-3 bg-gray-50">
-            <div className="text-xs text-gray-500 mb-1">Trạm</div>
-            <div className="font-medium">
-              {me?.station?.name || me?.stationId || "—"}
-            </div>
-          </div>
-        </div>
-
-        <Button
-          disabled={saving}
-          onClick={onSaveProfile}
-          className="inline-flex items-center gap-2"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? "Đang lưu…" : "Lưu thay đổi"}
-        </Button>
-        </CardContent>
-      </Card>
-
-      {/* Đổi mật khẩu */}
-      <Card className="border border-orange-200 rounded-lg">
-        <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Đổi mật khẩu
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Mật khẩu hiện tại
-          </label>
-          <input
-            type="password"
-            className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={pwd.oldPassword}
-            onChange={(e) =>
-              setPwd((s) => ({ ...s, oldPassword: e.target.value }))
-            }
-            placeholder="••••••••"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Mật khẩu mới</label>
-          <input
-            type="password"
-            className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={pwd.newPassword}
-            onChange={(e) =>
-              setPwd((s) => ({ ...s, newPassword: e.target.value }))
-            }
-            placeholder="••••••••"
-          />
-        </div>
-
-        <div className="mb-5">
-          <label className="block text-sm font-medium mb-1">
-            Xác nhận mật khẩu mới
-          </label>
-          <input
-            type="password"
-            className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={pwd.confirm}
-            onChange={(e) =>
-              setPwd((s) => ({ ...s, confirm: e.target.value }))
-            }
-            placeholder="••••••••"
-          />
-        </div>
-
+        {/* Save */}
+        <div className="mt-8 flex justify-center">
           <Button
-            onClick={onChangePassword}
-            disabled={changingPwd}
-            variant="outline"
+            onClick={onSaveProfile}
+            disabled={saving}
+            className="bg-[#FF7A00] hover:bg-[#e56a00] text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
           >
-            {changingPwd ? "Đang đổi…" : "Đổi mật khẩu"}
+            <Pencil className="w-4 h-4" />
+            {saving ? "Đang lưu..." : "Sửa hồ sơ"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Change password */}
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-[#FF7A00] mb-4 flex items-center gap-2">
+            <Lock className="w-5 h-5" /> Đổi mật khẩu
+          </h2>
+
+          <div className="space-y-4">
+            <input
+              type="password"
+              placeholder="Mật khẩu hiện tại"
+              value={pwd.oldPassword}
+              onChange={(e) => setPwd((s) => ({ ...s, oldPassword: e.target.value }))}
+              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
+            />
+            <input
+              type="password"
+              placeholder="Mật khẩu mới"
+              value={pwd.newPassword}
+              onChange={(e) => setPwd((s) => ({ ...s, newPassword: e.target.value }))}
+              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
+            />
+            <input
+              type="password"
+              placeholder="Xác nhận mật khẩu mới"
+              value={pwd.confirm}
+              onChange={(e) => setPwd((s) => ({ ...s, confirm: e.target.value }))}
+              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
+            />
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <Button
+              onClick={onChangePassword}
+              disabled={changingPwd}
+              className="bg-[#FF7A00] hover:bg-[#e56a00] text-white px-6 py-2 rounded-lg text-sm font-semibold"
+            >
+              {changingPwd ? "Đang đổi..." : "Đổi mật khẩu"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
