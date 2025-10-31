@@ -7,12 +7,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, Battery, User, MapPin, Search } from "lucide-react";
+import { Loader2, Battery, User, MapPin, Search, Clock } from "lucide-react";
 import {
   BatteryComplaintResponse,
   fetchAllComplaints,
 } from "@/services/complaint";
 import { fetchCustomerById } from "@/services/admin/customerAdminService";
+import { fetchSwapById } from "@/services/swaps";
 
 /** 🕒 Format ngày theo giờ Việt Nam */
 function formatVNDate(dateString: string | null): string {
@@ -37,6 +38,9 @@ const statusLabels: Record<string, string> = {
 const ComplaintsOfCustomer: React.FC = () => {
   const [complaints, setComplaints] = useState<BatteryComplaintResponse[]>([]);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [completedAtMap, setCompletedAtMap] = useState<Record<string, string>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -55,7 +59,6 @@ const ComplaintsOfCustomer: React.FC = () => {
 
         // 🧠 Tạo map {userId: userName}
         const namesMap: Record<string, string> = {};
-
         await Promise.all(
           userIds.map(async (id) => {
             try {
@@ -68,8 +71,26 @@ const ComplaintsOfCustomer: React.FC = () => {
           })
         );
 
+        // 🧩 Lấy completedAt cho từng complaint (dựa vào swapTransactionId)
+        const completedMap: Record<string, string> = {};
+        await Promise.all(
+          complaintList.map(async (c: any) => {
+            if (c.swapTransactionId) {
+              try {
+                const swap = await fetchSwapById(c.swapTransactionId);
+                if (swap?.completedAt) {
+                  completedMap[c.id] = swap.completedAt;
+                }
+              } catch (err) {
+                console.warn("Không lấy được completedAt cho complaint:", c.id);
+              }
+            }
+          })
+        );
+
         setUserNames(namesMap);
         setComplaints(complaintList);
+        setCompletedAtMap(completedMap);
       } catch (error) {
         console.error("Lỗi khi tải danh sách khiếu nại:", error);
       } finally {
@@ -158,6 +179,17 @@ const ComplaintsOfCustomer: React.FC = () => {
                   Nội dung khiếu nại:{" "}
                 </span>
                 {c.complaintDetails}
+              </p>
+
+              {/* 🕒 Ngày hoàn tất đổi pin */}
+              <p className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <span className="font-medium text-gray-700">
+                  Ngày hoàn tất đổi pin:
+                </span>
+                {completedAtMap[c.id]
+                  ? formatVNDate(completedAtMap[c.id])
+                  : "Chưa hoàn tất"}
               </p>
             </CardContent>
           </Card>

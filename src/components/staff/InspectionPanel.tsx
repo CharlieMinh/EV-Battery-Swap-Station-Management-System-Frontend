@@ -7,11 +7,14 @@ type Props = {
   reservation: Reservation;
   onDone: (batteryHealth: number) => void;
   onCancel: () => void;
+  isComplaint?: boolean;
 };
 
-const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
-
-export default function InspectionPanel({ reservation, onDone, onCancel }: Props) {
+export default function InspectionPanel({
+  reservation,
+  onDone,
+  onCancel,
+}: Props) {
   const [batteryHealth, setBatteryHealth] = useState<number>(85); // % pin cũ
   const [notes, setNotes] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -97,7 +100,9 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
 
         {/* % Pin cũ */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
+          <label className="block text-sm font-medium mb-1">
+            % Pin cũ (0-100)
+          </label>
           <input
             type="number"
             min="0"
@@ -107,7 +112,9 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
             onChange={(e) => setBatteryHealth(Number(e.target.value))}
             placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
-          <p className="mt-1 text-xs text-gray-500">Nhập % dung lượng pin còn lại (0-100%).</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Nhập % dung lượng pin còn lại (0-100%).
+          </p>
         </div>
 
         {/* Ghi chú */}
@@ -126,20 +133,35 @@ export default function InspectionPanel({ reservation, onDone, onCancel }: Props
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-medium">Ảnh pin cũ</div>
-            <div className="text-xs text-gray-500">{images.length} ảnh đã tải</div>
+            <div className="text-xs text-gray-500">
+              {images.length} ảnh đã tải
+            </div>
           </div>
 
           <label className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer hover:bg-gray-50">
             <Upload className="h-4 w-4" />
             <span className="text-sm">Tải ảnh (có thể chọn nhiều)</span>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleUpload}
+            />
           </label>
 
           {images.length ? (
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {images.map((url) => (
-                <div key={url} className="group relative overflow-hidden rounded-lg border">
-                  <img src={url} alt="battery" className="h-32 w-full object-cover" />
+                <div
+                  key={url}
+                  className="group relative overflow-hidden rounded-lg border"
+                >
+                  <img
+                    src={url}
+                    alt="battery"
+                    className="h-32 w-full object-cover"
+                  />
                   <button
                     onClick={() => removeImage(url)}
                     className="absolute top-1 right-1 rounded-full bg-white/90 p-1 shadow hover:bg-white"

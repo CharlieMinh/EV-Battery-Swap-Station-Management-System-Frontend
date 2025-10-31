@@ -4,37 +4,93 @@ import {
   listReservations,
   checkInReservation,
   type Reservation,
-  getUserNamesBatch, // ⭐ dùng để map userId → userName
+  getUserNamesBatch, // ⭐ map userId → userName
 } from "../../services/staff/staffApi";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
 import { ClipboardCheck, RefreshCw } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "react-toastify"; // ⭐ UPDATED: dùng toast thay alert
+import { fetchReservationDetail } from "@/services/swaps";
 
-type Stage = "idle" | "checking" | "readyToSwap";
+type Stage =
+  | "idle" // Chưa chọn lượt
+  | "checking" // Đang kiểm tra pin
+  | "readyToSwap" // Kiểm tra xong, sẵn sàng đổi pin
+  | "complaintCheck"; // Lượt có khiếu nại, mở panel kiểm tra đặc biệt
 
+// ⭐ Cập nhật STATUS_OPTIONS hiển thị
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "" },
-  { label: "Đang chờ", value: "Pending" },
+  { label: "Chờ đặt lịch", value: "PendingScheduling" },
+  { label: "Đã đặt lịch", value: "Scheduled" },
   { label: "Đã check-in", value: "CheckedIn" },
-  { label: "Đã hoàn tất", value: "Completed" },
-  { label: "Đã hủy", value: "Cancelled" },
-  { label: "Hết hạn", value: "Expired" },
+  { label: "Đang kiểm tra", value: "Investigating" },
+  { label: "Xác nhận lỗi", value: "Confirmed" },
+  { label: "Từ chối", value: "Rejected" },
+  { label: "Hoàn tất", value: "Resolved" },
 ];
 
+// ⭐ status → label tiếng Việt
 const statusToVi = (s?: string) => {
   switch ((s || "").toLowerCase()) {
-    case "pending": return "Đang chờ";
-    case "checkedin": return "Đã check-in";
-    case "completed": return "Đã hoàn tất";
-    case "cancelled": return "Đã hủy";
-    case "expired": return "Hết hạn";
-    default: return s || "—";
+    case "pendingscheduling":
+      return "Chờ đặt lịch";
+    case "scheduled":
+      return "Đã đặt lịch";
+    case "checkedin":
+      return "Đã check-in";
+    case "investigating":
+      return "Đang kiểm tra";
+    case "confirmed":
+      return "Xác nhận lỗi";
+    case "rejected":
+      return "Từ chối";
+    case "resolved":
+      return "Hoàn tất";
+    default:
+      return s || "—";
   }
 };
 
-/** Ghép slotDate + slotStartTime/slotEndTime; fallback các field ISO */
+// ⭐ Badge màu theo status mới
+const badgeClass = (s?: string) => {
+  const key = (s || "").toLowerCase();
+  switch (key) {
+    case "pendingscheduling":
+      return "bg-amber-100 text-amber-700";
+    case "scheduled":
+      return "bg-blue-100 text-blue-700";
+    case "checkedin":
+      return "bg-emerald-100 text-emerald-700";
+    case "investigating":
+      return "bg-yellow-100 text-yellow-700";
+    case "confirmed":
+      return "bg-emerald-200 text-emerald-900";
+    case "rejected":
+      return "bg-rose-100 text-rose-700";
+    case "resolved":
+      return "bg-gray-200 text-gray-600";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+};
+
+// ⭐ Helper trạng thái để render nút / stage
+const isPendingScheduling = (r: Reservation) =>
+  ["pendingscheduling", "scheduled"].includes(
+    ((r as any).status || "").toLowerCase()
+  );
+
+const isCheckedIn = (r: Reservation) =>
+  ((r as any).status || "").toLowerCase() === "checkedin";
+
+const isReadyToSwap = (r: Reservation) =>
+  ((r as any).status || "").toLowerCase() === "confirmed";
+
+const isRejectedOrResolved = (r: Reservation) =>
+  ["rejected", "resolved"].includes(((r as any).status || "").toLowerCase());
+
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   const date = r?.slotDate;
   const startStr = r?.slotStartTime;
@@ -72,7 +128,6 @@ function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   return { start: null, end: null };
 }
 
-/** Thử trích reservationId từ chuỗi QR (base64(JSON|sig)) để tự chọn hàng */
 function tryExtractReservationIdFromQR(raw: string): string | null {
   try {
     const txt = atob(raw);
@@ -84,20 +139,11 @@ function tryExtractReservationIdFromQR(raw: string): string | null {
   }
 }
 
-const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
-const TOAST_ID = {
-  fetchOk: "q-f-ok",
-  fetchErr: "q-f-err",
-  namesErr: "q-names-err",
-  noTargetWarn: "q-no-target",
-  checkinOk: "q-ci-ok",
-  checkinErr: "q-ci-err",
-  refreshInfo: "q-refresh",
-  afterInspectOk: "q-inspect-ok",
-  closeInfo: "q-close-info",
-};
-
-export default function QueueManagement({ stationId }: { stationId: string | number }) {
+export default function QueueManagement({
+  stationId,
+}: {
+  stationId: string | number;
+}) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [status, setStatus] = useState<string>(""); // '' = Tất cả
   const [list, setList] = useState<Reservation[]>([]);
@@ -106,9 +152,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
-  const [batteryHealthFromInspection, setBatteryHealthFromInspection] = useState<number>(85); // ⭐ Lưu % pin từ inspection
+  const [batteryHealthFromInspection, setBatteryHealthFromInspection] =
+    useState<number>(85);
 
-  // ⭐ map userId → userName
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
 
   const selected = useMemo(
@@ -127,22 +173,20 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     } catch (e: any) {
       console.error("load reservations error:", e);
       setList([]);
-      const msg = e?.response?.data?.message || e?.message || "Không thể tải danh sách.";
-      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
+      toast.error("Không thể tải danh sách lượt đặt lịch."); // ⭐ UPDATED
     } finally {
       setLoading(false);
     }
   };
 
-  // nạp danh sách
   useEffect(() => {
-    fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchList(); /* eslint-disable-next-line */
   }, [stationId, date, status]);
 
-  // khi list đổi, resolve tên khách (batch + cache)
   useEffect(() => {
-    const ids = Array.from(new Set(list.map((r) => r.userId).filter(Boolean) as string[]));
+    const ids = Array.from(
+      new Set(list.map((r) => r.userId).filter(Boolean) as string[])
+    );
     if (ids.length === 0) return;
     (async () => {
       try {
@@ -155,16 +199,15 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     })();
   }, [list]);
 
-  /** Nhận RAW QR; gọi BE thật */
+  /** QR Check-in */
   const doCheckInByQr = async (raw: string) => {
     const maybeId = tryExtractReservationIdFromQR(raw);
     const targetId = selectedId || maybeId;
 
     if (!targetId) {
-      toast.warning("Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR.", {
-        ...toastOpts,
-        toastId: TOAST_ID.noTargetWarn,
-      });
+      toast.error(
+        "Không xác định được Reservation. Hãy chọn 1 dòng hoặc nhập ID/QR."
+      );
       return;
     }
 
@@ -173,12 +216,20 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const qrCodeData = looksLikeBase64 ? raw : btoa(raw);
 
       await checkInReservation(targetId, qrCodeData);
-      toast.success("Check-in thành công!", { ...toastOpts, toastId: TOAST_ID.checkinOk });
+      toast.success("✅ Check-in thành công!");
       setScannerOpen(false);
       setStatus("CheckedIn");
       await fetchList();
       setSelectedId(targetId);
-      setStage("checking");
+
+      // ⭐ Kiểm tra RelatedComplaintId
+      const detail = await fetchReservationDetail(targetId);
+      if (detail?.relatedComplaintId) {
+        setStage("complaintCheck"); // stage riêng nếu có khiếu nại
+        toast.info("⚠️ Đây là lượt khiếu nại, mở panel kiểm tra đặc biệt");
+      } else {
+        setStage("checking");
+      }
     } catch (err: any) {
       console.error("check-in error:", err);
       const msg =
@@ -186,30 +237,33 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         err?.response?.data?.message ||
         err?.message ||
         "Check-in thất bại.";
-      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.checkinErr });
+      toast.error("❌ " + msg);
     }
   };
 
-  /** Check-in thủ công bằng nút bấm */
+  /** Check-in thủ công */
   const doManualCheckIn = async (reservation: Reservation) => {
     try {
-      // ⭐ Ưu tiên dùng QR code thật từ BE (đã có signature)
       const qrCodeData = reservation.qrCode || "";
-
       if (!qrCodeData) {
-        toast.error("Không tìm thấy QR code hợp lệ cho reservation này.", {
-          ...toastOpts,
-          toastId: TOAST_ID.checkinErr,
-        });
+        toast.error("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
         return;
       }
 
       await checkInReservation(reservation.reservationId, qrCodeData);
-      toast.success("Check-in thành công!", { ...toastOpts, toastId: TOAST_ID.checkinOk });
+      toast.success("✅ Check-in thành công!");
       setStatus("CheckedIn");
       await fetchList();
       setSelectedId(reservation.reservationId);
-      setStage("checking");
+
+      // ⭐ Kiểm tra RelatedComplaintId
+      const detail = await fetchReservationDetail(reservation.reservationId);
+      if (detail?.relatedComplaintId) {
+        setStage("complaintCheck"); // stage đặc biệt cho khiếu nại
+        toast.info("⚠️ Đây là lượt khiếu nại, mở panel kiểm tra đặc biệt");
+      } else {
+        setStage("checking");
+      }
     } catch (err: any) {
       console.error("manual check-in error:", err);
       const msg =
@@ -217,7 +271,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         err?.response?.data?.message ||
         err?.message ||
         "Check-in thất bại.";
-      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.checkinErr });
+      toast.error("❌ " + msg);
     }
   };
 
@@ -227,14 +281,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   };
 
   const onInspectionDone = (batteryHealth: number) => {
-    // ⭐ Lưu lại batteryHealth để truyền cho SwapPanel
-    console.log("✅ InspectionPanel done - batteryHealth:", batteryHealth);
     setBatteryHealthFromInspection(batteryHealth);
     setStage("readyToSwap");
-    toast.success("Đã lưu kết quả kiểm tra, chuyển sang bước thay pin.", {
-      ...toastOpts,
-      toastId: TOAST_ID.afterInspectOk,
-    });
+    toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin."); // ⭐ UPDATED
   };
 
   const closePanel = () => {
@@ -256,6 +305,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
   return (
     <div className="grid gap-4">
+      {/* Bộ lọc */}
       <div className="mb-3 flex flex-wrap items-end gap-2">
         <div>
           <label className="text-xs block">Ngày</label>
@@ -302,6 +352,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         </button>
       </div>
 
+      {/* Bảng danh sách */}
       <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left">
@@ -332,8 +383,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
             {list.map((r) => {
               const isSel = selectedId === r.reservationId;
-              const canStart = (r as any).status === "CheckedIn";
-              const isPending = (r as any).status === "Pending";
 
               const { start, end } = resolveSlotRange(r);
               const startLabel = start
@@ -343,7 +392,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 ? end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
                 : "—";
 
-              // ⭐ tên khách ưu tiên từ nameMap; fallback userName; cuối cùng Khách #xxxx
               const displayName =
                 (r.userId && nameMap[r.userId]) ||
                 r.userName ||
@@ -352,20 +400,30 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               return (
                 <React.Fragment key={r.reservationId}>
                   <tr className="border-t align-top hover:bg-gray-50">
-                    <td className="px-3 py-2 font-mono text-xs">{r.reservationId}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {r.reservationId}
+                    </td>
                     <td className="px-3 py-2 font-medium">{displayName}</td>
-                    <td className="px-3 py-2">{r.batteryModelName || r.batteryModelId || "—"}</td>
                     <td className="px-3 py-2">
-                      <span className={`rounded-full px-2 py-1 text-xs ${badgeClass(r.status)}`}>
+                      {r.batteryModelName || r.batteryModelId || "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs ${badgeClass(
+                          r.status
+                        )}`}
+                      >
                         {statusToVi(r.status)}
                       </span>
                     </td>
                     <td className="px-3 py-2">
-                      <div className="text-sm">{startLabel} - {endLabel}</div>
+                      <div className="text-sm">
+                        {startLabel} - {endLabel}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex gap-2 justify-end">
-                        {isPending && (
+                        {isPendingScheduling(r) && (
                           <button
                             onClick={() => doManualCheckIn(r)}
                             className="border rounded px-3 py-1 text-sm hover:bg-gray-100"
@@ -373,15 +431,25 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                             Check-in
                           </button>
                         )}
-                        {canStart && (
+
+                        {isCheckedIn(r) && (
                           <button
                             onClick={() => startChecking(r.reservationId)}
-                            className={`${isSel ? "bg-black text-white" : "border"} rounded px-3 py-1 text-sm`}
+                            className={`${
+                              isSel ? "bg-black text-white" : "border"
+                            } rounded px-3 py-1 text-sm`}
                           >
                             {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
                           </button>
                         )}
-                        {!isPending && !canStart && (
+
+                        {isReadyToSwap(r) && isSel && (
+                          <span className="text-sm text-emerald-700">
+                            Sẵn sàng đổi pin
+                          </span>
+                        )}
+
+                        {isRejectedOrResolved(r) && (
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </div>
@@ -396,6 +464,14 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                             reservation={selected}
                             onDone={(health) => onInspectionDone(health)}
                             onCancel={closePanel}
+                          />
+                        )}
+                        {stage === "complaintCheck" && selected && (
+                          <InspectionPanel
+                            reservation={selected}
+                            onDone={(health) => onInspectionDone(health)}
+                            onCancel={closePanel}
+                            isComplaint // ⭐ panel có thể dùng prop này để hiển thị đặc biệt
                           />
                         )}
                         {stage === "readyToSwap" && selected && (
