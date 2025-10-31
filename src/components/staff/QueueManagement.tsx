@@ -169,7 +169,8 @@ export default function QueueManagement({
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
-    } catch (e) {
+      toast.success("Đã tải danh sách lượt đặt.", { ...toastOpts, toastId: TOAST_ID.fetchOk });
+    } catch (e: any) {
       console.error("load reservations error:", e);
       setList([]);
       toast.error("Không thể tải danh sách lượt đặt lịch."); // ⭐ UPDATED
@@ -188,8 +189,13 @@ export default function QueueManagement({
     );
     if (ids.length === 0) return;
     (async () => {
-      const map = await getUserNamesBatch(ids);
-      setNameMap((prev) => ({ ...prev, ...map }));
+      try {
+        const map = await getUserNamesBatch(ids);
+        setNameMap((prev) => ({ ...prev, ...map }));
+      } catch (err: any) {
+        const msg = err?.response?.data?.message || err?.message || "Không thể lấy tên khách hàng.";
+        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
+      }
     })();
   }, [list]);
 
@@ -283,7 +289,18 @@ export default function QueueManagement({
   const closePanel = () => {
     setSelectedId(null);
     setStage("idle");
-    fetchList();
+    fetchList(); // ⭐ Refresh lại danh sách sau khi hoàn tất
+    toast.info("Đã đóng panel.", { ...toastOpts, toastId: TOAST_ID.closeInfo });
+  };
+
+  const badgeClass = (s?: string) => {
+    const key = (s || "").toLowerCase();
+    if (key === "checkedin") return "bg-emerald-100 text-emerald-700";
+    if (key === "pending") return "bg-amber-100 text-amber-700";
+    if (key === "completed") return "bg-blue-100 text-blue-700";
+    if (key === "cancelled") return "bg-rose-100 text-rose-700";
+    if (key === "expired") return "bg-gray-200 text-gray-600";
+    return "bg-gray-100 text-gray-700";
   };
 
   return (
@@ -316,7 +333,10 @@ export default function QueueManagement({
         </div>
 
         <button
-          onClick={fetchList}
+          onClick={() => {
+            toast.info("Đang làm mới danh sách...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
+            fetchList();
+          }}
           className="border rounded px-3 py-2 inline-flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
@@ -366,16 +386,10 @@ export default function QueueManagement({
 
               const { start, end } = resolveSlotRange(r);
               const startLabel = start
-                ? start.toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                ? start.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
                 : "—";
               const endLabel = end
-                ? end.toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                ? end.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
                 : "—";
 
               const displayName =

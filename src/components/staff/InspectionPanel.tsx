@@ -1,6 +1,7 @@
 import React, { useMemo, useState, ChangeEvent } from "react";
 import { uploadFile, type Reservation } from "../../services/staff/staffApi";
 import { CheckCircle, Upload, X, Image as ImageIcon } from "lucide-react";
+import { toast } from "react-toastify";
 
 type Props = {
   reservation: Reservation;
@@ -31,25 +32,59 @@ export default function InspectionPanel({
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
+
+    let successCount = 0;
+    let failCount = 0;
+
     for (const f of files) {
       try {
         const url = await uploadFile(f);
         setImages((prev) => [...prev, url]);
-      } catch {
-        alert("Tải ảnh thất bại. Vui lòng thử lại.");
+        successCount += 1;
+      } catch (err: any) {
+        failCount += 1;
       }
     }
+
+    // ✅ Chỉ 1 thông báo tổng kết cho hành động upload
+    if (successCount && !failCount) {
+      toast.success(`Đã tải lên ${successCount} ảnh.`, {
+        ...toastOpts,
+        toastId: `insp-upload-success-${successCount}`,
+      });
+    } else if (!successCount && failCount) {
+      const msg = "Tải ảnh thất bại. Vui lòng thử lại.";
+      toast.error(msg, { ...toastOpts, toastId: "insp-upload-fail" });
+    } else {
+      toast.info(`Đã tải ${successCount} ảnh, lỗi ${failCount} ảnh.`, {
+        ...toastOpts,
+        toastId: `insp-upload-mixed-${successCount}-${failCount}`,
+      });
+    }
+
     e.currentTarget.value = "";
   };
 
-  const removeImage = (url: string) =>
+  const removeImage = (url: string) => {
     setImages((prev) => prev.filter((x) => x !== url));
+    // ✅ 1 toast cho mỗi lần bấm xóa (người dùng chỉ bấm 1 lần)
+    toast.info("Đã xóa ảnh.", { ...toastOpts, toastId: `insp-delete-${url}` });
+  };
 
   const finish = () => {
     if (batteryHealth < 0 || batteryHealth > 100) {
-      alert("⚠️ Vui lòng nhập % pin cũ trong khoảng 0-100.");
+      // ❗ 1 toast cảnh báo khi % không hợp lệ
+      toast.warning("Vui lòng nhập % pin cũ trong khoảng 0-100.", {
+        ...toastOpts,
+        toastId: "insp-invalid-health",
+      });
       return;
     }
+    // ✅ 1 toast xác nhận lưu
+    toast.success("Đã lưu kết quả kiểm tra pin.", {
+      ...toastOpts,
+      toastId: "insp-finish",
+    });
     onDone(batteryHealth);
   };
 
@@ -174,7 +209,10 @@ export default function InspectionPanel({
             Hoàn tất kiểm tra
           </button>
           <button
-            onClick={onCancel}
+            onClick={() => {
+              onCancel();
+              toast.info("Đã đóng kiểm tra pin.", { ...toastOpts, toastId: "insp-cancel" });
+            }}
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
           >
             Đóng
@@ -199,9 +237,7 @@ export default function InspectionPanel({
           <div className="flex justify-between">
             <dt className="text-gray-500">Model pin</dt>
             <dd className="font-medium">
-              {reservation.batteryModelName ||
-                reservation.batteryModelId ||
-                "—"}
+              {reservation.batteryModelName || reservation.batteryModelId || "—"}
             </dd>
           </div>
         </dl>
