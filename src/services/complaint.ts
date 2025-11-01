@@ -24,7 +24,7 @@ export interface GetComplaintsResponse {
 export async function fetchAllComplaints(page: number, pageSize:number) {
     try {
         const response = await api.get(`/api/BatteryComplaints?page=${page}&pageSize=${pageSize}`, {withCredentials:true })
-        return response.data.items;
+        return response.data;
     } catch (error) {
         console.error("Error fetching data: ", error)
         throw error

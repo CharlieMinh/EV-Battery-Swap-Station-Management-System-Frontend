@@ -120,6 +120,14 @@ export function InspectionBookingWizard({
         setSelectedSlot(null);
     };
 
+    // ✅ Helper function: Format date theo local timezone (tránh lệch múi giờ UTC)
+    const formatDateForAPI = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleConfirm = async () => {
         if (!selectedStation || !bookingDate || !slotStartTime || !slotEndTime) {
             toast.error("Vui lòng chọn đầy đủ thông tin");
@@ -129,7 +137,8 @@ export function InspectionBookingWizard({
         setIsSubmitting(true);
 
         try {
-            const formattedDate = bookingDate.toISOString().split("T")[0];
+            // ✅ FIX: Dùng formatDateForAPI thay vì toISOString để tránh lệch múi giờ
+            const formattedDate = formatDateForAPI(bookingDate);
 
             const response = await axios.post(
                 `http://localhost:5194/api/driver/complaints/${complaintId}/schedule-inspection`,
