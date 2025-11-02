@@ -53,6 +53,6 @@ const useGeoLocation = (): LocationState => {
   }, []);
 
   return location;
-};
+    };
 
 export default useGeoLocation;
