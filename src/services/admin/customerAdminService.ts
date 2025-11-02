@@ -18,14 +18,16 @@ export interface CustomerDetail extends Customer {
     role: string;
     cancelledReservations: number;
     totalVehicles: number;
+    profilePicture: string,
 }
 
 export interface UpdateUserPayload {
     name?: string;
     phoneNumber?: string;
     role: string;
+    profilePicture?: string,
     status: string;
-    stationId: string
+    stationId?: string
 }
 
 export async function fetchCustomers(  page: number,
@@ -52,25 +54,35 @@ export async function fetchCustomerById(id: string) {
 }
 
 export async function updateUser(id: string, payload: UpdateUserPayload) {
-    try {
-        // Thử các format khác
-        const wrappedPayload = {
-            name: payload.name,
-            phoneNumber: payload.phoneNumber,
-            role: parseInt(payload.role),
-            status: parseInt(payload.status),
-            stationId: payload.stationId // Có thể backend cần số thay vì string
-        };
+  try {
+    const formData = new FormData();
 
-        const response = await api.put(`/api/v1/Users/${id}`, wrappedPayload, {
-            withCredentials: true,
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error updating user:', error);
-        throw error;
-    }
+    // Duyệt tất cả field trong payload
+    Object.entries(payload).forEach(([key, value]) => {
+      // ❌ Bỏ qua stationId nếu không có (hoặc các field rỗng)
+      if (value === undefined || value === null || value === "") return;
+
+      // Convert số sang chuỗi vì FormData chỉ nhận string hoặc Blob
+      if (typeof value === "number") formData.append(key, value.toString());
+      else formData.append(key, value as any);
+    });
+
+    // ép role & status sang chuỗi
+    formData.set("role", parseInt(payload.role).toString());
+    formData.set("status", parseInt(payload.status).toString());
+
+    const response = await api.put(`/api/v1/Users/${id}`, formData, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error;
+  }
 }
+
 
 export async function fetchTotalCustomers(  page: number,
   pageSize: number
