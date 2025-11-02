@@ -18,6 +18,7 @@ export interface StaffDetails extends Staff {
     totalSwapTransactions: number;
     recentReservationsVerified: number;
     recentSwapTransactions: number;
+    profilePicture: string
 }
 
 export async function fetchStaffList(page: number, pageSize: number) {

@@ -78,44 +78,40 @@ export const RequestForStation: React.FC = () => {
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
     const grouped = data.reduce(
       (acc: { [key: string]: BatteryRequest[] }, request) => {
-        // Làm tròn thời gian đến giây (bỏ milliseconds)
-        const dateKey = new Date(request.createdAt).toISOString().split(".")[0];
+        const time = new Date(request.createdAt).getTime();
 
-        if (!acc[dateKey]) {
-          acc[dateKey] = [];
+        // Làm tròn về bội số của 5 giây (5000ms)
+        const bucket = Math.floor(time / 5000) * 5000;
+
+        if (!acc[bucket]) {
+          acc[bucket] = [];
         }
-        acc[dateKey].push(request);
+        acc[bucket].push(request);
         return acc;
       },
       {}
     );
 
-    const groupedArray: GroupedRequest[] = Object.keys(grouped).map(
-      (dateKey) => {
-        const items = grouped[dateKey];
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const groupedArray: GroupedRequest[] = Object.keys(grouped).map((key) => {
+      const items = grouped[key];
+      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+      const allSameStatus = items.every((i) => i.status === items[0].status);
 
-        // Kiểm tra xem tất cả requests trong group có cùng status không
-        const allSameStatus = items.every(
-          (item) => item.status === items[0].status
-        );
+      return {
+        createdAt: items[0].createdAt,
+        requests: items,
+        adminName: items[0].requestedByAdminName,
+        stationName: items[0].stationName,
+        totalItems,
+        status: allSameStatus ? items[0].status : 0,
+      };
+    });
 
-        return {
-          createdAt: items[0].createdAt,
-          requests: items,
-          adminName: items[0].requestedByAdminName,
-          stationName: items[0].stationName,
-          totalItems,
-          status: allSameStatus ? items[0].status : 0,
-        };
-      }
-    );
-
-    // Sắp xếp theo thời gian mới nhất
     groupedArray.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+
     setGroupedRequests(groupedArray);
   };
 

@@ -108,6 +108,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
     name: "",
     phoneNumber: "",
     role: "0",
+    profilePicture: "",
     status: "0",
     stationId: "",
   });
@@ -131,6 +132,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
           name: data.name || "",
           phoneNumber: data.phoneNumber || "",
           role: roleValue,
+          profilePicture: data.profilePicture || "",
           status: statusValue,
           stationId: data.stationId || "",
         });
@@ -153,6 +155,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
         role: formData.role,
+        profilePicture: formData.profilePicture,
         status: formData.status,
         stationId: formData.stationId,
       };
@@ -162,12 +165,13 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         ...staffDetail,
         name: formData.name,
         phoneNumber: formData.phoneNumber,
+        profilePicture: formData.profilePicture,
         role: getRoleText(formData.role),
         status: formData.status === "0" ? "Active" : "Inactive",
       });
     } catch (error) {
       console.error("Error updating staff:", error);
-      toast.error(t("admin.updateFailed"));
+      toast.error("Cập nhật thất bại!");
     } finally {
       setLoading(false);
     }
@@ -211,6 +215,8 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         return formData.phoneNumber || staffDetail.phoneNumber;
       case "role":
         return getRoleText(formData.role);
+      case "profilePicture":
+        return formData.profilePicture || staffDetail.profilePicture;
       case "status":
         return formData.status === "0" ? "Đang hoạt động" : "Ngừng hoạt động";
       default:
@@ -285,6 +291,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
             : staffDetail?.role === "Staff"
             ? "1"
             : "2",
+        profilePicture: staffDetail?.profilePicture,
         status: staffDetail?.status === "Active" ? "0" : "1",
         stationId: staffDetail?.stationId || "",
       });
@@ -369,6 +376,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                           : staffDetail.role === "Staff"
                           ? "1"
                           : "2",
+                      profilePicture: staffDetail.profilePicture,
                       status: staffDetail.status === "Active" ? "0" : "1",
                       stationId: staffDetail.stationId || "",
                     });

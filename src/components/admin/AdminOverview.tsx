@@ -129,10 +129,12 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis
+                  width={90}
                   tickFormatter={(value) =>
                     value.toLocaleString("vi-VN", {
                       style: "currency",
                       currency: "VND",
+                      maximumFractionDigits: 0,
                     })
                   }
                 />

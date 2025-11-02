@@ -24,6 +24,7 @@ import {
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { toast } from "react-toastify";
+import { profile } from "console";
 
 const StatItem: React.FC<{
   icon: React.ElementType;
@@ -107,6 +108,7 @@ const CustomerDetailModal = ({
     name: "",
     phoneNumber: "",
     role: "0",
+    profilePicture: "",
     status: "0",
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -126,6 +128,7 @@ const CustomerDetailModal = ({
           name: data.name || "",
           phoneNumber: data.phoneNumber || "",
           role: roleValue,
+          profilePicture: data.profilePicture,
           status: statusValue,
         });
       } catch (error) {
@@ -145,6 +148,7 @@ const CustomerDetailModal = ({
         name: formData.name,
         phoneNumber: formData.phoneNumber,
         role: formData.role,
+        profilePicture: formData.profilePicture,
         status: formData.status,
       };
       await updateUser(customerDetail.id!, payload);
@@ -251,6 +255,7 @@ const CustomerDetailModal = ({
             : customerDetail?.role === "Staff"
             ? "1"
             : "2",
+        profilePicture: customerDetail.profilePicture,
         status: customerDetail?.status === "Active" ? "0" : "1",
       });
 
@@ -336,6 +341,7 @@ const CustomerDetailModal = ({
                           : customerDetail.role === "Staff"
                           ? "1"
                           : "2",
+                      profilePicture: customerDetail.profilePicture,
                       status: customerDetail.status === "Active" ? "0" : "1",
                     });
                   }}
