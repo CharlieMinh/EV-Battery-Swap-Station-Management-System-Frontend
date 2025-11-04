@@ -7,9 +7,19 @@ import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 
 function normalizePayments(payload: any): Payment[] {
-  // Chấp nhận nhiều dạng gói dữ liệu phổ biến (GIỮ NGUYÊN)
   if (Array.isArray(payload)) return payload as Payment[];
+
   if (payload && typeof payload === "object") {
+    if (Array.isArray(payload.payments)) {
+      return (payload.payments as any[]).map((p) => ({
+        paymentId: p?.id ?? p?.paymentId ?? "",
+        swapId: p?.reservationId ?? p?.swapId,
+        amount: p?.amount,
+        method: p?.method,
+        status: p?.status,
+        paidAt: p?.completedAt ?? p?.paidAt,
+      })) as Payment[];
+    }
     if (Array.isArray(payload.items)) return payload.items as Payment[];
     if (Array.isArray(payload.data)) return payload.data as Payment[];
     if (Array.isArray(payload.results)) return payload.results as Payment[];
@@ -20,12 +30,20 @@ function normalizePayments(payload: any): Payment[] {
 }
 
 const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
-// ✅ Mỗi hành động chỉ 1 toast: dùng toastId để tránh trùng lặp
-const TOAST_ID = {
-  fetchOk: "rev-fetch-ok",
-  fetchErr: "rev-fetch-err",
-  refreshInfo: "rev-refresh-info",
-};
+const TOAST_ID = { fetchOk: "rev-fetch-ok", fetchErr: "rev-fetch-err", refreshInfo: "rev-refresh-info" };
+
+function isPaidStatus(s: any): boolean {
+  const v = (s ?? "").toString().trim().toLowerCase();
+  if (v === "paid" || v === "success" || v === "completed") return true;
+  const n = Number(v);
+  return !Number.isNaN(n) && n === 2;
+}
+function isCashMethod(m: any): boolean {
+  const v = (m ?? "").toString().trim().toLowerCase();
+  if (v === "cash" || v === "tiền mặt") return true;
+  const n = Number(v);
+  return !Number.isNaN(n) && n === 1;
+}
 
 export default function Revenue() {
   const [from, setFrom] = useState<string>("");
@@ -46,13 +64,9 @@ export default function Revenue() {
       });
 
       const list = normalizePayments(data);
-      const paidOnly = list.filter(
-        (p) => (p?.status ?? "").toString().toLowerCase() === "paid"
-      );
-
+      const paidOnly = list.filter((p) => isPaidStatus((p as any).status));
       setPaid(paidOnly);
 
-      // ✅ Chỉ 1 thông báo thành công
       toast.success(
         paidOnly.length
           ? `Đã tải ${paidOnly.length} giao dịch đã thanh toán.`
@@ -63,10 +77,7 @@ export default function Revenue() {
       console.error("Load revenue error:", e);
       setErr("Không tải được dữ liệu doanh thu.");
       setPaid([]);
-
-      // ❌ Chỉ 1 thông báo lỗi
-      const msg =
-        e?.response?.data?.message || e?.message || "Không tải được dữ liệu doanh thu.";
+      const msg = e?.response?.data?.message || e?.message || "Không tải được dữ liệu doanh thu.";
       toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
@@ -75,15 +86,14 @@ export default function Revenue() {
 
   useEffect(() => {
     fetchPaid();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line
 
   const revenue = useMemo(
-    () => paid.reduce((s, p) => s + (Number(p.amount) || 0), 0),
+    () => paid.reduce((s, p) => s + (Number((p as any).amount) || 0), 0),
     [paid]
   );
   const cashCount = useMemo(
-    () => paid.filter((p) => p?.method === "Cash").length,
+    () => paid.filter((p) => isCashMethod((p as any).method)).length,
     [paid]
   );
   const arps = useMemo(
@@ -119,10 +129,7 @@ export default function Revenue() {
             </div>
             <Button
               onClick={() => {
-                toast.info("Đang làm mới dữ liệu...", {
-                  ...toastOpts,
-                  toastId: TOAST_ID.refreshInfo,
-                });
+                toast.info("Đang làm mới dữ liệu...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
                 fetchPaid();
               }}
               className="inline-flex items-center gap-2"
@@ -133,7 +140,6 @@ export default function Revenue() {
             </Button>
           </div>
 
-          {/* UI báo lỗi cũ giữ nguyên (không phát thêm toast ở đây) */}
           {err && (
             <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-sm">
               {err}
@@ -158,7 +164,8 @@ export default function Revenue() {
               </div>
             </div>
             <div className="rounded-xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">ARPS</div>
+              {/* ⭐ Đổi nhãn */}
+              <div className="text-sm text-gray-600 mb-1">Doanh thu TB / giao dịch</div>
               <div className="text-2xl font-bold">{arps.toLocaleString()} đ</div>
             </div>
           </div>
@@ -190,15 +197,17 @@ export default function Revenue() {
                   </tr>
                 )}
                 {paid.map((p) => (
-                  <tr key={p.paymentId} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">{p.paymentId}</td>
-                    <td className="px-4 py-3">{p.swapId || "—"}</td>
+                  <tr key={(p as any).paymentId} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">{(p as any).paymentId}</td>
+                    <td className="px-4 py-3">{(p as any).swapId || "—"}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(Number(p.amount) || 0).toLocaleString()} đ
+                      {(Number((p as any).amount) || 0).toLocaleString()} đ
                     </td>
-                    <td className="px-4 py-3">{p.method || "—"}</td>
+                    <td className="px-4 py-3">{(p as any).method || "—"}</td>
                     <td className="px-4 py-3">
-                      {p.paidAt ? new Date(p.paidAt).toLocaleString() : "—"}
+                      {(p as any).paidAt
+                        ? new Date((p as any).paidAt as any).toLocaleString()
+                        : "—"}
                     </td>
                   </tr>
                 ))}
