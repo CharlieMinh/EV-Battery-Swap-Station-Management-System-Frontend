@@ -9,7 +9,9 @@ import {
 } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { Battery, CheckCircle, XCircle, Loader2, AlertCircle, Star } from "lucide-react";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Battery, CheckCircle, XCircle, Loader2, AlertCircle, Star, Search, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import {
   Dialog,
@@ -20,7 +22,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { Textarea } from "../ui/textarea";
 
 // Interface Swap (Giữ nguyên)
@@ -58,11 +59,9 @@ interface SwapHistoryProps {
 
 export function SwapHistory({ }: SwapHistoryProps) {
   const { t } = useLanguage();
-  const navigate = useNavigate();
 
-  // ✅ THÊM STATE NỘI BỘ
+  // ✅ STATE NỘI BỘ
   const [swapHistory, setSwapHistory] = useState<SwapHistoryResponse | null>(null);
-  const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,18 +79,21 @@ export function SwapHistory({ }: SwapHistoryProps) {
   const [feedback, setFeedback] = useState("");
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
+  // ✅ NEW: State cho filter và pagination
+  const [searchText, setSearchText] = useState("");
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
+  const [filterRating, setFilterRating] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   // ✅ THÊM useEffect ĐỂ TỰ GỌI API
   useEffect(() => {
     async function fetchSwapHistory() {
       setLoading(true);
       setError(null);
       try {
-        let url;
-        if (showAll) {
-          url = "http://localhost:5194/api/v1/swaps/history?page=1&pageSize=50";
-        } else {
-          url = "http://localhost:5194/api/v1/swaps/history?page=1&pageSize=3";
-        }
+        // ✅ NEW: Always load all data (pagination handled client-side)
+        const url = "http://localhost:5194/api/v1/swaps/history?page=1&pageSize=100";
         const response = await axios.get<SwapHistoryResponse>(url, { withCredentials: true });
         setSwapHistory(response.data);
       } catch (error) {
@@ -102,7 +104,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
       }
     }
     fetchSwapHistory();
-  }, [showAll, t]);
+  }, [t]);
 
   // Handler mở modal báo cáo lỗi
   const handleOpenReportModal = (swapId: string) => {
@@ -238,8 +240,58 @@ export function SwapHistory({ }: SwapHistoryProps) {
     }
   };
 
-  // Lấy danh sách giao dịch từ state
-  const transactionsToShow = swapHistory?.transactions || [];
+  // ✅ NEW: Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, filterPaymentStatus, filterRating]);
+
+  // ✅ NEW: Filter and search logic
+  const allTransactions = swapHistory?.transactions || [];
+
+  const filteredTransactions = allTransactions.filter((swap) => {
+    // Search filter
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase();
+      const matchesSearch =
+        swap.transactionNumber.toLowerCase().includes(searchLower) ||
+        swap.stationName.toLowerCase().includes(searchLower) ||
+        swap.vehicleLicensePlate.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+
+    // Payment status filter
+    if (filterPaymentStatus !== "all") {
+      if (filterPaymentStatus === "paid" && !swap.isPaid) return false;
+      if (filterPaymentStatus === "unpaid" && swap.isPaid) return false;
+    }
+
+    // Rating filter
+    if (filterRating !== "all") {
+      if (filterRating === "unrated" && swap.rating) return false;
+      if (filterRating === "1-2" && (!swap.rating || swap.rating > 2)) return false;
+      if (filterRating === "3-4" && (!swap.rating || swap.rating < 3 || swap.rating > 4)) return false;
+      if (filterRating === "5" && swap.rating !== 5) return false;
+    }
+
+    return true;
+  });
+
+  // ✅ NEW: Pagination logic
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const transactionsToShow = filteredTransactions.slice(startIndex, endIndex);
+
+  // ✅ NEW: Check if any filters are active
+  const hasActiveFilters = searchText.trim() !== "" || filterPaymentStatus !== "all" || filterRating !== "all";
+
+  // ✅ NEW: Clear all filters
+  const handleClearFilters = () => {
+    setSearchText("");
+    setFilterPaymentStatus("all");
+    setFilterRating("all");
+    setCurrentPage(1);
+  };
 
   // --- Render UI ---
 
@@ -264,7 +316,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
         </CardHeader>
         <CardContent className="text-center text-red-600">
           <p>{error}</p>
-          <Button variant="outline" onClick={() => setShowAll(prev => !prev)} className="mt-4">
+          <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
             Thử lại
           </Button>
         </CardContent>
@@ -289,6 +341,78 @@ export function SwapHistory({ }: SwapHistoryProps) {
       </CardHeader>
 
       <CardContent className="p-6">
+        {/* ✅ NEW: Filter and Search UI */}
+        <Card className="mb-6 bg-gray-50 border-gray-200">
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              {/* Row 1: Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Tìm theo mã giao dịch, trạm, biển số xe..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Row 2: Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Payment Status Filter */}
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Thanh toán</label>
+                  <Select value={filterPaymentStatus} onValueChange={setFilterPaymentStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tất cả" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="paid">Đã thanh toán</SelectItem>
+                      <SelectItem value="unpaid">Chưa thanh toán</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Rating Filter */}
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Đánh giá</label>
+                  <Select value={filterRating} onValueChange={setFilterRating}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tất cả" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="unrated">Chưa đánh giá</SelectItem>
+                      <SelectItem value="1-2">1-2 sao</SelectItem>
+                      <SelectItem value="3-4">3-4 sao</SelectItem>
+                      <SelectItem value="5">5 sao</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Filter Summary & Clear Button */}
+              {hasActiveFilters && (
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <p className="text-sm text-gray-600">
+                    Tìm thấy <span className="font-bold text-orange-600">{filteredTransactions.length}</span> kết quả
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearFilters}
+                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Xóa bộ lọc
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="space-y-4">
           {/* ✅ SỬA LẠI: Dùng transactionsToShow */}
           {transactionsToShow.length === 0 ? (
@@ -451,27 +575,34 @@ export function SwapHistory({ }: SwapHistoryProps) {
           )}
         </div>
 
-        {/* Nút Xem thêm/Thu gọn */}
-        {(swapHistory?.totalCount ?? 0) > 3 && (
-          <div className="mt-6 flex justify-center">
-            {showAll ? (
+        {/* ✅ NEW: Pagination Controls */}
+        {filteredTransactions.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between border-t pt-4">
+            <p className="text-sm text-gray-600">
+              Trang <span className="font-bold text-orange-600">{currentPage}</span> / {totalPages}
+            </p>
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                className="border-2 border-orange-400 text-orange-600 hover:bg-orange-50 px-8 font-semibold"
-                onClick={() => setShowAll(false)}
-                disabled={loading}
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="border-orange-400 text-orange-600 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("driver.collapse")}
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Trước
               </Button>
-            ) : (
               <Button
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 font-semibold shadow-md"
-                onClick={() => setShowAll(true)}
-                disabled={loading}
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="border-orange-400 text-orange-600 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("driver.viewAllHistory")}
+                Sau
+                <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
-            )}
+            </div>
           </div>
         )}
 
