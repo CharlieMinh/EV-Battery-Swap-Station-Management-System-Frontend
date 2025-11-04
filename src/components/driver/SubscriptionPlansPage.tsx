@@ -17,6 +17,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import Swal from "sweetalert2";
+import useGeoLocation from "../map/useGeoLocation";
+import { fetchStations, Station } from "../../services/admin/stationService";
 
 // --- Logic (Giữ nguyên) ---
 
@@ -81,6 +84,11 @@ export function SubscriptionPlansPage() {
 
     const navigate = useNavigate();
 
+    // Thêm states cho việc tìm trạm gần nhất
+    const location = useGeoLocation();
+    const [stations, setStations] = useState<Station[] | null>(null);
+    const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
+
     // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
@@ -110,9 +118,25 @@ export function SubscriptionPlansPage() {
                 { withCredentials: true }
             );
 
-            toast.success("Đã tạo đơn hàng của bạn ! Hãy đến trạm để thực hiện hoàn tất thanh toán  ");
             setIsPaymentModalOpen(false);
 
+            // Hiển thị alert tùy chỉnh với 2 nút lựa chọn
+            const result = await Swal.fire({
+                icon: "success",
+                title: "Đơn hàng đã được tạo",
+                html: "Hãy đến trạm gần nhất để thanh toán.",
+                showCancelButton: true,
+                confirmButtonColor: "#f97316",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: "Tìm trạm gần nhất",
+                cancelButtonText: "Để sau",
+                allowOutsideClick: false,
+            });
+
+            if (result.isConfirmed) {
+                // Người dùng chọn "Tìm trạm gần nhất"
+                setIsWaitingForLocation(true);
+            }
 
         } catch (error: any) {
             const msg = error.response?.data?.message || "Không thể chọn phương thức tiền mặt.";
@@ -164,6 +188,55 @@ export function SubscriptionPlansPage() {
         };
         getSubscriptionPlans();
     }, []);
+
+    // Fetch danh sách trạm khi component mount
+    useEffect(() => {
+        const getAllStations = async () => {
+            try {
+                const response = await fetchStations(1, 20);
+                setStations(response.items);
+            } catch (error) {
+                console.error("Error fetching stations:", error);
+            }
+        };
+        getAllStations();
+    }, []);
+
+    // Xử lý khi có vị trí người dùng và cần tìm trạm
+    useEffect(() => {
+        if (isWaitingForLocation && location.loaded && !location.error && location.coordinates) {
+            const userLocation = {
+                lat: location.coordinates.lat,
+                lng: location.coordinates.lng,
+            };
+
+            setIsWaitingForLocation(false);
+
+            navigate("/map", {
+                state: {
+                    userLocation,
+                    stations,
+                },
+            });
+        }
+
+        if (isWaitingForLocation && location.loaded && location.error) {
+            setIsWaitingForLocation(false);
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi xác định vị trí",
+                text: `${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`,
+                confirmButtonColor: "#f97316",
+            });
+        }
+    }, [
+        isWaitingForLocation,
+        location.loaded,
+        location.error,
+        location.coordinates,
+        navigate,
+        stations,
+    ]);
 
 
     // Flow mới: không cần tải danh sách xe khi mua gói
