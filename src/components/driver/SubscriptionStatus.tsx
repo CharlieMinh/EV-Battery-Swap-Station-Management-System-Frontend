@@ -21,6 +21,7 @@ interface SubscriptionInfo {
   swapsLimit: number | null; // Dùng trường này (từ API /mine/all)
   subscriptionPlan: {
     name: string;
+    batteryModelId?: string;
     maxSwapsPerMonth?: number; // Trường này có thể vẫn dùng dự phòng
   };
   // Thêm thông tin xe (dựa trên DTO /mine/all)
