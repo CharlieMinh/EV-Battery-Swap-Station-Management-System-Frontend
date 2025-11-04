@@ -27,6 +27,10 @@ interface Slot {
     slotStartTime: string;
     slotEndTime: string;
     isAvailable: boolean;
+    // optional fields from API (not required for current UI but kept for future use)
+    totalCapacity?: number;
+    currentReservations?: number;
+    availableSlots?: number;
 }
 
 interface InspectionBookingWizardProps {
@@ -57,7 +61,7 @@ export function InspectionBookingWizard({
     const [slotEndTime, setSlotEndTime] = useState<string>("");
 
     const [isLoadingStations, setIsLoadingStations] = useState(false);
-    // Không gọi API lấy slot nữa
+    const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const totalSteps = 4;
@@ -83,37 +87,56 @@ export function InspectionBookingWizard({
         }
     }, [isOpen]);
 
-    // Tạo slot 30 phút từ 08:00 đến 18:00 khi chọn ngày
+    // Gọi API lấy slots khả dụng dựa trên trạm + ngày + complaintId
     useEffect(() => {
-        if (!bookingDate) {
-            setSlots([]);
-            setSelectedSlot(null);
-            setSlotStartTime("");
-            setSlotEndTime("");
-            return;
-        }
-        const generateSlots = () => {
-            const results: Slot[] = [];
-            const startMinutes = 8 * 60; // 08:00
-            const endMinutes = 18 * 60; // 18:00
-            for (let m = startMinutes; m < endMinutes; m += 30) {
-                const startH = Math.floor(m / 60).toString().padStart(2, '0');
-                const startM = (m % 60).toString().padStart(2, '0');
-                const endH = Math.floor((m + 30) / 60).toString().padStart(2, '0');
-                const endM = ((m + 30) % 60).toString().padStart(2, '0');
-                results.push({
-                    slotStartTime: `${startH}:${startM}:00`,
-                    slotEndTime: `${endH}:${endM}:00`,
-                    isAvailable: true,
-                });
-            }
-            return results;
-        };
-        setSlots(generateSlots());
+        // Reset khi đổi trạm/ngày
         setSelectedSlot(null);
         setSlotStartTime("");
         setSlotEndTime("");
-    }, [bookingDate]);
+
+        if (!selectedStation || !bookingDate || !complaintId) {
+            setSlots([]);
+            return;
+        }
+
+        const fetchSlots = async () => {
+            setIsLoadingSlots(true);
+            try {
+                const formattedDate = formatDateForAPI(bookingDate);
+                const response = await axios.get(
+                    `http://localhost:5194/api/v1/slot-reservations/inspection-slots`,
+                    {
+                        params: {
+                            stationId: selectedStation.id,
+                            date: formattedDate,
+                            complaintId: complaintId,
+                        },
+                        withCredentials: true,
+                    }
+                );
+
+                // Map dữ liệu trả về sang cấu trúc Slot đang dùng
+                const apiSlots: Slot[] = (response.data || []).map((s: any) => ({
+                    slotStartTime: s.slotStartTime,
+                    slotEndTime: s.slotEndTime,
+                    isAvailable: Boolean(s.isAvailable),
+                    totalCapacity: s.totalCapacity,
+                    currentReservations: s.currentReservations,
+                    availableSlots: s.availableSlots,
+                }));
+
+                setSlots(apiSlots);
+            } catch (error: any) {
+                const apiMsg = error?.response?.data?.error?.message || error?.response?.data?.message;
+                toast.error(apiMsg || "Không thể tải danh sách khung giờ. Vui lòng thử lại.");
+                setSlots([]);
+            } finally {
+                setIsLoadingSlots(false);
+            }
+        };
+
+        fetchSlots();
+    }, [selectedStation?.id, bookingDate, complaintId]);
 
     const handleStationSelect = (station: Station) => {
         setSelectedStation(station);
@@ -300,7 +323,11 @@ export function InspectionBookingWizard({
                     <div className="space-y-6">
                         <h3 className="text-lg font-medium">Chọn khung giờ</h3>
                         <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2">
-                            {slots.length > 0 ? (
+                            {isLoadingSlots ? (
+                                <div className="col-span-4 flex justify-center py-12">
+                                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                                </div>
+                            ) : slots.length > 0 ? (
                                 slots.map((slot) => {
                                     const now = new Date();
                                     const isToday = bookingDate ? bookingDate.toDateString() === now.toDateString() : false;
@@ -313,13 +340,15 @@ export function InspectionBookingWizard({
                                     }
                                     return (
                                         <Button
-                                            key={slot.slotStartTime}
+                                            key={`${slot.slotStartTime}-${slot.slotEndTime}`}
                                             variant={selectedSlot?.slotStartTime === slot.slotStartTime ? "default" : "outline"}
                                             className={`h-12 ${selectedSlot?.slotStartTime === slot.slotStartTime ? 'bg-orange-500' : ''}`}
                                             onClick={() => { setSelectedSlot(slot); setSlotStartTime(slot.slotStartTime); setSlotEndTime(slot.slotEndTime); }}
                                             disabled={isSlotDisabled}
+                                            title={typeof slot.availableSlots === 'number' ? `Còn ${slot.availableSlots}/${slot.totalCapacity}` : undefined}
                                         >
-                                            {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)}
+                                            {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)}<br />
+                                            ({(slot.currentReservations ?? 0)}/{(slot.totalCapacity ?? '-')})
                                         </Button>
                                     );
                                 })

@@ -141,16 +141,24 @@ export default function VehicleFormWithOCR({
         }
 
         const formData = new FormData();
-        formData.append('Vin', vin.trim());
-        formData.append('Plate', plate.trim());
-        formData.append('VehicleModelId', vehicleModelId);
+        if (isEdit) {
+            // Chế độ cập nhật: chỉ cho phép thay đổi ảnh xe
+            if (vehiclePhoto) {
+                formData.append('Photo', vehiclePhoto);
+            }
+        } else {
+            // Chế độ tạo mới: gửi đầy đủ thông tin
+            formData.append('Vin', vin.trim());
+            formData.append('Plate', plate.trim());
+            formData.append('VehicleModelId', vehicleModelId);
 
-        if (vehiclePhoto) {
-            formData.append('Photo', vehiclePhoto);
-        }
+            if (vehiclePhoto) {
+                formData.append('Photo', vehiclePhoto);
+            }
 
-        if (!isEdit && registrationPhoto) {
-            formData.append('RegistrationPhoto', registrationPhoto);
+            if (registrationPhoto) {
+                formData.append('RegistrationPhoto', registrationPhoto);
+            }
         }
 
         try {
@@ -273,7 +281,7 @@ export default function VehicleFormWithOCR({
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">{t("driver.plate")}</label>
-                        <Input value={plate} onChange={(e) => setPlate(e.target.value)} placeholder={t("driver.enterPlate")} required />
+                        <Input value={plate} onChange={(e) => setPlate(e.target.value)} placeholder={t("driver.enterPlate")} required disabled={isEdit} />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">{t("driver.vehicleModel")}</label>

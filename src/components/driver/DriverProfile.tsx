@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios"; // 👈 Thêm
 import {
   Card,
@@ -10,10 +10,10 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
-import { Edit, Mail, PhoneCallIcon, User, Loader2, AlertCircle, RefreshCcw } from "lucide-react"; // 👈 Thêm Loader2, AlertCircle
+import { Edit, Mail, PhoneCallIcon, User, Loader2, AlertCircle, RefreshCcw, Camera, Upload } from "lucide-react"; // 👈 Thêm Camera, Upload
 import { useLanguage } from "../LanguageContext";
 import { toast } from "react-toastify"; // 👈 Thêm
 import { showError, showSuccess } from "../ui/alert"; // 👈 Sửa đường dẫn (giả sử nó ở /ui)
@@ -27,6 +27,7 @@ interface UserData {
   role: string;
   createdAt: string;
   lastLogin: string;
+  profilePictureUrl?: string; // 👈 Thêm field này
 }
 
 // ❌ Xóa DriverProfileProps
@@ -43,6 +44,12 @@ export function DriverProfile() { // 👈 Xóa props
   // ✅ State cho input (giữ nguyên)
   const [name, setName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
+
+  // ✅ State cho upload ảnh
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ Hàm fetchProfile (chuyển từ Dashboard vào đây)
   const fetchProfile = async () => {
@@ -69,16 +76,100 @@ export function DriverProfile() { // 👈 Xóa props
     fetchProfile();
   }, []); // [] = chạy 1 lần duy nhất
 
+  // ✅ Hàm xử lý chọn file
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError("Lỗi!", "Vui lòng chọn file ảnh (JPEG, PNG)");
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showError("Lỗi!", "Kích thước file không được vượt quá 10MB");
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ✅ Hàm upload ảnh
+  const handleUploadPhoto = async () => {
+    if (!selectedFile || !userData) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('ProfilePicture', selectedFile);
+      formData.append('Name', name);
+      formData.append('PhoneNumber', phoneNumber);
+
+      await axios.put(
+        `http://localhost:5194/api/v1/Users/${userData.id}`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      showSuccess("Cập nhật ảnh đại diện thành công!");
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      await fetchProfile(); // Tải lại profile
+    } catch (error: any) {
+      const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
+      if (backendErrorMessage) {
+        showError("Không thể tải ảnh lên!", backendErrorMessage);
+      } else {
+        showError("Không thể tải ảnh lên!", "Lỗi không xác định");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ✅ Hàm hủy chọn ảnh
+  const handleCancelPhoto = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   // ✅ Hàm handleUpdateProfile (chuyển từ Dashboard vào đây)
   const handleUpdateProfile = async () => {
     if (!userData) return; // Không có data thì không làm gì
 
     setIsUpdating(true); // Bật loading nút
     try {
-      await axios.put(`http://localhost:5194/api/v1/Users/${userData.id}`, {
-        "name": name, // Gửi state 'name'
-        "phoneNumber": phoneNumber // Gửi state 'phoneNumber'
-      }, { withCredentials: true });
+      const formData = new FormData();
+      formData.append('Name', name);
+      formData.append('PhoneNumber', phoneNumber);
+
+      await axios.put(
+        `http://localhost:5194/api/v1/Users/${userData.id}`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
       showSuccess("Cập nhật thông tin thành công!");
       fetchProfile(); // Tải lại data mới sau khi cập nhật
@@ -139,12 +230,67 @@ export function DriverProfile() { // 👈 Xóa props
       <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
         <CardHeader className="text-center pb-4">
           <div className="flex flex-col items-center space-y-4">
-            <Avatar className="w-28 h-28 shadow-lg border-4 border-orange-500">
-              <AvatarFallback className="text-4xl font-bold text-orange-600 bg-orange-100">
-                {/* Sửa lại: Dùng 'name' từ state vì 'userData.name' có thể cũ */}
-                {name ? name.charAt(0).toUpperCase() : 'U'}
-              </AvatarFallback>
-            </Avatar>
+            {/* Avatar với nút upload */}
+            <div className="relative group">
+              <Avatar className="w-28 h-28 shadow-lg border-4 border-orange-500">
+                {previewUrl || userData.profilePictureUrl ? (
+                  <AvatarImage
+                    src={previewUrl || userData.profilePictureUrl}
+                    alt={name}
+                    className="object-cover"
+                  />
+                ) : null}
+                <AvatarFallback className="text-4xl font-bold text-orange-600 bg-orange-100">
+                  {name ? name.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Nút upload overlay */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                type="button"
+              >
+                <Camera className="w-8 h-8 text-white" />
+              </button>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+
+            {/* Nút upload/cancel nếu có file được chọn */}
+            {selectedFile && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUploadPhoto}
+                  disabled={isUploading}
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                  size="sm"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-1" />
+                  )}
+                  {isUploading ? "Đang tải..." : "Tải ảnh lên"}
+                </Button>
+                <Button
+                  onClick={handleCancelPhoto}
+                  disabled={isUploading}
+                  variant="outline"
+                  className="text-sm"
+                  size="sm"
+                >
+                  Hủy
+                </Button>
+              </div>
+            )}
 
             <div>
               <h3 className="text-3xl font-semibold text-gray-900">
