@@ -495,7 +495,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       <span>{t("driver.profile")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("support")}
                       isActive={activeSection === "support"}
@@ -504,7 +504,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       <HeadphonesIcon className="w-4 h-4" />
                       <span>{t("driver.support")}</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

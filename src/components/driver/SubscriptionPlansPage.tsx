@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     Card,
     CardContent,
@@ -7,14 +7,16 @@ import {
     CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-// 👈 Thêm Badge, Landmark, CreditCard
 import { Badge } from "../ui/badge";
-import { Edit, Car, Delete, Check, CheckCircle, XCircle, Loader2, Landmark, CreditCard } from "lucide-react";
+import { Edit, Car, Delete, Check, CheckCircle, XCircle, Loader2, Landmark, CreditCard, Search } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 // --- Logic (Giữ nguyên) ---
 
@@ -66,10 +68,26 @@ export function SubscriptionPlansPage() {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [payment, setPayment] = useState<Payment | null>(null);
 
-
     const [isLoading, setIsLoading] = useState(false);
 
+    // Bộ lọc client-side
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [minPrice, setMinPrice] = useState<string>("");
+    const [maxPrice, setMaxPrice] = useState<string>("");
+    const [battery, setBattery] = useState<string>("ALL");
+
+    // Phân trang client-side
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(9);
+
     const navigate = useNavigate();
+
+    // Debounce search
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+        return () => clearTimeout(handler);
+    }, [search]);
 
     const handlePayWithVNPay = () => {
         if (payment && payment.paymentUrl) {
@@ -170,6 +188,45 @@ export function SubscriptionPlansPage() {
         getMyVehicles();
     }, []);
 
+    // Danh sách loại pin từ dữ liệu
+    const batteryOptions = useMemo(() => {
+        const set = new Set<string>();
+        plans.forEach(p => {
+            if (p.batteryModel?.name) set.add(p.batteryModel.name);
+        });
+        return Array.from(set).sort();
+    }, [plans]);
+
+    // Áp dụng lọc client-side
+    const filteredPlans = useMemo(() => {
+        let list = [...plans];
+        if (debouncedSearch) {
+            list = list.filter(p => p.name.toLowerCase().includes(debouncedSearch));
+        }
+        if (minPrice) {
+            const min = Number(minPrice);
+            if (!isNaN(min)) list = list.filter(p => p.monthlyPrice >= min);
+        }
+        if (maxPrice) {
+            const max = Number(maxPrice);
+            if (!isNaN(max)) list = list.filter(p => p.monthlyPrice <= max);
+        }
+        if (battery && battery !== "ALL") {
+            list = list.filter(p => p.batteryModel?.name === battery);
+        }
+        list.sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+        return list;
+    }, [plans, debouncedSearch, minPrice, maxPrice, battery]);
+
+    // Tính toán phân trang client-side
+    const total = filteredPlans.length;
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, maxPage);
+    const pagedPlans = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredPlans.slice(start, start + pageSize);
+    }, [filteredPlans, currentPage, pageSize]);
+
 
     const handleSelectPlan = (plan: SubscriptionPlan) => {
         setSelectedPlan(plan);
@@ -191,8 +248,72 @@ export function SubscriptionPlansPage() {
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">Chọn một gói dịch vụ phù hợp nhất với nhu cầu di chuyển của bạn.</p>
                 </div>
 
+                {/* Filters */}
+                <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div className="md:col-span-2">
+                            <Label className="mb-1 block">Tìm theo tên</Label>
+                            <div className="relative">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input
+                                    placeholder="Nhập tên gói..."
+                                    className="pl-8"
+                                    value={search}
+                                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="mb-1 block">Giá tối thiểu</Label>
+                            <div className="relative">
+                                <Input
+                                    type="text"
+                                    placeholder="VD: 100.000"
+                                    value={minPrice ? Number(minPrice).toLocaleString('vi-VN') : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setMinPrice(value);
+                                        setPage(1);
+                                    }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">đ</span>
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="mb-1 block">Giá tối đa</Label>
+                            <div className="relative">
+                                <Input
+                                    type="text"
+                                    placeholder="VD: 1.000.000"
+                                    value={maxPrice ? Number(maxPrice).toLocaleString('vi-VN') : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setMaxPrice(value);
+                                        setPage(1);
+                                    }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">đ</span>
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="mb-1 block">Loại pin</Label>
+                            <Select value={battery} onValueChange={(v) => { setBattery(v); setPage(1); }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Tất cả" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">Tất cả</SelectItem>
+                                    {batteryOptions.map(b => (
+                                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {plans.map((plan, index) => {
+                    {pagedPlans.map((plan, index) => {
                         // Tách lợi ích (giống PricingSection)
                         const features = (plan.benefits || "").split('\n').filter(f => f.trim() !== "" && f.trim() !== "✓");
 
@@ -252,6 +373,49 @@ export function SubscriptionPlansPage() {
                         )
                     })}
                 </div>
+
+                {/* Pagination */}
+                {total > 0 && (
+                    <div className="mt-8 flex items-center justify-between">
+                        <div className="text-sm text-gray-600">
+                            Tổng: {total.toLocaleString('vi-VN')} gói
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Label className="text-sm">Hiển thị</Label>
+                            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
+                                <SelectTrigger className="w-24">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[6, 9, 12, 18].map(n => (
+                                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage <= 1}
+                                >
+                                    Trang trước
+                                </Button>
+                                <span className="text-sm">Trang {currentPage}/{maxPage}</span>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setPage(p => Math.min(maxPage, p + 1))}
+                                    disabled={currentPage >= maxPage}
+                                >
+                                    Trang sau
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {filteredPlans.length === 0 && (
+                    <p className="text-center text-gray-500 text-lg py-12">Không tìm thấy gói nào phù hợp với tiêu chí lọc.</p>
+                )}
 
                 {/* --- Dialog Chọn Xe (Làm đẹp) --- */}
                 {selectedPlan && (
