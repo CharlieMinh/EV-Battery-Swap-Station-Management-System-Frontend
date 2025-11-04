@@ -6,14 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 
-/* ===========================
- *  Helper: Chuẩn hoá dữ liệu
- * =========================== */
 function normalizePayments(payload: any): Payment[] {
-  // Chấp nhận nhiều dạng gói dữ liệu phổ biến
+  // Trường hợp BE trả trực tiếp mảng
   if (Array.isArray(payload)) return payload as Payment[];
 
+  // Trường hợp BE bọc đối tượng
   if (payload && typeof payload === "object") {
+    // ⭐ BE của bạn: { payments: [...], pagination: {...} }
+    if (Array.isArray(payload.payments)) {
+      return (payload.payments as any[]).map((p) => ({
+        paymentId: p?.id ?? p?.paymentId ?? "",
+        swapId: p?.reservationId ?? p?.swapId,
+        amount: p?.amount,
+        method: p?.method,            // ví dụ: "Cash" | "VNPay" (string)
+        status: p?.status,            // ví dụ: "Pending" | "Completed" (string)
+        paidAt: p?.completedAt ?? p?.paidAt,
+      })) as Payment[];
+    }
+
+    // Các khóa cũ vẫn giữ nguyên
     if (Array.isArray(payload.items)) return payload.items as Payment[];
     if (Array.isArray(payload.data)) return payload.data as Payment[];
     if (Array.isArray(payload.results)) return payload.results as Payment[];
@@ -23,21 +34,73 @@ function normalizePayments(payload: any): Payment[] {
   return [];
 }
 
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+const TOAST_ID = { fetchOk: "rev-fetch-ok", fetchErr: "rev-fetch-err", refreshInfo: "rev-refresh-info" };
+
+/* ===== Helpers chấp nhận cả text & mã số ===== */
+function isPaidStatus(s: any): boolean {
+  const v = (s ?? "").toString().trim().toLowerCase();
+  if (v === "paid" || v === "success" || v === "completed") return true;
+  const n = Number(v);
+  return !Number.isNaN(n) && n === 2; // 2 = Completed
+}
+function isCashMethod(m: any): boolean {
+  const v = (m ?? "").toString().trim().toLowerCase();
+  if (v === "cash" || v === "tiền mặt") return true;
+  const n = Number(v);
+  return !Number.isNaN(n) && n === 1; // phòng khi BE lưu 1 = Cash
+}
+
 export default function Revenue() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [paid, setPaid] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string>("");
 
-  /* ===========================
-   *  Tính toán tổng hợp
-   * =========================== */
+  const fetchPaid = async () => {
+    setLoading(true);
+    setErr("");
+    try {
+      const { data } = await listAllPayments({
+        fromDate: from || undefined,
+        toDate: to || undefined,
+        page: 1,
+        pageSize: 500,
+      });
+
+      const list = normalizePayments(data);
+      const paidOnly = list.filter((p) => isPaidStatus((p as any).status));
+      setPaid(paidOnly);
+
+      toast.success(
+        paidOnly.length
+          ? `Đã tải ${paidOnly.length} giao dịch đã thanh toán.`
+          : "Không có giao dịch đã thanh toán trong khoảng ngày đã chọn.",
+        { ...toastOpts, toastId: TOAST_ID.fetchOk }
+      );
+    } catch (e: any) {
+      console.error("Load revenue error:", e);
+      setErr("Không tải được dữ liệu doanh thu.");
+      setPaid([]);
+      const msg = e?.response?.data?.message || e?.message || "Không tải được dữ liệu doanh thu.";
+      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPaid();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const revenue = useMemo(
-    () => paid.reduce((s, p) => s + (Number(p.amount) || 0), 0),
+    () => paid.reduce((s, p) => s + (Number((p as any).amount) || 0), 0),
     [paid]
   );
   const cashCount = useMemo(
-    () => paid.filter((p) => (p?.method || "").toString() === "Cash").length,
+    () => paid.filter((p) => isCashMethod((p as any).method)).length,
     [paid]
   );
   const arps = useMemo(
@@ -45,98 +108,6 @@ export default function Revenue() {
     [revenue, paid.length]
   );
 
-  /* ===========================
-   *  Fetch dữ liệu + Toast
-   * =========================== */
-  const fetchPaid = async (withToast = false) => {
-    // Validate ngày
-    if (from && to && new Date(from) > new Date(to)) {
-      toast.warning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.");
-      return;
-    }
-
-    setLoading(true);
-    const params = {
-      fromDate: from || undefined,
-      toDate: to || undefined,
-      page: 1,
-      pageSize: 500,
-    };
-    const promise = listAllPayments(params);
-
-    try {
-      if (withToast) {
-        const res = await toast.promise(
-          promise,
-          {
-            pending: "Đang tải dữ liệu doanh thu...",
-            success: {
-              render({ data }) {
-                // data có thể là AxiosResponse; lấy data.data nếu có
-                const payload = (data as any)?.data ?? data;
-                const list = normalizePayments(payload);
-                const onlyPaid = list.filter(
-                  (p) => (p?.status ?? "").toString().toLowerCase() === "paid"
-                );
-                const total = onlyPaid.reduce(
-                  (s, p) => s + (Number(p.amount) || 0),
-                  0
-                );
-                return `Đã tải ${onlyPaid.length} giao dịch • Tổng: ${total.toLocaleString("vi-VN")} đ`;
-              },
-            },
-            error: {
-              render({ data }) {
-                const err: any = data;
-                return (
-                  err?.response?.data?.message ||
-                  err?.message ||
-                  "Không tải được dữ liệu doanh thu."
-                );
-              },
-            },
-          },
-          { autoClose: 2000 }
-        );
-
-        const payload = (res as any)?.data ?? res;
-        const list = normalizePayments(payload);
-        const paidOnly = list.filter(
-          (p) => (p?.status ?? "").toString().toLowerCase() === "paid"
-        );
-        setPaid(paidOnly);
-      } else {
-        const { data } = await promise;
-        const list = normalizePayments(data);
-        const paidOnly = list.filter(
-          (p) => (p?.status ?? "").toString().toLowerCase() === "paid"
-        );
-        setPaid(paidOnly);
-      }
-    } catch (e: any) {
-      // Khi không dùng toast.promise thì bắn lỗi tại đây
-      if (!withToast) {
-        toast.error(
-          e?.response?.data?.message ||
-            e?.message ||
-            "Không tải được dữ liệu doanh thu."
-        );
-      }
-      setPaid([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Lần đầu load im lặng để đỡ ồn toast
-  useEffect(() => {
-    fetchPaid(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* ===========================
-   *  Giao diện
-   * =========================== */
   return (
     <div className="space-y-6">
       <Card className="border border-orange-200 rounded-lg">
@@ -164,21 +135,29 @@ export default function Revenue() {
               />
             </div>
             <Button
-              onClick={() => fetchPaid(true)}
-              className="inline-flex items-center gap-2 disabled:opacity-60"
+              onClick={() => {
+                toast.info("Đang làm mới dữ liệu...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
+                fetchPaid();
+              }}
+              className="inline-flex items-center gap-2"
               disabled={loading}
-              title="Làm mới"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Làm mới
             </Button>
           </div>
 
+          {err && (
+            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-sm">
+              {err}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <div className="rounded-xl border border-orange-200 p-4 text-center bg-orange-50">
               <div className="text-sm text-gray-600 mb-1">Doanh thu</div>
               <div className="text-2xl font-bold text-orange-600">
-                {revenue.toLocaleString("vi-VN")} đ
+                {revenue.toLocaleString()} đ
               </div>
             </div>
             <div className="rounded-xl border border-orange-200 p-4 text-center">
@@ -193,9 +172,7 @@ export default function Revenue() {
             </div>
             <div className="rounded-xl border border-orange-200 p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">ARPS</div>
-              <div className="text-2xl font-bold">
-                {arps.toLocaleString("vi-VN")} đ
-              </div>
+              <div className="text-2xl font-bold">{arps.toLocaleString()} đ</div>
             </div>
           </div>
 
@@ -213,28 +190,24 @@ export default function Revenue() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      Đang tải...
-                    </td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Đang tải...</td>
                   </tr>
                 )}
                 {!loading && paid.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      Không có dữ liệu
-                    </td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Không có dữ liệu</td>
                   </tr>
                 )}
                 {paid.map((p) => (
-                  <tr key={p.paymentId} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">{p.paymentId}</td>
-                    <td className="px-4 py-3">{p.swapId || "—"}</td>
+                  <tr key={(p as any).paymentId} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">{(p as any).paymentId}</td>
+                    <td className="px-4 py-3">{(p as any).swapId || "—"}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(Number(p.amount) || 0).toLocaleString("vi-VN")} đ
+                      {(Number((p as any).amount) || 0).toLocaleString()} đ
                     </td>
-                    <td className="px-4 py-3">{p.method || "—"}</td>
+                    <td className="px-4 py-3">{(p as any).method || "—"}</td>
                     <td className="px-4 py-3">
-                      {p.paidAt ? new Date(p.paidAt).toLocaleString("vi-VN") : "—"}
+                      {(p as any).paidAt ? new Date((p as any).paidAt as any).toLocaleString() : "—"}
                     </td>
                   </tr>
                 ))}
