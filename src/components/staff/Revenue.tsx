@@ -7,24 +7,19 @@ import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 
 function normalizePayments(payload: any): Payment[] {
-  // Trường hợp BE trả trực tiếp mảng
   if (Array.isArray(payload)) return payload as Payment[];
 
-  // Trường hợp BE bọc đối tượng
   if (payload && typeof payload === "object") {
-    // ⭐ BE của bạn: { payments: [...], pagination: {...} }
     if (Array.isArray(payload.payments)) {
       return (payload.payments as any[]).map((p) => ({
         paymentId: p?.id ?? p?.paymentId ?? "",
         swapId: p?.reservationId ?? p?.swapId,
         amount: p?.amount,
-        method: p?.method,            // ví dụ: "Cash" | "VNPay" (string)
-        status: p?.status,            // ví dụ: "Pending" | "Completed" (string)
+        method: p?.method,
+        status: p?.status,
         paidAt: p?.completedAt ?? p?.paidAt,
       })) as Payment[];
     }
-
-    // Các khóa cũ vẫn giữ nguyên
     if (Array.isArray(payload.items)) return payload.items as Payment[];
     if (Array.isArray(payload.data)) return payload.data as Payment[];
     if (Array.isArray(payload.results)) return payload.results as Payment[];
@@ -37,18 +32,17 @@ function normalizePayments(payload: any): Payment[] {
 const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
 const TOAST_ID = { fetchOk: "rev-fetch-ok", fetchErr: "rev-fetch-err", refreshInfo: "rev-refresh-info" };
 
-/* ===== Helpers chấp nhận cả text & mã số ===== */
 function isPaidStatus(s: any): boolean {
   const v = (s ?? "").toString().trim().toLowerCase();
   if (v === "paid" || v === "success" || v === "completed") return true;
   const n = Number(v);
-  return !Number.isNaN(n) && n === 2; // 2 = Completed
+  return !Number.isNaN(n) && n === 2;
 }
 function isCashMethod(m: any): boolean {
   const v = (m ?? "").toString().trim().toLowerCase();
   if (v === "cash" || v === "tiền mặt") return true;
   const n = Number(v);
-  return !Number.isNaN(n) && n === 1; // phòng khi BE lưu 1 = Cash
+  return !Number.isNaN(n) && n === 1;
 }
 
 export default function Revenue() {
@@ -92,8 +86,7 @@ export default function Revenue() {
 
   useEffect(() => {
     fetchPaid();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line
 
   const revenue = useMemo(
     () => paid.reduce((s, p) => s + (Number((p as any).amount) || 0), 0),
@@ -171,7 +164,8 @@ export default function Revenue() {
               </div>
             </div>
             <div className="rounded-xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">ARPS</div>
+              {/* ⭐ Đổi nhãn */}
+              <div className="text-sm text-gray-600 mb-1">Doanh thu TB / giao dịch</div>
               <div className="text-2xl font-bold">{arps.toLocaleString()} đ</div>
             </div>
           </div>
@@ -190,12 +184,16 @@ export default function Revenue() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Đang tải...</td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      Đang tải...
+                    </td>
                   </tr>
                 )}
                 {!loading && paid.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Không có dữ liệu</td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      Không có dữ liệu
+                    </td>
                   </tr>
                 )}
                 {paid.map((p) => (
@@ -207,7 +205,9 @@ export default function Revenue() {
                     </td>
                     <td className="px-4 py-3">{(p as any).method || "—"}</td>
                     <td className="px-4 py-3">
-                      {(p as any).paidAt ? new Date((p as any).paidAt as any).toLocaleString() : "—"}
+                      {(p as any).paidAt
+                        ? new Date((p as any).paidAt as any).toLocaleString()
+                        : "—"}
                     </td>
                   </tr>
                 ))}
