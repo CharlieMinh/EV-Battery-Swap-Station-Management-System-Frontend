@@ -59,12 +59,10 @@ interface Payment {
 export function SubscriptionPlansPage() {
     const { t } = useLanguage();
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-    const [myVehicles, setMyVehicles] = useState<Vehicle[]>([]);
-
+    // Flow mới: không cần chọn xe khi mua gói
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-    const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
+    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [payment, setPayment] = useState<Payment | null>(null);
 
@@ -124,25 +122,20 @@ export function SubscriptionPlansPage() {
         }
     };
 
-    const handleCreatePendingSubscription = async () => {
-        if (!selectedVehicleId || !selectedPlan) return;
-
+    const handleCreatePendingSubscription = async (plan: SubscriptionPlan) => {
         setIsLoading(true);
 
         try {
             const response = await axios.post(
                 "http://localhost:5194/api/v1/subscriptions/create-pending",
                 {
-                    subscriptionPlanId: selectedPlan.id,
-                    vehicleId: selectedVehicleId,
+                    subscriptionPlanId: plan.id,
                 },
                 { withCredentials: true }
             );
 
-            setPayment(response.data)
-            setIsVehicleModalOpen(false);
+            setPayment(response.data);
             setIsPaymentModalOpen(true);
-
         } catch (error: any) {
             const msg = error.response?.data?.message || "Không thể tạo đơn hàng.";
             toast.error(msg);
@@ -173,20 +166,7 @@ export function SubscriptionPlansPage() {
     }, []);
 
 
-    useEffect(() => {
-        const getMyVehicles = async () => {
-            try {
-                const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
-                    withCredentials: true,
-                });
-                setMyVehicles(res.data);
-            } catch (err) {
-                toast.error("Không thể lấy xe bạn đã đăng ký, vui lòng thử lại sau");
-            }
-        };
-
-        getMyVehicles();
-    }, []);
+    // Flow mới: không cần tải danh sách xe khi mua gói
 
     // Danh sách loại pin từ dữ liệu
     const batteryOptions = useMemo(() => {
@@ -230,8 +210,15 @@ export function SubscriptionPlansPage() {
 
     const handleSelectPlan = (plan: SubscriptionPlan) => {
         setSelectedPlan(plan);
-        setSelectedVehicleId(null);
-        setIsVehicleModalOpen(true);
+        // Hiển thị dialog xác nhận trước khi đăng ký
+        setIsConfirmDialogOpen(true);
+    };
+
+    const handleConfirmSubscription = () => {
+        if (selectedPlan) {
+            setIsConfirmDialogOpen(false);
+            handleCreatePendingSubscription(selectedPlan);
+        }
     };
 
     // --- JSX (Đã làm đẹp) ---
@@ -417,67 +404,47 @@ export function SubscriptionPlansPage() {
                     <p className="text-center text-gray-500 text-lg py-12">Không tìm thấy gói nào phù hợp với tiêu chí lọc.</p>
                 )}
 
-                {/* --- Dialog Chọn Xe (Làm đẹp) --- */}
+                {/* Dialog Xác Nhận Đăng Ký Gói */}
                 {selectedPlan && (
-                    <Dialog open={isVehicleModalOpen} onOpenChange={setIsVehicleModalOpen}>
+                    <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
                         <DialogContent className="max-w-lg rounded-xl">
                             <DialogHeader className="text-center">
-                                <DialogTitle className="text-2xl font-bold text-gray-900">Áp dụng cho xe nào?</DialogTitle>
-                                <DialogDescription className="text-lg text-gray-600 pt-2">
-                                    Gói <span className="font-bold text-orange-600">{selectedPlan.name}</span>
-                                    <br />
-                                    chỉ tương thích với pin <span className="font-medium text-gray-800">{selectedPlan.batteryModel.name}</span>.
+                                <DialogTitle className="text-2xl font-bold text-gray-900">
+                                    Xác nhận đăng ký gói
+                                </DialogTitle>
+                                <DialogDescription className="text-base text-gray-600 pt-4">
+                                    Bạn có chắc chắn muốn đăng ký gói{" "}
+                                    <span className="font-bold text-orange-600">{selectedPlan.name}</span>?
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="max-h-64 overflow-y-auto space-y-3 p-1">
-                                {myVehicles.length > 0 ? myVehicles.map((vehicle) => {
-                                    const isCompatible = vehicle.compatibleBatteryModelId === selectedPlan.batteryModel.id;
-                                    const isSelected = selectedVehicleId === vehicle.id;
-                                    return (
-                                        <Card
-                                            key={vehicle.id}
-                                            className={`rounded-xl transition-all ${isSelected
-                                                ? 'border-2 border-orange-500 bg-orange-50 shadow-lg'
-                                                : (isCompatible
-                                                    ? 'cursor-pointer hover:border-orange-400 hover:bg-gray-50'
-                                                    : 'opacity-50 bg-gray-100 cursor-not-allowed')
-                                                }`}
-                                            onClick={() => {
-                                                if (isCompatible) {
-                                                    setSelectedVehicleId(vehicle.id);
-                                                } else {
-                                                    toast.error("Xe này không tương thích với gói pin đã chọn.");
-                                                }
-                                            }}
-                                        >
-                                            <CardContent className="p-4 flex items-center justify-between">
-                                                <div className="flex items-center space-x-4">
-                                                    <Car className="w-8 h-8 text-gray-600" />
-                                                    <div>
-                                                        <p className="font-bold text-base text-gray-900">{vehicle.vehicleModelFullName || vehicle.brand}</p>
-                                                        <p className="text-sm text-gray-600">Biển số: {vehicle.plate}</p>
-                                                    </div>
-                                                </div>
-                                                {isCompatible ? (
-                                                    isSelected && <CheckCircle className="w-6 h-6 text-green-500" />
-                                                ) : (
-                                                    <XCircle className="w-6 h-6 text-red-500" />
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                }) : <p className="text-center text-gray-500 py-4">Bạn chưa có xe nào. Vui lòng thêm xe trước.</p>}
+                            <div className="my-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-900 font-medium mb-2">
+                                    📌 Lưu ý quan trọng:
+                                </p>
+                                <p className="text-sm text-blue-800">
+                                    Gói này chỉ áp dụng với những xe có model pin{" "}
+                                    <span className="font-bold">{selectedPlan.batteryModel.name}</span>.
+                                    <br />
+                                    Hãy đảm bảo bạn sở hữu xe với model pin này trước khi mua gói.
+                                </p>
                             </div>
 
-                            <div className="flex justify-end pt-4">
+                            <div className="flex justify-end gap-3 pt-4">
                                 <Button
-                                    className='bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg'
-                                    onClick={handleCreatePendingSubscription}
-                                    disabled={!selectedVehicleId || isLoading}
+                                    variant="outline"
+                                    onClick={() => setIsConfirmDialogOpen(false)}
+                                    disabled={isLoading}
                                 >
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isLoading ? "Đang xử lý..." : "Tiếp tục"}
+                                    Hủy
+                                </Button>
+                                <Button
+                                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6"
+                                    onClick={handleConfirmSubscription}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Xác nhận đăng ký
                                 </Button>
                             </div>
                         </DialogContent>

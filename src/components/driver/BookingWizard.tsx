@@ -45,11 +45,11 @@ interface SubscriptionInfo {
   endDate: string | null;
   isActive: boolean;
   isBlocked: boolean;
-  vehicleId: string;
   currentMonthSwapCount: number;
   swapsLimit: number | null;
   subscriptionPlan: {
     name: string;
+    batteryModelId?: string; // dùng để so khớp với xe
     maxSwapsPerMonth?: number;
   };
 }
@@ -110,38 +110,80 @@ export function BookingWizard({
   const [swapPrice, setSwapPrice] = useState<number | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [selectedPayMethod, setSelectedPayMethod] = useState<number | null>(null);
+  const [showPackageConfirmDialog, setShowPackageConfirmDialog] = useState(false);
+  const [pendingVehicle, setPendingVehicle] = useState<Vehicle | null>(null);
 
   const totalSteps = 5;
 
 
   const handleVehicleSelect = async (vehicle: Vehicle | null) => {
-    onVehicleSelect(vehicle);
     setSelectedPayMethod(null);
 
     if (!vehicle) {
+      onVehicleSelect(null);
       setIsUsingSubscription(false);
       setSwapPrice(null);
       return;
     }
+
+    // Tìm gói phù hợp theo BatteryModel của xe
     const matchedSub = subscriptionInfoList.find(
-      (sub) => sub.vehicleId === vehicle.id && sub.isActive
+      (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
     );
-    let isSubValid = false;
+
     if (matchedSub) {
       const limit = matchedSub.swapsLimit ?? matchedSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
       const count = matchedSub.currentMonthSwapCount;
-      if (limit === null || (limit != null && count < limit)) {
-        isSubValid = true;
+      const hasRemainingSwaps = limit === null || count < limit;
+
+      if (hasRemainingSwaps) {
+        // Có gói và còn lượt -> hiện dialog hỏi
+        setPendingVehicle(vehicle);
+        setShowPackageConfirmDialog(true);
+        return; // Chưa set vehicle, đợi user chọn
       }
     }
-    setIsUsingSubscription(isSubValid);
 
-    if (!isSubValid) {
+    // Không có gói hoặc hết lượt -> chọn xe và load giá lẻ
+    onVehicleSelect(vehicle);
+    setIsUsingSubscription(false);
+    setIsLoadingPrice(true);
+    setSwapPrice(null);
+    try {
+      const response = await axios.get(
+        `http://localhost:5194/api/BatteryModels/${vehicle.compatibleBatteryModelId}/swap-price`,
+        { withCredentials: true }
+      );
+      setSwapPrice(response.data.swapPricePerSession);
+    } catch (error) {
+      console.error("Lỗi khi lấy giá đổi pin:", error);
+    } finally {
+      setIsLoadingPrice(false);
+    }
+  };
+
+  const handleConfirmUsePackage = () => {
+    if (pendingVehicle) {
+      onVehicleSelect(pendingVehicle);
+      setIsUsingSubscription(true);
+      setSwapPrice(null);
+      setPendingVehicle(null);
+      setShowPackageConfirmDialog(false);
+    }
+  };
+
+  const handleConfirmPayPerSwap = async () => {
+    if (pendingVehicle) {
+      onVehicleSelect(pendingVehicle);
+      setIsUsingSubscription(false);
+      setShowPackageConfirmDialog(false);
+
+      // Load giá lẻ
       setIsLoadingPrice(true);
       setSwapPrice(null);
       try {
         const response = await axios.get(
-          `http://localhost:5194/api/BatteryModels/${vehicle.compatibleBatteryModelId}/swap-price`,
+          `http://localhost:5194/api/BatteryModels/${pendingVehicle.compatibleBatteryModelId}/swap-price`,
           { withCredentials: true }
         );
         setSwapPrice(response.data.swapPricePerSession);
@@ -149,15 +191,14 @@ export function BookingWizard({
         console.error("Lỗi khi lấy giá đổi pin:", error);
       } finally {
         setIsLoadingPrice(false);
+        setPendingVehicle(null);
       }
-    } else {
-      setSwapPrice(null);
     }
   };
 
 
   const selectedVehicleSub = selectedVehicle
-    ? subscriptionInfoList.find(s => s.vehicleId === selectedVehicle.id && s.isActive)
+    ? subscriptionInfoList.find(s => s.isActive && s.subscriptionPlan?.batteryModelId === selectedVehicle.compatibleBatteryModelId)
     : null;
   const showWarning = selectedVehicle && selectedVehicleSub && !isUsingSubscription;
 
@@ -194,58 +235,109 @@ export function BookingWizard({
             <h3 className="text-lg font-medium">{t('driver.selectVehicle')}</h3>
             <div className="max-h-64 overflow-y-auto pr-2 space-y-3">
               {vehicles.map((vehicle) => {
+                // Tìm gói phù hợp theo BatteryModel của xe
                 const vehicleSub = subscriptionInfoList.find(
-                  (sub) => sub.vehicleId === vehicle.id && sub.isActive
+                  (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
                 );
-                let vehicleSubInfo: { planName: string; usageText: string; isLimitReached: boolean } | null = null;
+                let vehicleSubInfo: { planName: string; usageText: string; remainingText: string; isLimitReached: boolean; batteryModelName: string } | null = null;
                 if (vehicleSub) {
                   const limit = vehicleSub.swapsLimit ?? vehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
                   const count = vehicleSub.currentMonthSwapCount;
                   let isLimitReached = false;
                   let usageText = "";
+                  let remainingText = "";
                   if (limit === null) {
-                    usageText = `${count} lượt (Không giới hạn)`;
+                    usageText = `Đã dùng ${count} lượt`;
+                    remainingText = "Không giới hạn";
                   } else {
-                    usageText = `${count}/${limit} lượt`;
+                    const remaining = limit - count;
+
+                    remainingText = `${remaining}/${limit} lượt`;
                     if (count >= limit) isLimitReached = true;
                   }
-                  vehicleSubInfo = { planName: vehicleSub.subscriptionPlan.name, usageText, isLimitReached };
+                  vehicleSubInfo = {
+                    planName: vehicleSub.subscriptionPlan.name,
+                    usageText,
+                    remainingText,
+                    isLimitReached,
+                    batteryModelName: vehicle.compatibleBatteryModelName || "N/A"
+                  };
                 }
                 return (
                   <Card key={vehicle.id}
                     className={`cursor-pointer transition-all ${selectedVehicle?.id === vehicle.id ? "border-2 border-orange-500 bg-orange-50" : "border-gray-300 bg-white hover:border-orange-400"}`}
                     onClick={() => handleVehicleSelect(vehicle)}>
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {vehicle.photoUrl ? <img src={vehicle.photoUrl} alt={vehicle.vehicleModelFullName} className="w-16 h-12 object-cover rounded-md" /> : <Car className="w-10 h-10 text-gray-400" />}
-                        <div className="space-y-1">
-                          <p className="font-bold">{vehicle.vehicleModelFullName || vehicle.brand}</p>
-                          <p className="text-sm text-gray-600">{t('driver.booking.licensePlate')}: <span className="font-semibold">{vehicle.plate}</span></p>
-                          {vehicleSubInfo ? (
-                            vehicleSubInfo.isLimitReached ? (
-                              <Badge variant="destructive">{vehicleSubInfo.planName} ({vehicleSubInfo.usageText})</Badge>
-                            ) : (
-                              <Badge className="bg-orange-500 text-white"><>
-                                {vehicleSubInfo.planName}
-                                <br />
-                                ({vehicleSubInfo.usageText})
-                              </></Badge>
-                            )
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start space-x-3 flex-1 min-w-0">
+                          {vehicle.photoUrl ? (
+                            <img src={vehicle.photoUrl} alt={vehicle.vehicleModelFullName} className="w-14 h-14 object-cover rounded-md flex-shrink-0" />
                           ) : (
-                            <Badge variant="secondary">Không có gói thuê</Badge>
+                            <Car className="w-10 h-10 text-gray-400 flex-shrink-0" />
                           )}
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <p className="font-bold text-sm truncate">{vehicle.vehicleModelFullName || vehicle.brand}</p>
+                            <p className="text-xs text-gray-600">
+                              Biển số: <span className="font-semibold">{vehicle.plate}</span>
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              Pin: {vehicle.compatibleBatteryModelName}
+                            </p>
+                            <div className="pt-1">
+                              {vehicleSubInfo ? (
+                                vehicleSubInfo.isLimitReached ? (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Hết lượt: {vehicleSubInfo.usageText}
+                                  </Badge>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <Badge className="bg-green-600 text-white text-xs whitespace-normal">
+                                      ✓ Gói: {vehicleSubInfo.planName}
+                                    </Badge>
+                                    <p className="text-xs text-green-700">
+                                      {vehicleSubInfo.usageText}
+                                    </p>
+                                  </div>
+                                )
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Trả lẻ</Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                        {selectedVehicle?.id === vehicle.id && (
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        )}
                       </div>
-                      {selectedVehicle?.id === vehicle.id && <CheckCircle className="w-6 h-6 text-green-500" />}
                     </CardContent>
                   </Card>
                 );
               })}
             </div>
-            {showWarning && (
-              <div className="p-3 bg-red-50 border border-red-300 rounded-md flex items-start space-x-2">
-                <Info className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <p className="text-sm text-red-700">Gói dành cho xe này đã đạt giới hạn số lần đổi trong tháng. Nếu tiếp tục, phí đổi pin sẽ được tính theo lượt.</p>
+            {selectedVehicle && selectedVehicleSub && (
+              <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
+                <p className="text-sm font-semibold text-green-800 mb-1">
+                  ✓ Xe này có gói: {selectedVehicleSub.subscriptionPlan.name}
+                </p>
+                <p className="text-xs text-green-700">
+                  {(() => {
+                    const limit = selectedVehicleSub.swapsLimit ?? selectedVehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
+                    const count = selectedVehicleSub.currentMonthSwapCount;
+                    if (limit === null) {
+                      return `Đã dùng ${count} lượt (Không giới hạn)`;
+                    }
+                    const remaining = limit - count;
+                    return `Còn lại ${remaining}/${limit} lượt trong tháng`;
+                  })()}
+                </p>
+              </div>
+            )}
+            {selectedVehicle && !selectedVehicleSub && (
+              <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg">
+                <p className="text-xs text-blue-800 flex items-center">
+                  <Info className="w-4 h-4 inline mr-1 flex-shrink-0" />
+                  <span>Xe này sẽ thanh toán theo lượt</span>
+                </p>
               </div>
             )}
             <div className="flex justify-end pt-4">
@@ -435,6 +527,64 @@ export function BookingWizard({
         )}
 
       </DialogContent>
+
+      {/* Dialog Xác Nhận Sử Dụng Gói */}
+      {pendingVehicle && (
+        <Dialog open={showPackageConfirmDialog} onOpenChange={setShowPackageConfirmDialog}>
+          <DialogContent className="max-w-md rounded-xl">
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-xl font-bold text-gray-900">
+                Xe này có gói đăng ký
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-600 pt-3">
+                Xe <span className="font-bold">{pendingVehicle.plate}</span> có thể sử dụng gói đăng ký.
+                <br />
+                Bạn muốn đặt lịch theo gói hay thanh toán lẻ?
+              </DialogDescription>
+            </DialogHeader>
+
+            {(() => {
+              const vehicleSub = subscriptionInfoList.find(
+                (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === pendingVehicle.compatibleBatteryModelId
+              );
+              if (!vehicleSub) return null;
+
+              const limit = vehicleSub.swapsLimit ?? vehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
+              const count = vehicleSub.currentMonthSwapCount;
+              const remaining = limit !== null ? limit - count : null;
+
+              return (
+                <div className="my-4 p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
+                  <p className="text-sm font-semibold text-green-900">
+                    📦 Gói: {vehicleSub.subscriptionPlan.name}
+                  </p>
+                  <p className="text-sm text-green-800">
+                    {remaining !== null
+                      ? `Còn lại ${remaining}/${limit} lượt trong tháng`
+                      : `Đã dùng ${count} lượt (Không giới hạn)`}
+                  </p>
+                </div>
+              );
+            })()}
+
+            <div className="space-y-3 pt-2">
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-5 text-base rounded-lg"
+                onClick={handleConfirmUsePackage}
+              >
+                ✓ Sử dụng gói đăng ký (Miễn phí)
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold py-5 text-base rounded-lg"
+                onClick={handleConfirmPayPerSwap}
+              >
+                Thanh toán theo lượt
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
