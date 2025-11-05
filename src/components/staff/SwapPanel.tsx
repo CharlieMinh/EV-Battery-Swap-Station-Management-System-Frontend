@@ -5,7 +5,13 @@ import {
   type Reservation,
   type SwapFinalizeResponse,
 } from "../../services/staff/staffApi";
-import { CheckCircle, Battery, BadgeCheck, Loader2, AlertTriangle } from "lucide-react";
+import {
+  CheckCircle,
+  Battery,
+  BadgeCheck,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "react-toastify";
 
 type Props = {
@@ -13,9 +19,14 @@ type Props = {
   initialBatteryHealth?: number; // ⭐ Nhận % pin từ InspectionPanel
   onSwapped: (info: { swapId?: string }) => void;
   onCancel: () => void;
+  stationId: string;
 };
 
-const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2200,
+  closeOnClick: true,
+};
 // ✅ Bảo đảm MỖI hành động chỉ hiển thị 1 toast (dùng toastId cố định)
 const TOAST_ID = {
   swap: "swap-action-toast",
@@ -26,6 +37,7 @@ export default function SwapPanel({
   reservation,
   initialBatteryHealth = 85, // ⭐ Default 85 nếu không truyền vào
   onSwapped,
+  stationId,
   onCancel,
 }: Props) {
   const [health, setHealth] = useState<number>(initialBatteryHealth);
@@ -103,7 +115,9 @@ export default function SwapPanel({
         </header>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
+          <label className="block text-sm font-medium mb-1">
+            % Pin cũ (0-100)
+          </label>
           <input
             type="number"
             min="0"
@@ -114,7 +128,8 @@ export default function SwapPanel({
             placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Nhập % pin cũ mà staff đo được (0-100). Hệ thống sẽ tự chọn pin mới phù hợp.
+            Nhập % pin cũ mà staff đo được (0-100). Hệ thống sẽ tự chọn pin mới
+            phù hợp.
           </p>
         </div>
 
@@ -207,11 +222,14 @@ export default function SwapPanel({
             {/* Thông tin chung */}
             <div className="rounded-xl border p-3 bg-white">
               <div>
-                <b>Mã swap:</b> {result.swapTransactionId || result.swapId || "—"}
+                <b>Mã swap:</b>{" "}
+                {result.swapTransactionId || result.swapId || "—"}
               </div>
               <div>
                 <b>Thời gian:</b>{" "}
-                {result.timestamp ? new Date(result.timestamp).toLocaleString() : "—"}
+                {result.timestamp
+                  ? new Date(result.timestamp).toLocaleString()
+                  : "—"}
               </div>
               <div>
                 <b>Khách hàng:</b> {result.driverName || "—"}
