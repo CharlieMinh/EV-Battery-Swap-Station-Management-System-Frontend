@@ -108,6 +108,12 @@ const isReadyToSwap = (r: Reservation) =>
 const isRejectedOrResolved = (r: Reservation) =>
   ["rejected", "resolved"].includes(((r as any).status || "").toLowerCase());
 
+const isCompleted = (r: Reservation) =>
+  ((r as any).status || "").toLowerCase() === "completed";
+
+const isFinalState = (r: Reservation) =>
+  isRejectedOrResolved(r) || isCompleted(r);
+
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   const date = r?.slotDate;
   const startStr = r?.slotStartTime;
@@ -171,6 +177,7 @@ export default function QueueManagement({
   const [stage, setStage] = useState<Stage>("idle");
   const [batteryHealthFromInspection, setBatteryHealthFromInspection] =
     useState<number>(85);
+  const [noteFromInspection, setNoteFromInspection] = useState<string>("");
 
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
 
@@ -303,8 +310,9 @@ export default function QueueManagement({
     setStage("checking");
   };
 
-  const onInspectionDone = (batteryHealth: number) => {
+  const onInspectionDone = (batteryHealth: number, note: string) => {
     setBatteryHealthFromInspection(batteryHealth);
+    setNoteFromInspection(note);
     setStage("readyToSwap");
     toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin."); // ⭐ UPDATED
   };
@@ -413,15 +421,15 @@ export default function QueueManagement({
               const { start, end } = resolveSlotRange(r);
               const startLabel = start
                 ? start.toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "—";
               const endLabel = end
                 ? end.toLocaleTimeString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "—";
 
               const displayName =
@@ -455,33 +463,38 @@ export default function QueueManagement({
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex gap-2 justify-end">
-                        {isPendingScheduling(r) && (
+                        {/* Nút check-in thủ công - hiện khi chưa check-in VÀ chưa ở trạng thái kết thúc */}
+                        {!isCheckedIn(r) && !isFinalState(r) && (
                           <button
                             onClick={() => doManualCheckIn(r)}
-                            className="border rounded px-3 py-1 text-sm hover:bg-gray-100"
+                            className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1 text-sm text-white hover:bg-emerald-700 transition"
+                            title="Check-in thủ công (không cần quét QR)"
                           >
+                            <ClipboardCheck className="h-4 w-4" />
                             Check-in
                           </button>
                         )}
 
+                        {/* Nút kiểm tra pin - hiện sau khi check-in */}
                         {isCheckedIn(r) && (
                           <button
                             onClick={() => startChecking(r.reservationId)}
-                            className={`${
-                              isSel ? "bg-black text-white" : "border"
-                            } rounded px-3 py-1 text-sm`}
+                            className={`${isSel ? "bg-black text-white" : "border"
+                              } rounded px-3 py-1 text-sm`}
                           >
                             {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
                           </button>
                         )}
 
+                        {/* Hiển thị trạng thái sẵn sàng */}
                         {isReadyToSwap(r) && isSel && (
                           <span className="text-sm text-emerald-700">
                             Sẵn sàng đổi pin
                           </span>
                         )}
 
-                        {isRejectedOrResolved(r) && (
+                        {/* Các trạng thái kết thúc */}
+                        {isFinalState(r) && (
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </div>
@@ -494,14 +507,14 @@ export default function QueueManagement({
                         {stage === "checking" && selected && (
                           <InspectionPanel
                             reservation={selected}
-                            onDone={(health) => onInspectionDone(health)}
+                            onDone={(health, note) => onInspectionDone(health, note)}
                             onCancel={closePanel}
                           />
                         )}
                         {stage === "complaintCheck" && selected && (
                           <InspectionPanel
                             reservation={selected}
-                            onDone={(health) => onInspectionDone(health)}
+                            onDone={(health, note) => onInspectionDone(health, note)}
                             onCancel={closePanel}
                             isComplaint // ⭐ panel có thể dùng prop này để hiển thị đặc biệt
                           />
@@ -510,6 +523,7 @@ export default function QueueManagement({
                           <SwapPanel
                             reservation={selected}
                             initialBatteryHealth={batteryHealthFromInspection}
+                            initialNote={noteFromInspection}
                             onSwapped={() => closePanel()}
                             onCancel={closePanel}
                           />

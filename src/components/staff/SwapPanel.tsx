@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 type Props = {
   reservation: Reservation;
   initialBatteryHealth?: number; // ⭐ Nhận % pin từ InspectionPanel
+  initialNote?: string; // ⭐ Nhận note từ InspectionPanel
   onSwapped: (info: { swapId?: string }) => void;
   onCancel: () => void;
 };
@@ -25,10 +26,12 @@ const TOAST_ID = {
 export default function SwapPanel({
   reservation,
   initialBatteryHealth = 85, // ⭐ Default 85 nếu không truyền vào
+  initialNote = "", // ⭐ Default "" nếu không truyền vào
   onSwapped,
   onCancel,
 }: Props) {
   const [health, setHealth] = useState<number>(initialBatteryHealth);
+  const [note, setNote] = useState<string>(initialNote);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SwapFinalizeResponse | null>(null);
   const [message, setMessage] = useState("");
@@ -54,10 +57,19 @@ export default function SwapPanel({
     setLoading(true);
     setMessage("");
 
+    // ⭐ DEBUG: Log để kiểm tra note có được truyền không
+    console.log("🔍 SwapPanel - handleSwap called with:", {
+      reservationId: reservation.reservationId,
+      oldBatteryHealth: health,
+      note: note,
+      noteLength: note?.length || 0,
+    });
+
     try {
       const res = await finalizeSwapFromReservation({
         reservationId: reservation.reservationId,
         oldBatteryHealth: health,
+        note: note, // ⭐ Truyền note vào API
       });
 
       if (res.success) {

@@ -241,13 +241,27 @@ export const checkInReservation = (reservationId: string, qrCodeData: string) =>
 export async function finalizeSwapFromReservation(payload: {
   reservationId: string;
   oldBatteryHealth: number;  // ⭐ % pin cũ (0-100)
+  note?: string;  // ⭐ Ghi chú từ staff
 }): Promise<SwapFinalizeResponse & { code?: number }> {
-  const { reservationId, oldBatteryHealth } = payload;
+  const { reservationId, oldBatteryHealth, note } = payload;
+
+  // ⭐ DEBUG: Log request payload
+  console.log("🔍 staffApi - finalizeSwapFromReservation payload:", {
+    reservationId,
+    oldBatteryHealth,
+    note,
+    noteType: typeof note,
+    noteLength: note?.length || 0,
+  });
 
   try {
+    // Backend expects property name `Notes` (JSON `notes`). Map it explicitly.
+    const requestBody = { reservationId, oldBatteryHealth, notes: note } as any;
+    console.log("🔍 staffApi - Request body being sent:", requestBody);
+    
     const res = await api.post<SwapFinalizeResponse>(
       "swaps/finalize-from-reservation",
-      { reservationId, oldBatteryHealth }
+      requestBody
     );
     return { success: true, ...res.data, code: 200 };
   } catch (e: any) {

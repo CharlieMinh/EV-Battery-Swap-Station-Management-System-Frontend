@@ -457,8 +457,7 @@ export function BookingWizard({
               <div className="space-y-3">
                 <h4 className="text-md font-medium">Chọn phương thức thanh toán:</h4>
                 <div className="space-y-2"> {/* Bọc các label trong div */}
-                  {/* Lựa chọn VNPay */}
-                  <label htmlFor="pay-vnpay" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
+                  {/*  <label htmlFor="pay-vnpay" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
                     <input
                       type="radio"
                       id="pay-vnpay"
@@ -470,7 +469,8 @@ export function BookingWizard({
                     />
                     <CreditCard className="w-5 h-5 text-blue-600" />
                     <span className="flex-grow">Thanh toán ngay bằng VNPay</span>
-                  </label>
+                  </label> */}
+
 
                   {/* Lựa chọn Cash */}
                   <label htmlFor="pay-cash" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 1 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
