@@ -549,14 +549,15 @@ export function SubscriptionPlansPage() {
                             </div>
 
                             <div className="space-y-3 pt-2">
-                                <Button
+                                {/*    <Button
                                     className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-5 text-base rounded-lg shadow-md"
                                     onClick={handlePayWithVNPay}
                                     disabled={isLoading}
                                 >
                                     <CreditCard className="mr-2 h-5 w-5" />
                                     Thanh toán ngay bằng VNPay
-                                </Button>
+                                </Button> */}
+
                                 <Button
                                     variant="outline"
                                     className="w-full border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:text-orange-700 font-semibold py-5 text-base rounded-lg"
