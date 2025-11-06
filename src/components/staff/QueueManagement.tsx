@@ -185,6 +185,23 @@ export default function QueueManagement({
   };
 
   useEffect(() => {
+    // 🔍 Nếu reload lại và vẫn có reservation đang Investigating (tức là đang xử lý khiếu nại)
+    const activeComplaint = list.find(
+      (r) =>
+        r.relatedComplaintId &&
+        ["investigating", "confirmed"].includes((r.status || "").toLowerCase())
+    );
+    if (activeComplaint) {
+      setSelectedId(activeComplaint.reservationId);
+      setStage("complaintCheck");
+      setIsLoadingComplaint(true);
+      getComplaintById(activeComplaint.relatedComplaintId)
+        .then((c) => setComplaintDetail(c))
+        .finally(() => setIsLoadingComplaint(false));
+    }
+  }, [list]);
+
+  useEffect(() => {
     fetchList();
   }, [stationId, date, status]);
 
@@ -297,8 +314,22 @@ export default function QueueManagement({
   };
 
   const startChecking = (id: string) => {
+    const found = list.find((r) => r.reservationId === id);
+    if (!found) return;
+
     setSelectedId(id);
-    setStage("checking");
+
+    if (found.relatedComplaintId) {
+      // 🔥 Nếu có khiếu nại, luôn vào stage complaintCheck
+      setStage("complaintCheck");
+      setIsLoadingComplaint(true);
+      getComplaintById(found.relatedComplaintId)
+        .then((c) => setComplaintDetail(c))
+        .finally(() => setIsLoadingComplaint(false));
+    } else {
+      // Bình thường thì vào stage checking
+      setStage("checking");
+    }
   };
 
   const onInspectionDone = (batteryHealth: number) => {
@@ -306,12 +337,16 @@ export default function QueueManagement({
     setStage("readyToSwap");
     toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin.");
   };
-
   const closePanel = () => {
+    // Nếu đang ở form khiếu nại thì KHÔNG reset stage
+    if (stage === "complaintCheck") {
+      // Giữ nguyên trạng thái complaint đang xem
+      return;
+    }
+
+    // Còn lại thì reset như cũ
     setSelectedId(null);
     setStage("idle");
-    fetchList();
-    toast.info("Đã đóng panel.", { ...toastOpts, toastId: TOAST_ID.closeInfo });
   };
 
   return (
@@ -511,20 +546,48 @@ export default function QueueManagement({
                             />
 
                             <div className="flex justify-end gap-3 mt-3">
+                              {/* ✅ Xác nhận lỗi */}
                               <button
                                 onClick={async () => {
                                   try {
-                                    if (!complaintDetail?.complaintId) return;
+                                    if (!complaintDetail?.id) {
+                                      toast.error(
+                                        "❌ Không tìm thấy complaintId!"
+                                      );
+                                      console.log(
+                                        "complaintDetail:",
+                                        complaintDetail
+                                      );
+                                      return;
+                                    }
+
+                                    // 1️⃣ Gọi resolveComplaint để xác nhận lỗi
+                                    await resolveComplaint(
+                                      complaintDetail.id,
+                                      "Confirmed",
+                                      "Xác nhận pin lỗi, chuẩn bị Re-swap."
+                                    );
+
+                                    toast.success(
+                                      "✅ Đã xác nhận lỗi, tiến hành Re-swap..."
+                                    );
+
+                                    // 2️⃣ Sau khi status = Confirmed → gọi finalizeComplaintReswap
                                     await finalizeComplaintReswap(
-                                      complaintDetail.complaintId,
+                                      complaintDetail.id,
                                       String(stationId),
                                       batteryHealthFromInspection
                                     );
+
                                     toast.success(
-                                      "✅ Xác nhận lỗi & hoàn tất Re-swap!"
+                                      "⚡ Hoàn tất đổi pin miễn phí (Re-swap)!"
                                     );
                                     closePanel();
                                   } catch (err: any) {
+                                    console.error(
+                                      "❌ finalizeComplaintReswap error:",
+                                      err
+                                    );
                                     toast.error(
                                       err?.response?.data?.message ||
                                         "Hoàn tất Re-swap thất bại!"
@@ -536,10 +599,17 @@ export default function QueueManagement({
                                 ✅ Xác nhận lỗi (Re-swap)
                               </button>
 
+                              {/* ❌ Từ chối khiếu nại */}
                               <button
                                 onClick={async () => {
                                   try {
-                                    if (!complaintDetail?.complaintId) return;
+                                    if (!complaintDetail?.id) {
+                                      toast.error(
+                                        "❌ Không tìm thấy complaintId!"
+                                      );
+                                      return;
+                                    }
+
                                     const notes = prompt(
                                       "Nhập ghi chú từ chối (ít nhất 10 ký tự):"
                                     );
@@ -551,7 +621,7 @@ export default function QueueManagement({
                                     }
 
                                     await resolveComplaint(
-                                      complaintDetail.complaintId,
+                                      complaintDetail.id,
                                       "Rejected",
                                       notes.trim()
                                     );

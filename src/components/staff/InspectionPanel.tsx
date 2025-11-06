@@ -31,6 +31,7 @@ export default function InspectionPanel({
   reservation,
   onDone,
   onCancel,
+  isComplaint = false,
 }: Props) {
   const [batteryHealth, setBatteryHealth] = useState<number>(85); // % pin cũ
   const [notes, setNotes] = useState("");
@@ -218,13 +219,17 @@ export default function InspectionPanel({
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={finish}
-            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition"
-          >
-            <CheckCircle className="h-4 w-4" />
-            Hoàn tất kiểm tra
-          </button>
+          {/* Ẩn nút Hoàn tất kiểm tra nếu đang xử lý khiếu nại */}
+          {!isComplaint && (
+            <button
+              onClick={finish}
+              className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Hoàn tất kiểm tra
+            </button>
+          )}
+
           <button
             onClick={() => {
               onCancel();
