@@ -7,7 +7,6 @@ import {
   Calendar,
   User,
   Eye,
-  RefreshCw,
   Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ import {
 } from "@/services/admin/batteryService";
 import { RequestDetailModal } from "./RequestDetailModal";
 import { fetchStations } from "@/services/admin/stationService";
+import { Input } from "../ui/input";
 
 interface GroupedRequest {
   createdAt: string;
@@ -37,6 +37,13 @@ export const RequestForStation: React.FC = () => {
   );
   const [showDetailModal, setShowDetailModal] = useState(false);
 
+  const [stations, setStations] = useState<{ id: string; name: string }[]>([]);
+  const [selectedStation, setSelectedStation] = useState<string>("Tất cả");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // số nhóm request trên 1 trang
+
   // Fetch requests từ API
   const fetchRequests = async () => {
     try {
@@ -55,8 +62,6 @@ export const RequestForStation: React.FC = () => {
     fetchRequests();
   }, []);
 
-  const [stations, setStations] = useState<{ id: string; name: string }[]>([]);
-  const [selectedStation, setSelectedStation] = useState<string>("Tất cả");
   useEffect(() => {
     const loadStations = async () => {
       try {
@@ -74,18 +79,25 @@ export const RequestForStation: React.FC = () => {
       ? groupedRequests
       : groupedRequests.filter((g) => g.stationName === selectedStation);
 
+  // Reset page khi chọn station khác
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStation]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredGroups.length / itemsPerPage);
+  const paginatedGroups = filteredGroups.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   // Gộp các requests có cùng createdAt (làm tròn đến giây)
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
     const grouped = data.reduce(
       (acc: { [key: string]: BatteryRequest[] }, request) => {
         const time = new Date(request.createdAt).getTime();
-
-        // Làm tròn về bội số của 5 giây (5000ms)
-        const bucket = Math.floor(time / 5000) * 5000;
-
-        if (!acc[bucket]) {
-          acc[bucket] = [];
-        }
+        const bucket = Math.floor(time / 5000) * 5000; // bội số 5 giây
+        if (!acc[bucket]) acc[bucket] = [];
         acc[bucket].push(request);
         return acc;
       },
@@ -163,7 +175,6 @@ export const RequestForStation: React.FC = () => {
 
   const formatNumber = (num: number) => num.toLocaleString("vi-VN");
 
-  // Calculate statistics
   const stats = {
     total: groupedRequests.length,
     pending: groupedRequests.filter((g) => g.status === 0).length,
@@ -211,78 +222,66 @@ export const RequestForStation: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-orange-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">Tổng lô hàng</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatNumber(stats.total)}
-                </p>
-              </div>
-              <Package className="w-8 h-8 text-blue-500" />
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-xs text-gray-500">Tổng lô hàng</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatNumber(stats.total)}
+              </p>
             </div>
+            <Package className="w-8 h-8 text-blue-500" />
           </CardContent>
         </Card>
 
         <Card className="border-yellow-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">Chờ xác nhận</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {formatNumber(stats.pending)}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-500" />
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-xs text-gray-500">Chờ xác nhận</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {formatNumber(stats.pending)}
+              </p>
             </div>
+            <Clock className="w-8 h-8 text-yellow-500" />
           </CardContent>
         </Card>
 
         <Card className="border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">Đã xác nhận</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatNumber(stats.confirmed)}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-xs text-gray-500">Đã xác nhận</p>
+              <p className="text-2xl font-bold text-green-600">
+                {formatNumber(stats.confirmed)}
+              </p>
             </div>
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </CardContent>
         </Card>
 
         <Card className="border-red-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500">Đã từ chối</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatNumber(stats.rejected)}
-                </p>
-              </div>
-              <XCircle className="w-8 h-8 text-red-500" />
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-xs text-gray-500">Đã từ chối</p>
+              <p className="text-2xl font-bold text-red-600">
+                {formatNumber(stats.rejected)}
+              </p>
             </div>
+            <XCircle className="w-8 h-8 text-red-500" />
           </CardContent>
         </Card>
       </div>
 
       {/* Request List */}
-      {filteredGroups.length === 0 ? (
+      {paginatedGroups.length === 0 ? (
         <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-gray-500">
-              <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="font-medium">Chưa có lô hàng nào</p>
-              <p className="text-sm mt-1">
-                Chưa có yêu cầu gửi pin nào được tạo
-              </p>
-            </div>
+          <CardContent className="py-12 text-center text-gray-500">
+            <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="font-medium">Chưa có lô hàng nào</p>
+            <p className="text-sm mt-1">Chưa có yêu cầu gửi pin nào được tạo</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredGroups.map((group, index) => (
+          {paginatedGroups.map((group, index) => (
             <Card
               key={index}
               className="hover:shadow-lg transition-shadow border border-orange-300"
@@ -291,7 +290,9 @@ export const RequestForStation: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Lô hàng #{filteredGroups.length - index}
+                      Lô hàng #
+                      {filteredGroups.length -
+                        ((currentPage - 1) * itemsPerPage + index)}
                     </CardTitle>
                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -313,7 +314,6 @@ export const RequestForStation: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {/* Battery Models Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {group.requests.map((req) => (
                       <div
@@ -330,7 +330,6 @@ export const RequestForStation: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Footer */}
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div className="text-sm text-gray-600">
                       <span className="font-semibold">Tổng số lượng:</span>{" "}
@@ -350,7 +349,6 @@ export const RequestForStation: React.FC = () => {
                     </Button>
                   </div>
 
-                  {/* Notes if processed */}
                   {group.requests[0].staffNotes && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
@@ -371,6 +369,48 @@ export const RequestForStation: React.FC = () => {
         </div>
       )}
 
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center space-x-3 mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage <= 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+        >
+          Trước
+        </Button>
+
+        <div className="flex items-center space-x-1">
+          <span className="text-gray-700 text-sm">Trang</span>
+          <Input
+            type="number"
+            min={1}
+            max={totalPages || 1}
+            value={currentPage}
+            onChange={(e) => {
+              const newPage = Number(e.target.value);
+              if (
+                !isNaN(newPage) &&
+                newPage >= 1 &&
+                newPage <= (totalPages || 1)
+              ) {
+                setCurrentPage(newPage);
+              }
+            }}
+            className="w-16 text-center text-sm"
+          />
+          <span className="text-gray-700 text-sm">/ {totalPages || 1}</span>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage >= (totalPages || 1)}
+          onClick={() => setCurrentPage((p) => p + 1)}
+        >
+          Sau
+        </Button>
+      </div>
       {/* Detail Modal */}
       {showDetailModal && selectedGroup && (
         <RequestDetailModal group={selectedGroup} onClose={handleCloseModal} />

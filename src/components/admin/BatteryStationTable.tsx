@@ -7,6 +7,7 @@ import {
 import { fetchStations } from "@/services/admin/stationService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -24,7 +25,7 @@ import {
 import { AddPinToStation } from "./AddPinToStation";
 
 interface BatteryStationTableProps {
-  onDataUpdate?: () => void; // callback khi dữ liệu thay đổi
+  onDataUpdate?: () => void;
 }
 
 export function BatteryStationTable({
@@ -38,18 +39,39 @@ export function BatteryStationTable({
   const [openModal, setOpenModal] = useState(false);
   const [selectedStation, setSelectedStation] = useState<any>(null);
 
+  // Phân trang
+  const [page, setPage] = useState(1);
+  const [inputPage, setInputPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // Filter theo tên
+  const [filterText, setFilterText] = useState("");
+
+  const filteredStationsByName = useMemo(() => {
+    return stations.filter((s) =>
+      s.name.toLowerCase().includes(filterText.toLowerCase())
+    );
+  }, [stations, filterText]);
+
+  const totalPages = Math.ceil(filteredStationsByName.length / pageSize);
+
+  // Đồng bộ inputPage với page khi page thay đổi
+  useEffect(() => {
+    setInputPage(page);
+  }, [page]);
+
   const loadData = async () => {
     setLoading(true);
     try {
       const [batteriesData, modelsData, stationsData] = await Promise.all([
         fetchAllBatteries(),
         fetchModelBattery(),
-        fetchStations(1, 1000), // ví dụ lấy page 1, pageSize lớn để lấy tất cả
+        fetchStations(1, 1000),
       ]);
 
       setBatteries(batteriesData);
       setModels(modelsData);
-      setStations(stationsData.items); // mappedItems trong fetchStations
+      setStations(stationsData.items);
     } catch (err) {
       console.error("Failed to fetch data", err);
     } finally {
@@ -61,16 +83,14 @@ export function BatteryStationTable({
     loadData();
   }, []);
 
-  // Lọc pin theo model
-  const filtered = useMemo(() => {
+  const filteredBatteries = useMemo(() => {
     if (selectedModel === "all") return batteries;
     return batteries.filter((b) => b.batteryModelName === selectedModel);
   }, [batteries, selectedModel]);
 
-  // Gom nhóm theo trạm dựa trên stations
   const stationStats = useMemo(() => {
-    return stations.map((s) => {
-      const pins = filtered.filter((b) => b.stationId === s.id);
+    return filteredStationsByName.map((s) => {
+      const pins = filteredBatteries.filter((b) => b.stationId === s.id);
       return {
         stationId: s.id,
         stationName: s.name,
@@ -82,7 +102,13 @@ export function BatteryStationTable({
         reserved: pins.filter((b) => b.status === "Reserved").length,
       };
     });
-  }, [stations, filtered]);
+  }, [filteredStationsByName, filteredBatteries]);
+
+  const paginatedStations = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return stationStats.slice(start, end);
+  }, [stationStats, page, pageSize]);
 
   if (loading)
     return (
@@ -100,7 +126,15 @@ export function BatteryStationTable({
             🔋 Thông tin pin các trạm
           </CardTitle>
 
-          <div className="mt-3 sm:mt-0">
+          <div className="mt-3 sm:mt-0 flex items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Tìm theo tên trạm..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="w-56"
+            />
+
             <Select onValueChange={setSelectedModel} defaultValue="all">
               <SelectTrigger className="w-56">
                 <SelectValue placeholder="Tất cả" />
@@ -123,57 +157,101 @@ export function BatteryStationTable({
               Không có dữ liệu trạm nào.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-gray-100 text-gray-700">
-                  <tr>
-                    <th className="p-3 text-left">Trạm</th>
-                    <th className="p-3 text-center">Tổng pin</th>
-                    <th className="p-3 text-center">Đang sử dụng</th>
-                    <th className="p-3 text-center">Đang sạc</th>
-                    <th className="p-3 text-center">Đã sẵn sàng</th>
-                    <th className="p-3 text-center">Bảo trì</th>
-                    <th className="p-3 text-center">Đặt trước</th>
-                    <th className="p-3 text-center">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stationStats.map((s, idx) => (
-                    <tr key={idx} className="border-t hover:bg-gray-50">
-                      <td className="p-3">{s.stationName}</td>
-                      <td className="p-3 text-center font-medium">{s.total}</td>
-                      <td className="p-3 text-center text-blue-600">
-                        {s.inUse}
-                      </td>
-                      <td className="p-3 text-center text-teal-600">
-                        {s.charging}
-                      </td>
-                      <td className="p-3 text-center text-green-600">
-                        {s.full}
-                      </td>
-                      <td className="p-3 text-center text-red-600">
-                        {s.maintenance}
-                      </td>
-                      <td className="p-3 text-center text-yellow-600">
-                        {s.reserved}
-                      </td>
-                      <td className="p-3 text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedStation(s);
-                            setOpenModal(true);
-                          }}
-                        >
-                          Cung cấp pin
-                        </Button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-gray-200 text-sm">
+                  <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                      <th className="p-3 text-left">Trạm</th>
+                      <th className="p-3 text-center">Tổng pin</th>
+                      <th className="p-3 text-center">Đang sử dụng</th>
+                      <th className="p-3 text-center">Đang sạc</th>
+                      <th className="p-3 text-center">Đã sẵn sàng</th>
+                      <th className="p-3 text-center">Bảo trì</th>
+                      <th className="p-3 text-center">Đặt trước</th>
+                      <th className="p-3 text-center">Hành động</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {paginatedStations.map((s, idx) => (
+                      <tr key={idx} className="border-t hover:bg-gray-50">
+                        <td className="p-3">{s.stationName}</td>
+                        <td className="p-3 text-center font-medium">
+                          {s.total}
+                        </td>
+                        <td className="p-3 text-center text-blue-600">
+                          {s.inUse}
+                        </td>
+                        <td className="p-3 text-center text-teal-600">
+                          {s.charging}
+                        </td>
+                        <td className="p-3 text-center text-green-600">
+                          {s.full}
+                        </td>
+                        <td className="p-3 text-center text-red-600">
+                          {s.maintenance}
+                        </td>
+                        <td className="p-3 text-center text-yellow-600">
+                          {s.reserved}
+                        </td>
+                        <td className="p-3 text-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStation(s);
+                              setOpenModal(true);
+                            }}
+                          >
+                            Cung cấp pin
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex justify-center items-center space-x-3 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Trước
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-700 text-sm">Trang</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={inputPage}
+                    onChange={(e) => setInputPage(e.target.valueAsNumber)}
+                    onBlur={() => {
+                      let newPage = inputPage;
+                      if (isNaN(newPage) || newPage < 1) newPage = 1;
+                      if (newPage > totalPages) newPage = totalPages;
+                      setPage(newPage);
+                    }}
+                    className="w-16 text-center text-sm"
+                  />
+                  <span className="text-gray-700 text-sm">/ {totalPages}</span>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -188,7 +266,6 @@ export function BatteryStationTable({
           <AddPinToStation
             stationId={selectedStation?.stationId}
             stationName={selectedStation?.stationName}
-            // batteryModelName={selectedModel === "all" ? null : selectedModel}
             onClose={() => setOpenModal(false)}
             onSuccess={() => {
               loadData();

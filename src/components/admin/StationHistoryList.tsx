@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Zap, Clock, DollarSign, User } from "lucide-react";
-import { fetchHistoryStationByName } from "@/services/admin/stationService";
+import { fetchHistoryStationById } from "@/services/admin/stationService";
 
 export interface SwapTransaction {
   id: string;
@@ -28,11 +28,11 @@ const formatCurrency = (amount: number) =>
   }).format(amount);
 
 interface StationHistoryListProps {
-  stationName: string;
+  stationId: string;
 }
 
 export const StationHistoryList: React.FC<StationHistoryListProps> = ({
-  stationName,
+  stationId,
 }) => {
   const [transactions, setTransactions] = useState<SwapTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,16 +40,16 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const data = await fetchHistoryStationByName(stationName, 1, 50);
-        setTransactions(data?.transactions ?? []);
+        const data = await fetchHistoryStationById(stationId, 1, 50);
+        setTransactions(data ?? []);
       } catch (err) {
-        console.error("Lỗi khi lấy lịch sử:", err);
+        console.error("❌ Lỗi khi lấy lịch sử:", err);
       } finally {
         setLoading(false);
       }
     };
     loadHistory();
-  }, [stationName]);
+  }, [stationId]);
 
   if (loading)
     return (
@@ -63,7 +63,6 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
       </div>
     );
 
-  // Nhóm theo ngày
   const grouped = transactions.reduce((acc, tx) => {
     const date = formatDate(tx.completedAt);
     if (!acc[date]) acc[date] = [];

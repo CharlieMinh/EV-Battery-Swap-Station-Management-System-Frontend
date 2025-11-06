@@ -67,7 +67,7 @@ export interface CompleteReswapRequest {
 
 // === Swap APIs ===
 export async function fetchSwapById(id: string) {
-  const response = await api.get(`/api/v1/SwapTransactions/${id}`);
+  const response = await api.get(`/api/v1/swaps/${id}`);
   return response.data as SwapTransaction;
 }
 
