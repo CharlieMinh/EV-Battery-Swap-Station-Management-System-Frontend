@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -7,8 +7,13 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { AlertTriangle, Calendar, CheckCircle, Package, XCircle, Zap, Car } from "lucide-react"; // Thêm icon Car
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { AlertTriangle, Calendar, CheckCircle, Package, XCircle, Zap, Car, Ban, Loader2 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 // ✅ SỬA LẠI INTERFACE: Thêm thông tin xe và swapsLimit
 interface SubscriptionInfo {
@@ -38,13 +43,20 @@ interface SubscriptionInfo {
   } | null;
 }
 
-// ✅ SỬA LẠI PROPS: Nhận một danh sách
+// ✅ SỬA LẠI PROPS: Nhận một danh sách + callback
 interface SubscriptionStatusProps {
-  subscriptionInfoList: SubscriptionInfo[]; // Nhận toàn bộ danh sách
+  subscriptionInfoList: SubscriptionInfo[];
+  onRefresh?: () => void; // Callback để refresh danh sách
 }
 
 // Hàm helper để render 1 card gói thuê
-function SubscriptionCard({ subscriptionInfo }: { subscriptionInfo: SubscriptionInfo }) {
+function SubscriptionCard({
+  subscriptionInfo,
+  onCancel
+}: {
+  subscriptionInfo: SubscriptionInfo;
+  onCancel: () => void;
+}) {
   const { t } = useLanguage();
 
   const getStatus = () => {
@@ -127,6 +139,20 @@ function SubscriptionCard({ subscriptionInfo }: { subscriptionInfo: Subscription
           {/* ✅ SỬA LẠI HIỂN THỊ LƯỢT ĐỔI */}
           <span className="font-bold text-lg text-blue-600">{swapsText}</span>
         </div>
+
+        {/* ✅ THÊM NÚT HỦY GÓI */}
+        {subscriptionInfo.isActive && (
+          <div className="mt-4 pt-4 border-t border-orange-200">
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400"
+            >
+              <Ban className="w-4 h-4 mr-2" />
+              Hủy gói đăng ký
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -134,8 +160,52 @@ function SubscriptionCard({ subscriptionInfo }: { subscriptionInfo: Subscription
 
 
 // ✅ SỬA LẠI COMPONENT CHÍNH
-export function SubscriptionStatus({ subscriptionInfoList }: SubscriptionStatusProps) {
+export function SubscriptionStatus({ subscriptionInfoList, onRefresh }: SubscriptionStatusProps) {
   const { t } = useLanguage();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Handler để mở dialog xác nhận
+  const handleCancelClick = (subscriptionId: string) => {
+    setSelectedSubscriptionId(subscriptionId);
+    setShowCancelDialog(true);
+  };
+
+  // Handler để hủy gói đăng ký
+  const handleConfirmCancel = async () => {
+    if (!selectedSubscriptionId) return;
+
+    setIsCancelling(true);
+    try {
+      const response = await axios.put(
+        "http://localhost:5194/api/v1/subscriptions/mine/cancel",
+        {},
+        { withCredentials: true }
+      );
+
+      setShowCancelDialog(false);
+      setSelectedSubscriptionId(null);
+
+      // Hiển thị thông báo thành công
+      await Swal.fire({
+        icon: "success",
+        title: "Hủy gói thành công",
+        text: response.data.message || "Gói đăng ký của bạn đã được hủy.",
+        confirmButtonColor: "#f97316",
+      });
+
+      // Gọi callback để refresh danh sách
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.message || "Không thể hủy gói đăng ký. Vui lòng thử lại sau.";
+      toast.error(msg);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   // Lọc ra chỉ các gói đang active
   const activeSubscriptions = subscriptionInfoList.filter(sub => sub.isActive);
@@ -168,9 +238,45 @@ export function SubscriptionStatus({ subscriptionInfoList }: SubscriptionStatusP
       {/* Tạo lưới cho các Card gói thuê */}
       <div className="grid grid-cols-1 gap-6">
         {activeSubscriptions.map(subInfo => (
-          <SubscriptionCard key={subInfo.id} subscriptionInfo={subInfo} />
+          <SubscriptionCard
+            key={subInfo.id}
+            subscriptionInfo={subInfo}
+            onCancel={() => handleCancelClick(subInfo.id)}
+          />
         ))}
       </div>
+
+      {/* Dialog Xác Nhận Hủy Gói */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="max-w-md rounded-xl">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              Xác nhận hủy gói đăng ký
+            </DialogTitle>
+            <DialogDescription className="text-base text-gray-600 pt-2">
+              Bạn có chắc chắn muốn hủy gói đăng ký này không? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end gap-3 pt-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              disabled={isCancelling}
+            >
+              Không, giữ lại
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6"
+              onClick={handleConfirmCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Có, hủy gói
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

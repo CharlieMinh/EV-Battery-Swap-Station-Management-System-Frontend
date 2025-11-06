@@ -169,6 +169,20 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     fetchSubscriptionData();
   }, []);
 
+  // ✅ THÊM: Handler để refresh subscription sau khi hủy
+  const handleRefreshSubscriptions = async () => {
+    try {
+      const infoResponse = await axios.get(
+        "http://localhost:5194/api/v1/subscriptions/mine/all",
+        { withCredentials: true }
+      );
+      setSubscriptionInfoList(infoResponse.data);
+      console.log("Refreshed subscriptions:", infoResponse.data);
+    } catch (error) {
+      console.error("Refresh subscription failed:", error);
+    }
+  };
+
   // (useEffect fetchData (lấy xe) không đổi)
   useEffect(() => {
     const fetchData = async () => {
@@ -618,9 +632,10 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
 
             {activeSection === "profile" && (
               <div>
-                <DriverProfile /> {/* 👈 Đã xóa props */}
+                <DriverProfile />
                 <SubscriptionStatus
-                  subscriptionInfoList={subscriptionInfoList} // Prop này giữ lại
+                  subscriptionInfoList={subscriptionInfoList}
+                  onRefresh={handleRefreshSubscriptions}
                 />
               </div>
             )}
