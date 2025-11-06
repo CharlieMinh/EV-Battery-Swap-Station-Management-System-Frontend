@@ -62,6 +62,8 @@ export type Reservation = {
   slotStartTime?: string;   // HH:mm:ss
   slotEndTime?: string;     // HH:mm:ss
   checkInWindow?: { earliestTime?: string; latestTime?: string };
+
+  relatedComplaintId: string,
 };
 
 export type SwapFinalizeResponse = {
@@ -227,6 +229,7 @@ export const listReservations = async (params: {
     slotStartTime: x?.slotStartTime ?? "",
     slotEndTime: x?.slotEndTime ?? "",
     checkInWindow: x?.checkInWindow,
+    relatedComplaintId: x?.relatedComplaintId ?? "",
   }));
 
   return { data };
