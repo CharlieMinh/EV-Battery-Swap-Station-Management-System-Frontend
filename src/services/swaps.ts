@@ -25,7 +25,7 @@ export interface SwapTransaction {
   checkedInAt: Date;
   batteryIssuedAt: Date;
   batteryReturnedAt: Date;
-  completedAt: Date;
+  completedAt: string;
   notes: string;
   reservationId: string;
   userSubscriptionId: string;
@@ -99,13 +99,19 @@ export async function resolveComplaint(
   newStatus: "Confirmed" | "Rejected",
   notes: string
 ) {
+  // Ánh xạ string → enum number
+  const statusMap = {
+    Confirmed: 4,
+    Rejected: 5,
+  } as const;
+
   try {
     const res = await api.post(
       `/api/BatteryComplaints/${complaintId}/resolve`,
       {
-        newStatus,
+        newStatus: statusMap[newStatus], // ✅ Gửi int thay vì string
         resolutionNotes: notes,
-      } satisfies ResolveComplaintRequest
+      }
     );
     toast.success("Ra quyết định khiếu nại thành công!");
     return res.data;
@@ -114,6 +120,7 @@ export async function resolveComplaint(
     throw err;
   }
 }
+
 
 // 6️⃣ Hoàn tất Re-swap (Resolved)
 export async function finalizeComplaintReswap(
