@@ -155,81 +155,111 @@ export async function fetchBatteryCountByStation(stationId: string) {
     console.error("Failed to get battery of staion:" , error)
   }
 }
-export async function countHistoryStationByName(
-  stationName: string,
-  page:number,
-  pageSize:number
-): Promise<SwapTransaction[]> {
+export async function countHistoryStationById(
+  stationId: string,
+  _page: number,   // chỉ là tham số, không dùng làm bộ đếm
+  pageSize: number
+): Promise<number> {
   try {
-    const response = await api.get<SwapHistoryResponse>(
-      `/api/v1/swaps/history?page=${page}&pageSize=${pageSize}`
-    );
+    let totalCompleted = 0;
+    let currentPage = 1; // luôn bắt đầu từ trang 1
+    let totalPages = 1;
 
-    // Lọc những giao dịch thuộc trạm và đã hoàn thành
-    const filtered = response.data.transactions.filter(
-      (tx) => tx.stationName === stationName && tx.status === "Completed"
-    );
+    do {
+      const res = await api.get<SwapHistoryResponse>(
+        `/api/v1/swaps/all/admin?stationId=${stationId}&page=${currentPage}&pageSize=${pageSize}`
+      );
 
-    console.log(`Tìm thấy ${filtered.length} giao dịch hoàn thành tại ${stationName}`);
-    return filtered;
+      const completed = res.data.transactions.filter(
+        (tx) => tx.stationId === stationId && tx.status === "Completed"
+      );
+
+      const byStatus = res.data.transactions
+        .filter((tx) => tx.stationId === stationId)
+        .reduce((acc, tx) => {
+          acc[tx.status] = (acc[tx.status] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+      console.log(
+        `📄 Trang ${currentPage}: ${res.data.transactions.length} giao dịch của trạm ${stationId} — chi tiết:`,
+        byStatus
+      );
+
+      totalCompleted += completed.length;
+      totalPages = res.data.totalPages;
+      currentPage++;
+    } while (currentPage <= totalPages);
+
+    console.log(`✅ Tổng ${totalCompleted} giao dịch Completed tại trạm ${stationId}`);
+    return totalCompleted;
   } catch (error) {
     console.error("Lỗi khi lấy lịch sử đổi pin:", error);
+    return 0;
+  }
+}
+
+
+export async function fetchHistoryStationById(
+  stationId: string,
+  page: number,
+  pageSize: number
+): Promise<SwapTransaction[]> {
+  try {
+    let allTransactions: SwapTransaction[] = [];
+    let currentPage = page;
+    let totalPages = 1;
+
+    do {
+      const response = await api.get<SwapHistoryResponse>(
+        `/api/v1/swaps/all/admin?page=${currentPage}&pageSize=${pageSize}`
+      );
+
+      // Lọc giao dịch của trạm cần tìm
+      const filtered = response.data.transactions.filter(
+        (tx) => tx.stationId === stationId
+      );
+
+      allTransactions = allTransactions.concat(filtered);
+
+      totalPages = response.data.totalPages;
+      currentPage++;
+    } while (currentPage <= totalPages);
+
+    console.log(`✅ Lấy được ${allTransactions.length} giao dịch của trạm ${stationId}`);
+    return allTransactions;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy lịch sử đổi pin theo stationId:", error);
     return [];
   }
 }
 
-export async function fetchHistoryStationByName(
-  stationName: string,
-  page: number,
-  pageSize: number
-): Promise<SwapHistoryResponse | null> {
-  try {
-    const response = await api.get<SwapHistoryResponse>(
-      `/api/v1/swaps/history?page=${page}&pageSize=${pageSize}`
-    );
-
-    // Nếu muốn lọc theo tên trạm tại đây (tùy bạn)
-    const filteredTransactions = response.data.transactions.filter(
-      (tx) => tx.stationName === stationName
-    );
-
-    return {
-      ...response.data,
-      transactions: filteredTransactions, // giữ nguyên cấu trúc, chỉ thay phần transactions
-    };
-  } catch (error) {
-    console.error("Lỗi khi lấy lịch sử đổi pin:", error);
-    return null;
-  }
-}
 
 export async function getTotalCompletedSwaps(): Promise<number> {
-  let totalSwaps = 0;
-  let page = 0;
-  const pageSize = 50; // số giao dịch mỗi lần lấy
-  let totalPages = 1;  // khởi tạo tạm
+  try {
+    let totalSwaps = 0;
+    let page = 1;
+    const pageSize = 50;
+    let totalPages = 1;
 
-  while (page < totalPages) {
-    const response = await api.get(`/api/v1/swaps/history`, {
-      params: {
-        page,
-        pageSize
-      }
-    });
+    while (page <= totalPages) {
+      const res = await api.get(`/api/v1/swaps/all/admin`, {
+        params: { page, pageSize },
+      });
 
-    const data = response.data;
+      const data = res.data;
+      const completed = data.transactions.filter(
+        (tx: any) => tx.status === "Completed"
+      );
 
-    // Lọc các giao dịch đã hoàn thành
-    const completed = data.transactions.filter(
-      (tx: any) => tx.status === "Completed"
-    );
+      totalSwaps += completed.length;
+      totalPages = data.totalPages;
+      page++;
+    }
 
-    totalSwaps += completed.length;
-
-    // Cập nhật tổng số trang
-    totalPages = data.totalPages;
-    page += 1;
+    return totalSwaps;
+  } catch (error) {
+    console.error("Error counting completed swaps:", error);
+    return 0;
   }
-
-  return totalSwaps;
 }

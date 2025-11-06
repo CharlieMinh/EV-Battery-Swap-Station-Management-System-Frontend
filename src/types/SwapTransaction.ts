@@ -28,6 +28,7 @@ export interface SwapTransaction {
   rating: number;
   feedback: string;
   ratedAt: string;
+  stationId: string;
 }
 
 // Kiểu phản hồi từ API

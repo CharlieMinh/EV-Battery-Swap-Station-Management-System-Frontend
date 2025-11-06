@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   fetchBatteryCountByStation,
-  countHistoryStationByName,
+  countHistoryStationById,
   fetchStationById,
   Station,
   updateStation,
@@ -160,12 +160,8 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
 
     const getSwapDetail = async () => {
       try {
-        const response = await countHistoryStationByName(
-          stationDetail.name,
-          1,
-          20
-        );
-        setSwapCounts(response.length);
+        const response = await countHistoryStationById(stationDetail.id, 1, 20);
+        setSwapCounts(response);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu đổi pin:", error);
         setSwapCounts(0);
@@ -419,7 +415,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
 
             {/* Hiệu suất & Dung lượng */}
             <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
-              Hiệu suất & Dung lượng (Dữ liệu chưa có)
+              Hiệu suất & Dung lượng
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
               <StatItem
@@ -468,7 +464,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 Lịch sử giao dịch – {stationDetail.name}
               </h2>
             </div>
-            <StationHistoryList stationName={stationDetail.name} />
+            <StationHistoryList stationId={stationDetail.id} />
           </>
         )}
       </div>
