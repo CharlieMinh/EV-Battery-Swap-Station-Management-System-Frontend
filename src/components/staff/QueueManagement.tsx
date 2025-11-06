@@ -53,6 +53,8 @@ const statusToVi = (s?: string) => {
   switch ((s || "").toLowerCase()) {
     case "pendingscheduling":
       return "Chờ đặt lịch";
+    case "pending":
+      return "Đang chờ";
     case "scheduled":
       return "Đã đặt lịch";
     case "checkedin":
@@ -60,11 +62,22 @@ const statusToVi = (s?: string) => {
     case "investigating":
       return "Đang kiểm tra";
     case "confirmed":
-      return "Xác nhận lỗi";
+      return "Sẵn sàng đổi pin";
+    case "ready":
+    case "readytoswap":
+    case "ready_to_swap":
+      return "Sẵn sàng đổi pin";
     case "rejected":
       return "Từ chối";
     case "resolved":
       return "Hoàn tất";
+    case "completed":
+      return "Đã hoàn tất";
+    case "pendingpayment":
+    case "awaitingpayment":
+      return "Chờ thanh toán";
+    case "paid":
+      return "Đã thanh toán";
     default:
       return s || "—";
   }
@@ -75,6 +88,8 @@ const badgeClass = (s?: string) => {
   switch (key) {
     case "pendingscheduling":
       return "bg-amber-100 text-amber-700";
+    case "pending":
+      return "bg-amber-100 text-amber-700";
     case "scheduled":
       return "bg-blue-100 text-blue-700";
     case "checkedin":
@@ -83,10 +98,21 @@ const badgeClass = (s?: string) => {
       return "bg-yellow-100 text-yellow-700";
     case "confirmed":
       return "bg-emerald-200 text-emerald-900";
+    case "ready":
+    case "readytoswap":
+    case "ready_to_swap":
+      return "bg-emerald-200 text-emerald-900";
     case "rejected":
       return "bg-rose-100 text-rose-700";
     case "resolved":
       return "bg-gray-200 text-gray-600";
+    case "completed":
+      return "bg-gray-200 text-gray-700";
+    case "pendingpayment":
+    case "awaitingpayment":
+      return "bg-amber-100 text-amber-700";
+    case "paid":
+      return "bg-emerald-100 text-emerald-800";
     default:
       return "bg-gray-100 text-gray-700";
   }
@@ -161,9 +187,42 @@ export default function QueueManagement({
   const [stage, setStage] = useState<Stage>("idle");
   const [batteryHealthFromInspection, setBatteryHealthFromInspection] =
     useState<number>(85);
+  const [noteFromInspection, setNoteFromInspection] = useState<string>("");
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
   const [complaintDetail, setComplaintDetail] = useState<any>(null);
   const [isLoadingComplaint, setIsLoadingComplaint] = useState(false);
+  const [isProcessingComplaint, setIsProcessingComplaint] = useState(false);
+
+  // Refresh only one row from server to keep UI in sync without reloading entire list
+  const refreshReservationRow = async (reservationId: string) => {
+    try {
+      const detail = await fetchReservationDetail(reservationId);
+      if (!detail) return;
+      setList((prev) =>
+        prev.map((r) =>
+          r.reservationId === reservationId
+            ? {
+              ...r,
+              reservationId: detail.reservationId || r.reservationId,
+              userId: (detail as any).userId ?? r.userId,
+              userName: (detail as any).userName ?? r.userName,
+              batteryModelId: detail.batteryModelId ?? r.batteryModelId,
+              batteryModelName: detail.batteryModelName ?? r.batteryModelName,
+              status: detail.status ?? r.status,
+              slotDate: detail.slotDate ?? r.slotDate,
+              slotStartTime: detail.slotStartTime ?? r.slotStartTime,
+              slotEndTime: detail.slotEndTime ?? r.slotEndTime,
+              qrCode: detail.qrCode ?? r.qrCode,
+              relatedComplaintId:
+                detail.relatedComplaintId ?? r.relatedComplaintId,
+            }
+            : r
+        )
+      );
+    } catch (err) {
+      console.warn("refreshReservationRow failed", err);
+    }
+  };
 
   const selected = useMemo(
     () => list.find((x) => x.reservationId === selectedId) || null,
@@ -264,12 +323,12 @@ export default function QueueManagement({
         setSelectedId(rid);
       }
 
-      await fetchList();
+      await refreshReservationRow(rid);
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Không thể check-in bằng QR."
+        err?.message ||
+        "Không thể check-in bằng QR."
       );
     }
   };
@@ -286,7 +345,7 @@ export default function QueueManagement({
       await checkInReservation(reservation.reservationId, qrCodeData);
       toast.success("✅ Check-in thành công!");
       setStatus("CheckedIn");
-      await fetchList();
+      await refreshReservationRow(reservation.reservationId);
       setSelectedId(reservation.reservationId);
 
       const found = list.find(
@@ -341,17 +400,20 @@ export default function QueueManagement({
   const onInspectionDone = (batteryHealth: number, note: string) => {
     setBatteryHealthFromInspection(batteryHealth);
     setNoteFromInspection(note);
+    // ⭐ Cập nhật trạng thái local để ẩn nút "Kiểm tra pin" và hiển thị "Sẵn sàng đổi pin"
+    setList((prev) =>
+      prev.map((r) =>
+        r.reservationId === selectedId ? { ...r, status: "Confirmed" } : r
+      )
+    );
     setStage("readyToSwap");
     toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin.");
   };
-  const closePanel = () => {
-    // Nếu đang ở form khiếu nại thì KHÔNG reset stage
-    if (stage === "complaintCheck") {
-      // Giữ nguyên trạng thái complaint đang xem
+  const closePanel = (force?: boolean) => {
+    // Nếu force đóng thì bỏ qua logic giữ panel complaint mở
+    if (!force && stage === "complaintCheck") {
       return;
     }
-
-    // Còn lại thì reset như cũ
     setSelectedId(null);
     setStage("idle");
   };
@@ -465,16 +527,16 @@ export default function QueueManagement({
                       <div className="text-sm">
                         {start
                           ? start.toLocaleTimeString("vi-VN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : "—"}{" "}
                         -{" "}
                         {end
                           ? end.toLocaleTimeString("vi-VN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : "—"}
                       </div>
                     </td>
@@ -491,7 +553,7 @@ export default function QueueManagement({
                             Check-in
                           </button>
                         )}
-                        {isCheckedIn(r) && (
+                        {isCheckedIn(r) && !(isSel && stage === "readyToSwap") && (
                           <button
                             onClick={() => startChecking(r.reservationId)}
                             className={`${isSel ? "bg-black text-white" : "border"
@@ -500,7 +562,7 @@ export default function QueueManagement({
                             {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
                           </button>
                         )}
-                        {isReadyToSwap(r) && isSel && (
+                        {(isReadyToSwap(r) || (isSel && stage === "readyToSwap")) && (
                           <span className="text-sm text-emerald-700">
                             Sẵn sàng đổi pin
                           </span>
@@ -557,93 +619,96 @@ export default function QueueManagement({
                             <div className="flex justify-end gap-3 mt-3">
                               {/* ✅ Xác nhận lỗi */}
                               <button
+                                disabled={isProcessingComplaint}
                                 onClick={async () => {
                                   try {
                                     if (!complaintDetail?.id) {
-                                      toast.error(
-                                        "❌ Không tìm thấy complaintId!"
-                                      );
-                                      console.log(
-                                        "complaintDetail:",
-                                        complaintDetail
-                                      );
+                                      toast.error("❌ Không tìm thấy complaintId!");
                                       return;
                                     }
 
-                                    // 1️⃣ Gọi resolveComplaint để xác nhận lỗi
+                                    setIsProcessingComplaint(true);
+
+                                    // 1️⃣ Xác nhận lỗi (Resolve -> Confirmed)
                                     await resolveComplaint(
                                       complaintDetail.id,
                                       "Confirmed",
                                       "Xác nhận pin lỗi, chuẩn bị Re-swap."
                                     );
+                                    toast.success("✅ Đã xác nhận lỗi, tiến hành Re-swap...");
 
-                                    toast.success(
-                                      "✅ Đã xác nhận lỗi, tiến hành Re-swap..."
-                                    );
-
-                                    // 2️⃣ Sau khi status = Confirmed → gọi finalizeComplaintReswap
+                                    // 2️⃣ Thực hiện Re-swap (không tính vào gói - BE cần đảm bảo)
                                     await finalizeComplaintReswap(
                                       complaintDetail.id,
                                       String(stationId),
                                       batteryHealthFromInspection
                                     );
+                                    toast.success("⚡ Hoàn tất đổi pin miễn phí (Re-swap)!");
 
-                                    toast.success(
-                                      "⚡ Hoàn tất đổi pin miễn phí (Re-swap)!"
-                                    );
-                                    closePanel();
+                                    // 3️⃣ Làm mới hàng dữ liệu và đóng panel để tránh click lặp
+                                    if (selectedId) {
+                                      await refreshReservationRow(selectedId);
+                                    }
+                                    setComplaintDetail(null);
+                                    closePanel(true);
                                   } catch (err: any) {
-                                    console.error(
-                                      "❌ finalizeComplaintReswap error:",
-                                      err
-                                    );
+                                    console.error("❌ finalizeComplaintReswap error:", err);
                                     toast.error(
                                       err?.response?.data?.message ||
-                                        "Hoàn tất Re-swap thất bại!"
+                                      "Hoàn tất Re-swap thất bại!"
                                     );
+                                  } finally {
+                                    setIsProcessingComplaint(false);
                                   }
                                 }}
-                                className="bg-emerald-600 text-white rounded px-4 py-2 text-sm hover:bg-emerald-700"
+                                className={`rounded px-4 py-2 text-sm text-white ${isProcessingComplaint
+                                  ? "bg-emerald-400 cursor-not-allowed"
+                                  : "bg-emerald-600 hover:bg-emerald-700"
+                                  }`}
                               >
                                 ✅ Xác nhận lỗi (Re-swap)
                               </button>
 
                               {/* ❌ Từ chối khiếu nại */}
                               <button
+                                disabled={isProcessingComplaint}
                                 onClick={async () => {
                                   try {
                                     if (!complaintDetail?.id) {
-                                      toast.error(
-                                        "❌ Không tìm thấy complaintId!"
-                                      );
+                                      toast.error("❌ Không tìm thấy complaintId!");
                                       return;
                                     }
 
-                                    const notes = prompt(
-                                      "Nhập ghi chú từ chối (ít nhất 10 ký tự):"
-                                    );
+                                    const notes = prompt("Nhập ghi chú từ chối (ít nhất 10 ký tự):");
                                     if (!notes || notes.trim().length < 10) {
-                                      toast.error(
-                                        "Ghi chú phải ít nhất 10 ký tự!"
-                                      );
+                                      toast.error("Ghi chú phải ít nhất 10 ký tự!");
                                       return;
                                     }
 
+                                    setIsProcessingComplaint(true);
                                     await resolveComplaint(
                                       complaintDetail.id,
                                       "Rejected",
                                       notes.trim()
                                     );
                                     toast.success("🚫 Đã từ chối khiếu nại.");
-                                    closePanel();
+                                    if (selectedId) {
+                                      await refreshReservationRow(selectedId);
+                                    }
+                                    setComplaintDetail(null);
+                                    closePanel(true);
                                   } catch (err: any) {
                                     toast.error(
-                                      err?.response?.data?.message ||
-                                        "Từ chối khiếu nại thất bại!"
+                                      err?.response?.data?.message || "Từ chối khiếu nại thất bại!"
                                     );
+                                  } finally {
+                                    setIsProcessingComplaint(false);
                                   }
                                 }}
-                                className="bg-rose-600 text-white rounded px-4 py-2 text-sm hover:bg-rose-700"
+                                className={`rounded px-4 py-2 text-sm text-white ${isProcessingComplaint
+                                  ? "bg-rose-400 cursor-not-allowed"
+                                  : "bg-rose-600 hover:bg-rose-700"
+                                  }`}
                               >
                                 ❌ Từ chối khiếu nại
                               </button>
@@ -656,7 +721,22 @@ export default function QueueManagement({
                             reservation={selected}
                             stationId={String(stationId)}
                             initialBatteryHealth={batteryHealthFromInspection}
-                            onSwapped={closePanel}
+                            initialNote={noteFromInspection}
+                            onSwapped={async () => {
+                              if (selectedId) {
+                                // Refresh đúng hàng, nếu API chưa cập nhật kịp thì optimistic Completed
+                                await refreshReservationRow(selectedId);
+                                setList((prev) =>
+                                  prev.map((r) =>
+                                    r.reservationId === selectedId
+                                      ? { ...r, status: "Completed" }
+                                      : r
+                                  )
+                                );
+                              }
+                              toast.success("✅ Hoàn tất đổi pin.");
+                              closePanel(true);
+                            }}
                             onCancel={closePanel}
                           />
                         )}

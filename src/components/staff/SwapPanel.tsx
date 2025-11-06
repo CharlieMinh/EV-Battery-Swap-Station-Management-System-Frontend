@@ -145,6 +145,19 @@ export default function SwapPanel({
           </p>
         </div>
 
+        {/* Ghi chú (tùy chọn) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Ghi chú (tuỳ chọn)</label>
+          <textarea
+            className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Ví dụ: Pin cũ có dấu hiệu phồng nhẹ, đề nghị kiểm tra thêm."
+          />
+          <p className="mt-2 text-xs text-gray-500">Nội dung này sẽ được lưu vào trường notes của giao dịch.</p>
+        </div>
+
         {message && (
           <div className="mb-3 flex items-start gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-2 text-sm text-yellow-700">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
