@@ -1,24 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Loader2, RefreshCw, AlertCircle, CheckCircle, User, Tag, CalendarDays, Search, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
+// src/components/staff/CashPaymentManagement.tsx  (giữ nguyên tên export của bạn)
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import {
+  Loader2,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  Tag,
+  CalendarDays,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
+} from "../ui/select";
 
-// =========================
-// Interfaces (Giữ nguyên)
-// =========================
+/* =========================
+ * Interfaces (GIỮ NGUYÊN)
+ * ========================= */
 interface PaymentListItem {
   id: string;
   userId: string;
@@ -46,13 +64,16 @@ interface ConfirmResponse {
   message?: string | null;
 }
 
-// =========================
-// Helpers cho toast
-// =========================
-const toastOpts = { position: 'top-right' as const, autoClose: 2500, closeOnClick: true };
-
+/* =========================
+ * Helpers cho toast (GIỮ)
+ * ========================= */
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2500,
+  closeOnClick: true,
+};
 function getAxiosErrorMessage(err: any) {
-  return err?.response?.data?.message || err?.message || 'Đã xảy ra lỗi.';
+  return err?.response?.data?.message || err?.message || "Đã xảy ra lỗi.";
 }
 
 export function StaffCashPaymentManagement() {
@@ -61,101 +82,95 @@ export function StaffCashPaymentManagement() {
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  // Filter & Search states
-  const [searchText, setSearchText] = useState<string>('');
-  const [filterType, setFilterType] = useState<string>('all'); // 'all', 'Subscription', 'PayPerSwap'
-  const [filterPriceRange, setFilterPriceRange] = useState<string>('all'); // 'all', '0-100k', '100k-500k', '500k+'
-  const [filterDate, setFilterDate] = useState<string>('all'); // 'all', 'today', 'yesterday', 'this-week', 'this-month'
+  // Filters
+  const [searchText, setSearchText] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterPriceRange, setFilterPriceRange] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("all"); // (đang không dùng trong UI)
 
-  // Pagination states
+  // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 3; // Giảm xuống 3 để dễ test phân trang  // =========================
-  // Fetch pending cash payments
-  // =========================
+  const itemsPerPage = 3; // giữ nguyên
+
+  /* =========================
+   * Fetch pending cash payments (GIỮ NGUYÊN LOGIC)
+   * ========================= */
   const fetchPendingCashPayments = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await axios.get<{ payments: PaymentListItem[] }>(
-        'http://localhost:5194/api/v1/payments',
-        {
-          params: { status: 0, method: 1, pageSize: 100 },
-          withCredentials: true,
-        }
+        "http://localhost:5194/api/v1/payments",
+        { params: { status: 0, method: 1, pageSize: 100 }, withCredentials: true }
       );
 
       const list = response.data.payments || [];
       setPayments(list);
 
-      // ✅ Chỉ 1 toast nhờ toastId
       toast.success(
         list.length > 0
           ? `Đã tải ${list.length} thanh toán tiền mặt đang chờ.`
-          : 'Không có thanh toán tiền mặt nào đang chờ.',
-        { ...toastOpts, toastId: 'cash-fetch' }
+          : "Không có thanh toán tiền mặt nào đang chờ.",
+        { ...toastOpts, toastId: "cash-fetch" }
       );
     } catch (err: any) {
-      console.error('Error fetching payments:', err);
-      const msg = getAxiosErrorMessage(err) || 'Không thể tải danh sách thanh toán.';
-      setError('Không thể tải danh sách thanh toán.');
+      console.error("Error fetching payments:", err);
+      const msg =
+        getAxiosErrorMessage(err) || "Không thể tải danh sách thanh toán.";
+      setError("Không thể tải danh sách thanh toán.");
       setPayments([]);
-      // ❌ Chỉ 1 toast lỗi
-      toast.error(msg, { ...toastOpts, toastId: 'cash-fetch-error' });
+      toast.error(msg, { ...toastOpts, toastId: "cash-fetch-error" });
     } finally {
       setLoading(false);
     }
   };
 
-  // Gọi fetch khi mount (Giữ nguyên)
   useEffect(() => {
     fetchPendingCashPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // =========================
-  // Filter & Search Logic
-  // =========================
+  /* =========================
+   * Filter & Search Logic (GIỮ)
+   * ========================= */
   const filteredPayments = payments.filter((payment) => {
-    // Search filter (tên hoặc số điện thoại)
     const searchLower = searchText.toLowerCase().trim();
-    const matchesSearch = !searchLower ||
+    const matchesSearch =
+      !searchLower ||
       payment.userName?.toLowerCase().includes(searchLower) ||
       payment.userPhone?.toLowerCase().includes(searchLower) ||
       payment.userEmail?.toLowerCase().includes(searchLower);
 
-    // Type filter
-    const matchesType = filterType === 'all' || payment.type === filterType;
+    const matchesType = filterType === "all" || payment.type === filterType;
 
-    // Price range filter
     let matchesPrice = true;
-    if (filterPriceRange === '0-100k') {
+    if (filterPriceRange === "0-100k") {
       matchesPrice = payment.amount <= 100000;
-    } else if (filterPriceRange === '100k-500k') {
+    } else if (filterPriceRange === "100k-500k") {
       matchesPrice = payment.amount > 100000 && payment.amount <= 500000;
-    } else if (filterPriceRange === '500k+') {
+    } else if (filterPriceRange === "500k+") {
       matchesPrice = payment.amount > 500000;
     }
 
-    // Date filter
+    // filterDate chưa render chọn trong UI -> để nguyên
     let matchesDate = true;
-    if (filterDate !== 'all') {
+    if (filterDate !== "all") {
       const paymentDate = new Date(payment.createdAt);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
 
-      if (filterDate === 'today') {
-        matchesDate = paymentDate >= today;
-      } else if (filterDate === 'yesterday') {
+      if (filterDate === "today") matchesDate = paymentDate >= today;
+      else if (filterDate === "yesterday") {
         const yesterdayEnd = new Date(yesterday);
         yesterdayEnd.setDate(yesterdayEnd.getDate() + 1);
         matchesDate = paymentDate >= yesterday && paymentDate < yesterdayEnd;
-      } else if (filterDate === 'this-week') {
+      } else if (filterDate === "this-week") {
         const weekStart = new Date(today);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         matchesDate = paymentDate >= weekStart;
-      } else if (filterDate === 'this-month') {
+      } else if (filterDate === "this-month") {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         matchesDate = paymentDate >= monthStart;
       }
@@ -164,17 +179,19 @@ export function StaffCashPaymentManagement() {
     return matchesSearch && matchesType && matchesPrice && matchesDate;
   });
 
-  // Pagination
+  // Pagination (GIỮ)
   const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPayments = filteredPayments.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchText, filterType, filterPriceRange]);
 
+  /* =========================
+   * Confirm cash (GIỮ NGUYÊN LOGIC)
+   * ========================= */
   const handleConfirmCash = async (paymentId: string) => {
     if (confirmingId) return;
     setConfirmingId(paymentId);
@@ -186,23 +203,20 @@ export function StaffCashPaymentManagement() {
       );
 
       if (response.data.success) {
-        // ✅ Thành công — đảm bảo 1 toast cho mỗi payment
-        toast.success(response.data.message || 'Xác nhận thành công!', {
+        toast.success(response.data.message || "Xác nhận thành công!", {
           ...toastOpts,
           toastId: `cash-confirm-${paymentId}`,
         });
         setPayments((prev) => prev.filter((p) => p.id !== paymentId));
       } else {
-        // ❌ Thất bại (không throw)
-        toast.error(response.data.message || 'Xác nhận thất bại.', {
+        toast.error(response.data.message || "Xác nhận thất bại.", {
           ...toastOpts,
           toastId: `cash-confirm-error-${paymentId}`,
         });
       }
     } catch (err: any) {
-      console.error('Error confirming payment:', err);
-      // ❌ Lỗi khi gọi API
-      toast.error(getAxiosErrorMessage(err) || 'Lỗi khi xác nhận.', {
+      console.error("Error confirming payment:", err);
+      toast.error(getAxiosErrorMessage(err) || "Lỗi khi xác nhận.", {
         ...toastOpts,
         toastId: `cash-confirm-error-${paymentId}`,
       });
@@ -211,10 +225,9 @@ export function StaffCashPaymentManagement() {
     }
   };
 
-  // =========================
-  // Render UI (giữ nguyên cấu trúc)
-  // =========================
-
+  /* =========================
+   * Loading / Error (GIỮ)
+   * ========================= */
   if (loading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -231,7 +244,10 @@ export function StaffCashPaymentManagement() {
         <p>{error}</p>
         <Button
           onClick={() => {
-            toast.info('Đang làm mới danh sách...', { ...toastOpts, toastId: 'cash-refresh' });
+            toast.info("Đang làm mới danh sách...", {
+              ...toastOpts,
+              toastId: "cash-refresh",
+            });
             fetchPendingCashPayments();
           }}
           variant="outline"
@@ -243,76 +259,86 @@ export function StaffCashPaymentManagement() {
     );
   }
 
+  /* =========================
+   * UI ĐỒNG BỘ VỚI CÁC MÀN KHÁC (CHỈ SỬA CLASSNAME/JSX)
+   * ========================= */
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+    <div className="container mx-auto space-y-6">
+      {/* Header card đồng bộ */}
+      <Card className="rounded-2xl shadow-lg border border-orange-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold text-orange-600">
             Xác nhận thanh toán tiền mặt
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          </CardTitle>
+          <p className="text-sm text-gray-600">
             Quản lý và xác nhận các giao dịch thanh toán bằng tiền mặt
           </p>
-        </div>
-        <Button
-          onClick={() => {
-            toast.info('Đang làm mới danh sách...', { ...toastOpts, toastId: 'cash-refresh' });
-            fetchPendingCashPayments();
-          }}
-          variant="outline"
-          size="sm"
-          disabled={loading || !!confirmingId}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Làm mới
-        </Button>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-end">
+            <Button
+              onClick={() => {
+                toast.info("Đang làm mới danh sách...", {
+                  ...toastOpts,
+                  toastId: "cash-refresh",
+                });
+                fetchPendingCashPayments();
+              }}
+              variant="outline"
+              size="sm"
+              disabled={loading || !!confirmingId}
+              className="h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Làm mới
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Filters & Search */}
-      <Card className="border-2">
+      {/* Filters card đồng bộ */}
+      <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Tìm theo tên, số điện thoại hoặc email..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-10 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
               />
               {searchText && (
                 <button
-                  onClick={() => setSearchText('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setSearchText("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            {/* Filter by Type */}
+            {/* Filter loại */}
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 bg-white px-3 text-sm focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Loại thanh toán" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-2 border-gray-300 rounded-lg">
                 <SelectItem value="all">Tất cả loại</SelectItem>
                 <SelectItem value="Subscription">Mua gói</SelectItem>
                 <SelectItem value="PayPerSwap">Đặt lịch đổi pin</SelectItem>
               </SelectContent>
             </Select>
 
-            {/* Filter by Price */}
+            {/* Filter giá */}
             <Select value={filterPriceRange} onValueChange={setFilterPriceRange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 bg-white px-3 text-sm focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400">
                 <Tag className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Khoảng giá" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-2 border-gray-300 rounded-lg">
                 <SelectItem value="all">Tất cả giá</SelectItem>
                 <SelectItem value="0-100k">Dưới 100k</SelectItem>
                 <SelectItem value="100k-500k">100k - 500k</SelectItem>
@@ -321,22 +347,29 @@ export function StaffCashPaymentManagement() {
             </Select>
           </div>
 
-          {/* Filter summary */}
+          {/* Summary */}
           <div className="mt-4 flex items-center justify-between text-sm">
             <p className="text-gray-600">
-              Hiển thị <span className="font-semibold text-orange-600">{currentPayments.length}</span> / {filteredPayments.length} giao dịch
+              Hiển thị{" "}
+              <span className="font-semibold text-orange-600">
+                {currentPayments.length}
+              </span>{" "}
+              / {filteredPayments.length} giao dịch
               {filteredPayments.length !== payments.length && (
-                <span className="text-gray-400"> (đã lọc từ {payments.length})</span>
+                <span className="text-gray-400">
+                  {" "}
+                  (đã lọc từ {payments.length})
+                </span>
               )}
             </p>
-            {(searchText || filterType !== 'all' || filterPriceRange !== 'all') && (
+            {(searchText || filterType !== "all" || filterPriceRange !== "all") && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSearchText('');
-                  setFilterType('all');
-                  setFilterPriceRange('all');
+                  setSearchText("");
+                  setFilterType("all");
+                  setFilterPriceRange("all");
                 }}
                 className="text-orange-600 hover:text-orange-700"
               >
@@ -348,8 +381,9 @@ export function StaffCashPaymentManagement() {
         </CardContent>
       </Card>
 
+      {/* Empty state / List */}
       {filteredPayments.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl border border-orange-200">
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
@@ -360,13 +394,15 @@ export function StaffCashPaymentManagement() {
         </Card>
       ) : (
         <>
-          {/* Payment Cards */}
+          {/* Cards danh sách – viền cam & bo tròn lớn đồng bộ */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentPayments.map((payment) => (
-              <Card key={payment.id} className="flex flex-col hover:shadow-lg transition-shadow border-2">
+              <Card
+                key={payment.id}
+                className="flex flex-col hover:shadow-lg transition-shadow rounded-2xl border border-orange-200"
+              >
                 <CardHeader className="pb-3">
-                  {/* Badge phân loại loại thanh toán */}
-                  {payment.type === 'Subscription' ? (
+                  {payment.type === "Subscription" ? (
                     <Badge className="mb-3 w-fit bg-blue-500 hover:bg-blue-600 text-white">
                       Thanh toán Mua Gói
                     </Badge>
@@ -376,43 +412,47 @@ export function StaffCashPaymentManagement() {
                     </Badge>
                   )}
 
-                  {/* Tên người dùng - Ưu tiên hiển thị */}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg">
-                      {(payment.userName || 'K')[0].toUpperCase()}
+                      {(payment.userName || "K")[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg text-gray-900 truncate">
-                        {payment.userName || 'Khách lẻ'}
+                        {payment.userName || "Khách lẻ"}
                       </h3>
                       {payment.userPhone && (
-                        <p className="text-sm text-gray-600 truncate">{payment.userPhone}</p>
+                        <p className="text-sm text-gray-600 truncate">
+                          {payment.userPhone}
+                        </p>
                       )}
                       {payment.userEmail && (
-                        <p className="text-xs text-gray-500 truncate">{payment.userEmail}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {payment.userEmail}
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  {/* Số tiền */}
-                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
-                    <p className="text-xs text-orange-700 font-medium mb-1">Số tiền thanh toán</p>
+                  <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                    <p className="text-xs text-orange-700 font-medium mb-1">
+                      Số tiền thanh toán
+                    </p>
                     <p className="text-2xl font-bold text-orange-600">
-                      {payment.amount.toLocaleString('vi-VN')} đ
+                      {payment.amount.toLocaleString("vi-VN")} đ
                     </p>
                   </div>
                 </CardHeader>
 
                 <CardContent className="flex-grow space-y-3 text-sm pb-4">
-                  {/* Thời gian */}
                   <div className="flex items-center text-gray-600 bg-gray-50 rounded-md p-2">
                     <CalendarDays className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
                     <span className="text-xs">
-                      {format(new Date(payment.createdAt), 'HH:mm - dd/MM/yyyy', { locale: vi })}
+                      {format(new Date(payment.createdAt), "HH:mm - dd/MM/yyyy", {
+                        locale: vi,
+                      })}
                     </span>
                   </div>
 
-                  {/* Gói hoặc mô tả */}
                   {payment.subscriptionPlanName && (
                     <div className="flex items-start bg-blue-50 rounded-md p-2 border border-blue-200">
                       <Tag className="w-4 h-4 mr-2 mt-0.5 text-blue-600 flex-shrink-0" />
@@ -433,7 +473,7 @@ export function StaffCashPaymentManagement() {
 
                 <div className="p-4 pt-0 mt-auto">
                   <Button
-                    className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md hover:shadow-lg transition-all"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
                     size="lg"
                     onClick={() => handleConfirmCash(payment.id)}
                     disabled={confirmingId === payment.id || !!confirmingId}
@@ -455,9 +495,9 @@ export function StaffCashPaymentManagement() {
             ))}
           </div>
 
-          {/* Pagination */}
+          {/* Pagination đồng bộ */}
           {totalPages > 1 && (
-            <Card>
+            <Card className="rounded-2xl border border-orange-200">
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600">
@@ -467,34 +507,37 @@ export function StaffCashPaymentManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       Trước
                     </Button>
 
-                    {/* Page numbers */}
                     <div className="flex gap-1">
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
+                        if (totalPages <= 5) pageNum = i + 1;
+                        else if (currentPage <= 3) pageNum = i + 1;
+                        else if (currentPage >= totalPages - 2)
                           pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
+                        else pageNum = currentPage - 2 + i;
 
                         return (
                           <Button
                             key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
+                            variant={
+                              currentPage === pageNum ? "default" : "outline"
+                            }
                             size="sm"
                             onClick={() => setCurrentPage(pageNum)}
-                            className={currentPage === pageNum ? "bg-orange-600 hover:bg-orange-700" : ""}
+                            className={
+                              currentPage === pageNum
+                                ? "bg-orange-600 hover:bg-orange-700"
+                                : ""
+                            }
                           >
                             {pageNum}
                           </Button>
@@ -505,7 +548,11 @@ export function StaffCashPaymentManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(totalPages, prev + 1)
+                        )
+                      }
                       disabled={currentPage === totalPages}
                     >
                       Sau

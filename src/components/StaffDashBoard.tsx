@@ -130,7 +130,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
     () => [
       { key: "profile", label: "Thông tin cá nhân", icon: UserCircle },
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
-      { key: "transactions", label: "Giao dịch", icon: CreditCard },
+      // { key: "transactions", label: "Giao dịch", icon: CreditCard }, // Tạm thời ẩn
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "requests", label: "Yêu cầu nhập pin", icon: Package },
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
@@ -380,7 +380,7 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
               <>
                 {active === "profile" && <ProfileManagement />}
                 {active === "queue" && <QueueManagement stationId={stationId || ""} />}
-                {active === "transactions" && <Transactions />}
+                {/* {active === "transactions" && <Transactions />} */} {/* Tạm thời ẩn */}
                 {active === "inventory" && (
                   <InventoryManagement stationId={stationId || ""} />
                 )}

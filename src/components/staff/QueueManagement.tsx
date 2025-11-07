@@ -18,12 +18,9 @@ import {
   resolveComplaint,
   startComplaintInvestigation,
 } from "@/services/swaps";
+import { Button } from "../ui/button";
 
-const toastOpts = {
-  position: "top-right" as const,
-  autoClose: 2200,
-  closeOnClick: true,
-};
+const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
 const TOAST_ID = {
   fetchOk: "q-f-ok",
   fetchErr: "q-f-err",
@@ -38,6 +35,7 @@ const TOAST_ID = {
 
 type Stage = "idle" | "checking" | "readyToSwap" | "complaintCheck";
 
+/* ====== options/normalize/badge/label giữ nguyên ====== */
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "" },
   { label: "Chờ đặt lịch", value: "PendingScheduling" },
@@ -47,39 +45,49 @@ const STATUS_OPTIONS = [
   { label: "Xác nhận lỗi", value: "Confirmed" },
   { label: "Từ chối", value: "Rejected" },
   { label: "Hoàn tất", value: "Resolved" },
+  { label: "Đã hoàn tất", value: "Completed" },
+  { label: "Chờ thanh toán", value: "PendingPayment" },
+  { label: "Đã thanh toán", value: "Paid" },
 ];
+
+function normalizeStatusKey(raw?: string): string {
+  const s = (raw || "").toLowerCase().replace(/\s|_/g, "");
+  if (!s) return "";
+  if (s === "pendingscheduling" || s === "chođặtlịch" || s === "chodatlịch" || s === "chodatcho")
+    return "PendingScheduling";
+  if (s === "pending" || s === "dangcho") return "Pending";
+  if (s === "scheduled" || s === "dadatlich") return "Scheduled";
+  if (s === "checkedin" || s === "dacheckin") return "CheckedIn";
+  if (s === "investigating" || s === "dangkiemtra") return "Investigating";
+  if (s === "confirmed" || s === "ready" || s === "readytoswap" || s === "ready_to_swap")
+    return "Confirmed";
+  if (s === "rejected" || s === "tuchoi") return "Rejected";
+  if (s === "resolved" || s === "hoantat") return "Resolved";
+  if (s === "completed" || s === "dahoantat") return "Completed";
+  if (s === "pendingpayment" || s === "awaitingpayment" || s === "chothanhtoan")
+    return "PendingPayment";
+  if (s === "paid" || s === "dathanhtoan") return "Paid";
+  return raw || "";
+}
 
 const statusToVi = (s?: string) => {
   switch ((s || "").toLowerCase()) {
-    case "pendingscheduling":
-      return "Chờ đặt lịch";
-    case "pending":
-      return "Đang chờ";
-    case "scheduled":
-      return "Đã đặt lịch";
-    case "checkedin":
-      return "Đã check-in";
-    case "investigating":
-      return "Đang kiểm tra";
+    case "pendingscheduling": return "Chờ đặt lịch";
+    case "pending": return "Đang chờ";
+    case "scheduled": return "Đã đặt lịch";
+    case "checkedin": return "Đã check-in";
+    case "investigating": return "Đang kiểm tra";
     case "confirmed":
-      return "Sẵn sàng đổi pin";
     case "ready":
     case "readytoswap":
-    case "ready_to_swap":
-      return "Sẵn sàng đổi pin";
-    case "rejected":
-      return "Từ chối";
-    case "resolved":
-      return "Hoàn tất";
-    case "completed":
-      return "Đã hoàn tất";
+    case "ready_to_swap": return "Sẵn sàng đổi pin";
+    case "rejected": return "Từ chối";
+    case "resolved": return "Hoàn tất";
+    case "completed": return "Đã hoàn tất";
     case "pendingpayment":
-    case "awaitingpayment":
-      return "Chờ thanh toán";
-    case "paid":
-      return "Đã thanh toán";
-    default:
-      return s || "—";
+    case "awaitingpayment": return "Chờ thanh toán";
+    case "paid": return "Đã thanh toán";
+    default: return s || "—";
   }
 };
 
@@ -87,147 +95,79 @@ const badgeClass = (s?: string) => {
   const key = (s || "").toLowerCase();
   switch (key) {
     case "pendingscheduling":
-      return "bg-amber-100 text-amber-700";
-    case "pending":
-      return "bg-amber-100 text-amber-700";
-    case "scheduled":
-      return "bg-blue-100 text-blue-700";
-    case "checkedin":
-      return "bg-emerald-100 text-emerald-700";
-    case "investigating":
-      return "bg-yellow-100 text-yellow-700";
+    case "pending": return "bg-amber-100 text-amber-700";
+    case "scheduled": return "bg-blue-100 text-blue-700";
+    case "checkedin": return "bg-emerald-100 text-emerald-700";
+    case "investigating": return "bg-yellow-100 text-yellow-700";
     case "confirmed":
-      return "bg-emerald-200 text-emerald-900";
     case "ready":
     case "readytoswap":
-    case "ready_to_swap":
-      return "bg-emerald-200 text-emerald-900";
-    case "rejected":
-      return "bg-rose-100 text-rose-700";
+    case "ready_to_swap": return "bg-emerald-200 text-emerald-900";
+    case "rejected": return "bg-rose-100 text-rose-700";
     case "resolved":
-      return "bg-gray-200 text-gray-600";
-    case "completed":
-      return "bg-gray-200 text-gray-700";
+    case "completed": return "bg-gray-200 text-gray-700";
     case "pendingpayment":
-    case "awaitingpayment":
-      return "bg-amber-100 text-amber-700";
-    case "paid":
-      return "bg-emerald-100 text-emerald-800";
-    default:
-      return "bg-gray-100 text-gray-700";
+    case "awaitingpayment": return "bg-amber-100 text-amber-700";
+    case "paid": return "bg-emerald-100 text-emerald-800";
+    default: return "bg-gray-100 text-gray-700";
   }
 };
 
-const isPendingScheduling = (r: Reservation) =>
-  ["pendingscheduling", "scheduled"].includes(
-    ((r as any).status || "").toLowerCase()
-  );
-
-const isCheckedIn = (r: Reservation) =>
-  ((r as any).status || "").toLowerCase() === "checkedin";
-
-const isReadyToSwap = (r: Reservation) =>
-  ((r as any).status || "").toLowerCase() === "confirmed";
-
+/* ========= logic cũ ========= */
+const isCheckedIn = (r: Reservation) => ((r as any).status || "").toLowerCase() === "checkedin";
+const isReadyToSwap = (r: Reservation) => ((r as any).status || "").toLowerCase() === "confirmed";
 const isRejectedOrResolved = (r: Reservation) =>
   ["rejected", "resolved"].includes(((r as any).status || "").toLowerCase());
+const isCompleted = (r: Reservation) => ((r as any).status || "").toLowerCase() === "completed";
+const isFinalState = (r: Reservation) => isRejectedOrResolved(r) || isCompleted(r);
 
-const isCompleted = (r: Reservation) =>
-  ((r as any).status || "").toLowerCase() === "completed";
-
-const isFinalState = (r: Reservation) =>
-  isRejectedOrResolved(r) || isCompleted(r);
-
+/* ========= helpers ========= */
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
-  const date = r?.slotDate;
-  const startStr = r?.slotStartTime;
-  const endStr = r?.slotEndTime;
-
+  const date = r?.slotDate, startStr = r?.slotStartTime, endStr = r?.slotEndTime;
   const toHHmmss = (t: string) => {
     if (!t) return "";
     if (/^\d{2}:\d{2}:\d{2}$/.test(t)) return t;
     if (/^\d{2}:\d{2}$/.test(t)) return `${t}:00`;
-    const m = t.match(/^(\d{2}:\d{2}:\d{2})/);
-    return m ? m[1] : "";
+    const m = t.match(/^(\d{2}:\d{2}:\d{2})/); return m ? m[1] : "";
   };
-
   if (date && startStr && endStr) {
-    const sISO = `${date}T${toHHmmss(String(startStr))}`;
-    const eISO = `${date}T${toHHmmss(String(endStr))}`;
-    const sd = new Date(sISO);
-    const ed = new Date(eISO);
+    const sd = new Date(`${date}T${toHHmmss(String(startStr))}`);
+    const ed = new Date(`${date}T${toHHmmss(String(endStr))}`);
     if (!isNaN(+sd) && !isNaN(+ed)) return { start: sd, end: ed };
   }
-
   return { start: null, end: null };
 }
 
 function tryExtractReservationIdFromQR(raw: string): string | null {
-  try {
-    const txt = atob(raw);
-    const [json] = txt.split("|");
-    const obj = JSON.parse(json);
-    return obj.rid || obj.reservationId || null;
-  } catch {
-    return null;
-  }
+  try { const txt = atob(raw); const [json] = txt.split("|"); const obj = JSON.parse(json);
+    return obj.rid || obj.reservationId || null; } catch { return null; }
 }
 
-export default function QueueManagement({
-  stationId,
-}: {
-  stationId: string | number;
-}) {
+function displayVehicleName(r: any): string {
+  return r?.vehicleModelName || r?.vehicleName || r?.vehicle?.vehicleModel?.name ||
+         r?.vehicle?.modelName || r?.vehicleModel || r?.vehicleType || "—";
+}
+function displayPlate(r: any): string {
+  const p = r?.vehiclePlate || r?.licensePlate || r?.vehicle?.plateNumber ||
+            r?.vehicle?.licensePlate || r?.vehicle?.plate || r?.plate || "";
+  return (p || "—").toString().toUpperCase();
+}
+
+export default function QueueManagement({ stationId }: { stationId: string | number }) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [status, setStatus] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
   const [list, setList] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
-  const [batteryHealthFromInspection, setBatteryHealthFromInspection] =
-    useState<number>(85);
+  const [batteryHealthFromInspection, setBatteryHealthFromInspection] = useState<number>(85);
   const [noteFromInspection, setNoteFromInspection] = useState<string>("");
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
   const [complaintDetail, setComplaintDetail] = useState<any>(null);
   const [isLoadingComplaint, setIsLoadingComplaint] = useState(false);
   const [isProcessingComplaint, setIsProcessingComplaint] = useState(false);
-
-  // Refresh only one row from server to keep UI in sync without reloading entire list
-  const refreshReservationRow = async (reservationId: string) => {
-    try {
-      const detail = await fetchReservationDetail(reservationId);
-      if (!detail) return;
-      setList((prev) =>
-        prev.map((r) =>
-          r.reservationId === reservationId
-            ? {
-              ...r,
-              reservationId: detail.reservationId || r.reservationId,
-              userId: (detail as any).userId ?? r.userId,
-              userName: (detail as any).userName ?? r.userName,
-              batteryModelId: detail.batteryModelId ?? r.batteryModelId,
-              batteryModelName: detail.batteryModelName ?? r.batteryModelName,
-              status: detail.status ?? r.status,
-              slotDate: detail.slotDate ?? r.slotDate,
-              slotStartTime: detail.slotStartTime ?? r.slotStartTime,
-              slotEndTime: detail.slotEndTime ?? r.slotEndTime,
-              qrCode: detail.qrCode ?? r.qrCode,
-              relatedComplaintId:
-                detail.relatedComplaintId ?? r.relatedComplaintId,
-            }
-            : r
-        )
-      );
-    } catch (err) {
-      console.warn("refreshReservationRow failed", err);
-    }
-  };
-
-  const selected = useMemo(
-    () => list.find((x) => x.reservationId === selectedId) || null,
-    [list, selectedId]
-  );
 
   const fetchList = async () => {
     if (!stationId) return;
@@ -236,121 +176,161 @@ export default function QueueManagement({
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
-      toast.success("Đã tải danh sách lượt đặt.", {
-        ...toastOpts,
-        toastId: TOAST_ID.fetchOk,
-      });
-    } catch (e: any) {
-      console.error("load reservations error:", e);
+      toast.success("Đã tải danh sách lượt đặt.", { ...toastOpts, toastId: TOAST_ID.fetchOk });
+    } catch (e) {
       setList([]);
       toast.error("Không thể tải danh sách lượt đặt lịch.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   useEffect(() => {
-    // 🔍 Nếu reload lại và vẫn có reservation đang Investigating (tức là đang xử lý khiếu nại)
-    const activeComplaint = list.find(
-      (r) =>
-        r.relatedComplaintId &&
+    const active = list.find(
+      (r) => r.relatedComplaintId &&
         ["investigating", "confirmed"].includes((r.status || "").toLowerCase())
     );
-    if (activeComplaint) {
-      setSelectedId(activeComplaint.reservationId);
+    if (active) {
+      setSelectedId(active.reservationId);
       setStage("complaintCheck");
       setIsLoadingComplaint(true);
-      getComplaintById(activeComplaint.relatedComplaintId)
+      getComplaintById(active.relatedComplaintId)
         .then((c) => setComplaintDetail(c))
         .finally(() => setIsLoadingComplaint(false));
     }
   }, [list]);
 
-  useEffect(() => {
-    fetchList();
-  }, [stationId, date, status]);
+  useEffect(() => { fetchList(); }, [stationId, date, status]);
 
   useEffect(() => {
-    const ids = Array.from(
-      new Set(list.map((r) => r.userId).filter(Boolean) as string[])
-    );
-    if (ids.length === 0) return;
+    const ids = Array.from(new Set(list.map((r) => r.userId).filter(Boolean) as string[]));
+    if (!ids.length) return;
     (async () => {
       try {
         const map = await getUserNamesBatch(ids);
         setNameMap((prev) => ({ ...prev, ...map }));
       } catch (err: any) {
-        const msg =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Không thể lấy tên khách hàng.";
+        const msg = err?.response?.data?.message || err?.message || "Không thể lấy tên khách hàng.";
         toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
       }
     })();
   }, [list]);
 
+  const filtered = useMemo(() => {
+    let result = list;
+    if (status) {
+      const key = normalizeStatusKey(status);
+      result = result.filter((r) => normalizeStatusKey(r.status) === key);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((r) => {
+        const displayName =
+          (r.userId && nameMap[r.userId]) || r.userName || (r.userId ? `Khách #${r.userId.slice(-4)}` : "");
+        return (
+          displayName.toLowerCase().includes(q) ||
+          (r.batteryModelName || "").toLowerCase().includes(q) ||
+          (r.batteryModelId || "").toLowerCase().includes(q) ||
+          (r.reservationId || "").toLowerCase().includes(q) ||
+          (r.vehiclePlate || "").toLowerCase().includes(q) ||
+          (r.licensePlate || "").toLowerCase().includes(q) ||
+          (r.vehicleModelName || "").toLowerCase().includes(q) ||
+          (r.vehicleName || "").toLowerCase().includes(q)
+        );
+      });
+    }
+    return result;
+  }, [list, status, search, nameMap]);
+
+  const selected = useMemo(
+    () => list.find((x) => x.reservationId === selectedId) || null,
+    [list, selectedId]
+  );
+
+  const refreshReservationRow = async (reservationId: string) => {
+    try {
+      const detail = await fetchReservationDetail(reservationId);
+      if (!detail) return;
+      setList((prev) =>
+        prev.map((r) =>
+          r.reservationId === reservationId
+            ? {
+                ...r,
+                reservationId: (detail as any).reservationId || r.reservationId,
+                userId: (detail as any).userId ?? r.userId,
+                userName: (detail as any).userName ?? r.userName,
+                batteryModelId: (detail as any).batteryModelId ?? r.batteryModelId,
+                batteryModelName: (detail as any).batteryModelName ?? r.batteryModelName,
+                status: (detail as any).status ?? r.status,
+                slotDate: (detail as any).slotDate ?? r.slotDate,
+                slotStartTime: (detail as any).slotStartTime ?? r.slotStartTime,
+                slotEndTime: (detail as any).slotEndTime ?? r.slotEndTime,
+                qrCode: (detail as any).qrCode ?? r.qrCode,
+                relatedComplaintId: (detail as any).relatedComplaintId ?? r.relatedComplaintId,
+                vehicleId: (detail as any).vehicleId ?? r.vehicleId,
+                vehicleName:
+                  (detail as any).vehicleName ??
+                  (detail as any).vehicleModelName ??
+                  r.vehicleName ??
+                  r.vehicleModelName,
+                licensePlate:
+                  (detail as any).licensePlate ??
+                  (detail as any).vehiclePlate ??
+                  r.licensePlate ??
+                  r.vehiclePlate,
+                vehicleModelName:
+                  (detail as any).vehicleModelName ??
+                  (detail as any).vehicleName ??
+                  r.vehicleModelName ??
+                  r.vehicleName,
+                vehiclePlate:
+                  (detail as any).vehiclePlate ??
+                  (detail as any).licensePlate ??
+                  r.vehiclePlate ??
+                  r.licensePlate,
+              }
+            : r
+        )
+      );
+    } catch {}
+  };
+
   const doCheckInByQr = async (qrRaw: string) => {
     const rid = tryExtractReservationIdFromQR(qrRaw);
-    if (!rid) {
-      toast.error("❌ Mã QR không hợp lệ.");
-      return;
-    }
-
+    if (!rid) return toast.error("❌ Mã QR không hợp lệ.");
     try {
       const detail = await fetchReservationDetail(rid);
-      if (!detail) {
-        toast.error("Không tìm thấy thông tin đặt chỗ.");
-        return;
-      }
-
+      if (!detail) return toast.error("Không tìm thấy thông tin đặt chỗ.");
       await checkInReservation(rid, qrRaw);
       toast.success("✅ Check-in thành công!");
-
-      // Nếu là complaint → sang form khiếu nại
-      if (detail.relatedComplaintId) {
+      if ((detail as any).relatedComplaintId) {
         setStage("complaintCheck");
         setSelectedId(rid);
         setIsLoadingComplaint(true);
         try {
-          await startComplaintInvestigation(detail.relatedComplaintId);
-          const complaint = await getComplaintById(detail.relatedComplaintId);
+          await startComplaintInvestigation((detail as any).relatedComplaintId);
+          const complaint = await getComplaintById((detail as any).relatedComplaintId);
           setComplaintDetail(complaint);
-        } finally {
-          setIsLoadingComplaint(false);
-        }
+        } finally { setIsLoadingComplaint(false); }
       } else {
         setStage("checking");
         setSelectedId(rid);
       }
-
       await refreshReservationRow(rid);
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-        err?.message ||
-        "Không thể check-in bằng QR."
-      );
+      toast.error(err?.response?.data?.message || err?.message || "Không thể check-in bằng QR.");
     }
   };
 
-  /** ✅ Check-in thủ công */
   const doManualCheckIn = async (reservation: Reservation) => {
     try {
-      const qrCodeData = reservation.qrCode || "";
-      if (!qrCodeData) {
-        toast.error("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
-        return;
-      }
-
-      await checkInReservation(reservation.reservationId, qrCodeData);
+      const qr = reservation.qrCode || "";
+      if (!qr) return toast.error("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
+      await checkInReservation(reservation.reservationId, qr);
       toast.success("✅ Check-in thành công!");
       setStatus("CheckedIn");
       await refreshReservationRow(reservation.reservationId);
       setSelectedId(reservation.reservationId);
 
-      const found = list.find(
-        (r) => r.reservationId === reservation.reservationId
-      );
+      const found = list.find((r) => r.reservationId === reservation.reservationId);
       if (found?.relatedComplaintId) {
         setStage("complaintCheck");
         toast.info("⚠️ Đây là lượt khiếu nại, mở panel kiểm tra đặc biệt");
@@ -359,21 +339,13 @@ export default function QueueManagement({
           await startComplaintInvestigation(found.relatedComplaintId);
           const complaint = await getComplaintById(found.relatedComplaintId);
           setComplaintDetail(complaint);
-        } catch (err) {
-          console.error("Complaint fetch/investigate error:", err);
-        } finally {
-          setIsLoadingComplaint(false);
-        }
+        } finally { setIsLoadingComplaint(false); }
       } else {
         setStage("checking");
       }
     } catch (err: any) {
-      console.error("manual check-in error:", err);
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Check-in thất bại.";
+      const msg = err?.response?.data?.error?.message ||
+                  err?.response?.data?.message || err?.message || "Check-in thất bại.";
       toast.error("❌ " + msg);
     }
   };
@@ -381,26 +353,26 @@ export default function QueueManagement({
   const startChecking = (id: string) => {
     const found = list.find((r) => r.reservationId === id);
     if (!found) return;
-
     setSelectedId(id);
-
     if (found.relatedComplaintId) {
-      // 🔥 Nếu có khiếu nại, luôn vào stage complaintCheck
       setStage("complaintCheck");
       setIsLoadingComplaint(true);
       getComplaintById(found.relatedComplaintId)
         .then((c) => setComplaintDetail(c))
         .finally(() => setIsLoadingComplaint(false));
-    } else {
-      // Bình thường thì vào stage checking
-      setStage("checking");
-    }
+    } else setStage("checking");
   };
 
-  const onInspectionDone = (batteryHealth: number, note: string) => {
-    setBatteryHealthFromInspection(batteryHealth);
+  const startSwap = (id: string) => {
+    const found = list.find((r) => r.reservationId === id);
+    if (!found) return;
+    setSelectedId(id);
+    setStage("readyToSwap");
+  };
+
+  const onInspectionDone = (health: number, note: string) => {
+    setBatteryHealthFromInspection(health);
     setNoteFromInspection(note);
-    // ⭐ Cập nhật trạng thái local để ẩn nút "Kiểm tra pin" và hiển thị "Sẵn sàng đổi pin"
     setList((prev) =>
       prev.map((r) =>
         r.reservationId === selectedId ? { ...r, status: "Confirmed" } : r
@@ -409,346 +381,317 @@ export default function QueueManagement({
     setStage("readyToSwap");
     toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin.");
   };
+
   const closePanel = (force?: boolean) => {
-    // Nếu force đóng thì bỏ qua logic giữ panel complaint mở
-    if (!force && stage === "complaintCheck") {
-      return;
-    }
+    if (!force && stage === "complaintCheck") return;
     setSelectedId(null);
     setStage("idle");
   };
 
+  const formatTime = (d: Date | null) =>
+    d ? d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "—";
+
+  /* ====== UI: Giữ phần trên (filter card), trả phần dưới về TABLE cũ ====== */
   return (
-    <div className="grid gap-4">
-      {/* Bộ lọc */}
-      <div className="mb-3 flex flex-wrap items-end gap-2">
-        <div>
-          <label className="text-xs block">Ngày</label>
-          <input
-            type="date"
-            className="border rounded px-3 py-2 w-44"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+    <div className="container mx-auto">
+      {/* Filter card (giữ như bạn đang có) */}
+      <section className="rounded-2xl bg-white shadow-lg p-5 border border-orange-200 mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-orange-600">Quản Lý Hàng Chờ</h1>
+            <p className="text-gray-600 mt-1 text-sm">Theo dõi & xử lý lượt đổi pin trong ngày</p>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="text-xs block text-gray-600 mb-1">Ngày</label>
+              <input
+                type="date"
+                className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-44 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs block text-gray-600 mb-1">Trạng thái</label>
+              <select
+                className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-56 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value || "ALL"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs block text-gray-600 mb-1">Tìm kiếm</label>
+              <input
+                type="text"
+                className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-60 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                placeholder="Tên, model pin, biển số..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <Button
+              onClick={() => {
+                toast.info("Đang làm mới danh sách...", { ...toastOpts, toastId: TOAST_ID.refreshInfo });
+                fetchList();
+              }}
+              variant="outline"
+              className="h-10 border-orange-600 text-orange-600 hover:bg-orange-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Làm mới
+            </Button>
+
+            <Button onClick={() => setScannerOpen(true)} className="h-10 bg-black hover:bg-gray-800">
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+              Check-in bằng camera
+            </Button>
+          </div>
         </div>
-        <div>
-          <label className="text-xs block">Trạng thái</label>
-          <select
-            className="border rounded px-3 py-2 w-56"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value || "ALL"} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          onClick={() => {
-            toast.info("Đang làm mới danh sách...", {
-              ...toastOpts,
-              toastId: TOAST_ID.refreshInfo,
-            });
-            fetchList();
-          }}
-          className="border rounded px-3 py-2 inline-flex items-center gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Làm mới
-        </button>
-        <button
-          onClick={() => setScannerOpen(true)}
-          className="bg-black text-white rounded px-3 py-2 inline-flex items-center gap-2"
-        >
-          <ClipboardCheck className="h-4 w-4" />
-          Check-in bằng camera
-        </button>
-      </div>
+      </section>
 
-      {/* Danh sách lượt */}
-      <div className="overflow-x-auto rounded-lg border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left">
-            <tr>
-              <th className="px-3 py-2">Reservation ID</th>
-              <th className="px-3 py-2">Tên khách hàng</th>
-              <th className="px-3 py-2">Model pin</th>
-              <th className="px-3 py-2">Trạng thái</th>
-              <th className="px-3 py-2">Slot Start - End</th>
-              <th className="px-3 py-2 text-right">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center">
-                  Đang tải...
-                </td>
-              </tr>
-            )}
-            {!loading && list.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                  Không có lượt nào
-                </td>
-              </tr>
-            )}
+      {/* Danh sách bảng (cũ) */}
+      <section className="rounded-2xl bg-white shadow-lg p-5 border border-orange-200">
+        <h3 className="text-lg font-semibold mb-3">Danh sách hàng chờ</h3>
 
-            {list.map((r) => {
-              const isSel = selectedId === r.reservationId;
-              const { start, end } = resolveSlotRange(r);
-              const displayName =
-                (r.userId && nameMap[r.userId]) ||
-                r.userName ||
-                (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
+        <div className="rounded-xl border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-fixed text-sm">
+              <thead className="bg-gray-50">
+                <tr className="text-gray-600">
+                  <th className="px-4 py-3 text-left w-56">Tên khách hàng</th>
+                  <th className="px-4 py-3 text-left w-48">Model pin</th>
+                  <th className="px-4 py-3 text-left w-48">Xe</th>
+                  <th className="px-4 py-3 text-left w-40">Biển số</th>
+                  <th className="px-4 py-3 text-left w-40">Trạng thái</th>
+                  <th className="px-4 py-3 text-left w-48">Slot Start - End</th>
+                  <th className="px-4 py-3 text-right w-56">Thao tác</th>
+                </tr>
+              </thead>
 
-              return (
-                <React.Fragment key={r.reservationId}>
-                  <tr className="border-t align-top hover:bg-gray-50">
-                    <td className="px-3 py-2 font-mono text-xs">
-                      {r.reservationId}
-                    </td>
-                    <td className="px-3 py-2 font-medium">{displayName}</td>
-                    <td className="px-3 py-2">
-                      {r.batteryModelName || r.batteryModelId || "—"}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${badgeClass(
-                          r.status
-                        )}`}
-                      >
-                        {statusToVi(r.status)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="text-sm">
-                        {start
-                          ? start.toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                          : "—"}{" "}
-                        -{" "}
-                        {end
-                          ? end.toLocaleTimeString("vi-VN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                          : "—"}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="flex gap-2 justify-end">
-                        {/* Nút check-in thủ công - hiện khi chưa check-in VÀ chưa ở trạng thái kết thúc */}
-                        {!isCheckedIn(r) && !isFinalState(r) && (
-                          <button
-                            onClick={() => doManualCheckIn(r)}
-                            className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1 text-sm text-white hover:bg-emerald-700 transition"
-                            title="Check-in thủ công (không cần quét QR)"
-                          >
-                            <ClipboardCheck className="h-4 w-4" />
-                            Check-in
-                          </button>
-                        )}
-                        {isCheckedIn(r) && !(isSel && stage === "readyToSwap") && (
-                          <button
-                            onClick={() => startChecking(r.reservationId)}
-                            className={`${isSel ? "bg-black text-white" : "border"
-                              } rounded px-3 py-1 text-sm`}
-                          >
-                            {isSel ? "Đang kiểm tra" : "Kiểm tra pin"}
-                          </button>
-                        )}
-                        {(isReadyToSwap(r) || (isSel && stage === "readyToSwap")) && (
-                          <span className="text-sm text-emerald-700">
-                            Sẵn sàng đổi pin
-                          </span>
-                        )}
-                        {isRejectedOrResolved(r) && (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </div>
+              <tbody className="divide-y">
+                {loading && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                      Đang tải…
                     </td>
                   </tr>
+                )}
 
-                  {isSel && (
-                    <tr className="bg-gray-50/50">
-                      <td colSpan={6} className="p-3">
-                        {stage === "checking" && selected && (
-                          <InspectionPanel
-                            reservation={selected}
-                            onDone={(health, note) => onInspectionDone(health, note)}
-                            onCancel={closePanel}
-                          />
-                        )}
+                {!loading && filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                      Không có lượt nào
+                    </td>
+                  </tr>
+                )}
 
-                        {stage === "complaintCheck" && selected && (
-                          <div className="space-y-3">
-                            {isLoadingComplaint ? (
-                              <div className="text-sm text-gray-500 italic">
-                                Đang tải thông tin khiếu nại...
-                              </div>
-                            ) : complaintDetail ? (
-                              <div className="border rounded-lg p-3 bg-amber-50">
-                                <h4 className="font-semibold text-amber-700">
-                                  📋 Thông tin khiếu nại
-                                </h4>
-                                <p className="text-sm text-gray-700 mt-1">
-                                  {complaintDetail.description ||
-                                    "Không có mô tả."}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500 italic">
-                                Không tìm thấy dữ liệu khiếu nại.
-                              </div>
-                            )}
+                {!loading &&
+                  filtered.map((r) => {
+                    const isSel = selectedId === r.reservationId;
+                    const { start, end } = resolveSlotRange(r);
+                    const displayName =
+                      (r.userId && nameMap[r.userId]) ||
+                      r.userName ||
+                      (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
 
-                            <InspectionPanel
-                              reservation={selected}
-                              onDone={async (health) =>
-                                setBatteryHealthFromInspection(health)
-                              }
-                              onCancel={closePanel}
-                              isComplaint
-                            />
+                    return (
+                      <React.Fragment key={r.reservationId}>
+                        <tr className="odd:bg-white even:bg-gray-50 hover:bg-orange-50/40 transition-colors">
+                          <td className="px-4 py-3 align-middle font-medium">{displayName}</td>
+                          <td className="px-4 py-3 align-middle">
+                            {r.batteryModelName || r.batteryModelId || "—"}
+                          </td>
+                          <td className="px-4 py-3 align-middle">{displayVehicleName(r)}</td>
+                          <td className="px-4 py-3 align-middle font-mono">{displayPlate(r)}</td>
+                          <td className="px-4 py-3 align-middle">
+                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass(r.status)}`}>
+                              {statusToVi(r.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 align-middle">
+                            {start ? formatTime(start) : "—"} - {end ? formatTime(end) : "—"}
+                          </td>
+                          <td className="px-4 py-3 align-middle text-right">
+                            <div className="flex gap-2 justify-end">
+                              {!isCheckedIn(r) && !isFinalState(r) && (
+                                <button
+                                  onClick={() => doManualCheckIn(r)}
+                                  className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700 transition"
+                                  title="Check-in thủ công (không cần quét QR)"
+                                >
+                                  <ClipboardCheck className="h-4 w-4" />
+                                  Check-in
+                                </button>
+                              )}
 
-                            <div className="flex justify-end gap-3 mt-3">
-                              {/* ✅ Xác nhận lỗi */}
-                              <button
-                                disabled={isProcessingComplaint}
-                                onClick={async () => {
-                                  try {
-                                    if (!complaintDetail?.id) {
-                                      toast.error("❌ Không tìm thấy complaintId!");
-                                      return;
-                                    }
+                              {isCheckedIn(r) && !(isSel && stage === "readyToSwap") && !isFinalState(r) && (
+                                <button
+                                  onClick={() => startChecking(r.reservationId)}
+                                  className={`${isSel && stage === "checking" ? "bg-black text-white" : "border"} rounded px-3 py-1.5 text-sm hover:bg-gray-50 transition`}
+                                >
+                                  {isSel && stage === "checking" ? "Đang kiểm tra" : "Kiểm tra pin"}
+                                </button>
+                              )}
 
-                                    setIsProcessingComplaint(true);
+                              {(isReadyToSwap(r) || (isSel && stage === "readyToSwap")) && !isFinalState(r) && (
+                                <button
+                                  onClick={() => startSwap(r.reservationId)}
+                                  className="rounded px-3 py-1.5 text-sm text-white bg-emerald-700 hover:bg-emerald-800 transition"
+                                  title="Tiến hành thay pin"
+                                >
+                                  Thay pin
+                                </button>
+                              )}
 
-                                    // 1️⃣ Xác nhận lỗi (Resolve -> Confirmed)
-                                    await resolveComplaint(
-                                      complaintDetail.id,
-                                      "Confirmed",
-                                      "Xác nhận pin lỗi, chuẩn bị Re-swap."
-                                    );
-                                    toast.success("✅ Đã xác nhận lỗi, tiến hành Re-swap...");
-
-                                    // 2️⃣ Thực hiện Re-swap (không tính vào gói - BE cần đảm bảo)
-                                    await finalizeComplaintReswap(
-                                      complaintDetail.id,
-                                      String(stationId),
-                                      batteryHealthFromInspection
-                                    );
-                                    toast.success("⚡ Hoàn tất đổi pin miễn phí (Re-swap)!");
-
-                                    // 3️⃣ Làm mới hàng dữ liệu và đóng panel để tránh click lặp
-                                    if (selectedId) {
-                                      await refreshReservationRow(selectedId);
-                                    }
-                                    setComplaintDetail(null);
-                                    closePanel(true);
-                                  } catch (err: any) {
-                                    console.error("❌ finalizeComplaintReswap error:", err);
-                                    toast.error(
-                                      err?.response?.data?.message ||
-                                      "Hoàn tất Re-swap thất bại!"
-                                    );
-                                  } finally {
-                                    setIsProcessingComplaint(false);
-                                  }
-                                }}
-                                className={`rounded px-4 py-2 text-sm text-white ${isProcessingComplaint
-                                  ? "bg-emerald-400 cursor-not-allowed"
-                                  : "bg-emerald-600 hover:bg-emerald-700"
-                                  }`}
-                              >
-                                ✅ Xác nhận lỗi (Re-swap)
-                              </button>
-
-                              {/* ❌ Từ chối khiếu nại */}
-                              <button
-                                disabled={isProcessingComplaint}
-                                onClick={async () => {
-                                  try {
-                                    if (!complaintDetail?.id) {
-                                      toast.error("❌ Không tìm thấy complaintId!");
-                                      return;
-                                    }
-
-                                    const notes = prompt("Nhập ghi chú từ chối (ít nhất 10 ký tự):");
-                                    if (!notes || notes.trim().length < 10) {
-                                      toast.error("Ghi chú phải ít nhất 10 ký tự!");
-                                      return;
-                                    }
-
-                                    setIsProcessingComplaint(true);
-                                    await resolveComplaint(
-                                      complaintDetail.id,
-                                      "Rejected",
-                                      notes.trim()
-                                    );
-                                    toast.success("🚫 Đã từ chối khiếu nại.");
-                                    if (selectedId) {
-                                      await refreshReservationRow(selectedId);
-                                    }
-                                    setComplaintDetail(null);
-                                    closePanel(true);
-                                  } catch (err: any) {
-                                    toast.error(
-                                      err?.response?.data?.message || "Từ chối khiếu nại thất bại!"
-                                    );
-                                  } finally {
-                                    setIsProcessingComplaint(false);
-                                  }
-                                }}
-                                className={`rounded px-4 py-2 text-sm text-white ${isProcessingComplaint
-                                  ? "bg-rose-400 cursor-not-allowed"
-                                  : "bg-rose-600 hover:bg-rose-700"
-                                  }`}
-                              >
-                                ❌ Từ chối khiếu nại
-                              </button>
+                              {isRejectedOrResolved(r) && <span className="text-xs text-gray-400">—</span>}
                             </div>
-                          </div>
-                        )}
+                          </td>
+                        </tr>
 
-                        {stage === "readyToSwap" && selected && (
-                          <SwapPanel
-                            reservation={selected}
-                            stationId={String(stationId)}
-                            initialBatteryHealth={batteryHealthFromInspection}
-                            initialNote={noteFromInspection}
-                            onSwapped={async () => {
-                              if (selectedId) {
-                                // Refresh đúng hàng, nếu API chưa cập nhật kịp thì optimistic Completed
-                                await refreshReservationRow(selectedId);
-                                setList((prev) =>
-                                  prev.map((r) =>
-                                    r.reservationId === selectedId
-                                      ? { ...r, status: "Completed" }
-                                      : r
-                                  )
-                                );
-                              }
-                              toast.success("✅ Hoàn tất đổi pin.");
-                              closePanel(true);
-                            }}
-                            onCancel={closePanel}
-                          />
+                        {/* Hàng mở rộng chi tiết */}
+                        {isSel && (
+                          <tr className="bg-gray-50/50">
+                            <td colSpan={7} className="p-4">
+                              {stage === "checking" && selected && (
+                                <div className="rounded-xl border border-orange-200 bg-white p-4 shadow-sm">
+                                  <InspectionPanel
+                                    reservation={selected}
+                                    onDone={(health, note) => onInspectionDone(health, note)}
+                                    onCancel={closePanel}
+                                  />
+                                </div>
+                              )}
+
+                              {stage === "complaintCheck" && selected && (
+                                <div className="space-y-3">
+                                  {isLoadingComplaint ? (
+                                    <div className="text-sm text-gray-500 italic">
+                                      Đang tải thông tin khiếu nại...
+                                    </div>
+                                  ) : complaintDetail ? (
+                                    <div className="border rounded-lg p-3 bg-amber-50 border-amber-200">
+                                      <h4 className="font-semibold text-amber-700">📋 Thông tin khiếu nại</h4>
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        {complaintDetail.description || "Không có mô tả."}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-gray-500 italic">
+                                      Không tìm thấy dữ liệu khiếu nại.
+                                    </div>
+                                  )}
+
+                                  <div className="rounded-xl border border-orange-200 bg-white p-4 shadow-sm">
+                                    <InspectionPanel
+                                      reservation={selected}
+                                      onDone={async (health) => setBatteryHealthFromInspection(health)}
+                                      onCancel={closePanel}
+                                      isComplaint
+                                    />
+                                  </div>
+
+                                  <div className="flex justify-end gap-3 mt-3">
+                                    <button
+                                      disabled={isProcessingComplaint}
+                                      onClick={async () => {
+                                        try {
+                                          if (!complaintDetail?.id) return toast.error("❌ Không tìm thấy complaintId!");
+                                          setIsProcessingComplaint(true);
+                                          await resolveComplaint(
+                                            complaintDetail.id,
+                                            "Confirmed",
+                                            "Xác nhận pin lỗi, chuẩn bị Re-swap."
+                                          );
+                                          toast.success("✅ Đã xác nhận lỗi, tiến hành Re-swap...");
+                                          await finalizeComplaintReswap(
+                                            complaintDetail.id,
+                                            String(stationId),
+                                            batteryHealthFromInspection
+                                          );
+                                          toast.success("⚡ Hoàn tất đổi pin miễn phí (Re-swap)!");
+                                          if (selectedId) await refreshReservationRow(selectedId);
+                                          setComplaintDetail(null);
+                                          closePanel(true);
+                                        } catch (err: any) {
+                                          toast.error(err?.response?.data?.message || "Hoàn tất Re-swap thất bại!");
+                                        } finally { setIsProcessingComplaint(false); }
+                                      }}
+                                      className={`${isProcessingComplaint ? "bg-emerald-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"} rounded px-4 py-2 text-sm text-white`}
+                                    >
+                                      ✅ Xác nhận lỗi (Re-swap)
+                                    </button>
+
+                                    <button
+                                      disabled={isProcessingComplaint}
+                                      onClick={async () => {
+                                        try {
+                                          if (!complaintDetail?.id) return toast.error("❌ Không tìm thấy complaintId!");
+                                          const notes = prompt("Nhập ghi chú từ chối (ít nhất 10 ký tự):");
+                                          if (!notes || notes.trim().length < 10) return toast.error("Ghi chú phải ít nhất 10 ký tự!");
+                                          setIsProcessingComplaint(true);
+                                          await resolveComplaint(complaintDetail.id, "Rejected", notes.trim());
+                                          toast.success("🚫 Đã từ chối khiếu nại.");
+                                          if (selectedId) await refreshReservationRow(selectedId);
+                                          setComplaintDetail(null);
+                                          closePanel(true);
+                                        } catch (err: any) {
+                                          toast.error(err?.response?.data?.message || "Từ chối khiếu nại thất bại!");
+                                        } finally { setIsProcessingComplaint(false); }
+                                      }}
+                                      className={`${isProcessingComplaint ? "bg-rose-400 cursor-not-allowed" : "bg-rose-600 hover:bg-rose-700"} rounded px-4 py-2 text-sm text-white`}
+                                    >
+                                      ❌ Từ chối khiếu nại
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {stage === "readyToSwap" && selected && (
+                                <div className="rounded-2xl border border-orange-200 bg-white p-4 shadow-sm">
+                                  <SwapPanel
+                                    reservation={selected}
+                                    stationId={String(stationId)}
+                                    initialBatteryHealth={batteryHealthFromInspection}
+                                    initialNote={noteFromInspection}
+                                    onSwapped={async () => {
+                                      if (selectedId) {
+                                        await refreshReservationRow(selectedId);
+                                        setList((prev) =>
+                                          prev.map((x) =>
+                                            x.reservationId === selectedId ? { ...x, status: "Completed" } : x
+                                          )
+                                        );
+                                      }
+                                      toast.success("✅ Hoàn tất đổi pin.");
+                                      closePanel(true);
+                                    }}
+                                    onCancel={closePanel}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                      </React.Fragment>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Modal quét QR giữ nguyên */}
       <CheckInManagement
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}

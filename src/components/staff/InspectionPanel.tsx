@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { type Reservation } from "../../services/staff/staffApi";
+// src/components/staff/InspectionPanel.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { type Reservation, getUserNameById } from "../../services/staff/staffApi";
 import { CheckCircle } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -7,17 +8,6 @@ const toastOpts = {
   position: "top-right" as const,
   autoClose: 2200,
   closeOnClick: true,
-};
-const TOAST_ID = {
-  fetchOk: "q-f-ok",
-  fetchErr: "q-f-err",
-  namesErr: "q-names-err",
-  noTargetWarn: "q-no-target",
-  checkinOk: "q-ci-ok",
-  checkinErr: "q-ci-err",
-  refreshInfo: "q-refresh",
-  afterInspectOk: "q-inspect-ok",
-  closeInfo: "q-close-info",
 };
 
 type Props = {
@@ -27,6 +17,30 @@ type Props = {
   isComplaint?: boolean;
 };
 
+/* ===== Helpers hiển thị (không thay đổi logic dữ liệu) ===== */
+function getVehicleName(r: any): string {
+  return (
+    r?.vehicleName ||
+    r?.vehicleModelName ||
+    r?.vehicle?.vehicleModel?.name ||
+    r?.vehicle?.modelName ||
+    r?.vehicleModel ||
+    "—"
+  );
+}
+
+function getPlate(r: any): string {
+  const p =
+    r?.licensePlate ||
+    r?.vehiclePlate ||
+    r?.vehicle?.plateNumber ||
+    r?.vehicle?.licensePlate ||
+    r?.vehicle?.plate ||
+    r?.plate ||
+    "";
+  return (p || "—").toString().toUpperCase();
+}
+
 export default function InspectionPanel({
   reservation,
   onDone,
@@ -35,6 +49,28 @@ export default function InspectionPanel({
 }: Props) {
   const [batteryHealth, setBatteryHealth] = useState<number>(85); // % pin cũ
   const [notes, setNotes] = useState("");
+  const [loadedName, setLoadedName] = useState<string>("");
+
+  // ⭐ Nạp tên khách theo userId (dùng cache có sẵn), chỉ khi reservation.userName trống
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!reservation?.userName && reservation?.userId) {
+        try {
+          const name = await getUserNameById(reservation.userId);
+          if (mounted) setLoadedName(name);
+        } catch {
+          // bỏ qua, sẽ fallback Khách #xxxx
+        }
+      } else {
+        // nếu đã có userName từ list thì giữ nguyên
+        setLoadedName(reservation.userName || "");
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [reservation.userId, reservation.userName, reservation.reservationId]);
 
   // Thông số tham khảo (ngẫu nhiên)
   const metrics = useMemo(
@@ -48,28 +84,24 @@ export default function InspectionPanel({
 
   const finish = () => {
     if (batteryHealth < 0 || batteryHealth > 100) {
-      // ❗ 1 toast cảnh báo khi % không hợp lệ
       toast.warning("Vui lòng nhập % pin cũ trong khoảng 0-100.", {
         ...toastOpts,
         toastId: "insp-invalid-health",
       });
       return;
     }
-
-    // ⭐ DEBUG: Log để kiểm tra notes có giá trị không
-    console.log("🔍 InspectionPanel - finish called with:", {
-      batteryHealth,
-      notes,
-      notesLength: notes?.length || 0,
-    });
-
-    // ✅ 1 toast xác nhận lưu
     toast.success("Đã lưu kết quả kiểm tra pin.", {
       ...toastOpts,
       toastId: "insp-finish",
     });
     onDone(batteryHealth, notes);
   };
+
+  // Tên hiển thị (ưu tiên userName -> loadedName -> Khách #xxxx)
+  const customerLabel =
+    reservation.userName ||
+    loadedName ||
+    (reservation.userId ? `Khách #${String(reservation.userId).slice(-4)}` : "—");
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -83,9 +115,7 @@ export default function InspectionPanel({
 
         {/* % Pin cũ */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            % Pin cũ (0-100)
-          </label>
+          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
           <input
             type="number"
             min="0"
@@ -95,9 +125,7 @@ export default function InspectionPanel({
             onChange={(e) => setBatteryHealth(Number(e.target.value))}
             placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Nhập % dung lượng pin còn lại (0-100%).
-          </p>
+          <p className="mt-1 text-xs text-gray-500">Nhập % dung lượng pin còn lại (0-100%).</p>
         </div>
 
         {/* Ghi chú */}
@@ -133,7 +161,6 @@ export default function InspectionPanel({
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Ẩn nút Hoàn tất kiểm tra nếu đang xử lý khiếu nại */}
           {!isComplaint && (
             <button
               onClick={finish}
@@ -143,15 +170,8 @@ export default function InspectionPanel({
               Hoàn tất kiểm tra
             </button>
           )}
-
           <button
-            onClick={() => {
-              onCancel();
-              toast.info("Đã đóng kiểm tra pin.", {
-                ...toastOpts,
-                toastId: "insp-cancel",
-              });
-            }}
+            onClick={onCancel}
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
           >
             Đóng
@@ -162,26 +182,22 @@ export default function InspectionPanel({
       {/* RIGHT: Thông tin đặt lịch */}
       <aside className="rounded-2xl bg-white shadow-lg p-5">
         <h4 className="text-sm font-semibold mb-3">Thông tin đặt lịch</h4>
-        <dl className="space-y-2 text-sm text-gray-700">
-          <div className="flex justify-between">
-            <dt className="text-gray-500">Khách</dt>
-            <dd className="font-medium">{reservation.userName || "—"}</dd>
+
+        <div className="grid grid-cols-2 gap-y-2 text-sm">
+          <div className="text-gray-500">Khách</div>
+          <div className="font-medium text-gray-900">{customerLabel}</div>
+
+          <div className="text-gray-500">Xe</div>
+          <div className="font-medium text-gray-900">{getVehicleName(reservation)}</div>
+
+          <div className="text-gray-500">Biển số</div>
+          <div className="font-medium font-mono text-gray-900">{getPlate(reservation)}</div>
+
+          <div className="text-gray-500">Model pin</div>
+          <div className="font-semibold text-gray-900">
+            {reservation.batteryModelName || reservation.batteryModelId || "—"}
           </div>
-          <div className="flex justify-between">
-            <dt className="text-gray-500">Xe</dt>
-            <dd className="font-medium">
-              {reservation.vehiclePlate || reservation.vehicleModelName || "—"}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-gray-500">Model pin</dt>
-            <dd className="font-medium">
-              {reservation.batteryModelName ||
-                reservation.batteryModelId ||
-                "—"}
-            </dd>
-          </div>
-        </dl>
+        </div>
       </aside>
     </div>
   );

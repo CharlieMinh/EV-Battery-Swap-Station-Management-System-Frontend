@@ -40,7 +40,7 @@ const RequestBattery = () => {
   const [selectedGroup, setSelectedGroup] = useState<GroupedRequest | null>(null);
   const [showCheckModal, setShowCheckModal] = useState(false);
 
-  // Fetch requests từ API (giữ nguyên luồng)
+  // Fetch requests từ API (GIỮ NGUYÊN LUỒNG)
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -65,7 +65,7 @@ const RequestBattery = () => {
     fetchRequests();
   }, []);
 
-  // Gộp các requests có cùng createdAt (±3s), cùng admin & station (giữ nguyên thuật toán)
+  // Gộp các requests có cùng createdAt (±3s), cùng admin & station (GIỮ NGUYÊN THUẬT TOÁN)
   const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
     if (!data || data.length === 0) {
       setGroupedRequests([]);
@@ -172,9 +172,10 @@ const RequestBattery = () => {
     fetchRequests(); // Refresh danh sách sau khi xong (giữ nguyên ý định)
   };
 
+  /* ======= Loading (đồng bộ style) ======= */
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center py-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Đang tải...</p>
@@ -184,14 +185,22 @@ const RequestBattery = () => {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-orange-600">Yêu Cầu Nhập Pin</h1>
-        <p className="text-gray-600 mt-2">Quản lý các yêu cầu nhập pin từ Admin</p>
-      </div>
+    <div className="container mx-auto space-y-6">
+      {/* Header card đồng bộ */}
+      <Card className="rounded-2xl shadow-lg border border-orange-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold text-orange-600">
+            Yêu cầu nhập pin
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Quản lý các yêu cầu nhập pin từ Admin
+          </p>
+        </CardHeader>
+      </Card>
 
+      {/* List / Empty state */}
       {groupedRequests.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl border border-orange-200">
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -204,7 +213,7 @@ const RequestBattery = () => {
           {groupedRequests.map((group, index) => (
             <Card
               key={index}
-              className="hover:shadow-lg transition-shadow border border-orange-200"
+              className="rounded-2xl hover:shadow-lg transition-shadow border border-orange-200"
             >
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
@@ -212,7 +221,7 @@ const RequestBattery = () => {
                     <CardTitle className="text-lg font-semibold text-gray-800">
                       Lô hàng #{groupedRequests.length - index}
                     </CardTitle>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <User className="w-4 h-4" />
                         <span>{group.adminName}</span>
@@ -230,8 +239,10 @@ const RequestBattery = () => {
                   {getStatusBadge(group.status)}
                 </div>
               </CardHeader>
+
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-3">
+                  {/* Items trong lô */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {group.requests.map((req) => (
                       <div
@@ -248,19 +259,17 @@ const RequestBattery = () => {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t">
+                  {/* Tổng + Action */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t">
                     <div className="text-sm text-gray-600">
                       <span className="font-semibold">Tổng số lượng:</span>{" "}
-                      <span className="text-orange-600 font-bold">
-                        {group.totalItems}
-                      </span>{" "}
-                      pin
+                      <span className="text-orange-600 font-bold">{group.totalItems}</span> pin
                     </div>
 
                     {group.status === 0 ? (
                       <Button
                         onClick={() => handleCheckRequest(group)}
-                        className="bg-orange-600 hover:bg-orange-700"
+                        className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Kiểm tra hàng
@@ -269,7 +278,7 @@ const RequestBattery = () => {
                       <Button
                         onClick={() => handleCheckRequest(group)}
                         variant="outline"
-                        className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                        className="h-10 rounded-lg border-orange-600 text-orange-600 hover:bg-orange-50"
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Xem chi tiết
@@ -277,7 +286,7 @@ const RequestBattery = () => {
                     )}
                   </div>
 
-                  {/* Hiển thị notes nếu đã xử lý */}
+                  {/* Notes nếu đã xử lý (GIỮ LOGIC) */}
                   {group.requests[0].staffNotes && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
@@ -298,7 +307,7 @@ const RequestBattery = () => {
         </div>
       )}
 
-      {/* Modal kiểm tra/chỉnh sửa */}
+      {/* Modal kiểm tra/chỉnh sửa (GIỮ) */}
       {showCheckModal && selectedGroup && (
         <CheckRequest group={selectedGroup} onClose={handleCloseModal} />
       )}
