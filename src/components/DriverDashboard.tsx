@@ -324,8 +324,15 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
         setBookingStep(5);
       } catch (error: any) {
         console.error("Lỗi khi đặt lịch bằng gói:", error);
-        const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
-        toast.error(backendErrorMessage || t("driver.booking.errorGeneric"));
+
+        // ⭐ Lấy message lỗi từ nhiều nguồn có thể
+        const backendErrorMessage =
+          error?.response?.data?.error?.message ||  // Lỗi có wrapper
+          error?.response?.data?.message ||         // Lỗi thông thường
+          error?.message ||                         // Network error
+          t("driver.booking.errorGeneric");
+
+        toast.error(backendErrorMessage);
       } finally {
         setIsBooking(false);
       }
@@ -362,17 +369,24 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
 
         const result = response.data;
 
+        // ⭐ Kiểm tra success trước để bắt lỗi từ backend
+        if (!result.success) {
+          toast.error(result.message || "Không thể tạo đặt lịch.");
+          setIsBooking(false);
+          return;
+        }
+
         if (methodToUse === 0) { // VNPay
-          if (result.success && result.paymentUrl) {
+          if (result.paymentUrl) {
             toast.loading("Đang chuyển hướng đến cổng thanh toán...");
             window.location.href = result.paymentUrl;
           } else {
-            console.error("Failed to get VNPay URL or Success is false:", result);
+            console.error("Failed to get VNPay URL:", result);
             toast.error(result.message || "Không thể tạo link thanh toán VNPay.");
             setIsBooking(false);
           }
         } else { // Cash (methodToUse === 1)
-          if (result.success && result.qrCode) {
+          if (result.qrCode) {
             toast.success(result.message || "Đặt lịch thanh toán tiền mặt thành công!");
             setBookingResult(result);
             // ❌ XÓA: setActiveReservation(result); // SwapStatus sẽ tự fetch
@@ -380,15 +394,23 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             // ❌ XÓA: getReservation(); // SwapStatus sẽ tự fetch
             setIsBooking(false);
           } else {
-            console.error("Failed to create Cash reservation or Success is false:", result);
+            console.error("Failed to create Cash reservation:", result);
             toast.error(result.message || "Không thể tạo lịch hẹn tiền mặt.");
             setIsBooking(false);
           }
         }
       } catch (error: any) {
         console.error("Lỗi khi gọi API tạo thanh toán:", error);
-        const backendErrorMessage = error?.response?.data?.message || error?.response?.data?.errors?.Amount?.[0];
-        toast.error(backendErrorMessage || "Không thể tạo yêu cầu thanh toán. Vui lòng thử lại.");
+
+        // ⭐ Lấy message lỗi từ nhiều nguồn có thể
+        const backendErrorMessage =
+          error?.response?.data?.message ||           // Lỗi thông thường
+          error?.response?.data?.error?.message ||    // Lỗi có wrapper
+          error?.response?.data?.errors?.Amount?.[0] ||  // Validation error
+          error?.message ||                           // Network error
+          "Không thể tạo yêu cầu thanh toán. Vui lòng thử lại.";
+
+        toast.error(backendErrorMessage);
         setIsBooking(false);
       }
     }
