@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Loader2, RefreshCw, AlertCircle, CreditCard, Landmark, CalendarDays, Tag, ChevronLeft, ChevronRight, X, Filter, DollarSign } from 'lucide-react';
+import { Loader2, RefreshCw, AlertCircle, CreditCard, Landmark, CalendarDays, Tag, ChevronLeft, ChevronRight, X, Filter, DollarSign, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import {
     Select,
     SelectContent,
@@ -49,39 +51,42 @@ interface MyPaymentsApiResponse {
 }
 
 export function MyPaymentsPage() {
-    const [pendingPayments, setPendingPayments] = useState<MyPaymentItem[]>([]);
+    const [allPayments, setAllPayments] = useState<MyPaymentItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [switchingId, setSwitchingId] = useState<string | null>(null); // Lưu ID của payment đang đổi sang tiền mặt
+    const [switchingId, setSwitchingId] = useState<string | null>(null);
 
     // Filter states
     const [filterType, setFilterType] = useState<string>('all'); // 'all', 'Subscription', 'PayPerSwap'
-    const [filterPriceRange, setFilterPriceRange] = useState<string>('all'); // 'all', '0-100k', '100k-500k', '500k+'
+    const [filterStatus, setFilterStatus] = useState<string>('all'); // 'all', 'Pending', 'Paid', 'Completed'
+    const [minPrice, setMinPrice] = useState<string>('');
+    const [maxPrice, setMaxPrice] = useState<string>('');
+    const [filterDate, setFilterDate] = useState<string>(''); // Date filter
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 6;
 
-    // Hàm gọi API lấy danh sách payment đang chờ (Pending) của user
-    const fetchMyPendingPayments = async () => {
+    // Hàm gọi API lấy tất cả payment của user (không giới hạn status)
+    const fetchMyPayments = async () => {
         setLoading(true);
         setError(null);
         try {
+            // Gọi API không truyền status để lấy tất cả
             const response = await axios.get<MyPaymentsApiResponse>(
-                'http://localhost:5194/api/v1/payments/my-payments', // URL API của bạn
+                'http://localhost:5194/api/v1/payments/my-payments',
                 {
                     params: {
-                        status: 0,
-                        pageSize: 50,
+                        pageSize: 100, // Lấy nhiều hơn để có đủ dữ liệu
                     },
                     withCredentials: true,
                 }
             );
-            setPendingPayments(response.data.payments || []);
+            setAllPayments(response.data.payments || []);
         } catch (err: any) {
             console.error("Lỗi khi tải hóa đơn:", err);
             setError("Không thể tải hóa đơn. Vui lòng thử lại.");
-            setPendingPayments([]);
+            setAllPayments([]);
         } finally {
             setLoading(false);
         }
@@ -89,37 +94,60 @@ export function MyPaymentsPage() {
 
     // Gọi API khi component được mount
     useEffect(() => {
-        fetchMyPendingPayments();
+        fetchMyPayments();
     }, []);
 
-    // Filter & Search Logic
-    const filteredPayments = pendingPayments.filter((payment) => {
-        // Type filter
-        const matchesType = filterType === 'all' || payment.type === filterType;
+    // Filter & Sort Logic
+    const filteredAndSortedPayments = allPayments
+        .filter((payment) => {
+            // Type filter
+            const matchesType = filterType === 'all' || payment.type === filterType;
 
-        // Price range filter
-        let matchesPrice = true;
-        if (filterPriceRange === '0-100k') {
-            matchesPrice = payment.amount <= 100000;
-        } else if (filterPriceRange === '100k-500k') {
-            matchesPrice = payment.amount > 100000 && payment.amount <= 500000;
-        } else if (filterPriceRange === '500k+') {
-            matchesPrice = payment.amount > 500000;
-        }
+            // Status filter
+            const matchesStatus = filterStatus === 'all' ||
+                (filterStatus === 'Pending' && payment.status.toLowerCase() === 'pending') ||
+                (filterStatus === 'Paid' && payment.status.toLowerCase() === 'paid') ||
+                (filterStatus === 'Completed' && payment.status.toLowerCase() === 'completed');
 
-        return matchesType && matchesPrice;
-    });
+            // Price filter
+            let matchesPrice = true;
+            if (minPrice) {
+                const min = Number(minPrice);
+                if (!isNaN(min)) matchesPrice = matchesPrice && payment.amount >= min;
+            }
+            if (maxPrice) {
+                const max = Number(maxPrice);
+                if (!isNaN(max)) matchesPrice = matchesPrice && payment.amount <= max;
+            }
+
+            // Date filter
+            const matchesDate = !filterDate ||
+                format(new Date(payment.createdAt), 'yyyy-MM-dd') === filterDate;
+
+            return matchesType && matchesStatus && matchesPrice && matchesDate;
+        })
+        .sort((a, b) => {
+            // Sắp xếp: Pending/Cash trước, Paid/Completed sau
+            const aIsPending = a.status.toLowerCase() === 'pending';
+            const bIsPending = b.status.toLowerCase() === 'pending';
+
+            if (aIsPending && !bIsPending) return -1;
+            if (!aIsPending && bIsPending) return 1;
+
+            // Cùng loại thì sắp xếp theo ngày mới nhất
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
 
     // Pagination
-    const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredAndSortedPayments.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentPayments = filteredPayments.slice(startIndex, endIndex);
+    const currentPayments = filteredAndSortedPayments.slice(startIndex, endIndex);
 
     // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [filterType, filterPriceRange]);
+    }, [filterType, filterStatus, minPrice, maxPrice, filterDate]);
 
     // Hàm xử lý khi User bấm "Đổi sang Tiền mặt"
     const handleSwitchToCash = async (paymentId: string) => {
@@ -137,7 +165,7 @@ export function MyPaymentsPage() {
             if (response.data.success) {
                 toast.success(response.data.message || 'Đã đổi sang thanh toán tiền mặt!');
                 // Cập nhật lại danh sách: tìm payment vừa đổi và cập nhật method
-                setPendingPayments(prevPayments =>
+                setAllPayments(prevPayments =>
                     prevPayments.map(p =>
                         p.id === paymentId ? { ...p, method: 'Cash' } : p
                     )
@@ -169,7 +197,7 @@ export function MyPaymentsPage() {
             <div className="text-center py-10 text-red-600">
                 <AlertCircle className="h-8 w-8 mx-auto mb-2" />
                 <p>{error}</p>
-                <Button onClick={fetchMyPendingPayments} variant="outline" className="mt-4">
+                <Button onClick={fetchMyPayments} variant="outline" className="mt-4">
                     <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
                 </Button>
             </div>
@@ -182,13 +210,13 @@ export function MyPaymentsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-                        Hóa đơn chờ thanh toán
+                        Hóa đơn của tôi
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Quản lý các hóa đơn đang chờ thanh toán của bạn
+                        Quản lý tất cả hóa đơn của bạn
                     </p>
                 </div>
-                <Button onClick={fetchMyPendingPayments} variant="outline" size="sm" disabled={loading || !!switchingId} className="gap-2">
+                <Button onClick={fetchMyPayments} variant="outline" size="sm" disabled={loading || !!switchingId} className="gap-2">
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                     Làm mới
                 </Button>
@@ -197,60 +225,114 @@ export function MyPaymentsPage() {
             {/* Filters */}
             <Card className="border-2">
                 <CardContent className="pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         {/* Filter by Type */}
-                        <Select value={filterType} onValueChange={setFilterType}>
-                            <SelectTrigger className="w-full">
-                                <Filter className="h-4 w-4 mr-2" />
-                                <SelectValue placeholder="Loại hóa đơn" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả loại</SelectItem>
-                                <SelectItem value="Subscription">Mua gói</SelectItem>
-                                <SelectItem value="PayPerSwap">Đặt lẻ</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div>
+                            <Label className="mb-2 block text-xs text-gray-600">Loại hóa đơn</Label>
+                            <Select value={filterType} onValueChange={setFilterType}>
+                                <SelectTrigger className="w-full">
+                                    <Filter className="h-4 w-4 mr-2" />
+                                    <SelectValue placeholder="Loại hóa đơn" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả loại</SelectItem>
+                                    <SelectItem value="Subscription">Mua gói</SelectItem>
+                                    <SelectItem value="PayPerSwap">Đặt lẻ</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        {/* Filter by Price */}
-                        <Select value={filterPriceRange} onValueChange={setFilterPriceRange}>
-                            <SelectTrigger className="w-full">
-                                <DollarSign className="h-4 w-4 mr-2" />
-                                <SelectValue placeholder="Khoảng giá" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả giá</SelectItem>
-                                <SelectItem value="0-100k">Dưới 100k</SelectItem>
-                                <SelectItem value="100k-500k">100k - 500k</SelectItem>
-                                <SelectItem value="500k+">Trên 500k</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {/* Filter by Status */}
+                        <div>
+                            <Label className="mb-2 block text-xs text-gray-600">Trạng thái</Label>
+                            <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                <SelectTrigger className="w-full">
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    <SelectValue placeholder="Trạng thái" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả</SelectItem>
+                                    <SelectItem value="Pending">Chờ thanh toán</SelectItem>
+                                    <SelectItem value="Paid">Đã thanh toán</SelectItem>
+                                    <SelectItem value="Completed">Hoàn tất</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        {/* Clear filters button */}
+                        {/* Min Price */}
+                        <div>
+                            <Label className="mb-2 block text-xs text-gray-600">Giá tối thiểu</Label>
+                            <div className="relative">
+                                <Input
+                                    type="text"
+                                    placeholder="VD: 100.000"
+                                    value={minPrice ? Number(minPrice).toLocaleString('vi-VN') : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setMinPrice(value);
+                                    }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">đ</span>
+                            </div>
+                        </div>
+
+                        {/* Max Price */}
+                        <div>
+                            <Label className="mb-2 block text-xs text-gray-600">Giá tối đa</Label>
+                            <div className="relative">
+                                <Input
+                                    type="text"
+                                    placeholder="VD: 1.000.000"
+                                    value={maxPrice ? Number(maxPrice).toLocaleString('vi-VN') : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setMaxPrice(value);
+                                    }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">đ</span>
+                            </div>
+                        </div>
+
+                        {/* Date Filter */}
+                        <div>
+                            <Label className="mb-2 block text-xs text-gray-600">Ngày tạo</Label>
+                            <input
+                                type="date"
+                                className="h-10 w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors"
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Clear filters button */}
+                    <div className="mt-4 flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                            Hiển thị <span className="font-semibold text-orange-600">{currentPayments.length}</span> / {filteredAndSortedPayments.length} hóa đơn
+                            {filteredAndSortedPayments.length !== allPayments.length && (
+                                <span className="text-gray-400"> (đã lọc từ {allPayments.length})</span>
+                            )}
+                        </div>
                         <Button
                             variant="outline"
+                            size="sm"
                             onClick={() => {
                                 setFilterType('all');
-                                setFilterPriceRange('all');
+                                setFilterStatus('all');
+                                setMinPrice('');
+                                setMaxPrice('');
+                                setFilterDate('');
                             }}
-                            disabled={filterType === 'all' && filterPriceRange === 'all'}
-                            className="w-full"
+                            disabled={filterType === 'all' && filterStatus === 'all' && !minPrice && !maxPrice && !filterDate}
                         >
                             <X className="h-4 w-4 mr-2" />
                             Xóa bộ lọc
                         </Button>
                     </div>
-
-                    {/* Filter summary */}
-                    <div className="mt-4 text-sm text-gray-600">
-                        Hiển thị <span className="font-semibold text-orange-600">{currentPayments.length}</span> / {filteredPayments.length} hóa đơn
-                        {filteredPayments.length !== pendingPayments.length && (
-                            <span className="text-gray-400"> (đã lọc từ {pendingPayments.length})</span>
-                        )}
-                    </div>
                 </CardContent>
             </Card>
 
-            {filteredPayments.length === 0 ? (
+            {filteredAndSortedPayments.length === 0 ? (
                 <Card>
                     <CardContent className="py-12">
                         <div className="text-center text-gray-500">
@@ -267,18 +349,30 @@ export function MyPaymentsPage() {
                         {currentPayments.map((payment) => {
                             const isVnPay = payment.method.toLowerCase() === 'vnpay';
                             const isCash = payment.method.toLowerCase() === 'cash';
+                            const isPending = payment.status.toLowerCase() === 'pending';
+                            const isPaid = payment.status.toLowerCase() === 'paid' || payment.status.toLowerCase() === 'completed';
                             const isLoadingThis = switchingId === payment.id;
 
                             return (
-                                <Card key={payment.id} className={`flex flex-col ${isCash ? 'border-green-200 bg-green-50/30' : ''}`}>
+                                <Card key={payment.id} className={`flex flex-col ${isCash ? 'border-green-200 bg-green-50/30' :
+                                        isPaid ? 'border-gray-200 bg-gray-50/30' : ''
+                                    }`}>
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
                                             <span className="text-lg font-semibold text-orange-600">
                                                 {payment.amount.toLocaleString('vi-VN')} VND
                                             </span>
-                                            <Badge variant={payment.type === 'Subscription' ? 'default' : 'secondary'}>
-                                                {payment.type === 'Subscription' ? 'Mua gói' : 'Đặt lẻ'}
-                                            </Badge>
+                                            <div className="flex gap-2">
+                                                <Badge variant={payment.type === 'Subscription' ? 'default' : 'secondary'}>
+                                                    {payment.type === 'Subscription' ? 'Mua gói' : 'Đặt lẻ'}
+                                                </Badge>
+                                                {isPaid && (
+                                                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                                                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                        Đã xong
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </CardTitle>
                                         <CardDescription className="flex items-center pt-1">
                                             <CalendarDays className="w-4 h-4 mr-1.5 text-gray-500" />
@@ -292,28 +386,34 @@ export function MyPaymentsPage() {
                                                 <span className="text-gray-700">{payment.subscriptionPlanName || payment.description}</span>
                                             </div>
                                         )}
-                                        {isVnPay && (
+                                        {isPending && isVnPay && (
                                             <div className="flex items-start p-3 bg-blue-50 border border-blue-200 rounded-md">
                                                 <CreditCard className="w-4 h-4 mr-2 mt-0.5 text-blue-600 flex-shrink-0" />
                                                 <span className="text-blue-700">Đang chờ thanh toán qua VNPay.</span>
                                             </div>
                                         )}
-                                        {isCash && (
+                                        {isPending && isCash && (
                                             <div className="flex items-start p-3 bg-green-50 border border-green-200 rounded-md">
                                                 <Landmark className="w-4 h-4 mr-2 mt-0.5 text-green-600 flex-shrink-0" />
                                                 <span className="text-green-700">Đang chờ thanh toán tiền mặt tại trạm.</span>
                                             </div>
                                         )}
+                                        {isPaid && (
+                                            <div className="flex items-start p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                                <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 text-gray-600 flex-shrink-0" />
+                                                <span className="text-gray-700">Đã hoàn tất thanh toán.</span>
+                                            </div>
+                                        )}
                                     </CardContent>
                                     <div className="p-4 pt-0">
-                                        {/* Chỉ hiển thị nút Đổi sang Tiền mặt nếu đang là VNPay */}
-                                        {isVnPay && (
+                                        {/* Chỉ hiển thị nút Đổi sang Tiền mặt nếu đang là VNPay và Pending */}
+                                        {isPending && isVnPay && (
                                             <Button
                                                 variant="outline"
                                                 className="w-full"
                                                 size="sm"
                                                 onClick={() => handleSwitchToCash(payment.id)}
-                                                disabled={isLoadingThis || !!switchingId} // Disable nếu đang xử lý
+                                                disabled={isLoadingThis || !!switchingId}
                                             >
                                                 {isLoadingThis ? (
                                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -323,13 +423,13 @@ export function MyPaymentsPage() {
                                                 Đổi sang thanh toán Tiền mặt
                                             </Button>
                                         )}
-                                        {/* Hiển thị nút Thanh toán (bị vô hiệu hóa) vì chúng ta không thể lấy lại link */}
-                                        {isVnPay && (
+                                        {/* Hiển thị nút Thanh toán (bị vô hiệu hóa) */}
+                                        {isPending && isVnPay && (
                                             <Button
                                                 variant="default"
                                                 className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
                                                 size="sm"
-                                                disabled={true} // Bị vô hiệu hóa
+                                                disabled={true}
                                             >
                                                 <CreditCard className="mr-2 h-4 w-4" />
                                                 Thanh toán VNPay (Đã hết hạn link)

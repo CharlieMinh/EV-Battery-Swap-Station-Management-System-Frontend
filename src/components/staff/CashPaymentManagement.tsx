@@ -35,26 +35,65 @@ import {
 } from "../ui/select";
 
 /* =========================
- * Interfaces (GIỮ NGUYÊN)
+ * Interfaces
  * ========================= */
-interface PaymentListItem {
+interface VehicleInfo {
   id: string;
-  userId: string;
-  userName?: string | null;
-  userEmail?: string | null;
-  userPhone?: string | null;
-  userSubscriptionId?: string | null;
-  subscriptionPlanName?: string | null;
-  reservationId?: string | null;
+  plate: string;
+  vin?: string | null;
+  vehicleModelName?: string | null;
+}
+
+interface ReservationInfo {
+  id: string;
+  slotDate: string;
+  slotStartTime: string;
+  slotEndTime: string;
+  status: string;
+}
+
+interface SubscriptionPlanInfo {
+  id: string;
+  name: string;
+  monthlyPrice: number;
+  maxSwapsPerMonth: number;
+  batteryModelName: string;
+}
+
+interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber?: string | null;
+}
+
+interface StationInfo {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface PaymentDetailInfo {
+  amount: number;
   method: string;
   type: string;
-  amount: number;
-  status: string;
-  description?: string | null;
   createdAt: string;
   completedAt?: string | null;
-  processedByStaffId?: string | null;
-  processedByStaffName?: string | null;
+  description?: string | null;
+  user: UserInfo;
+  subscriptionPlan?: SubscriptionPlanInfo | null;
+  vehicle?: VehicleInfo | null;
+  reservation?: ReservationInfo | null;
+  processedByStaff?: any | null;
+  station?: StationInfo | null;
+}
+
+interface PendingCashPaymentItem {
+  success: boolean;
+  paymentId: string;
+  status: string;
+  message: string;
+  paymentDetail: PaymentDetailInfo;
 }
 
 interface ConfirmResponse {
@@ -77,7 +116,7 @@ function getAxiosErrorMessage(err: any) {
 }
 
 export function StaffCashPaymentManagement() {
-  const [payments, setPayments] = useState<PaymentListItem[]>([]);
+  const [payments, setPayments] = useState<PendingCashPaymentItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -93,18 +132,18 @@ export function StaffCashPaymentManagement() {
   const itemsPerPage = 3; // giữ nguyên
 
   /* =========================
-   * Fetch pending cash payments (GIỮ NGUYÊN LOGIC)
+   * Fetch pending cash payments - GỌI API MỚI
    * ========================= */
   const fetchPendingCashPayments = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get<{ payments: PaymentListItem[] }>(
-        "http://localhost:5194/api/v1/payments",
-        { params: { status: 0, method: 1, pageSize: 100 }, withCredentials: true }
+      const response = await axios.get<PendingCashPaymentItem[]>(
+        "http://localhost:5194/api/v1/payments/pending-cash",
+        { withCredentials: true }
       );
 
-      const list = response.data.payments || [];
+      const list = response.data || [];
       setPayments(list);
 
       toast.success(
@@ -131,31 +170,34 @@ export function StaffCashPaymentManagement() {
   }, []);
 
   /* =========================
-   * Filter & Search Logic (GIỮ)
+   * Filter & Search Logic
    * ========================= */
   const filteredPayments = payments.filter((payment) => {
+    const detail = payment.paymentDetail;
     const searchLower = searchText.toLowerCase().trim();
     const matchesSearch =
       !searchLower ||
-      payment.userName?.toLowerCase().includes(searchLower) ||
-      payment.userPhone?.toLowerCase().includes(searchLower) ||
-      payment.userEmail?.toLowerCase().includes(searchLower);
+      detail.user.name?.toLowerCase().includes(searchLower) ||
+      detail.user.phoneNumber?.toLowerCase().includes(searchLower) ||
+      detail.user.email?.toLowerCase().includes(searchLower) ||
+      detail.vehicle?.plate?.toLowerCase().includes(searchLower) ||
+      detail.vehicle?.vin?.toLowerCase().includes(searchLower);
 
-    const matchesType = filterType === "all" || payment.type === filterType;
+    const matchesType = filterType === "all" || detail.type === filterType;
 
     let matchesPrice = true;
     if (filterPriceRange === "0-100k") {
-      matchesPrice = payment.amount <= 100000;
+      matchesPrice = detail.amount <= 100000;
     } else if (filterPriceRange === "100k-500k") {
-      matchesPrice = payment.amount > 100000 && payment.amount <= 500000;
+      matchesPrice = detail.amount > 100000 && detail.amount <= 500000;
     } else if (filterPriceRange === "500k+") {
-      matchesPrice = payment.amount > 500000;
+      matchesPrice = detail.amount > 500000;
     }
 
-    // filterDate chưa render chọn trong UI -> để nguyên
+    // filterDate
     let matchesDate = true;
     if (filterDate !== "all") {
-      const paymentDate = new Date(payment.createdAt);
+      const paymentDate = new Date(detail.createdAt);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const yesterday = new Date(today);
@@ -207,7 +249,7 @@ export function StaffCashPaymentManagement() {
           ...toastOpts,
           toastId: `cash-confirm-${paymentId}`,
         });
-        setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+        setPayments((prev) => prev.filter((p) => p.paymentId !== paymentId));
       } else {
         toast.error(response.data.message || "Xác nhận thất bại.", {
           ...toastOpts,
@@ -396,103 +438,138 @@ export function StaffCashPaymentManagement() {
         <>
           {/* Cards danh sách – viền cam & bo tròn lớn đồng bộ */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentPayments.map((payment) => (
-              <Card
-                key={payment.id}
-                className="flex flex-col hover:shadow-lg transition-shadow rounded-2xl border border-orange-200"
-              >
-                <CardHeader className="pb-3">
-                  {payment.type === "Subscription" ? (
-                    <Badge className="mb-3 w-fit bg-blue-500 hover:bg-blue-600 text-white">
-                      Thanh toán Mua Gói
-                    </Badge>
-                  ) : (
-                    <Badge className="mb-3 w-fit bg-purple-500 hover:bg-purple-600 text-white">
-                      Thanh toán Đặt lịch Đổi Pin
-                    </Badge>
-                  )}
-
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg">
-                      {(payment.userName || "K")[0].toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">
-                        {payment.userName || "Khách lẻ"}
-                      </h3>
-                      {payment.userPhone && (
-                        <p className="text-sm text-gray-600 truncate">
-                          {payment.userPhone}
-                        </p>
-                      )}
-                      {payment.userEmail && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {payment.userEmail}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
-                    <p className="text-xs text-orange-700 font-medium mb-1">
-                      Số tiền thanh toán
-                    </p>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {payment.amount.toLocaleString("vi-VN")} đ
-                    </p>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="flex-grow space-y-3 text-sm pb-4">
-                  <div className="flex items-center text-gray-600 bg-gray-50 rounded-md p-2">
-                    <CalendarDays className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
-                    <span className="text-xs">
-                      {format(new Date(payment.createdAt), "HH:mm - dd/MM/yyyy", {
-                        locale: vi,
-                      })}
-                    </span>
-                  </div>
-
-                  {payment.subscriptionPlanName && (
-                    <div className="flex items-start bg-blue-50 rounded-md p-2 border border-blue-200">
-                      <Tag className="w-4 h-4 mr-2 mt-0.5 text-blue-600 flex-shrink-0" />
-                      <span className="text-blue-800 font-medium text-sm">
-                        {payment.subscriptionPlanName}
-                      </span>
-                    </div>
-                  )}
-                  {!payment.subscriptionPlanName && payment.description && (
-                    <div className="flex items-start bg-gray-50 rounded-md p-2">
-                      <Tag className="w-4 h-4 mr-2 mt-0.5 text-gray-600 flex-shrink-0" />
-                      <span className="text-gray-700 text-sm">
-                        {payment.description}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-
-                <div className="p-4 pt-0 mt-auto">
-                  <Button
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
-                    size="lg"
-                    onClick={() => handleConfirmCash(payment.id)}
-                    disabled={confirmingId === payment.id || !!confirmingId}
-                  >
-                    {confirmingId === payment.id ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang xử lý...
-                      </>
+            {currentPayments.map((payment) => {
+              const detail = payment.paymentDetail;
+              return (
+                <Card
+                  key={payment.paymentId}
+                  className="flex flex-col hover:shadow-lg transition-shadow rounded-2xl border border-orange-200"
+                >
+                  <CardHeader className="pb-3">
+                    {detail.type === "Subscription" ? (
+                      <Badge className="mb-3 w-fit bg-blue-500 hover:bg-blue-600 text-white">
+                        Thanh toán Mua Gói
+                      </Badge>
                     ) : (
-                      <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Xác nhận đã thu tiền
-                      </>
+                      <Badge className="mb-3 w-fit bg-purple-500 hover:bg-purple-600 text-white">
+                        Thanh toán Đặt lịch Đổi Pin
+                      </Badge>
                     )}
-                  </Button>
-                </div>
-              </Card>
-            ))}
+
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg">
+                        {(detail.user.name || "K")[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg text-gray-900 truncate">
+                          {detail.user.name || "Khách lẻ"}
+                        </h3>
+                        {detail.user.phoneNumber && (
+                          <p className="text-sm text-gray-600 truncate">
+                            {detail.user.phoneNumber}
+                          </p>
+                        )}
+                        {detail.user.email && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {detail.user.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                      <p className="text-xs text-orange-700 font-medium mb-1">
+                        Số tiền thanh toán
+                      </p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        {detail.amount.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="flex-grow space-y-3 text-sm pb-4">
+                    <div className="flex items-center text-gray-600 bg-gray-50 rounded-md p-2">
+                      <CalendarDays className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
+                      <span className="text-xs">
+                        {format(new Date(detail.createdAt), "HH:mm - dd/MM/yyyy", {
+                          locale: vi,
+                        })}
+                      </span>
+                    </div>
+
+                    {detail.subscriptionPlan && (
+                      <div className="flex items-start bg-blue-50 rounded-md p-2 border border-blue-200">
+                        <Tag className="w-4 h-4 mr-2 mt-0.5 text-blue-600 flex-shrink-0" />
+                        <span className="text-blue-800 font-medium text-sm">
+                          {detail.subscriptionPlan.name}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Thông tin xe - Chỉ hiển thị khi có reservation (PayPerSwap) */}
+                    {detail.vehicle && detail.type === "PayPerSwap" && (
+                      <div className="bg-purple-50 rounded-md p-3 border border-purple-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-purple-700 mb-1">Thông tin xe</p>
+                          </div>
+                        </div>
+                        <div className="pl-1 space-y-1">
+                          <p className="text-xs text-purple-700">
+                            <span className="font-medium">Biển số xe:</span> {detail.vehicle.plate}
+                          </p>
+                          {detail.vehicle.vin && (
+                            <p className="text-xs text-purple-700">
+                              <span className="font-medium">VIN:</span> {detail.vehicle.vin}
+                            </p>
+                          )}
+                          {detail.vehicle.vehicleModelName && (
+                            <p className="text-xs text-purple-700">
+                              <span className="font-medium">Dòng xe:</span> {detail.vehicle.vehicleModelName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {!detail.subscriptionPlan && detail.description && !detail.vehicle && (
+                      <div className="flex items-start bg-gray-50 rounded-md p-2">
+                        <Tag className="w-4 h-4 mr-2 mt-0.5 text-gray-600 flex-shrink-0" />
+                        <span className="text-gray-700 text-sm">
+                          {detail.description}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+
+                  <div className="p-4 pt-0 mt-auto">
+                    <Button
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                      size="lg"
+                      onClick={() => handleConfirmCash(payment.paymentId)}
+                      disabled={confirmingId === payment.paymentId || !!confirmingId}
+                    >
+                      {confirmingId === payment.paymentId ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Xác nhận đã thu tiền
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Card>
+              )
+            })}
           </div>
 
           {/* Pagination đồng bộ */}
