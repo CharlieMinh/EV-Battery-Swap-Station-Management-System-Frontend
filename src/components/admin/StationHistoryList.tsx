@@ -102,7 +102,6 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                 <div className="text-right">
                   <p className="text-sm text-gray-500">{tx.status}</p>
                   <p className="text-lg font-bold text-green-600 flex items-center justify-end gap-1">
-                    <DollarSign className="w-4 h-4" />
                     {formatCurrency(tx.swapFee)}
                   </p>
                 </div>

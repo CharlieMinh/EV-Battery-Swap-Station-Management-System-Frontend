@@ -424,12 +424,12 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 value={swapCounts.toLocaleString()}
                 color="text-blue-600"
               />
-              <StatItem
+              {/* <StatItem
                 icon={DollarSign}
                 title="Doanh thu (tháng)"
                 value={formatCurrency(revenue)}
                 color="text-green-600"
-              />
+              /> */}
               <StatItem
                 icon={BatteryCharging}
                 title="Số pin hiện có"
