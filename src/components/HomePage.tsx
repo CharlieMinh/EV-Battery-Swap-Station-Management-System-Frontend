@@ -35,6 +35,9 @@ import {
   QrCode,
   Contact,
   PhoneCall,
+  Pen,
+  CreditCardIcon,
+  AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
@@ -123,8 +126,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   useEffect(() => {
     if (isWaitingForLocation && location.loaded && !location.error) {
       const userLocation = {
-        lat: location.coordinates.lat,
-        lng: location.coordinates.lng,
+        lat: location.coordinates!.lat,
+        lng: location.coordinates!.lng,
       };
 
       setIsWaitingForLocation(false);
@@ -169,8 +172,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   const handleFineNearestStation = () => {
     if (location.loaded && !location.error) {
       const userLocation = {
-        lat: location.coordinates.lat,
-        lng: location.coordinates.lng,
+        lat: location.coordinates!.lat,
+        lng: location.coordinates!.lng,
       };
       console.log("User location:", userLocation);
       console.log("Stations:", stations);
@@ -297,6 +300,18 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       <span>Xe của tôi</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("subscription")}
+                    >
+                      <Pen className="mr-2 h-4 w-4" />
+                      <span>Đăng ký gói</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("my-payments")}
+                    >
+                      <CreditCardIcon className="mr-2 h-4 w-4" />
+                      <span>Hóa đơn chờ</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => handleNavigateToDashboard("swap")}
                     >
                       <QrCode className="mr-2 h-4 w-4" />
@@ -309,16 +324,16 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       <span>Lịch sử đổi pin</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      onClick={() => handleNavigateToDashboard("complaints")}
+                    >
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      <span>Khiếu nại của tôi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => handleNavigateToDashboard("profile")}
                     >
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>Hồ sơ</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("support")}
-                    >
-                      <PhoneCall className="mr-2 h-4 w-4" />
-                      <span>Hỗ trợ</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onLogout}>
