@@ -139,17 +139,19 @@ function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
 }
 
 function tryExtractReservationIdFromQR(raw: string): string | null {
-  try { const txt = atob(raw); const [json] = txt.split("|"); const obj = JSON.parse(json);
-    return obj.rid || obj.reservationId || null; } catch { return null; }
+  try {
+    const txt = atob(raw); const [json] = txt.split("|"); const obj = JSON.parse(json);
+    return obj.rid || obj.reservationId || null;
+  } catch { return null; }
 }
 
 function displayVehicleName(r: any): string {
   return r?.vehicleModelName || r?.vehicleName || r?.vehicle?.vehicleModel?.name ||
-         r?.vehicle?.modelName || r?.vehicleModel || r?.vehicleType || "—";
+    r?.vehicle?.modelName || r?.vehicleModel || r?.vehicleType || "—";
 }
 function displayPlate(r: any): string {
   const p = r?.vehiclePlate || r?.licensePlate || r?.vehicle?.plateNumber ||
-            r?.vehicle?.licensePlate || r?.vehicle?.plate || r?.plate || "";
+    r?.vehicle?.licensePlate || r?.vehicle?.plate || r?.plate || "";
   return (p || "—").toString().toUpperCase();
 }
 
@@ -253,44 +255,44 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         prev.map((r) =>
           r.reservationId === reservationId
             ? {
-                ...r,
-                reservationId: (detail as any).reservationId || r.reservationId,
-                userId: (detail as any).userId ?? r.userId,
-                userName: (detail as any).userName ?? r.userName,
-                batteryModelId: (detail as any).batteryModelId ?? r.batteryModelId,
-                batteryModelName: (detail as any).batteryModelName ?? r.batteryModelName,
-                status: (detail as any).status ?? r.status,
-                slotDate: (detail as any).slotDate ?? r.slotDate,
-                slotStartTime: (detail as any).slotStartTime ?? r.slotStartTime,
-                slotEndTime: (detail as any).slotEndTime ?? r.slotEndTime,
-                qrCode: (detail as any).qrCode ?? r.qrCode,
-                relatedComplaintId: (detail as any).relatedComplaintId ?? r.relatedComplaintId,
-                vehicleId: (detail as any).vehicleId ?? r.vehicleId,
-                vehicleName:
-                  (detail as any).vehicleName ??
-                  (detail as any).vehicleModelName ??
-                  r.vehicleName ??
-                  r.vehicleModelName,
-                licensePlate:
-                  (detail as any).licensePlate ??
-                  (detail as any).vehiclePlate ??
-                  r.licensePlate ??
-                  r.vehiclePlate,
-                vehicleModelName:
-                  (detail as any).vehicleModelName ??
-                  (detail as any).vehicleName ??
-                  r.vehicleModelName ??
-                  r.vehicleName,
-                vehiclePlate:
-                  (detail as any).vehiclePlate ??
-                  (detail as any).licensePlate ??
-                  r.vehiclePlate ??
-                  r.licensePlate,
-              }
+              ...r,
+              reservationId: (detail as any).reservationId || r.reservationId,
+              userId: (detail as any).userId ?? r.userId,
+              userName: (detail as any).userName ?? r.userName,
+              batteryModelId: (detail as any).batteryModelId ?? r.batteryModelId,
+              batteryModelName: (detail as any).batteryModelName ?? r.batteryModelName,
+              status: (detail as any).status ?? r.status,
+              slotDate: (detail as any).slotDate ?? r.slotDate,
+              slotStartTime: (detail as any).slotStartTime ?? r.slotStartTime,
+              slotEndTime: (detail as any).slotEndTime ?? r.slotEndTime,
+              qrCode: (detail as any).qrCode ?? r.qrCode,
+              relatedComplaintId: (detail as any).relatedComplaintId ?? r.relatedComplaintId,
+              vehicleId: (detail as any).vehicleId ?? r.vehicleId,
+              vehicleName:
+                (detail as any).vehicleName ??
+                (detail as any).vehicleModelName ??
+                r.vehicleName ??
+                r.vehicleModelName,
+              licensePlate:
+                (detail as any).licensePlate ??
+                (detail as any).vehiclePlate ??
+                r.licensePlate ??
+                r.vehiclePlate,
+              vehicleModelName:
+                (detail as any).vehicleModelName ??
+                (detail as any).vehicleName ??
+                r.vehicleModelName ??
+                r.vehicleName,
+              vehiclePlate:
+                (detail as any).vehiclePlate ??
+                (detail as any).licensePlate ??
+                r.vehiclePlate ??
+                r.licensePlate,
+            }
             : r
         )
       );
-    } catch {}
+    } catch { }
   };
 
   const doCheckInByQr = async (qrRaw: string) => {
@@ -326,7 +328,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       if (!qr) return toast.error("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
       await checkInReservation(reservation.reservationId, qr);
       toast.success("✅ Check-in thành công!");
-      setStatus("CheckedIn");
       await refreshReservationRow(reservation.reservationId);
       setSelectedId(reservation.reservationId);
 
@@ -345,7 +346,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       }
     } catch (err: any) {
       const msg = err?.response?.data?.error?.message ||
-                  err?.response?.data?.message || err?.message || "Check-in thất bại.";
+        err?.response?.data?.message || err?.message || "Check-in thất bại.";
       toast.error("❌ " + msg);
     }
   };

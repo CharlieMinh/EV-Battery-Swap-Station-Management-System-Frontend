@@ -7,9 +7,8 @@ import {
     CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
-import { Calendar, Loader2, AlertCircle, CheckCircle, XCircle, Clock, Search, X } from "lucide-react";
+import { Calendar, Loader2, AlertCircle, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -46,9 +45,8 @@ export function ComplaintsList() {
     const [complaints, setComplaints] = useState<BatteryComplaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Search & filters (no date filter per requirement)
-    const [search, setSearch] = useState("");
-    const [selectedStatuses, setSelectedStatuses] = useState<number[]>([]); // multi-select
+    // Filters
+    const [statusFilter, setStatusFilter] = useState<string>("all");
     const [stationFilter, setStationFilter] = useState<string>("all");
 
     // Pagination
@@ -119,29 +117,14 @@ export function ComplaintsList() {
         fetchComplaints();
     };
 
-    // Filter + search (client-side)
+    // Filter (client-side)
     const filteredComplaints = useMemo(() => {
-        const q = search.trim().toLowerCase();
         return complaints.filter((c) => {
-            // status filter
-            const statusOk =
-                selectedStatuses.length === 0 || selectedStatuses.includes(c.status);
-            // station filter
+            const statusOk = statusFilter === "all" || String(c.status) === statusFilter;
             const stationOk = stationFilter === "all" || c.stationName === stationFilter;
-            // search across id, serial, station, details
-            const hay = [
-                c.id,
-                c.issuedBatterySerial,
-                c.stationName,
-                c.complaintDetails,
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            const searchOk = q === "" || hay.includes(q);
-            return statusOk && stationOk && searchOk;
+            return statusOk && stationOk;
         });
-    }, [complaints, search, selectedStatuses, stationFilter]);
+    }, [complaints, statusFilter, stationFilter]);
 
     // Pagination derive
     const total = filteredComplaints.length;
@@ -152,20 +135,13 @@ export function ComplaintsList() {
         return filteredComplaints.slice(start, start + pageSize);
     }, [filteredComplaints, currentPage, pageSize]);
 
-    // Reset page when filters/search change
+    // Reset page when filters change
     useEffect(() => {
         setPage(1);
-    }, [search, selectedStatuses, stationFilter]);
-
-    const toggleStatus = (s: number) => {
-        setSelectedStatuses((prev) =>
-            prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-        );
-    };
+    }, [statusFilter, stationFilter]);
 
     const clearAll = () => {
-        setSearch("");
-        setSelectedStatuses([]);
+        setStatusFilter("all");
         setStationFilter("all");
         setPage(1);
     };
@@ -182,86 +158,47 @@ export function ComplaintsList() {
                     </p>
                 </div>
 
-                {/* Toolbar: Search + Filters */}
-                <div className="mb-8">
-                    <div className="flex flex-col gap-4">
-                        {/* Search */}
-                        <div className="relative">
-                            <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                            <Input
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Tìm theo ID, trạm, serial, nội dung..."
-                                className="pl-12 h-12 text-base md:text-lg bg-white shadow-sm"
-                            />
-                            {search && (
-                                <button
-                                    aria-label="Xoá tìm kiếm"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    onClick={() => setSearch("")}
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            )}
+                {/* Filters */}
+                <div className="mb-8 bg-white/70 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm">
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-sm font-medium text-gray-600">Trạng thái</label>
+                            <select
+                                className="h-11 rounded-md border border-gray-300 bg-white px-3 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="all">Tất cả</option>
+                                <option value={ComplaintStatus.PendingScheduling}>Chờ đặt lịch</option>
+                                <option value={ComplaintStatus.Scheduled}>Đã đặt lịch</option>
+                                <option value={ComplaintStatus.CheckedIn}>Đã check-in</option>
+                                <option value={ComplaintStatus.Investigating}>Đang kiểm tra</option>
+                                <option value={ComplaintStatus.Confirmed}>Xác nhận lỗi</option>
+                                <option value={ComplaintStatus.Rejected}>Từ chối</option>
+                                <option value={ComplaintStatus.Resolved}>Đã giải quyết</option>
+                            </select>
                         </div>
-
-                        {/* Filters row */}
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-                            {/* Status multi-select as chips */}
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600 mr-1">Trạng thái:</span>
-                                {[
-                                    { v: ComplaintStatus.PendingScheduling, label: "Chờ đặt lịch", color: "bg-yellow-500" },
-                                    { v: ComplaintStatus.Scheduled, label: "Đã đặt lịch", color: "bg-blue-500" },
-                                    { v: ComplaintStatus.CheckedIn, label: "Đã check-in", color: "bg-purple-500" },
-                                    { v: ComplaintStatus.Investigating, label: "Đang kiểm tra", color: "bg-orange-500" },
-                                    { v: ComplaintStatus.Confirmed, label: "Xác nhận lỗi", color: "bg-red-500" },
-                                    { v: ComplaintStatus.Rejected, label: "Từ chối", color: "bg-gray-600" },
-                                    { v: ComplaintStatus.Resolved, label: "Đã giải quyết", color: "bg-green-600" },
-                                ].map((s) => (
-                                    <button
-                                        key={s.v}
-                                        type="button"
-                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition border ${selectedStatuses.includes(s.v)
-                                            ? `${s.color} text-white border-transparent`
-                                            : "bg-white text-gray-700 hover:bg-gray-50 border-gray-200"
-                                            }`}
-                                        onClick={() => toggleStatus(s.v)}
-                                    >
-                                        {s.label}
-                                    </button>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-sm font-medium text-gray-600">Trạm</label>
+                            <select
+                                className="h-11 rounded-md border border-gray-300 bg-white px-3 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                value={stationFilter}
+                                onChange={(e) => setStationFilter(e.target.value)}
+                            >
+                                <option value="all">Tất cả trạm</option>
+                                {stationOptions.map((name) => (
+                                    <option key={name} value={name}>{name}</option>
                                 ))}
-                            </div>
-
-                            {/* Station filter */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600">Trạm:</span>
-                                <select
-                                    className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm shadow-sm min-w-[180px]"
-                                    value={stationFilter}
-                                    onChange={(e) => setStationFilter(e.target.value)}
-                                >
-                                    <option value="all">Tất cả trạm</option>
-                                    {stationOptions.map((name) => (
-                                        <option key={name} value={name}>
-                                            {name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Clear all */}
-                            <div className="md:ml-auto">
-                                <Button variant="outline" onClick={clearAll} className="h-10">
-                                    Xoá bộ lọc
-                                </Button>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2 md:justify-end">
+                            <div className="flex gap-2 md:justify-end mt-6">
+                                <Button variant="outline" onClick={clearAll} className="h-11">Xoá bộ lọc</Button>
                             </div>
                         </div>
-
-                        {/* Result summary */}
-                        <div className="text-sm text-gray-600">
-                            Tìm thấy <span className="font-semibold text-gray-900">{total}</span> khiếu nại phù hợp
-                        </div>
+                    </div>
+                    <div className="mt-4 text-sm text-gray-600">
+                        Có <span className="font-semibold text-gray-900">{total}</span> khiếu nại phù hợp
                     </div>
                 </div>
 
@@ -315,11 +252,9 @@ export function ComplaintsList() {
                                                 {statusInfo.text}
                                             </Badge>
                                         </div>
-                                        <CardTitle className="text-xl font-extrabold text-gray-900">
-                                            Khiếu nại #{complaint.id.substring(0, 8)}
-                                        </CardTitle>
+
                                         <CardDescription className="text-sm text-gray-600">
-                                            Báo cáo lúc: {reportTime}
+                                            Báo cáo: {reportTime}
                                         </CardDescription>
                                     </CardHeader>
 

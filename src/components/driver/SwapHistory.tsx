@@ -41,6 +41,9 @@ interface Swap {
   rating?: number;
   feedback?: string;
   ratedAt?: string;
+  // ✅ Optional fields to detect subscription vs pay-per-swap
+  paymentType?: string;
+  userSubscriptionId?: string | null;
 }
 
 // Interface cho toàn bộ response API
@@ -81,7 +84,10 @@ export function SwapHistory({ }: SwapHistoryProps) {
 
   // ✅ NEW: State cho filter và pagination
   const [searchText, setSearchText] = useState("");
-  const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
+  // Bỏ filter thanh toán theo yêu cầu
+  // const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
+  // ✅ Thêm filter loại giao dịch (theo gói / theo lượt)
+  const [filterTransactionType, setFilterTransactionType] = useState("all"); // all | subscription | pay
   const [filterRating, setFilterRating] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -243,26 +249,29 @@ export function SwapHistory({ }: SwapHistoryProps) {
   // ✅ NEW: Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchText, filterPaymentStatus, filterRating]);
+  }, [searchText, filterTransactionType, filterRating]);
 
   // ✅ NEW: Filter and search logic
   const allTransactions = swapHistory?.transactions || [];
 
   const filteredTransactions = allTransactions.filter((swap) => {
+    const isSubscription = Boolean((swap as any).userSubscriptionId) ||
+      (typeof (swap as any).paymentType === 'string' && (swap as any).paymentType.toLowerCase().includes('subscription'));
+
     // Search filter
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase();
+      // ✅ Chỉ cho tìm theo tên trạm và biển số xe
       const matchesSearch =
-        swap.transactionNumber.toLowerCase().includes(searchLower) ||
         swap.stationName.toLowerCase().includes(searchLower) ||
         swap.vehicleLicensePlate.toLowerCase().includes(searchLower);
       if (!matchesSearch) return false;
     }
 
-    // Payment status filter
-    if (filterPaymentStatus !== "all") {
-      if (filterPaymentStatus === "paid" && !swap.isPaid) return false;
-      if (filterPaymentStatus === "unpaid" && swap.isPaid) return false;
+    // ✅ Filter loại giao dịch
+    if (filterTransactionType !== "all") {
+      if (filterTransactionType === "subscription" && !isSubscription) return false;
+      if (filterTransactionType === "pay" && isSubscription) return false;
     }
 
     // Rating filter
@@ -283,12 +292,13 @@ export function SwapHistory({ }: SwapHistoryProps) {
   const transactionsToShow = filteredTransactions.slice(startIndex, endIndex);
 
   // ✅ NEW: Check if any filters are active
-  const hasActiveFilters = searchText.trim() !== "" || filterPaymentStatus !== "all" || filterRating !== "all";
+  const hasActiveFilters = searchText.trim() !== "" || filterTransactionType !== "all" || filterRating !== "all";
 
   // ✅ NEW: Clear all filters
   const handleClearFilters = () => {
     setSearchText("");
-    setFilterPaymentStatus("all");
+    // setFilterPaymentStatus("all");
+    setFilterTransactionType("all");
     setFilterRating("all");
     setCurrentPage(1);
   };
@@ -350,7 +360,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="Tìm theo mã giao dịch, trạm, biển số xe..."
+                  placeholder="Tìm theo tên trạm hoặc biển số xe..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   className="pl-10"
@@ -359,17 +369,17 @@ export function SwapHistory({ }: SwapHistoryProps) {
 
               {/* Row 2: Filters */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Payment Status Filter */}
+                {/* ✅ Filter loại giao dịch */}
                 <div>
-                  <label className="text-xs text-gray-600 mb-1 block">Thanh toán</label>
-                  <Select value={filterPaymentStatus} onValueChange={setFilterPaymentStatus}>
+                  <label className="text-xs text-gray-600 mb-1 block">Hình thức</label>
+                  <Select value={filterTransactionType} onValueChange={setFilterTransactionType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Tất cả" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="paid">Đã thanh toán</SelectItem>
-                      <SelectItem value="unpaid">Chưa thanh toán</SelectItem>
+                      <SelectItem value="subscription">Theo gói</SelectItem>
+                      <SelectItem value="pay">Theo lượt</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -419,6 +429,8 @@ export function SwapHistory({ }: SwapHistoryProps) {
             <p className="text-center text-gray-500 py-4">{t("driver.swapHistory.noHistory")}</p>
           ) : (
             transactionsToShow.map((swap) => {
+              const isSubscription = Boolean((swap as any).userSubscriptionId) ||
+                (typeof (swap as any).paymentType === 'string' && (swap as any).paymentType.toLowerCase().includes('subscription'));
               const completedTime = new Date(swap.completedAt).toLocaleString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -481,7 +493,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
 
                       {/* Payment và Total */}
                       <div className="flex justify-between items-center pt-2 border-t">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-3 flex-wrap">
                           {swap.isPaid ? (
                             <div className="flex items-center space-x-1 text-green-600">
                               <CheckCircle className="w-4 h-4" />
@@ -493,6 +505,10 @@ export function SwapHistory({ }: SwapHistoryProps) {
                               <span className="text-sm font-medium">Chưa thanh toán</span>
                             </div>
                           )}
+                          {/* ✅ Hiển thị hình thức thanh toán */}
+                          <Badge variant={isSubscription ? "secondary" : "outline"} className={`${isSubscription ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-700'}`}>
+                            {isSubscription ? 'Theo gói' : 'Theo lượt'}
+                          </Badge>
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
@@ -514,10 +530,19 @@ export function SwapHistory({ }: SwapHistoryProps) {
                           </Dialog>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-500">{t("driver.totalAmount")}</p>
-                          <p className="font-bold text-green-600">
-                            {Number(swap.totalAmount).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-                          </p>
+                          {isSubscription ? (
+                            <>
+                              <p className="text-xs text-gray-500">Tổng</p>
+                              <p className="font-bold text-blue-600">Miễn phí theo gói</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-xs text-gray-500">{t("driver.totalAmount")}</p>
+                              <p className="font-bold text-green-600">
+                                {Number(swap.totalAmount).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
 
