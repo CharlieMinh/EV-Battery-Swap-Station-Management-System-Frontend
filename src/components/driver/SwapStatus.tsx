@@ -91,6 +91,34 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
     }
   };
 
+  // ⭐ HÀM KIỂM TRA HỦY MUỘN HAY SỚM
+  const checkCancellationTiming = (): { isLate: boolean; timeUntilSlot: number; warningMessage: string } => {
+    if (!activeReservation) return { isLate: false, timeUntilSlot: 0, warningMessage: '' };
+
+    try {
+      // Parse ngày và giờ từ reservation
+      const dateParts = activeReservation.slotDate.split('-').map(Number);
+      const timeParts = activeReservation.slotStartTime.split(':').map(Number);
+
+      const slotDateTime = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0], timeParts[1]);
+      const now = new Date();
+      const timeUntilSlot = (slotDateTime.getTime() - now.getTime()) / (1000 * 60 * 60); // Giờ
+
+      const isLate = timeUntilSlot <= 1 && timeUntilSlot > 0;
+
+      let warningMessage = '';
+      if (isLate) {
+        warningMessage = '⚠️ Hủy sát giờ (≤1h)';
+      } else if (timeUntilSlot > 1) {
+        warningMessage = '✓ Hủy sớm (>1h)';
+      }
+
+      return { isLate, timeUntilSlot, warningMessage };
+    } catch (error) {
+      return { isLate: false, timeUntilSlot: 0, warningMessage: '' };
+    }
+  };
+
   // --- Render Logic ---
 
   if (loading) {
@@ -150,6 +178,35 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
               {/* --- KHỐI NHẬP LÝ DO (logic nội bộ) --- */}
               {showCancelPrompt ? (
                 <div className="space-y-2 text-left">
+                  {/* ⭐ HIỂN THỊ CẢNH BÁO DỰA TRÊN THỜI GIAN */}
+                  {(() => {
+                    const { isLate, timeUntilSlot, warningMessage } = checkCancellationTiming();
+
+                    return (
+                      <>
+                        {timeUntilSlot > 0 && (
+                          <div className={`p-3 rounded-lg border ${isLate ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
+                            <p className={`text-sm font-semibold ${isLate ? 'text-red-700' : 'text-green-700'}`}>
+                              {warningMessage}
+                            </p>
+                            {isLate ? (
+                              <div className="mt-2 text-xs text-red-600 space-y-1">
+                                <p>• <strong>Hủy sát giờ sẽ bị hình phạt:</strong></p>
+                                <p className="ml-3">- Nếu đặt bằng <strong>Gói</strong>: Mất lượt (không hoàn)</p>
+                                <p className="ml-3">- Nếu đặt bằng <strong>Tiền mặt</strong>: Tăng vi phạm +1</p>
+                                <p className="ml-3 text-red-700 font-semibold">- Vi phạm 3 lần → Không được thanh toán tiền mặt</p>
+                              </div>
+                            ) : (
+                              <p className="mt-1 text-xs text-green-600">
+                                ✓ Hủy trước 1 giờ không bị phạt. Gói sẽ được hoàn lại lượt.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+
                   <label htmlFor="cancelNote" className="block text-sm font-medium text-gray-700">
                     {t("driver.cancelReason")} <span className="text-red-500">*</span>
                   </label>
