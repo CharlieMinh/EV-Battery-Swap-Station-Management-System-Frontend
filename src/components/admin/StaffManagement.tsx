@@ -153,9 +153,6 @@ export function StaffManagement() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                 </div>

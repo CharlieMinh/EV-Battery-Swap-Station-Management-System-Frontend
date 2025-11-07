@@ -15,10 +15,12 @@ export interface SwapTransaction {
 const formatDate = (date: string) => new Date(date).toLocaleDateString("vi-VN");
 
 const formatTime = (date: string) =>
-  new Date(date).toLocaleTimeString("vi-VN", {
+  new Intl.DateTimeFormat("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
-  });
+    hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh", // Bắt buộc múi giờ Việt Nam
+  }).format(new Date(date));
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", {
