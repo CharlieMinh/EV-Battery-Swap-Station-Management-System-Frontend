@@ -117,7 +117,7 @@ export default function Transactions() {
                 <label className="text-xs block text-gray-500 mb-1">Từ ngày</label>
                 <input
                   type="date"
-                  className="border rounded-lg px-3 py-2 w-40"
+                  className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-40 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
                 />
@@ -126,14 +126,15 @@ export default function Transactions() {
                 <label className="text-xs block text-gray-500 mb-1">Đến ngày</label>
                 <input
                   type="date"
-                  className="border rounded-lg px-3 py-2 w-40"
+                  className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-40 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
                 />
               </div>
               <Button
                 onClick={() => fetchAll()} // ❌ bỏ toast.info; fetchAll tự hiển thị 1 toast
-                className="inline-flex items-center gap-2"
+                variant="outline"
+                className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />

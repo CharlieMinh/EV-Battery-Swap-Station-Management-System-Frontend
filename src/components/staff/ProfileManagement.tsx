@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   getMe,
   updateUser,
   resetPassword,
+  uploadFile,            // vẫn giữ: thử upload rời nếu BE có endpoint
   type UserMe,
 } from "../../services/staff/staffApi";
-import { User, Mail, Phone, Lock, Pencil } from "lucide-react";
+import { User, Mail, Phone, Lock, Pencil, Upload, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 
@@ -19,6 +20,9 @@ const TOAST_ID = {
   pwdMismatch: "prof-pwd-mismatch",
   pwdSuccess: "prof-pwd-success",
   pwdError: "prof-pwd-error",
+  avatarUploading: "prof-avatar-uploading",
+  avatarSuccess: "prof-avatar-success",
+  avatarError: "prof-avatar-error",
 };
 
 export default function ProfileManagement() {
@@ -26,6 +30,7 @@ export default function ProfileManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPwd, setChangingPwd] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -39,17 +44,30 @@ export default function ProfileManagement() {
     confirm: "",
   });
 
+  // ⭐ giữ file thật để gửi multipart khi bấm "Sửa hồ sơ"
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  // ---- helper: đồng bộ lại hồ sơ từ BE (ưu tiên profilePictureUrl) ----
+  const refreshMe = async () => {
+    const { data } = await getMe();
+    setMe(data);
+    const fullName = (data.fullName || (data as any).name) || "";
+    setForm({
+      fullName,
+      phone: (data as any).phone || (data as any).phoneNumber || "",
+      avatarUrl:
+        (data as any).profilePictureUrl || // ƯU TIÊN field này từ BE
+        (data as any).avatarUrl ||
+        (data as any).avatar ||
+        "",
+    });
+  };
+
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await getMe();
-        setMe(data);
-        const fullName = (data.fullName || (data as any).name) || "";
-        setForm({
-          fullName,
-          phone: (data as any).phone || (data as any).phoneNumber || "",
-          avatarUrl: (data as any).avatarUrl || (data as any).avatar || "",
-        });
+        await refreshMe();
       } catch (e) {
         toast.error("Không thể tải hồ sơ. Vui lòng thử lại!", {
           ...toastOpts,
@@ -76,15 +94,19 @@ export default function ProfileManagement() {
 
     setSaving(true);
     try {
+      // ⭐ giữ nguyên logic + gửi kèm file nếu có để BE lưu avatar thật
       await updateUser(id, {
         fullName: form.fullName.trim(),
         phone: form.phone.trim(),
-        avatarUrl: form.avatarUrl.trim(),
+        avatarUrl: form.avatarUrl.trim(), // nếu uploadFile() trả URL thì vẫn dùng
+        avatarFile: avatarFile || null,   // file thật đi qua multipart
       });
-      toast.success("Đã lưu hồ sơ ✅", {
-        ...toastOpts,
-        toastId: TOAST_ID.saveSuccess,
-      });
+
+      // Đồng bộ lại từ BE để chắc lấy đúng profilePictureUrl
+      await refreshMe();
+
+      toast.success("Đã lưu hồ sơ ✅", { ...toastOpts, toastId: TOAST_ID.saveSuccess });
+      setAvatarFile(null); // clear file tạm
     } catch (e) {
       toast.error("Lưu hồ sơ thất bại. Vui lòng thử lại!", {
         ...toastOpts,
@@ -133,6 +155,53 @@ export default function ProfileManagement() {
     }
   };
 
+  const triggerPickFile = () => fileRef.current?.click();
+
+  // ⭐ chọn ảnh: preview ngay + thử upload rời (nếu server có /files/upload)
+  const onPickFile = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+
+    // ——— KHỚP CHÍNH XÁC VALIDATION CỦA BE: JPEG/PNG, tối đa 10MB ———
+    const isAllowedType = /^image\/(jpe?g|png)$/i.test(file.type);
+    if (!isAllowedType) {
+      toast.error("Chỉ hỗ trợ ảnh JPEG hoặc PNG.", toastOpts);
+      ev.target.value = "";
+      return;
+    }
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxBytes) {
+      toast.error("Ảnh quá lớn (> 10MB). Vui lòng chọn ảnh khác.", toastOpts);
+      ev.target.value = "";
+      return;
+    }
+
+    // preview cục bộ
+    const localPreview = URL.createObjectURL(file);
+    setAvatarFile(file);
+    setForm((s) => ({ ...s, avatarUrl: s.avatarUrl || localPreview }));
+
+    // cố gắng upload rời để có URL ngay (server bạn không có thì 404 → bỏ qua)
+    setUploadingAvatar(true);
+    toast.dismiss(TOAST_ID.avatarUploading);
+    toast.info("Đang tải ảnh lên...", { ...toastOpts, toastId: TOAST_ID.avatarUploading });
+
+    try {
+      const url = await uploadFile(file).catch(() => null as string | null);
+      if (url) {
+        setForm((s) => ({ ...s, avatarUrl: url || localPreview }));
+        toast.dismiss(TOAST_ID.avatarUploading);
+        toast.success("Tải ảnh thành công ✅", { ...toastOpts, toastId: TOAST_ID.avatarSuccess });
+      } else {
+        toast.dismiss(TOAST_ID.avatarUploading);
+        toast.info("Sẽ cập nhật ảnh khi bạn bấm 'Sửa hồ sơ'.", toastOpts);
+      }
+    } finally {
+      setUploadingAvatar(false);
+      if (ev.target) ev.target.value = "";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -144,6 +213,11 @@ export default function ProfileManagement() {
     );
   }
 
+  const avatarLetter = (form.fullName || (me as any)?.name || "S")
+    .toString()
+    .charAt(0)
+    .toUpperCase();
+
   return (
     <div className="flex justify-center items-center">
       <div className="w-full max-w-3xl bg-[#FFF3E5] rounded-2xl shadow-xl p-8">
@@ -153,9 +227,37 @@ export default function ProfileManagement() {
 
         {/* Avatar + Tên */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-24 h-24 rounded-full border-4 border-[#FF7A00] flex items-center justify-center text-3xl font-bold text-[#FF7A00] bg-white">
-            {(form.fullName || (me as any)?.name || "S").toString().charAt(0).toUpperCase()}
+          <div className="relative">
+            {form.avatarUrl ? (
+              <img
+                src={form.avatarUrl}
+                alt="avatar"
+                className="w-24 h-24 rounded-full border-4 border-[#FF7A00] object-cover bg-white"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full border-4 border-[#FF7A00] flex items-center justify-center text-3xl font-bold text-[#FF7A00] bg-white">
+                {avatarLetter}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={triggerPickFile}
+              className="absolute -bottom-2 -right-2 bg-[#FF7A00] hover:bg-[#e56a00] text-white rounded-full p-2 shadow"
+              title="Tải ảnh đại diện"
+            >
+              {uploadingAvatar ? <Loader2 className="animate-spin w-4 h-4" /> : <Upload className="w-4 h-4" />}
+            </button>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png"
+              className="hidden"
+              onChange={onPickFile}
+            />
           </div>
+
           <h2 className="text-xl font-semibold text-gray-800 mt-4">
             {form.fullName || (me as any)?.name || "—"}
           </h2>

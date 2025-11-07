@@ -1,8 +1,8 @@
 // src/components/staff/InventoryManagement.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  getStationInventory,            // ⭐ dùng thay cho stationBatteryStats
-  listStationBatteries,           // vẫn giữ để tương thích nếu cần refetch riêng
+  getStationInventory,
+  listStationBatteries,
   createReplenishmentRequest,
   type StationBatteryStats,
   type BatteryUnit,
@@ -10,11 +10,17 @@ import {
 } from "../../services/staff/staffApi";
 import { AlertTriangle, Plus, X } from "lucide-react";
 import { toast } from "react-toastify";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 type ReqItem = { batteryModelId: string; quantityRequested: number };
 type Props = { stationId: string | number };
 
-// ====== Filter trạng thái (giá trị dùng key EN để so sánh) ======
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "" },
   { label: "Sẵn sàng", value: "Available" },
@@ -28,7 +34,7 @@ const STATUS_OPTIONS = [
 
 const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
 
-// ====== Helpers chuẩn hoá trạng thái & hiển thị VI ======
+/* ========= GIỮ NGUYÊN LOGIC ========= */
 const normStatus = (s?: string) => {
   const x = (s || "").trim().toLowerCase();
   if (["full", "đầy", "available", "sẵn sàng", "ready"].includes(x)) return "Available";
@@ -62,40 +68,46 @@ const displayStatusVI = (s?: string) => {
 const isReservedFlag = (b: BatteryUnit) =>
   Boolean(b.isReserved || normStatus(b.status) === "Reserved");
 
+function modelKey(b: BatteryUnit): string {
+  const id = (b.batteryModelId ?? "").toString().trim().toLowerCase();
+  const name = (b.batteryModelName ?? "").toString().trim().toLowerCase();
+  return id || name;
+}
+function modelLabel(b: BatteryUnit): string {
+  return (b.batteryModelName || b.batteryModelId || "").toString();
+}
+
+/* ========================================================= */
+
 export default function InventoryManagement({ stationId }: Props) {
-  // ====== Stats & danh sách ======
   const [stats, setStats] = useState<StationBatteryStats | null>(null);
-  const [all, setAll] = useState<BatteryUnit[]>([]); // toàn bộ để tính header + lọc
-  const [list, setList] = useState<BatteryUnit[]>([]); // sau khi lọc để render
+  const [all, setAll] = useState<BatteryUnit[]>([]);
+  const [list, setList] = useState<BatteryUnit[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ====== Bộ lọc ======
-  const [status, setStatus] = useState<string>("");       // theo STATUS_OPTIONS
-  const [modelFilter, setModelFilter] = useState<string>(""); // "" = tất cả
-  const [search, setSearch] = useState<string>("");       // search serial
+  const [status, setStatus] = useState<string>("");
+  const [modelFilter, setModelFilter] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
 
-  // ====== Replenishment request ======
   const [reqOpen, setReqOpen] = useState(false);
   const [reqItems, setReqItems] = useState<ReqItem[]>([
     { batteryModelId: "", quantityRequested: 0 },
   ]);
   const [reason, setReason] = useState("");
 
-  // ====== Fetcher: lấy đúng trạm qua BatteryUnits (header không đổi khi lọc) ======
+  /* ====== FETCH (GIỮ LOGIC) ====== */
   const fetchInventory = async () => {
     if (!stationId) return;
     setLoading(true);
     try {
-      // ⭐ lấy cả list + stats trực tiếp từ BatteryUnits (đúng trạm)
       const { list: l, stats: s } = await getStationInventory(stationId);
       setAll(l ?? []);
       setStats(s ?? null);
     } catch {
-      // fallback: thử lấy raw list, tự tính sau
       try {
         const { data } = await listStationBatteries(stationId);
         setAll(Array.isArray(data) ? data : []);
-        setStats(null); // sẽ tự tính ở header
+        setStats(null);
       } catch {
         setAll([]);
         setStats(null);
@@ -107,10 +119,9 @@ export default function InventoryManagement({ stationId }: Props) {
 
   useEffect(() => {
     fetchInventory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId]);
 
-  // Lọc danh sách hiển thị (KHÔNG ảnh hưởng tới header)
+  /* ====== FILTER (GIỮ LOGIC) ====== */
   useEffect(() => {
     const s = (search || "").trim().toLowerCase();
     const filtered = all
@@ -119,25 +130,23 @@ export default function InventoryManagement({ stationId }: Props) {
         if (status === "Reserved") return isReservedFlag(b);
         return normStatus(b.status) === status;
       })
-      .filter((b) =>
-        modelFilter ? (b.batteryModelId || b.batteryModelName) === modelFilter : true
-      )
-      .filter((b) =>
-        s ? (b.serialNumber || "").toLowerCase().includes(s) : true
-      );
-
+      .filter((b) => (modelFilter ? modelKey(b) === modelFilter : true))
+      .filter((b) => (s ? (b.serialNumber || "").toLowerCase().includes(s) : true));
     setList(filtered);
   }, [all, status, modelFilter, search]);
 
-  // Danh sách model từ `all`
+  /* ====== MODEL OPTIONS ====== */
   const modelOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const b of all)
-      set.add((b.batteryModelId || b.batteryModelName || "").toString());
-    return Array.from(set).filter(Boolean);
+    const map = new Map<string, string>();
+    for (const b of all) {
+      const key = modelKey(b);
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, modelLabel(b));
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
   }, [all]);
 
-  // ====== Header totals (ưu tiên số từ stats; nếu chưa có → tự tính từ all) ======
+  /* ====== HEADER TOTAL ====== */
   const n = (v: any) => (typeof v === "number" && !Number.isNaN(v) ? v : 0);
   const apiTotals = {
     total: n(stats?.total ?? stats?.totalBatteries),
@@ -159,7 +168,6 @@ export default function InventoryManagement({ stationId }: Props) {
 
     if (hasAny) return apiTotals;
 
-    // Fallback: đếm từ toàn bộ `all` (đúng yêu cầu "tổng không đổi khi lọc")
     let total = all.length,
       available = 0,
       inUse = 0,
@@ -178,16 +186,12 @@ export default function InventoryManagement({ stationId }: Props) {
     return { total, available, inUse, charging, maintenance, reserved };
   }, [apiTotals, all]);
 
-  const lowStock = useMemo(
-    () => header.available + header.charging < 20,
-    [header.available, header.charging]
-  );
-  const toNum = (v: unknown) =>
-    typeof v === "number" && !isNaN(v as number) ? (v as number) : 0;
+  const lowStock = header.available + header.charging < 20;
 
-  // ====== Submit yêu cầu nhập pin (GIỮ LOGIC) ======
+  /* ====== REQUEST PIN (KEEP LOGIC) ====== */
   const addReqItem = () =>
     setReqItems((x) => [...x, { batteryModelId: "", quantityRequested: 0 }]);
+
   const removeReqItem = (i: number) =>
     setReqItems((arr) => arr.filter((_, idx) => idx !== i));
 
@@ -216,7 +220,7 @@ export default function InventoryManagement({ stationId }: Props) {
       setReqOpen(false);
       setReqItems([{ batteryModelId: "", quantityRequested: 0 }]);
       setReason("");
-      fetchInventory(); // refresh lại thống kê
+      fetchInventory();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -226,13 +230,29 @@ export default function InventoryManagement({ stationId }: Props) {
     }
   };
 
-  // ====== UI ======
+  /* ===== UI BADGE ===== */
+  const badgeClass = (b: BatteryUnit) => {
+    const k = normStatus(b.status);
+    if (k === "Available") return "bg-green-100 text-green-700";
+    if (k === "Charging") return "bg-blue-100 text-blue-700";
+    if (k === "Maintenance") return "bg-gray-200 text-gray-700";
+    if (k === "Depleted") return "bg-red-100 text-red-700";
+    if (k === "Reserved" || isReservedFlag(b)) return "bg-yellow-100 text-yellow-700";
+    if (k === "InUse") return "bg-purple-100 text-purple-700";
+    return "bg-slate-100 text-slate-700";
+  };
+
+  /* ========================================================= */
+
   return (
-    <div className="grid gap-6">
-      {/* Header tổng quan (không đổi khi lọc bảng) */}
-      <section className="rounded-2xl bg-white shadow-lg p-5">
-        <h3 className="text-lg font-semibold mb-4">Tổng quan kho</h3>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+    <div className="container mx-auto grid gap-6">
+
+      {/* ✅ CARD TỔNG QUAN (đồng nhất UI Hàng Chờ) */}
+      <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
+        <h2 className="text-2xl font-bold text-orange-600 mb-1">Tổng quan kho</h2>
+        <p className="text-gray-600 text-sm mb-4">Số lượng pin theo trạng thái</p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: "Tổng", value: header.total },
             { label: "Sẵn sàng", value: header.available },
@@ -243,216 +263,207 @@ export default function InventoryManagement({ stationId }: Props) {
           ].map((k) => (
             <div
               key={k.label}
-              className="rounded-xl border p-3 text-center bg-white"
+              className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4 text-center shadow-sm"
             >
-              <div className="text-xs text-gray-500">{k.label}</div>
-              <div className="text-xl font-semibold">{toNum(k.value)}</div>
+              <div className="text-xs text-gray-600 mb-1">{k.label}</div>
+              <div className="text-2xl font-semibold">{k.value}</div>
             </div>
           ))}
         </div>
 
         {lowStock && (
-          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
-            <div className="flex items-center gap-2 text-amber-700 text-sm">
-              <AlertTriangle className="h-4 w-4" />
-              Tồn kho thấp! Hãy gửi yêu cầu nhập pin.
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-sm">Tồn kho thấp! Hãy yêu cầu nhập thêm pin.</span>
             </div>
             <button
               onClick={() => setReqOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-black px-3 py-2 text-white hover:bg-gray-800 transition"
+              className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
             >
-              <Plus className="h-4 w-4" />
-              Tạo yêu cầu nhập pin
+              <Plus className="w-4 h-4 inline mr-1" />
+              Tạo yêu cầu
             </button>
           </div>
         )}
       </section>
 
-      {/* Danh sách pin + bộ lọc */}
-      <section className="rounded-2xl bg-white shadow-lg p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold">Danh sách pin</h3>
+      {/* ✅ CARD BỘ LỌC (đồng nhất UI Hàng Chờ) */}
+      <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
+        <h3 className="text-xl font-semibold text-orange-600 mb-4">Danh sách pin</h3>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className="w-56 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-              placeholder="Tìm serial..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div className="flex flex-wrap items-center gap-3 mb-4">
 
-            <select
-              className="w-52 rounded-lg border px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-black/20"
-              value={modelFilter}
-              onChange={(e) => setModelFilter(e.target.value)}
+          <input
+            className="h-10 w-56 rounded-lg border-2 border-gray-300 px-3 text-sm focus:ring-2 focus:ring-orange-300"
+            placeholder="Tìm serial..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          {/* Model */}
+          <div className="w-56">
+            <Select
+              value={modelFilter || "__all__"}
+              onValueChange={(val) => setModelFilter(val === "__all__" ? "" : val)}
             >
-              <option value="">Tất cả model</option>
-              {modelOptions.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="w-48 rounded-lg border px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-black/20"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value || "ALL"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
+                <SelectValue placeholder="Model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tất cả model</SelectItem>
+                {modelOptions.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Status */}
+          <div className="w-56">
+            <Select
+              value={status || "__all__"}
+              onValueChange={(val) => setStatus(val === "__all__" ? "" : val)}
+            >
+              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value || "ALL"} value={o.value || "__all__"}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
         </div>
 
-        <div className="overflow-x-auto rounded-xl border">
+        {/* ✅ PHẦN BẢNG — GIỮ NGUYÊN */}
+        <div className="rounded-xl border overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left">
+            <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="px-3 py-2 w-16">STT</th>
-                <th className="px-3 py-2">Serial</th>
-                <th className="px-3 py-2">Model</th>
-                <th className="px-3 py-2">Trạng thái</th>
-                <th className="px-3 py-2">Cập nhật</th>
+                <th className="px-4 py-3 w-16 text-left">STT</th>
+                <th className="px-4 py-3 w-48 text-left">Serial</th>
+                <th className="px-4 py-3 w-64 text-left">Model</th>
+                <th className="px-4 py-3 w-40 text-left">Trạng thái</th>
+                <th className="px-4 py-3 w-48 text-left">Cập nhật</th>
               </tr>
             </thead>
-            <tbody>
+
+            <tbody className="divide-y">
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center">
-                    Đang tải...
+                  <td colSpan={5} className="text-center py-6 text-gray-500">
+                    Đang tải…
                   </td>
                 </tr>
               )}
 
               {!loading && list.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-3 py-6 text-center text-gray-500"
-                  >
+                  <td colSpan={5} className="text-center py-6 text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
               )}
 
-              {list.map((b, idx) => (
-                <tr
-                  key={b.batteryId || b.serialNumber || `row-${idx}`}
-                  className="border-t"
-                >
-                  <td className="px-3 py-2">{idx + 1}</td>
-                  <td className="px-3 py-2 font-mono">
-                    {b.serialNumber || "—"}
-                  </td>
-                  <td className="px-3 py-2">
-                    {b.batteryModelName || b.batteryModelId || "—"}
-                  </td>
-                  <td className="px-3 py-2">{displayStatusVI(b.status)}</td>
-                  <td className="px-3 py-2">
-                    {b.updatedAt
-                      ? new Date(b.updatedAt).toLocaleString()
-                      : "—"}
-                  </td>
-                </tr>
-              ))}
+              {!loading &&
+                list.map((b, idx) => (
+                  <tr
+                    key={b.batteryId || b.serialNumber || idx}
+                    className="odd:bg-white even:bg-gray-50 hover:bg-orange-50/40"
+                  >
+                    <td className="px-4 py-3">{idx + 1}</td>
+                    <td className="px-4 py-3 font-mono">{b.serialNumber || "—"}</td>
+                    <td className="px-4 py-3">{b.batteryModelName || b.batteryModelId}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badgeClass(b)}`}>
+                        {displayStatusVI(b.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {b.updatedAt ? new Date(b.updatedAt).toLocaleString() : "—"}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Modal yêu cầu nhập pin (giữ logic) */}
+      {/* ✅ MODAL YÊU CẦU NHẬP PIN (GIỮ NGUYÊN) */}
       {reqOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl">
+            <div className="flex justify-between mb-4">
               <h3 className="text-lg font-semibold">Yêu cầu nhập pin</h3>
-              <button
-                onClick={() => setReqOpen(false)}
-                className="rounded-lg border px-3 py-1 hover:bg-gray-50"
-                title="Đóng"
-              >
-                <X className="h-4 w-4" />
+              <button onClick={() => setReqOpen(false)} className="p-2 hover:bg-gray-50 rounded-lg">
+                <X />
               </button>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Lý do</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-                placeholder="Ví dụ: Chuẩn bị giờ cao điểm"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            </div>
+            <label className="block text-sm mb-1">Lý do</label>
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 mb-4"
+              placeholder="VD: Chuẩn bị giờ cao điểm"
+            />
 
             <div className="mb-4">
-              <div className="mb-2 text-sm font-medium">
-                Danh sách model & số lượng
-              </div>
-              <div className="flex flex-col gap-2">
-                {reqItems.map((it, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <input
-                      className="flex-1 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-                      placeholder="BatteryModelId (VD: MOD-48V-30)"
-                      value={it.batteryModelId}
-                      onChange={(e) =>
-                        setReqItems((arr) =>
-                          arr.map((x, i) =>
-                            i === idx
-                              ? { ...x, batteryModelId: e.target.value }
-                              : x
-                          )
+              <p className="font-medium text-sm mb-2">Danh sách model & số lượng</p>
+              {reqItems.map((item, i) => (
+                <div key={i} className="flex gap-2 mb-2">
+                  <input
+                    className="flex-1 border rounded-lg px-3 py-2"
+                    placeholder="BatteryModelId"
+                    value={item.batteryModelId}
+                    onChange={(e) =>
+                      setReqItems((arr) =>
+                        arr.map((x, idx) =>
+                          idx === i ? { ...x, batteryModelId: e.target.value } : x
                         )
-                      }
-                    />
-                    <input
-                      type="number"
-                      className="w-36 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-                      placeholder="Số lượng"
-                      value={it.quantityRequested}
-                      onChange={(e) =>
-                        setReqItems((arr) =>
-                          arr.map((x, i) =>
-                            i === idx
-                              ? {
-                                  ...x,
-                                  quantityRequested: Number(e.target.value),
-                                }
-                              : x
-                          )
+                      )
+                    }
+                  />
+                  <input
+                    type="number"
+                    className="w-32 border rounded-lg px-3 py-2"
+                    placeholder="Số lượng"
+                    value={item.quantityRequested}
+                    onChange={(e) =>
+                      setReqItems((arr) =>
+                        arr.map((x, idx) =>
+                          idx === i ? { ...x, quantityRequested: Number(e.target.value) } : x
                         )
-                      }
-                    />
-                    <button
-                      onClick={() =>
-                        setReqItems((arr) => arr.filter((_, i) => i !== idx))
-                      }
-                      className="rounded-lg border px-3 py-2 hover:bg-gray-50"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-right mt-3">
-                <button
-                  onClick={submitRequest}
-                  className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition"
-                >
-                  Gửi yêu cầu
-                </button>
-              </div>
+                      )
+                    }
+                  />
+                  <button
+                    onClick={() => removeReqItem(i)}
+                    className="px-3 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-3 text-xs text-gray-500">
-              Mẹo: thêm nhiều dòng để yêu cầu nhiều model khác nhau.
+            <div className="text-right">
+              <button
+                onClick={submitRequest}
+                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+              >
+                Gửi yêu cầu
+              </button>
             </div>
+
+            <p className="mt-3 text-xs text-gray-500">Bạn có thể thêm nhiều model khác nhau.</p>
           </div>
         </div>
       )}

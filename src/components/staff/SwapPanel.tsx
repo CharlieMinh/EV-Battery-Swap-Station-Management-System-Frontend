@@ -36,8 +36,8 @@ const TOAST_ID = {
 
 export default function SwapPanel({
   reservation,
-  initialBatteryHealth = 85, // ⭐ Default 85 nếu không truyền vào
-  initialNote = "", // ⭐ Default "" nếu không truyền vào
+  initialBatteryHealth = 85,
+  initialNote = "",
   onSwapped,
   stationId,
   onCancel,
@@ -69,7 +69,7 @@ export default function SwapPanel({
     setLoading(true);
     setMessage("");
 
-    // ⭐ DEBUG: Log để kiểm tra note có được truyền không
+    // ⭐ DEBUG
     console.log("🔍 SwapPanel - handleSwap called with:", {
       reservationId: reservation.reservationId,
       oldBatteryHealth: health,
@@ -187,7 +187,6 @@ export default function SwapPanel({
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
             onClick={() => {
               onCancel();
-              // dùng toastId khác cho hành động đóng panel để không đè lên toast của swap
               toast.info("Đã đóng panel thay pin.", {
                 ...toastOpts,
                 toastId: TOAST_ID.close,

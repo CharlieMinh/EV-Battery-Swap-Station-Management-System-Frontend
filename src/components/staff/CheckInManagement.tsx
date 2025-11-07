@@ -12,10 +12,13 @@ export default function CheckInManagement({
   onClose: () => void;
   onDetected: (rawQrOrText: string) => void;
 }) {
-  const [manual, setManual] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const lockRef = useRef<number>(0);           // chống gọi liên tục
-  const lastErrorMsgRef = useRef<string | null>(null); // tránh spam toast lỗi giống nhau
+
+  // ✅ chống spam gọi detect
+  const lockRef = useRef<number>(0);
+
+  // ✅ chống spam lỗi giống nhau
+  const lastErrorMsgRef = useRef<string | null>(null);
 
   if (!open) return null;
 
@@ -25,19 +28,22 @@ export default function CheckInManagement({
     closeOnClick: true,
   };
 
+  /* =====================================================
+   ✅ Hàm chỉ quét 1 lần / 1s (giữ nguyên logic cũ)
+  ===================================================== */
   const triggerOnce = (text: string) => {
     const now = Date.now();
-    if (now - lockRef.current < 1000) return; // 1s chống spam
+    if (now - lockRef.current < 1000) return;
     lockRef.current = now;
 
-    // ✅ Giữ nguyên: chỉ gọi onDetected
     onDetected(text);
 
-    // ✅ Thông báo quét thành công (chỉ hiển thị 1 lần nhờ toastId)
-    const preview = text.length > 48 ? text.slice(0, 45).trim() + "..." : text.trim();
+    const preview =
+      text.length > 48 ? text.slice(0, 45).trim() + "..." : text.trim();
+
     toast.success(`Đã quét mã: ${preview}`, {
       ...toastOpts,
-      toastId: `qr-success-${preview}`, // cùng preview => không bị hiển thị trùng
+      toastId: `qr-success-${preview}`,
     });
 
     if (err) setErr(null);
@@ -56,15 +62,22 @@ export default function CheckInManagement({
     }
   };
 
+  /* ===========================
+     RENDER 
+  ============================ */
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
       <div className="w-full max-w-xl rounded-xl bg-white p-4 shadow-lg">
+        {/* HEADER */}
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-semibold">📷 Quét mã Check-in</h3>
           <button
             onClick={() => {
               onClose();
-              toast.info("Đã đóng cửa sổ quét.", { ...toastOpts, toastId: "qr-close" });
+              toast.info("Đã đóng cửa sổ quét.", {
+                ...toastOpts,
+                toastId: "qr-close",
+              });
             }}
             className="border px-3 py-1 rounded-lg"
           >
@@ -72,6 +85,7 @@ export default function CheckInManagement({
           </button>
         </div>
 
+        {/* CAMERA */}
         <div className="overflow-hidden rounded-lg border relative">
           <BarcodeScannerComponent
             width={640}
@@ -79,21 +93,29 @@ export default function CheckInManagement({
             facingMode="environment"
             onUpdate={(errObj: any, result: any) => {
               try {
+                // ✅ khi quét được
                 if (result && typeof result.getText === "function") {
                   const text = result.getText();
-                  if (text) {
-                    handleText(text);
-                  }
-                } else if (errObj) {
-                  // "Không thấy mã" sẽ lặp liên tục khi camera chưa nhìn thấy gì — bỏ qua
+                  if (text) handleText(text);
+                  return;
+                }
+
+                // ✅ khi lỗi
+                if (errObj) {
                   if (errObj.name === "NotFoundException") return;
 
                   if (errObj.name === "NotAllowedError") {
-                    setErrorWithToast("Trình duyệt bị chặn quyền camera. Hãy cấp quyền và thử lại.");
+                    setErrorWithToast(
+                      "Trình duyệt bị chặn quyền camera. Hãy cấp quyền và thử lại."
+                    );
                   } else if (errObj.name === "NotReadableError") {
-                    setErrorWithToast("Không truy cập được camera. Kiểm tra ứng dụng khác đang dùng camera.");
+                    setErrorWithToast(
+                      "Không truy cập được camera. Kiểm tra ứng dụng khác đang dùng camera."
+                    );
                   } else if (errObj.name === "OverconstrainedError") {
-                    setErrorWithToast("Không tìm thấy thiết bị camera phù hợp. Thử chuyển sang camera khác.");
+                    setErrorWithToast(
+                      "Không tìm thấy thiết bị camera phù hợp. Thử chuyển sang camera khác."
+                    );
                   } else {
                     setErrorWithToast("Không thể đọc mã.");
                   }
@@ -105,40 +127,12 @@ export default function CheckInManagement({
           />
         </div>
 
-        <div className="mt-3">
-          {err && <div className="text-xs text-red-600 mb-2">{err}</div>}
-          <div className="flex gap-2">
-            <input
-              className="w-full rounded border px-3 py-2"
-              placeholder="Dán chuỗi QR (base64) hoặc nhập ReservationId"
-              value={manual}
-              onChange={(e) => setManual(e.target.value)}
-            />
-            <button
-              className="rounded border px-3 py-2"
-              onClick={() => {
-                const v = manual.trim();
-                if (!v) {
-                  toast.warn("Vui lòng nhập nội dung để xác nhận.", {
-                    ...toastOpts,
-                    toastId: "qr-manual-empty",
-                  });
-                  return;
-                }
-                handleText(v);
-                toast.success("Đã xác nhận thủ công nội dung quét.", {
-                  ...toastOpts,
-                  toastId: "qr-manual-ok",
-                });
-              }}
-            >
-              Xác nhận
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Lưu ý: Trình duyệt cần chạy trên HTTPS hoặc localhost để mở camera.
-          </p>
-        </div>
+        {/* ✅ Giữ phần thông báo lỗi nhưng XOÁ phần input tay */}
+        {err && <p className="text-xs text-red-600 mt-2">{err}</p>}
+
+        <p className="mt-3 text-xs text-gray-500 text-center">
+          Lưu ý: Trình duyệt cần chạy trên HTTPS hoặc localhost để mở camera.
+        </p>
       </div>
     </div>
   );
