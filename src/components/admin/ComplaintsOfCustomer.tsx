@@ -26,15 +26,37 @@ function formatVNDate(dateString: string | null): string {
 }
 
 /** 📘 Map trạng thái khiếu nại */
-const statusLabels: Record<string, string> = {
-  PendingScheduling: "Chờ đặt lịch kiểm tra",
-  Scheduled: "Đã đặt lịch kiểm tra",
-  CheckedIn: "Đã check-in tại trạm",
-  Investigating: "Đang kiểm tra thực tế",
-  Confirmed: "Xác nhận lỗi hệ thống/bảo hành",
-  Rejected: "Từ chối (Lỗi do người dùng)",
-  Resolved: "Đã giải quyết (Đổi pin thành công)",
+/** 📘 Map trạng thái khiếu nại từ số sang tên ngắn */
+const statusLabels: Record<number, string> = {
+  0: "Chờ đặt lịch",
+  1: "Đã đặt lịch",
+  2: "Đã check-in",
+  3: "Đang kiểm tra",
+  4: "Xác nhận lỗi hệ thống/bảo hành",
+  5: "Từ chối (Lỗi do người dùng)",
+  6: "Đã giải quyết",
 };
+
+const statusColors: Record<number, string> = {
+  0: "bg-yellow-100 text-yellow-800", // Chờ đặt lịch
+  1: "bg-blue-100 text-blue-800", // Đã đặt lịch
+  2: "bg-indigo-100 text-indigo-800", // Đã check-in
+  3: "bg-purple-100 text-purple-800", // Đang kiểm tra
+  4: "bg-teal-100 text-teal-800", // Xác nhận lỗi hệ thống
+  5: "bg-red-100 text-red-800", // Từ chối
+  6: "bg-green-100 text-green-800", // Đã giải quyết
+};
+
+function getStatusLabel(status: string | number): {
+  label: string;
+  color: string;
+} {
+  const statusNumber = typeof status === "string" ? Number(status) : status;
+  return {
+    label: statusLabels[statusNumber] ?? String(status),
+    color: statusColors[statusNumber] ?? "bg-gray-100 text-gray-800",
+  };
+}
 
 const ComplaintsOfCustomer: React.FC = () => {
   const [complaints, setComplaints] = useState<BatteryComplaintResponse[]>([]);
@@ -187,7 +209,16 @@ const ComplaintsOfCustomer: React.FC = () => {
 
               <p>
                 <span className="font-medium text-gray-700">Trạng thái: </span>
-                {statusLabels[c.status] || c.status}
+                {(() => {
+                  const { label, color } = getStatusLabel(c.status);
+                  return (
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${color}`}
+                    >
+                      {label}
+                    </span>
+                  );
+                })()}
               </p>
 
               <p>
@@ -196,7 +227,7 @@ const ComplaintsOfCustomer: React.FC = () => {
                 </span>
                 {c.complaintDetails}
               </p>
-
+              {/* 
               <p className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <span className="font-medium text-gray-700">
@@ -205,7 +236,7 @@ const ComplaintsOfCustomer: React.FC = () => {
                 {completedAtMap[c.id]
                   ? formatVNDate(completedAtMap[c.id])
                   : "Chưa hoàn tất"}
-              </p>
+              </p> */}
             </CardContent>
           </Card>
         ))}

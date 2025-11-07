@@ -155,20 +155,13 @@ export function CustomerManagement() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Swaps: </span>
-                        <span className="font-medium">
-                          {customer.totalReservations.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Revenue: </span>
-                        <span className="font-medium">
-                          ${customer.completedReservations.toLocaleString()}
-                        </span>
-                      </div>
+                    <div>
+                      <span className="text-gray-500">Tổng lần thay pin: </span>
+                      <span className="font-medium">
+                        {customer.totalReservations.toLocaleString()}
+                      </span>
                     </div>
+
                     <div className="flex space-x-2 mt-2 justify-end">
                       <Button
                         size="sm"
@@ -176,9 +169,6 @@ export function CustomerManagement() {
                         onClick={() => handleViewDetails(customer)}
                       >
                         <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
