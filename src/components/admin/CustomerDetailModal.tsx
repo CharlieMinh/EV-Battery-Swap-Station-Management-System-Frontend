@@ -427,7 +427,7 @@ const CustomerDetailModal = ({
           <StatItem
             icon={Zap}
             color="text-green-500"
-            label={t("admin.revenue")}
+            label="Tổng lần thành công"
             value={`${formatNumber(customerDetail.completedReservations)} VND`}
           />
           <StatItem
