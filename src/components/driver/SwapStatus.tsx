@@ -13,6 +13,7 @@ interface Reservation {
   slotDate: string;
   stationName: string;
   slotStartTime: string;
+  slotEndTime?: string; // Thêm để tính slot duration
   qrCode: string;
   reservationCode: string;
   // (Thêm các trường khác nếu bạn cần)
@@ -100,17 +101,32 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
       const dateParts = activeReservation.slotDate.split('-').map(Number);
       const timeParts = activeReservation.slotStartTime.split(':').map(Number);
 
-      const slotDateTime = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0], timeParts[1]);
+      const slotStartDateTime = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0], timeParts[1]);
       const now = new Date();
-      const timeUntilSlot = (slotDateTime.getTime() - now.getTime()) / (1000 * 60 * 60); // Giờ
 
-      const isLate = timeUntilSlot <= 1 && timeUntilSlot > 0;
+      // Tính slotEndDateTime (nếu có slotEndTime, không thì mặc định +30 phút)
+      let slotEndDateTime: Date;
+      if (activeReservation.slotEndTime) {
+        const endTimeParts = activeReservation.slotEndTime.split(':').map(Number);
+        slotEndDateTime = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], endTimeParts[0], endTimeParts[1]);
+      } else {
+        // Mặc định slot kéo dài 30 phút
+        slotEndDateTime = new Date(slotStartDateTime.getTime() + 30 * 60 * 1000);
+      }
+
+      const timeUntilSlot = (slotStartDateTime.getTime() - now.getTime()) / (1000 * 60 * 60); // Giờ
+      const timeUntilSlotEnd = (slotEndDateTime.getTime() - now.getTime()) / (1000 * 60 * 60); // Giờ
+
+      // isLate = true nếu còn <= 1h trước slot hoặc đang trong slot (chưa hết slot)
+      const isLate = timeUntilSlot <= 1 && timeUntilSlotEnd > 0;
 
       let warningMessage = '';
-      if (isLate) {
-        warningMessage = '⚠️ Hủy sát giờ (≤1h)';
+      if (isLate && timeUntilSlot > 0) {
+        warningMessage = '⚠️ Đã gần giờ đặt lịch. Vui lòng cân nhắc trước khi hủy.';
+      } else if (isLate && timeUntilSlot <= 0 && timeUntilSlotEnd > 0) {
+        warningMessage = '⚠️ Đang trong khung giờ đặt lịch. Hủy bây giờ sẽ bị hình phạt.';
       } else if (timeUntilSlot > 1) {
-        warningMessage = '✓ Hủy sớm (>1h)';
+        warningMessage = 'Hủy trước 1 giờ';
       }
 
       return { isLate, timeUntilSlot, warningMessage };
@@ -184,23 +200,33 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
 
                     return (
                       <>
-                        {timeUntilSlot > 0 && (
-                          <div className={`p-3 rounded-lg border ${isLate ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
-                            <p className={`text-sm font-semibold ${isLate ? 'text-red-700' : 'text-green-700'}`}>
+                        {/* Hiển thị cảnh báo nếu đang gần giờ hoặc trong slot */}
+                        {isLate && (
+                          <div className="p-3 rounded-lg border bg-red-50 border-red-300">
+                            <p className="text-sm font-semibold text-red-700">
                               {warningMessage}
                             </p>
-                            {isLate ? (
-                              <div className="mt-2 text-xs text-red-600 space-y-1">
-                                <p>• <strong>Hủy sát giờ sẽ bị hình phạt:</strong></p>
-                                <p className="ml-3">- Nếu đặt bằng <strong>Gói</strong>: Mất lượt (không hoàn)</p>
-                                <p className="ml-3">- Nếu đặt bằng <strong>Tiền mặt</strong>: Tăng vi phạm +1</p>
-                                <p className="ml-3 text-red-700 font-semibold">- Vi phạm 3 lần → Không được thanh toán tiền mặt</p>
-                              </div>
-                            ) : (
-                              <p className="mt-1 text-xs text-green-600">
-                                ✓ Hủy trước 1 giờ không bị phạt. Gói sẽ được hoàn lại lượt.
-                              </p>
-                            )}
+                            <div className="mt-2 text-xs text-red-600 space-y-1">
+                              <p><strong>Chú ý khi hủy sát giờ:</strong></p>
+
+                              <p className="ml-3">- Đặt bằng <strong>gói</strong>: lượt đổi pin sẽ <strong>không được hoàn</strong>.</p>
+
+                              <p className="ml-3">- Đặt <strong> theo lượt </strong>: sẽ bị tính <strong>1 lần vi phạm</strong>. Sau <strong>3 lần</strong> bạn <strong>không thể</strong> trả bằng tiền mặt nữa.</p>
+
+
+                            </div>
+                          </div>
+                        )}
+                        {/* Hiển thị thông báo xanh nếu hủy sớm */}
+                        {!isLate && timeUntilSlot > 1 && (
+                          <div className="p-3 rounded-lg border bg-green-50 border-green-300">
+                            <p className="text-sm font-semibold text-green-700">
+                              {warningMessage}
+                            </p>
+                            <p className="mt-1 text-xs text-green-600">
+                              - Đặt bằng gói: lượt sẽ được hoàn lại.
+                              <br />- Đặt theo lượt: không bị tính vi phạm.
+                            </p>
                           </div>
                         )}
                       </>

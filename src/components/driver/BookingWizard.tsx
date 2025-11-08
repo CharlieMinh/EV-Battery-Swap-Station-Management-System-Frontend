@@ -292,7 +292,7 @@ export function BookingWizard({
                                 ) : (
                                   <div className="space-y-1">
                                     <Badge className="bg-green-600 text-white text-xs whitespace-normal">
-                                      ✓ Gói: {vehicleSubInfo.planName}
+                                      Xe có thể sử dụng: {vehicleSubInfo.planName}
                                     </Badge>
                                     <p className="text-xs text-green-700">
                                       {vehicleSubInfo.usageText}
@@ -317,7 +317,7 @@ export function BookingWizard({
             {selectedVehicle && selectedVehicleSub && (
               <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
                 <p className="text-sm font-semibold text-green-800 mb-1">
-                  ✓ Xe này có gói: {selectedVehicleSub.subscriptionPlan.name}
+                  Xe này có gói: {selectedVehicleSub.subscriptionPlan.name}
                 </p>
                 <p className="text-xs text-green-700">
                   {(() => {
@@ -644,10 +644,10 @@ export function BookingWizard({
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start space-x-3">
                   <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-800">
-                    <p className="font-semibold mb-1">Lưu ý quan trọng:</p>
+                    <p className="font-semibold mb-1">Lưu ý khi đổi pin theo lượt:</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
                       <li>Hủy lịch trong vòng 1 giờ trước giờ hẹn sẽ bị tính <strong>1 lần vi phạm</strong></li>
-                      <li>Không đến đúng giờ (No-show) sẽ bị tính <strong>1 lần vi phạm</strong></li>
+                      <li>Không đến đúng giờ với slot bạn đã đặt sẽ bị tính <strong>1 lần vi phạm</strong></li>
                       <li>Vi phạm 3 lần trở lên sẽ <strong>không được phép thanh toán tiền mặt</strong></li>
                     </ul>
                   </div>
@@ -660,12 +660,11 @@ export function BookingWizard({
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-3">
                 <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-1">Sử dụng gói đăng ký:</p>
+                  <p className="font-semibold mb-1">Lưu ý khi sử dụng gói đăng ký:</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li><strong>Lượt đổi pin sẽ được trừ ngay</strong> khi xác nhận đặt lịch</li>
-                    <li>Hủy lịch <strong>trước 1 giờ</strong> → Được hoàn lại lượt</li>
-                    <li>Hủy lịch <strong>trong vòng 1 giờ</strong> hoặc <strong>không đến</strong> → <strong>Mất lượt</strong> (không hoàn)</li>
-                    <li>Staff hủy lịch do lỗi trạm → Luôn được hoàn lại lượt</li>
+                    <li>Lượt đổi pin <strong>sẽ được trừ ngay</strong> khi xác nhận đặt lịch</li>
+                    <li>Nếu bạn <strong>hủy lịch trước 1 giờ</strong> so với giờ hẹn, <strong>lượt sẽ được hoàn lại</strong>.</li>
+                    <li>Nếu bạn <strong>hủy trong vòng 1 giờ</strong> trước giờ hẹn hoặc <strong>không đến checkin</strong>, <strong>lượt sẽ không được hoàn</strong>.</li>
                   </ul>
                 </div>
               </div>
@@ -737,7 +736,7 @@ export function BookingWizard({
               return (
                 <div className="my-4 p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
                   <p className="text-sm font-semibold text-green-900">
-                    📦 Gói: {vehicleSub.subscriptionPlan.name}
+                    Gói: {vehicleSub.subscriptionPlan.name}
                   </p>
                   <p className="text-sm text-green-800">
                     {remaining !== null
@@ -753,7 +752,7 @@ export function BookingWizard({
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-5 text-base rounded-lg"
                 onClick={handleConfirmUsePackage}
               >
-                ✓ Sử dụng gói đăng ký (Miễn phí)
+                Sử dụng gói đăng ký (Miễn phí)
               </Button>
               <Button
                 variant="outline"
