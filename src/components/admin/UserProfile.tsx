@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { getCurrentUser } from "@/services/authApi";
+import {
+  updateUser,
+  UpdateUserPayload,
+} from "@/services/admin/customerAdminService";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User, Mail, Phone, Calendar, Clock, Upload } from "lucide-react";
 
-const CLOUD_NAME = "dt8hbvtd7"; // ✅ đúng tên Cloudinary account
+const CLOUD_NAME = "dt8hbvtd7";
 const UPLOAD_PRESET = "FPTFast";
 
 interface UserProfileData {
@@ -19,18 +22,38 @@ interface UserProfileData {
   createdAt: string;
   lastLogin: string;
   avatar?: string;
+  status: string;
 }
 
 export default function UserProfile() {
   const [user, setUser] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Partial<UserProfileData>>({});
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await getCurrentUser();
-        setUser(data);
+        setUser({
+          ...data,
+          avatar: data.profilePictureUrl ?? undefined, // <- map profilePictureUrl sang avatar
+        });
+        setFormData({
+          name: data.name,
+          phoneNumber: data.phoneNumber,
+          avatar: data.profilePictureUrl ?? undefined,
+          status: data.status,
+          stationId: data.stationId,
+        });
+        setFormData({
+          name: data.name,
+          phoneNumber: data.phoneNumber,
+          avatar: data.avatar,
+          status: data.status,
+          stationId: data.stationId,
+        });
       } catch (error) {
         console.error("Lỗi khi lấy thông tin user:", error);
         toast.error("Không thể tải thông tin người dùng.");
@@ -41,40 +64,88 @@ export default function UserProfile() {
     fetchUser();
   }, []);
 
+  // Mapping role string sang số theo backend
+  // handleUpload
+  // handleUpload
   const handleUpload = async (file: File) => {
+    if (!user) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const form = new FormData();
+    form.append("file", file);
+    form.append("upload_preset", UPLOAD_PRESET);
 
     try {
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: form }
       );
-
       const data = await response.json();
 
       if (data.secure_url) {
-        const imageUrl = data.secure_url;
-        toast.success("🎉 Tải ảnh lên thành công!");
-        console.log("✅ Upload thành công:", imageUrl);
+        const avatarUrl = data.secure_url;
 
-        // ✅ Cập nhật lại state user.avatar để render lại avatar
-        setUser((prev) => (prev ? { ...prev, avatar: imageUrl } : prev));
+        // Gửi payload đúng tên backend
+        await updateUser(user.id, {
+          profilePicture: avatarUrl, // đổi từ profilePicture
+          role: user.role, // giữ nguyên
+          status: user.status, // giữ nguyên
+        });
+
+        setUser((prev) =>
+          prev
+            ? { ...prev, avatar: avatarUrl, profilePictureUrl: avatarUrl }
+            : prev
+        );
+
+        setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
+
+        toast.success("🎉 Tải ảnh lên và lưu thành công!");
       } else {
-        console.error("❌ Upload thất bại:", data);
         toast.error("Không thể tải ảnh lên Cloudinary!");
       }
     } catch (error) {
-      console.error("Lỗi khi upload:", error);
+      console.error("Lỗi upload:", error);
       toast.error("Đã xảy ra lỗi khi tải ảnh!");
     } finally {
       setUploading(false);
     }
+  };
+
+  // handleSave
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const payload: UpdateUserPayload = {
+        name: formData.name ?? user.name,
+        phoneNumber: formData.phoneNumber ?? user.phoneNumber,
+        profilePicture: formData.avatar ?? user.avatar, // đổi key
+        role: user.role,
+        status: user.status,
+        stationId: formData.stationId ?? user.stationId,
+      };
+
+      await updateUser(user.id, payload);
+      setUser((prev) => (prev ? { ...prev, ...payload } : prev));
+      toast.success("Cập nhật thông tin thành công!");
+      setEditMode(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể cập nhật thông tin.");
+    }
+  };
+
+  const handleCancel = () => {
+    if (!user) return;
+    setFormData({
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      avatar: user.avatar,
+      status: user.status,
+      stationId: user.stationId,
+    });
+    setEditMode(false);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -116,18 +187,14 @@ export default function UserProfile() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-
-      {/* Profile Card */}
       <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 border-b">
           <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5 text-orange-600" />
-            Thông tin cá nhân
+            <User className="w-5 h-5 text-orange-600" /> Thông tin cá nhân
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          {/* Avatar Section */}
+          {/* Avatar */}
           <div className="flex flex-col items-center mb-6">
             <div className="relative">
               <Avatar className="w-24 h-24 ring-4 ring-orange-100">
@@ -145,7 +212,7 @@ export default function UserProfile() {
                 </AvatarFallback>
               </Avatar>
 
-              {/* Upload Button */}
+              {/* Nút Upload luôn hiện */}
               <label className="absolute bottom-0 right-0 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-all shadow-lg">
                 <input
                   type="file"
@@ -161,9 +228,21 @@ export default function UserProfile() {
               </label>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 mt-4">
-              {user.name}
-            </h2>
+            {editMode ? (
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="text-xl font-bold text-gray-900 mt-4 border-b border-orange-400 focus:outline-none"
+              />
+            ) : (
+              <h2 className="text-xl font-bold text-gray-900 mt-4">
+                {user.name}
+              </h2>
+            )}
+
             <div
               className={`mt-2 px-4 py-1.5 rounded-full text-sm font-semibold border-2 ${getRoleBadgeColor(
                 user.role
@@ -173,7 +252,7 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* User Information */}
+          {/* Thông tin người dùng giữ nguyên như trước */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -190,9 +269,23 @@ export default function UserProfile() {
                 <Phone className="w-4 h-4" />
                 <span className="font-medium">Số điện thoại</span>
               </div>
-              <p className="text-gray-900 font-medium pl-6">
-                {user.phoneNumber || "Chưa cập nhật"}
-              </p>
+              {editMode ? (
+                <input
+                  type="text"
+                  value={formData.phoneNumber}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      phoneNumber: e.target.value,
+                    }))
+                  }
+                  className="pl-6 border-b border-gray-400 focus:outline-none w-full"
+                />
+              ) : (
+                <p className="text-gray-900 font-medium pl-6">
+                  {user.phoneNumber || "Chưa cập nhật"}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -234,6 +327,33 @@ export default function UserProfile() {
                 })}
               </p>
             </div>
+          </div>
+
+          {/* Nút Edit / Save / Cancel */}
+          <div className="flex justify-center mt-6 space-x-3">
+            {!editMode ? (
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                onClick={() => setEditMode(true)}
+              >
+                Chỉnh sửa thông tin
+              </button>
+            ) : (
+              <>
+                <button
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                  onClick={handleSave}
+                >
+                  Lưu thay đổi
+                </button>
+                <button
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
+                  onClick={handleCancel}
+                >
+                  Hủy
+                </button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
