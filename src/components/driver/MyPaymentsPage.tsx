@@ -55,6 +55,7 @@ export function MyPaymentsPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [switchingId, setSwitchingId] = useState<string | null>(null);
+    const [regeneratingId, setRegeneratingId] = useState<string | null>(null); // ⭐ NEW: Track regenerating VNPay URL
 
     // Filter states
     const [filterType, setFilterType] = useState<string>('all'); // 'all', 'Subscription', 'PayPerSwap'
@@ -178,6 +179,42 @@ export function MyPaymentsPage() {
             toast.error(err.response?.data?.message || 'Có lỗi xảy ra.');
         } finally {
             setSwitchingId(null); // Hoàn tất xử lý
+        }
+    };
+
+    // ⭐ NEW: Hàm xử lý khi User bấm "Thanh toán lại VNPay"
+    const handleRegenerateVnPayUrl = async (paymentId: string) => {
+        if (regeneratingId) return;
+
+        setRegeneratingId(paymentId);
+
+        try {
+            const response = await axios.post<{
+                success: boolean;
+                message?: string;
+                paymentId: string;
+                paymentUrl?: string;
+                amount: number;
+            }>(
+                `http://localhost:5194/api/v1/payments/${paymentId}/regenerate-vnpay-url`,
+                {},
+                { withCredentials: true }
+            );
+
+            if (response.data.success && response.data.paymentUrl) {
+                toast.success('Đang chuyển hướng đến VNPay...');
+                // Redirect to VNPay
+                setTimeout(() => {
+                    window.location.href = response.data.paymentUrl!;
+                }, 500);
+            } else {
+                toast.error(response.data.message || 'Không thể tạo link thanh toán VNPay.');
+            }
+        } catch (err: any) {
+            console.error("Lỗi khi tạo link VNPay:", err);
+            toast.error(err.response?.data?.message || 'Có lỗi xảy ra.');
+        } finally {
+            setRegeneratingId(null);
         }
     };
 
@@ -355,7 +392,7 @@ export function MyPaymentsPage() {
 
                             return (
                                 <Card key={payment.id} className={`flex flex-col ${isCash ? 'border-green-200 bg-green-50/30' :
-                                        isPaid ? 'border-gray-200 bg-gray-50/30' : ''
+                                    isPaid ? 'border-gray-200 bg-gray-50/30' : ''
                                     }`}>
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
@@ -405,35 +442,47 @@ export function MyPaymentsPage() {
                                             </div>
                                         )}
                                     </CardContent>
-                                    <div className="p-4 pt-0">
-                                        {/* Chỉ hiển thị nút Đổi sang Tiền mặt nếu đang là VNPay và Pending */}
+                                    <div className="p-4 pt-0 space-y-2">
+                                        {/* Chỉ hiển thị các nút nếu đang Pending và VNPay */}
                                         {isPending && isVnPay && (
-                                            <Button
-                                                variant="outline"
-                                                className="w-full"
-                                                size="sm"
-                                                onClick={() => handleSwitchToCash(payment.id)}
-                                                disabled={isLoadingThis || !!switchingId}
-                                            >
-                                                {isLoadingThis ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Landmark className="mr-2 h-4 w-4" />
-                                                )}
-                                                Đổi sang thanh toán Tiền mặt
-                                            </Button>
-                                        )}
-                                        {/* Hiển thị nút Thanh toán (bị vô hiệu hóa) */}
-                                        {isPending && isVnPay && (
-                                            <Button
-                                                variant="default"
-                                                className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
-                                                size="sm"
-                                                disabled={true}
-                                            >
-                                                <CreditCard className="mr-2 h-4 w-4" />
-                                                Thanh toán VNPay (Đã hết hạn link)
-                                            </Button>
+                                            <>
+                                                {/* Nút Thanh toán lại VNPay */}
+                                                <Button
+                                                    variant="default"
+                                                    className="w-full bg-blue-600 hover:bg-blue-700"
+                                                    size="sm"
+                                                    onClick={() => handleRegenerateVnPayUrl(payment.id)}
+                                                    disabled={!!regeneratingId || !!switchingId}
+                                                >
+                                                    {regeneratingId === payment.id ? (
+                                                        <>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            Đang tạo link...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CreditCard className="mr-2 h-4 w-4" />
+                                                            Thanh toán VNPay
+                                                        </>
+                                                    )}
+                                                </Button>
+
+                                                {/* Nút Đổi sang Tiền mặt */}
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full border-green-500 text-green-600 hover:bg-green-50"
+                                                    size="sm"
+                                                    onClick={() => handleSwitchToCash(payment.id)}
+                                                    disabled={!!switchingId || !!regeneratingId}
+                                                >
+                                                    {switchingId === payment.id ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Landmark className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    Đổi sang Tiền mặt
+                                                </Button>
+                                            </>
                                         )}
                                     </div>
                                 </Card>
