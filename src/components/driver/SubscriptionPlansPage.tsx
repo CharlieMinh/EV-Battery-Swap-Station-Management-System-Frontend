@@ -97,9 +97,9 @@ export function SubscriptionPlansPage() {
 
     const handlePayWithVNPay = () => {
         if (payment && payment.paymentUrl) {
-            toast.loading("Đang chuyển hướng đến VNPay...");
+            // Redirect to VNPay payment gateway
+            // VNPay will redirect back to /payment-result after payment
             window.location.href = decodeURIComponent(payment.paymentUrl);
-            navigate("/driver", { state: { initialSection: "profile" } });
         } else {
             toast.error("Không tìm thấy link thanh toán VNPay.");
         }
@@ -549,14 +549,14 @@ export function SubscriptionPlansPage() {
                             </div>
 
                             <div className="space-y-3 pt-2">
-                                {/*    <Button
+                                <Button
                                     className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-5 text-base rounded-lg shadow-md"
                                     onClick={handlePayWithVNPay}
                                     disabled={isLoading}
                                 >
                                     <CreditCard className="mr-2 h-5 w-5" />
                                     Thanh toán ngay bằng VNPay
-                                </Button> */}
+                                </Button>
 
                                 <Button
                                     variant="outline"

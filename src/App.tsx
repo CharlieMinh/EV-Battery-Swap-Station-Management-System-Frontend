@@ -18,6 +18,7 @@ import MapView from "./components/map/MapView";
 import api from "./configs/axios";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { PaymentResult } from "./components/driver/PaymentResult";
 
 // ✅ Dùng đúng component StaffDashboard (default export)
 import StaffDashboard from "./components/StaffDashBoard";
@@ -174,6 +175,8 @@ function App() {
           />
 
           <Route path="/map" element={<MapView />} />
+
+          <Route path="/payment-result" element={<PaymentResult />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
