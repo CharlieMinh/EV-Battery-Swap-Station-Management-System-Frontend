@@ -1,14 +1,36 @@
 import api from "@/configs/axios";
 
-interface Payment {
+export interface Payment {
+  id: string;
+  userId: string;
+  userName?: string | null;
+  userEmail?: string | null;
+  userPhone?: string | null;
+  userSubscriptionId?: string | null;
+  subscriptionPlanName?: string | null;
+  reservationId?: string | null;
+  method: string;
+  type: string;
   amount: number;
-  status: number;
-  [key: string]: any;
+  status: number; // ❗ string, không phải number
+  description?: string | null;
+  vnpTxnRef?: string | null;
+  paymentReference?: string | null;
+  vnpResponseCode?: string | null;
+  vnpTransactionNo?: string | null;
+  createdAt: string;
+  completedAt?: string | null;
+  processedByStaffId?: string | null;
+  processedByStaffName?: string | null;
+  stationId?: string | null;
+  stationName?: string | null;
 }
+
 
 interface GetTotalRevenueOptions {
   page?: number;
   pageSize?: number;
+  status?: number;
 }
 
 export async function getTotalRevenue(options: GetTotalRevenueOptions = {}): Promise<number> {
@@ -59,4 +81,26 @@ export async function getMonthlyRevenue(options: GetTotalRevenueOptions = {}): P
   }
 
   return Object.entries(monthlyRevenue).map(([month, revenue]) => ({ month, revenue }));
+}
+
+export async function getAllPayments(options: GetTotalRevenueOptions = {}): Promise<Payment[]> {
+  const pageSize = options.pageSize || 50;
+  let page = options.page || 1;
+  let totalPages = 1;
+  let allPayments: Payment[] = [];
+
+  while (page <= totalPages) {
+const response = await api.get("/api/v1/payments", {
+  params: { page, pageSize, status: options.status ?? 2 }, // 🔹 status = 2
+});
+
+    const data = response.data;
+    const payments: Payment[] = Array.isArray(data.payments) ? data.payments : [];
+
+    allPayments = allPayments.concat(payments);
+    totalPages = data.pagination?.totalPages || 1;
+    page += 1;
+  }
+
+  return allPayments;
 }

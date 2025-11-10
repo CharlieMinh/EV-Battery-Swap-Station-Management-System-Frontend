@@ -25,6 +25,7 @@ import {
 import { geocodeAddress } from "../map/geocode";
 import { toast } from "react-toastify";
 import { StationHistoryList } from "./StationHistoryList";
+import { getAllPayments, Payment } from "@/services/admin/payment";
 
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
@@ -169,6 +170,32 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     };
     getSwapDetail();
   }, [stationDetail?.name]);
+
+  const [stationRevenue, setStationRevenue] = useState<number>(0);
+  useEffect(() => {
+    if (!stationDetail?.id) return;
+
+    const fetchStationRevenue = async () => {
+      try {
+        // Lấy tất cả payment hoàn tất (status = 2)
+        const payments: Payment[] = await getAllPayments({ status: 2 });
+
+        // Lọc chỉ lấy payment của trạm này
+        const filtered = payments.filter(
+          (p) => p.stationId === stationDetail.id
+        );
+
+        // Tính tổng doanh thu
+        const total = filtered.reduce((sum, p) => sum + (p.amount || 0), 0);
+        setStationRevenue(total);
+      } catch (error) {
+        console.error("Lỗi khi lấy doanh thu trạm:", error);
+        setStationRevenue(0);
+      }
+    };
+
+    fetchStationRevenue();
+  }, [stationDetail?.id]);
 
   if (loading)
     return (
@@ -424,12 +451,12 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 value={swapCounts.toLocaleString()}
                 color="text-blue-600"
               />
-              {/* <StatItem
+              <StatItem
                 icon={DollarSign}
                 title="Doanh thu (tháng)"
-                value={formatCurrency(revenue)}
+                value={formatCurrency(stationRevenue)}
                 color="text-green-600"
-              /> */}
+              />
               <StatItem
                 icon={BatteryCharging}
                 title="Số pin hiện có"
