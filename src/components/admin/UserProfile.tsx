@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User, Mail, Phone, Calendar, Clock, Upload } from "lucide-react";
+import ChangePassword from "./ChangePassword";
 
 const CLOUD_NAME = "dt8hbvtd7";
 const UPLOAD_PRESET = "FPTFast";
@@ -31,6 +32,7 @@ export default function UserProfile() {
   const [uploading, setUploading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<Partial<UserProfileData>>({});
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -328,35 +330,50 @@ export default function UserProfile() {
               </p>
             </div>
           </div>
-
-          {/* Nút Edit / Save / Cancel */}
-          <div className="flex justify-center mt-6 space-x-3">
-            {!editMode ? (
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-                onClick={() => setEditMode(true)}
-              >
-                Chỉnh sửa thông tin
-              </button>
-            ) : (
-              <>
-                <button
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
-                  onClick={handleSave}
-                >
-                  Lưu thay đổi
-                </button>
-                <button
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
-                  onClick={handleCancel}
-                >
-                  Hủy
-                </button>
-              </>
-            )}
-          </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end space-x-3 mt-4">
+        {/* Nút Chỉnh sửa / Lưu / Hủy */}
+        {!editMode ? (
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+            onClick={() => setEditMode(true)}
+          >
+            Chỉnh sửa thông tin
+          </button>
+        ) : (
+          <>
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+              onClick={handleSave}
+            >
+              Lưu thay đổi
+            </button>
+            <button
+              className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
+              onClick={handleCancel}
+            >
+              Hủy
+            </button>
+          </>
+        )}
+
+        {/* Nút Đổi mật khẩu */}
+        <button
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
+          onClick={() => setShowChangePassword((prev) => !prev)}
+        >
+          {showChangePassword ? "Hủy đổi mật khẩu" : "Đổi mật khẩu"}
+        </button>
+      </div>
+
+      {/* Hiển thị component ChangePassword nếu showChangePassword = true */}
+      {showChangePassword && (
+        <div className="mt-4 w-full max-w-3xl mx-auto">
+          <ChangePassword />
+        </div>
+      )}
     </div>
   );
 }

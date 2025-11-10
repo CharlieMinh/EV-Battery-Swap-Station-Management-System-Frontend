@@ -92,8 +92,6 @@
 }
 
 
-
-
   export async function fetchTotalCustomers(  page: number,
     pageSize: number
   ) {
@@ -107,4 +105,18 @@
           throw error;
       }
   }
+
+export async function changePassword(payload: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}) {
+  try {
+    const response = await api.post(`/api/v1/Users/change-password`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
+}
 
