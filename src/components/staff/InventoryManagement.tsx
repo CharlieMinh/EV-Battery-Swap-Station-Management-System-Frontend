@@ -160,33 +160,6 @@ export default function InventoryManagement({ stationId }: Props) {
     loadData();
   }, []);
 
-  const handleSubmitStockRequest = async () => {
-    if (!selectedModel || quantity <= 0) {
-      toast.warning("Vui lòng chọn model và nhập số lượng hợp lệ.", toastOpts);
-      return;
-    }
-
-    try {
-      await createStockRequest({
-        stationId: myStationId,
-        batteryModelId: selectedModel,
-        quantity,
-        staffNote: note,
-      });
-      toast.success("Đã gửi yêu cầu nhập kho thành công.", toastOpts);
-      setCreateOpen(false);
-      setSelectedModel("");
-      setQuantity(0);
-      setNote("");
-      fetchInventory(); // refresh lại
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Gửi yêu cầu thất bại.",
-        toastOpts
-      );
-    }
-  };
-
   /* ====== FILTER (GIỮ LOGIC) ====== */
   useEffect(() => {
     const s = (search || "").trim().toLowerCase();
@@ -291,7 +264,7 @@ export default function InventoryManagement({ stationId }: Props) {
             stationId: String(stationId), // ép kiểu string nếu cần
             batteryModelId: item.batteryModelId,
             quantity: item.quantity,
-            staffNote: reason || undefined, // optional
+            staffNote: note || "", // optional
           })
         )
       );

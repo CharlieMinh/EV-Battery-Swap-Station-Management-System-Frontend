@@ -52,6 +52,7 @@ import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 import { toast } from "react-toastify";
+import SendRequestList from "./staff/SendRequestList";
 
 type TabKey =
   | "profile"
@@ -59,6 +60,7 @@ type TabKey =
   | "transactions"
   | "inventory"
   | "requests"
+  | "send-requests"
   | "revenue"
   | "approvals"
   | "complaint";
@@ -70,7 +72,10 @@ interface StaffDashboardPageProps {
   onLogout: () => void;
 }
 
-export default function StaffDashboard({ user, onLogout }: StaffDashboardPageProps) {
+export default function StaffDashboard({
+  user,
+  onLogout,
+}: StaffDashboardPageProps) {
   const [active, setActive] = useState<TabKey>("queue");
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +88,11 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
   const { t } = useLanguage(); // (chưa dùng nhưng giữ nguyên logic cũ)
   const [activeSection, setActiveSection] = useState("profile"); // (chưa dùng nhưng giữ nguyên)
 
-  const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+  const toastOpts = {
+    position: "top-right" as const,
+    autoClose: 2200,
+    closeOnClick: true,
+  };
 
   // ✅ Mỗi hành động chỉ hiện 1 toast (toastId)
   const TOAST_ID = {
@@ -132,7 +141,8 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
       // { key: "transactions", label: "Giao dịch", icon: CreditCard }, // Tạm thời ẩn
       { key: "inventory", label: "Kho pin", icon: Warehouse },
-      { key: "requests", label: "Yêu cầu nhập pin", icon: Package },
+      { key: "requests", label: "Yêu cầu nhận pin", icon: Package },
+      { key: "send-requests", label: "Yêu cầu nhập pin", icon: Package },
       { key: "revenue", label: "Doanh thu", icon: BarChart2 },
       { key: "approvals", label: "Xác nhận thanh toán", icon: BadgeCheck },
       { key: "complaint", label: "Khiếu nại và phản hồi", icon: MessageCircle },
@@ -221,10 +231,16 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
           <SidebarHeader>
             <div className="bg-orange-500 flex items-center p-2">
               <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
-                <img src={logo} alt="FPTFAST Logo" className="w-10 h-9 rounded-lg" />
+                <img
+                  src={logo}
+                  alt="FPTFAST Logo"
+                  className="w-10 h-9 rounded-lg"
+                />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg text-white font-semibold">F P T F A S T</span>
+                <span className="text-lg text-white font-semibold">
+                  F P T F A S T
+                </span>
                 <span className="text-sm font-medium text-gray-100">Staff</span>
               </div>
             </div>
@@ -262,7 +278,12 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
                 </p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
-              <Button variant="ghost" size="sm" className="shrink-0" onClick={logout}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+                onClick={logout}
+              >
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -276,7 +297,8 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
-                  {menu.find((m) => m.key === active)?.label || "Bảng điều khiển"}
+                  {menu.find((m) => m.key === active)?.label ||
+                    "Bảng điều khiển"}
                 </h1>
               </div>
 
@@ -300,7 +322,9 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
                       Thông báo
                     </h3>
                     {notifications.length === 0 ? (
-                      <p className="text-gray-500 text-sm">Không có thông báo nào</p>
+                      <p className="text-gray-500 text-sm">
+                        Không có thông báo nào
+                      </p>
                     ) : (
                       <div className="max-h-64 overflow-y-auto">
                         {notifications.map((n) => (
@@ -368,7 +392,10 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
                     <Save className="h-4 w-4" /> Lưu StationId
                   </button>
                   {stationIdOverride && (
-                    <button onClick={clearOverride} className="border rounded px-3 py-2">
+                    <button
+                      onClick={clearOverride}
+                      className="border rounded px-3 py-2"
+                    >
                       Xóa
                     </button>
                   )}
@@ -379,12 +406,16 @@ export default function StaffDashboard({ user, onLogout }: StaffDashboardPagePro
             {!loading && !err && (
               <>
                 {active === "profile" && <ProfileManagement />}
-                {active === "queue" && <QueueManagement stationId={stationId || ""} />}
-                {/* {active === "transactions" && <Transactions />} */} {/* Tạm thời ẩn */}
+                {active === "queue" && (
+                  <QueueManagement stationId={stationId || ""} />
+                )}
+                {/* {active === "transactions" && <Transactions />} */}{" "}
+                {/* Tạm thời ẩn */}
                 {active === "inventory" && (
-                  <InventoryManagement stationId={stationId || ""} />
+                  <InventoryManagement stationId={String(stationId)} />
                 )}
                 {active === "requests" && <RequestBattery />}
+                {active === "send-requests" && <SendRequestList />}
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
                 {active === "complaint" && <ComplaintsOfCustomer />}
