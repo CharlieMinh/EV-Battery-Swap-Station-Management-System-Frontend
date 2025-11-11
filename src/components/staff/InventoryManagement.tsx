@@ -1,4 +1,3 @@
-// src/components/staff/InventoryManagement.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   getStationInventory,
@@ -7,6 +6,8 @@ import {
   type StationBatteryStats,
   type BatteryUnit,
   STATUS_LABELS_VI,
+  updateBatteryStatus,
+  type BatteryStatusBackend,
 } from "../../services/staff/staffApi";
 import { AlertTriangle, Plus, X } from "lucide-react";
 import { toast } from "react-toastify";
@@ -30,13 +31,45 @@ type Props = { stationId: string };
 
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "" },
-  { label: "Sẵn sàng", value: "Available" },
+  { label: "Đầy", value: "Available" },
   { label: "Đang sử dụng", value: "InUse" },
   { label: "Đang sạc", value: "Charging" },
   { label: "Bảo trì", value: "Maintenance" },
   { label: "Đã đặt trước", value: "Reserved" },
   { label: "Lỗi", value: "Faulty" },
   { label: "Hết pin", value: "Depleted" },
+];
+
+// ✅ cho modal "Kiểm tra pin": HIỆN TẤT CẢ TRẠNG THÁI
+const CHECK_STATUS_OPTIONS: { label: string; value: BatteryStatusBackend }[] = [
+  {
+    value: "Full",
+    label: STATUS_LABELS_VI.Available || "Đầy",
+  },
+  {
+    value: "Reserved",
+    label: STATUS_LABELS_VI.Reserved || "Đã đặt trước",
+  },
+  {
+    value: "InUse",
+    label: STATUS_LABELS_VI.InUse || "Đang sử dụng",
+  },
+  {
+    value: "Charging",
+    label: STATUS_LABELS_VI.Charging || "Đang sạc",
+  },
+  {
+    value: "Depleted",
+    label: STATUS_LABELS_VI.Depleted || "Hết pin",
+  },
+  {
+    value: "Maintenance",
+    label: STATUS_LABELS_VI.Maintenance || "Bảo trì",
+  },
+  {
+    value: "Faulty",
+    label: STATUS_LABELS_VI.Faulty || "Lỗi",
+  },
 ];
 
 const toastOpts = {
@@ -62,16 +95,8 @@ const normStatus = (s?: string) => {
 
 const displayStatusVI = (s?: string) => {
   const k = normStatus(s);
-  if (k === "Available") return "Đầy";
   return (
-    {
-      InUse: "Đang sử dụng",
-      Charging: "Đang sạc",
-      Maintenance: "Bảo trì",
-      Reserved: "Đã đặt trước",
-      Faulty: "Lỗi",
-      Depleted: "Hết pin",
-    }[k as keyof typeof STATUS_LABELS_VI] ||
+    STATUS_LABELS_VI[k as keyof typeof STATUS_LABELS_VI] ||
     (STATUS_LABELS_VI as any)[s || ""] ||
     s ||
     "—"
@@ -88,6 +113,12 @@ function modelKey(b: BatteryUnit): string {
 }
 function modelLabel(b: BatteryUnit): string {
   return (b.batteryModelName || b.batteryModelId || "").toString();
+}
+
+// map status client → Backend enum name
+function clientStatusToBackend(k: string): BatteryStatusBackend {
+  if (k === "Available") return "Full";
+  return (k as BatteryStatusBackend) || "Full";
 }
 
 /* ========================================================= */
@@ -107,6 +138,15 @@ export default function InventoryManagement({ stationId }: Props) {
     { batteryModelId: "", quantityRequested: 0 },
   ]);
   const [reason, setReason] = useState("");
+
+  // ===== MODAL KIỂM TRA PIN =====
+  const [inspectOpen, setInspectOpen] = useState(false);
+  const [selectedBattery, setSelectedBattery] = useState<BatteryUnit | null>(
+    null
+  );
+  const [inspectStatus, setInspectStatus] =
+    useState<BatteryStatusBackend>("Full");
+  const [inspectNote, setInspectNote] = useState("");
 
   /* ====== FETCH (GIỮ LOGIC) ====== */
   const fetchInventory = async () => {
@@ -301,11 +341,43 @@ export default function InventoryManagement({ stationId }: Props) {
     return "bg-slate-100 text-slate-700";
   };
 
+  /* ===== HANDLER KIỂM TRA PIN ===== */
+  const openInspectModal = (b: BatteryUnit) => {
+    const k = normStatus(b.status); // Available / InUse / Charging / ...
+    const backend = clientStatusToBackend(k); // giữ nguyên logic map sang enum BE
+
+    setSelectedBattery(b);
+    setInspectStatus(backend);
+    setInspectNote("");
+    setInspectOpen(true);
+  };
+
+  const handleSaveInspect = async () => {
+    if (!selectedBattery) return;
+    try {
+      await updateBatteryStatus(selectedBattery.batteryId, inspectStatus);
+      toast.success("Đã cập nhật trạng thái pin", {
+        ...toastOpts,
+        toastId: "inv-update-status",
+      });
+      setInspectOpen(false);
+      setSelectedBattery(null);
+      setInspectNote("");
+      await fetchInventory();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Cập nhật trạng thái pin thất bại.";
+      toast.error(msg, { ...toastOpts, toastId: "inv-update-status-error" });
+    }
+  };
+
   /* ========================================================= */
 
   return (
     <div className="container mx-auto grid gap-6">
-      {/* ✅ CARD TỔNG QUAN (đồng nhất UI Hàng Chờ) */}
+      {/* CARD tổng quan, giữ nguyên logic */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
         <h2 className="text-2xl font-bold text-orange-600 mb-1">
           Tổng quan kho
@@ -317,8 +389,8 @@ export default function InventoryManagement({ stationId }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: "Tổng", value: header.total },
-            { label: "Sẵn sàng", value: header.available },
-            { label: "Đang sử dụng (đã xuất)", value: header.inUse },
+            { label: "Đầy", value: header.available },
+            { label: "Đang sử dụng", value: header.inUse },
             { label: "Đang sạc", value: header.charging },
             { label: "Bảo trì", value: header.maintenance },
             { label: "Đã đặt trước", value: header.reserved },
@@ -352,7 +424,7 @@ export default function InventoryManagement({ stationId }: Props) {
         )}
       </section>
 
-      {/* ✅ CARD BỘ LỌC (đồng nhất UI Hàng Chờ) */}
+      {/* Danh sách pin */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
         <h3 className="text-xl font-semibold text-orange-600 mb-4">
           Danh sách pin
@@ -411,7 +483,7 @@ export default function InventoryManagement({ stationId }: Props) {
           </div>
         </div>
 
-        {/* ✅ PHẦN BẢNG — GIỮ NGUYÊN */}
+        {/* Bảng */}
         <div className="rounded-xl border overflow-hidden">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
@@ -421,13 +493,14 @@ export default function InventoryManagement({ stationId }: Props) {
                 <th className="px-4 py-3 w-64 text-left">Model</th>
                 <th className="px-4 py-3 w-40 text-left">Trạng thái</th>
                 <th className="px-4 py-3 w-48 text-left">Cập nhật</th>
+                <th className="px-4 py-3 w-40 text-left">Kiểm tra</th>
               </tr>
             </thead>
 
             <tbody className="divide-y">
               {loading && (
                 <tr>
-                  <td colSpan={5} className="text-center py-6 text-gray-500">
+                  <td colSpan={6} className="text-center py-6 text-gray-500">
                     Đang tải…
                   </td>
                 </tr>
@@ -435,7 +508,7 @@ export default function InventoryManagement({ stationId }: Props) {
 
               {!loading && list.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-6 text-gray-500">
+                  <td colSpan={6} className="text-center py-6 text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
@@ -468,6 +541,14 @@ export default function InventoryManagement({ stationId }: Props) {
                         ? new Date(b.updatedAt).toLocaleString()
                         : "—"}
                     </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => openInspectModal(b)}
+                        className="px-3 py-1 rounded-full border text-xs hover:bg-gray-100"
+                      >
+                        Kiểm tra pin
+                      </button>
+                    </td>
                   </tr>
                 ))}
             </tbody>
@@ -475,7 +556,7 @@ export default function InventoryManagement({ stationId }: Props) {
         </div>
       </section>
 
-      {/* ✅ MODAL YÊU CẦU NHẬP PIN (GIỮ NGUYÊN) */}
+      {/* Modal yêu cầu nhập pin */}
       {reqOpen && (
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl">
@@ -571,6 +652,14 @@ export default function InventoryManagement({ stationId }: Props) {
               </h3>
               <button
                 onClick={() => setCreateOpen(false)}
+      {/* Modal kiểm tra pin */}
+      {inspectOpen && selectedBattery && (
+        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+            <div className="flex justify-between mb-4">
+              <h3 className="text-lg font-semibold">Kiểm tra pin</h3>
+              <button
+                onClick={() => setInspectOpen(false)}
                 className="p-2 hover:bg-gray-50 rounded-lg"
               >
                 <X />
@@ -657,6 +746,71 @@ export default function InventoryManagement({ stationId }: Props) {
                   Gửi yêu cầu
                 </button>
               </div>
+            <div className="space-y-2 mb-4 text-sm">
+              <p>
+                <span className="font-semibold">Serial:</span>{" "}
+                {selectedBattery.serialNumber || "—"}
+              </p>
+              <p>
+                <span className="font-semibold">Model:</span>{" "}
+                {selectedBattery.batteryModelName ||
+                  selectedBattery.batteryModelId ||
+                  "—"}
+              </p>
+              <p>
+                <span className="font-semibold">Trạng thái hiện tại:</span>{" "}
+                {displayStatusVI(selectedBattery.status)}
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm mb-1">
+                Trạng thái sau kiểm tra
+              </label>
+              <Select
+                value={inspectStatus}
+                onValueChange={(val) =>
+                  setInspectStatus(val as BatteryStatusBackend)
+                }
+              >
+                <SelectTrigger className="h-10 w-full rounded-lg border px-3 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHECK_STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm mb-1">
+                Ghi chú (tùy chọn)
+              </label>
+              <input
+                value={inspectNote}
+                onChange={(e) => setInspectNote(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="Ví dụ: pin nhập từ admin nhưng phát hiện hư hỏng thì chọn Lỗi."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setInspectOpen(false)}
+                className="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveInspect}
+                className="px-4 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
+              >
+                Lưu trạng thái
+              </button>
             </div>
           </div>
         </div>

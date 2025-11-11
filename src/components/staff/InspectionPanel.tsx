@@ -47,7 +47,8 @@ export default function InspectionPanel({
   onCancel,
   isComplaint = false,
 }: Props) {
-  const [batteryHealth, setBatteryHealth] = useState<number>(85); // % pin cũ
+  // 🔧 Dùng string để tránh bị dính số 0 khi xoá / gõ lại
+  const [batteryHealthInput, setBatteryHealthInput] = useState<string>("85"); // hiển thị
   const [notes, setNotes] = useState("");
   const [loadedName, setLoadedName] = useState<string>("");
 
@@ -82,19 +83,50 @@ export default function InspectionPanel({
     [reservation.reservationId]
   );
 
+  // 🔧 Handler cho ô % pin cũ: cho phép "" để dễ xoá, chặn ký tự lạ, bỏ bớt 0 ở đầu
+  const handleBatteryHealthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value;
+
+    // Cho phép rỗng để user xóa hết rồi gõ lại
+    if (v === "") {
+      setBatteryHealthInput("");
+      return;
+    }
+
+    // Chỉ cho tối đa 3 ký tự (đề phòng user gõ 100)
+    if (v.length > 3) return;
+
+    // Chỉ cho số
+    if (!/^\d+$/.test(v)) return;
+
+    // Bỏ bớt 0 ở đầu cho đẹp (001 -> 1, 010 -> 10)
+    if (v.length > 1) {
+      v = v.replace(/^0+(\d)/, "$1");
+    }
+
+    setBatteryHealthInput(v);
+  };
+
   const finish = () => {
-    if (batteryHealth < 0 || batteryHealth > 100) {
-      toast.warning("Vui lòng nhập % pin cũ trong khoảng 0-100.", {
+    // Convert string -> number để giữ nguyên logic cũ
+    const health =
+      batteryHealthInput === "" ? NaN : Number(batteryHealthInput);
+
+    // 🎯 Pin cũ 0–99, 100% là pin mới
+    if (!Number.isFinite(health) || health < 0 || health > 99) {
+      toast.warning("Vui lòng nhập % pin cũ trong khoảng 0-99.", {
         ...toastOpts,
         toastId: "insp-invalid-health",
       });
       return;
     }
+
     toast.success("Đã lưu kết quả kiểm tra pin.", {
       ...toastOpts,
       toastId: "insp-finish",
     });
-    onDone(batteryHealth, notes);
+
+    onDone(health, notes); // vẫn trả về number như trước
   };
 
   // Tên hiển thị (ưu tiên userName -> loadedName -> Khách #xxxx)
@@ -109,23 +141,26 @@ export default function InspectionPanel({
       <section className="lg:col-span-2 rounded-2xl bg-white shadow-lg p-5">
         <header className="mb-3">
           <p className="text-xs text-gray-500">
-            Kiểm tra pin cũ — Reservation: <b>{reservation.reservationId}</b>
+            Kiểm tra pin cũ — Khách: <b>{customerLabel}</b>
           </p>
         </header>
 
         {/* % Pin cũ */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">% Pin cũ (0-100)</label>
+          <label className="block text-sm font-medium mb-1">% Pin cũ (0-99)</label>
           <input
             type="number"
             min="0"
-            max="100"
+            max="99"
+            inputMode="numeric"
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={batteryHealth}
-            onChange={(e) => setBatteryHealth(Number(e.target.value))}
+            value={batteryHealthInput}
+            onChange={handleBatteryHealthChange}
             placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
-          <p className="mt-1 text-xs text-gray-500">Nhập % dung lượng pin còn lại (0-100%).</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Nhập % dung lượng pin còn lại (0-99%). 100% là pin mới, khách sẽ không cần đi thay.
+          </p>
         </div>
 
         {/* Ghi chú */}
@@ -191,7 +226,9 @@ export default function InspectionPanel({
           <div className="font-medium text-gray-900">{getVehicleName(reservation)}</div>
 
           <div className="text-gray-500">Biển số</div>
-          <div className="font-medium font-mono text-gray-900">{getPlate(reservation)}</div>
+          <div className="font-medium font-mono text-gray-900">
+            {getPlate(reservation)}
+          </div>
 
           <div className="text-gray-500">Model pin</div>
           <div className="font-semibold text-gray-900">
