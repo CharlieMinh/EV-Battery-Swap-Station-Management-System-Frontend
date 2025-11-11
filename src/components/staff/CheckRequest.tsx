@@ -49,7 +49,9 @@ function getAxiosErrorMessage(err: any) {
 const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
   const [notes, setNotes] = useState(group.requests[0].staffNotes || "");
   const [loading, setLoading] = useState(false);
-  const [actionType, setActionType] = useState<"confirm" | "reject" | null>(null);
+  const [actionType, setActionType] = useState<"confirm" | "reject" | null>(
+    null
+  );
 
   const formatDateTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -79,17 +81,23 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       const requestIds = group.requests.map((req) => req.id);
       await confirmMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(`Đã xác nhận thành công ${group.requests.length} yêu cầu!`, {
-        ...toastOpts,
-        toastId: `req-confirm-success-${groupKey(group)}`,
-      });
+      toast.success(
+        `Đã xác nhận thành công ${group.requests.length} yêu cầu!`,
+        {
+          ...toastOpts,
+          toastId: `req-confirm-success-${groupKey(group)}`,
+        }
+      );
       onClose();
     } catch (error: any) {
       console.error("Error confirming requests:", error);
-      toast.error(getAxiosErrorMessage(error) || "Có lỗi xảy ra khi xác nhận!", {
-        ...toastOpts,
-        toastId: `req-confirm-error-${groupKey(group)}`,
-      });
+      toast.error(
+        getAxiosErrorMessage(error) || "Có lỗi xảy ra khi xác nhận!",
+        {
+          ...toastOpts,
+          toastId: `req-confirm-error-${groupKey(group)}`,
+        }
+      );
     } finally {
       setLoading(false);
       setActionType(null);
@@ -155,7 +163,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 {isEditing ? "Chi Tiết Yêu Cầu" : "Kiểm Tra Hàng"}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {isEditing ? "Xem thông tin yêu cầu đã xử lý" : "Xác nhận hoặc từ chối lô hàng này"}
+                {isEditing
+                  ? "Xem thông tin yêu cầu đã xử lý"
+                  : "Xác nhận hoặc từ chối lô hàng này"}
               </p>
             </div>
             <Button
@@ -180,7 +190,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           {/* Thông tin chung */}
           <Card className="border border-orange-200">
             <CardHeader>
-              <CardTitle className="text-orange-600">Thông Tin Lô Hàng</CardTitle>
+              <CardTitle className="text-orange-600">
+                Thông Tin Lô Hàng
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,7 +207,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   <Calendar className="w-5 h-5 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Thời gian gửi</p>
-                    <p className="font-semibold">{formatDateTime(group.createdAt)}</p>
+                    <p className="font-semibold">
+                      {formatDateTime(group.createdAt)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -209,7 +223,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   <Package className="w-5 h-5 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Tổng số lượng</p>
-                    <p className="font-semibold text-orange-600">{group.totalItems} pin</p>
+                    <p className="font-semibold text-orange-600">
+                      {group.totalItems} pin
+                    </p>
                   </div>
                 </div>
               </div>
@@ -230,15 +246,23 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-orange-600 font-bold">{index + 1}</span>
+                        <span className="text-orange-600 font-bold">
+                          {index + 1}
+                        </span>
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">{request.batteryModelName}</p>
-                        <p className="text-sm text-gray-500">Model ID: {request.batteryModelId.slice(0, 8)}...</p>
+                        <p className="font-semibold text-gray-800">
+                          {request.batteryModelName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Model ID: {request.batteryModelId.slice(0, 8)}...
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-600">x{request.quantity}</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        x{request.quantity}
+                      </p>
                       <p className="text-xs text-gray-500">Số lượng</p>
                     </div>
                   </div>
@@ -265,7 +289,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={
-                    isEditing ? "" : "Ví dụ: Đã kiểm tra đầy đủ, hàng nguyên vẹn, không có vấn đề..."
+                    isEditing
+                      ? ""
+                      : "Ví dụ: Đã kiểm tra đầy đủ, hàng nguyên vẹn, không có vấn đề..."
                   }
                   className={`w-full p-3 border border-gray-300 rounded-lg ${
                     isEditing
@@ -293,7 +319,9 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Đã xử lý bởi</p>
-                    <p className="font-semibold">{group.requests[0].handledByStaffName}</p>
+                    <p className="font-semibold">
+                      {group.requests[0].handledByStaffName}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Trạng thái</p>
