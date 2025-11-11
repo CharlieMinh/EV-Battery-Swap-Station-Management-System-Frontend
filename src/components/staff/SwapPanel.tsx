@@ -28,6 +28,7 @@ const toastOpts = {
   autoClose: 2200,
   closeOnClick: true,
 };
+
 // ✅ Bảo đảm MỖI hành động chỉ hiển thị 1 toast (dùng toastId cố định)
 const TOAST_ID = {
   swap: "swap-action-toast",
@@ -42,7 +43,13 @@ export default function SwapPanel({
   stationId,
   onCancel,
 }: Props) {
+  // Giá trị số thực gửi cho BE
   const [health, setHealth] = useState<number>(initialBatteryHealth);
+  // Chuỗi user đang nhập trong input (dễ gõ hơn, không bị lỗi khi rỗng)
+  const [healthInput, setHealthInput] = useState<string>(
+    initialBatteryHealth.toString()
+  );
+
   const [note, setNote] = useState<string>(initialNote);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SwapFinalizeResponse | null>(null);
@@ -61,18 +68,23 @@ export default function SwapPanel({
   };
 
   const handleSwap = async () => {
-    if (health < 0 || health > 100) {
-      oneToast.warn("Vui lòng nhập % pin cũ trong khoảng 0-100.");
+    // Parse từ chuỗi người dùng nhập
+    const parsed = Number(healthInput || "0");
+
+    // 🎯 Pin cũ chỉ được 0–99%, 100% là pin mới
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 99) {
+      oneToast.warn("Vui lòng nhập % pin cũ trong khoảng 0-99.");
       return;
     }
 
+    setHealth(parsed); // lưu lại giá trị hợp lệ để gửi BE
     setLoading(true);
     setMessage("");
 
     // ⭐ DEBUG
     console.log("🔍 SwapPanel - handleSwap called with:", {
       reservationId: reservation.reservationId,
-      oldBatteryHealth: health,
+      oldBatteryHealth: parsed,
       note: note,
       noteLength: note?.length || 0,
     });
@@ -80,12 +92,15 @@ export default function SwapPanel({
     try {
       const res = await finalizeSwapFromReservation({
         reservationId: reservation.reservationId,
-        oldBatteryHealth: health,
+        oldBatteryHealth: parsed,
         note: note, // ⭐ Truyền note vào API
       });
 
       if (res.success) {
-        oneToast.success("Đã xác nhận thay pin thành công.");
+        // ✅ Thông báo có luôn thông tin dung lượng pin cũ staff nhập
+        oneToast.success(
+          `Đã ghi nhận % pin cũ = ${parsed}%. Thay pin thành công.`
+        );
         setResult(res);
         onSwapped({ swapId: res.swapTransactionId });
       } else {
@@ -122,32 +137,41 @@ export default function SwapPanel({
       <section className="rounded-2xl bg-white shadow-lg p-5">
         <header className="mb-3">
           <p className="text-xs text-gray-500">
-            Thay pin — Reservation: <b>{reservation.reservationId}</b>
+            Thay pin — Khách:&nbsp;
+            <b>{reservation.userName || "Khách lẻ"}</b>
           </p>
         </header>
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">
-            % Pin cũ (0-100)
+            % Pin cũ (0-99)
           </label>
           <input
-            type="number"
-            min="0"
-            max="100"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
-            value={health}
-            onChange={(e) => setHealth(Number(e.target.value))}
+            value={healthInput}
+            onChange={(e) => {
+              const v = e.target.value;
+              // Chỉ cho phép số hoặc rỗng
+              if (/^\d*$/.test(v)) {
+                setHealthInput(v);
+              }
+            }}
             placeholder="Nhập % pin cũ (ví dụ: 85)"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Nhập % pin cũ mà staff đo được (0-100). Hệ thống sẽ tự chọn pin mới
-            phù hợp.
+            Nhập % dung lượng pin cũ mà staff đo được (0-99%). 100% là pin mới,
+            khách sẽ không cần đi thay.
           </p>
         </div>
 
         {/* Ghi chú (tùy chọn) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Ghi chú (tuỳ chọn)</label>
+          <label className="block text-sm font-medium mb-1">
+            Ghi chú (tuỳ chọn)
+          </label>
           <textarea
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
             rows={3}
@@ -155,7 +179,9 @@ export default function SwapPanel({
             onChange={(e) => setNote(e.target.value)}
             placeholder="Ví dụ: Pin cũ có dấu hiệu phồng nhẹ, đề nghị kiểm tra thêm."
           />
-          <p className="mt-2 text-xs text-gray-500">Nội dung này sẽ được lưu vào trường notes của giao dịch.</p>
+          <p className="mt-2 text-xs text-gray-500">
+            Nội dung này sẽ được lưu vào trường notes của giao dịch.
+          </p>
         </div>
 
         {message && (
@@ -256,7 +282,8 @@ export default function SwapPanel({
                   : "—"}
               </div>
               <div>
-                <b>Khách hàng:</b> {result.driverName || "—"}
+                <b>Khách hàng:</b>{" "}
+                {result.driverName || reservation.userName || "—"}
               </div>
             </div>
           </div>

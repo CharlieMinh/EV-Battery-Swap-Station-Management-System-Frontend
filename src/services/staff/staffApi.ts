@@ -1,4 +1,3 @@
-// src/services/staff/staffApi.ts
 import axios from "axios";
 
 /* =========================
@@ -55,12 +54,12 @@ export type Reservation = {
 
   // --- Vehicle fields (mới từ BE) ---
   vehicleId?: string;
-  vehicleName?: string;      // BE: VehicleName (VD "VinFast VF8")
-  licensePlate?: string;     // BE: LicensePlate (VD "30A-12345")
+  vehicleName?: string;
+  licensePlate?: string;
 
   // --- Alias cũ để không vỡ UI cũ ---
-  vehiclePlate?: string;     // alias của licensePlate
-  vehicleModelName?: string; // alias của vehicleName
+  vehiclePlate?: string;
+  vehicleModelName?: string;
 
   // Battery
   batteryModelId?: string;
@@ -70,9 +69,9 @@ export type Reservation = {
   qrCode?: string;
 
   // thông tin slot (để hiển thị khung giờ)
-  slotDate?: string;        // yyyy-MM-dd
-  slotStartTime?: string;   // HH:mm:ss
-  slotEndTime?: string;     // HH:mm:ss
+  slotDate?: string;
+  slotStartTime?: string;
+  slotEndTime?: string;
   checkInWindow?: { earliestTime?: string; latestTime?: string };
 
   relatedComplaintId: string;
@@ -115,11 +114,11 @@ export type BatteryUnit = {
   status?: string;
   isReserved?: boolean;
   updatedAt?: string;
-  stationId?: string | number; // ⭐ cần cho lọc đúng trạm
+  stationId?: string | number;
 };
 
 export const STATUS_LABELS_VI: Record<string, string> = {
-  Available: "Sẵn sàng",
+  Available: "Đầy", // Đổi hiển thị cho khớp UI
   InUse: "Đang sử dụng",
   Charging: "Đang sạc",
   Maintenance: "Bảo trì",
@@ -142,15 +141,14 @@ export type UserMe = {
   station?: { id?: string | number; name?: string };
   phone?: string;
   avatarUrl?: string;
-  profilePictureUrl?: string; // <-- thêm để đọc ảnh BE
+  profilePictureUrl?: string;
 };
 
 export const getMe = () =>
   api.get<UserMe>("Auth/me", { withCredentials: true });
 
 /* =========================
- *  updateUser (ưu tiên multipart PUT /users/{id})
- *  — giữ nguyên logic fallback các endpoint khác
+ *  updateUser
  * ========================= */
 export const updateUser = async (
   userId: string,
@@ -158,7 +156,7 @@ export const updateUser = async (
     fullName?: string;
     phone?: string;
     avatarUrl?: string;
-    avatarFile?: File | null; // gửi nếu có
+    avatarFile?: File | null;
   }
 ) => {
   const candidates = [
@@ -173,13 +171,11 @@ export const updateUser = async (
   const Name = (body.fullName ?? "").trim();
   const PhoneNumber = (body.phone ?? "").trim();
 
-  // FormData cho endpoint chuẩn
   const form = new FormData();
   if (Name) form.append("Name", Name);
   if (PhoneNumber) form.append("PhoneNumber", PhoneNumber);
   if (body.avatarFile) form.append("ProfilePicture", body.avatarFile);
 
-  // JSON cho fallback
   const jsonPayload = {
     fullName: Name || undefined,
     name: Name || undefined,
@@ -253,7 +249,7 @@ export const resetPassword = async (payload: {
 };
 
 /* =========================
- *  Queue APIs (đã map thêm VehicleName/LicensePlate)
+ *  Queue APIs
  * ========================= */
 export const listReservations = async (params: {
   stationId: string | number;
@@ -265,7 +261,6 @@ export const listReservations = async (params: {
     ? res.data
     : res.data?.items ?? res.data?.data ?? res.data?.results ?? [];
 
-  // helpers để hút đủ từ nhiều naming khác nhau
   const pickVehicleName = (x: any) =>
     x?.vehicleName ??
     x?.vehicleModelName ??
@@ -305,25 +300,19 @@ export const listReservations = async (params: {
       reservationId: id,
       userId,
       userName: x?.userName ?? x?.user?.fullName ?? x?.user?.name ?? "",
-
-      // set cả field mới lẫn alias cũ
       vehicleId,
       vehicleName,
       licensePlate,
       vehiclePlate: licensePlate,
       vehicleModelName: vehicleName,
-
       batteryModelId,
       batteryModelName,
-
       status: x?.status ?? "",
       qrCode: x?.qrCode ?? "",
-
       slotDate: x?.slotDate ?? "",
       slotStartTime: x?.slotStartTime ?? "",
       slotEndTime: x?.slotEndTime ?? "",
       checkInWindow: x?.checkInWindow,
-
       relatedComplaintId: x?.relatedComplaintId ?? "",
     };
   });
@@ -339,8 +328,8 @@ export const checkInReservation = (reservationId: string, qrCodeData: string) =>
  * ========================= */
 export async function finalizeSwapFromReservation(payload: {
   reservationId: string;
-  oldBatteryHealth: number;  // % pin cũ (0-100)
-  note?: string;             // Ghi chú từ staff
+  oldBatteryHealth: number;
+  note?: string;
 }): Promise<SwapFinalizeResponse & { code?: number }> {
   const { reservationId, oldBatteryHealth, note } = payload;
 
@@ -433,12 +422,15 @@ function normalizeBatteryItem(x: any, i: number): BatteryUnit {
   };
 }
 
-// ✅ CHỈ SỬA Endpoint để khớp BE, KHÔNG đổi logic khác
 async function fetchBatteryUnitsRaw(stationId: string | number): Promise<any[]> {
   const res = await api.get(`stations/${stationId}/batteries`);
   const raw = Array.isArray(res.data)
     ? res.data
-    : res.data?.items ?? res.data?.data ?? res.data?.results ?? res.data?.value ?? [];
+    : res.data?.items ??
+      res.data?.data ??
+      res.data?.results ??
+      res.data?.value ??
+      [];
   return raw;
 }
 
@@ -453,7 +445,8 @@ export const listStationBatteries = async (stationId: string | number) => {
 
 function normStatus(raw?: string) {
   const s = (raw || "").trim().toLowerCase();
-  if (["available", "ready", "full", "sẵn sàng", "đầy"].includes(s)) return "Available";
+  if (["available", "ready", "full", "sẵn sàng", "đầy"].includes(s))
+    return "Available";
   if (["inuse", "in use", "đang sử dụng"].includes(s)) return "InUse";
   if (["charging", "đang sạc"].includes(s)) return "Charging";
   if (["maintenance", "bảo trì"].includes(s)) return "Maintenance";
@@ -463,7 +456,9 @@ function normStatus(raw?: string) {
   return "";
 }
 
-export async function getStationInventory(stationId: string | number): Promise<{
+export async function getStationInventory(
+  stationId: string | number
+): Promise<{
   list: BatteryUnit[];
   stats: StationBatteryStats;
 }> {
@@ -489,7 +484,81 @@ export const createReplenishmentRequest = (payload: {
   stationId: string | number;
   reason?: string;
   items: Array<{ batteryModelId: string; quantityRequested: number }>;
-}) => api.post(`stations/${payload.stationId}/replenishment-requests`, payload);
+}) =>
+  api.post(`stations/${payload.stationId}/replenishment-requests`, payload);
+
+/* =========================
+ *  BatteryUnits status update – dùng cho "Kiểm tra pin"
+ * ========================= */
+
+export type BatteryStatusBackend =
+  | "Full"
+  | "Reserved"
+  | "InUse"
+  | "Charging"
+  | "Depleted"
+  | "Maintenance"
+  | "Faulty";
+
+/** helper: lấy root host từ API_BASE_URL (bỏ /api hoặc /api/v1) */
+function getRootApiBase(): string {
+  const m = API_BASE_URL.match(/^(.*)\/api(?:\/v1)?$/i);
+  return m ? m[1] : API_BASE_URL;
+}
+
+// map text client → tên enum BE
+function normalizeBackendStatusName(s: string): BatteryStatusBackend {
+  const raw = (s || "").trim();
+  const lower = raw.toLowerCase();
+
+  if (["available", "ready", "full", "sẵn sàng", "đầy"].includes(lower))
+    return "Full";
+  if (["reserved", "đã đặt trước"].includes(lower)) return "Reserved";
+  if (["inuse", "in use", "đang sử dụng"].includes(lower)) return "InUse";
+  if (["charging", "đang sạc"].includes(lower)) return "Charging";
+  if (["depleted", "hết pin", "empty"].includes(lower)) return "Depleted";
+  if (["maintenance", "bảo trì"].includes(lower)) return "Maintenance";
+  if (["faulty", "lỗi"].includes(lower)) return "Faulty";
+
+  return "Full";
+}
+
+// ⭐ map enum → mã số BE (đúng với BatteryStatus.cs)
+const STATUS_CODE_MAP: Record<BatteryStatusBackend, number> = {
+  Full: 0,
+  Reserved: 1,
+  InUse: 2,
+  Charging: 3,
+  Depleted: 4,
+  Maintenance: 5,
+  Faulty: 6,
+};
+
+/** Cập nhật trạng thái 1 viên pin – gửi JSON number đúng enum cho BE */
+export const updateBatteryStatus = (
+  batteryId: string,
+  status: BatteryStatusBackend | string
+) => {
+  const root = getRootApiBase(); // vd: http://localhost:5194
+  const url = `${root}/api/BatteryUnits/${batteryId}/status`;
+
+  const token =
+    localStorage.getItem("token") || localStorage.getItem("authToken");
+
+  const name = normalizeBackendStatusName(status as string);
+  const code = STATUS_CODE_MAP[name];
+
+  return axios.patch(
+    url,
+    code, // gửi số 0..6, BE bind sang BatteryStatus
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+};
 
 /* =========================
  *  Payments APIs & Types
@@ -501,8 +570,6 @@ export type Payment = {
   method?: "Cash" | "Card" | string;
   status?: "Pending" | "Paid" | string;
   paidAt?: string;
-
-  // ➕ Thêm để khớp Revenue.tsx (không đổi logic xử lý)
   customer?: any;
   customerName?: string;
 };
@@ -521,9 +588,8 @@ export const completeSwap = (swapId: string) =>
   api.post(`swaps/${swapId}/complete`);
 
 /* =========================
- *  File Upload (utility) — GIỮ LẠI để không phá logic cũ
+ *  File Upload (utility)
  * ========================= */
-// ✅ Sửa dùng đúng endpoint BE: /api/v1/FileUpload/vehicle-photo
 export const uploadFile = async (file: File): Promise<string> => {
   const form = new FormData();
   form.append("file", file);
@@ -548,7 +614,12 @@ export default api;
 /* =========================
  *  User name cache helpers
  * ========================= */
-export type UserLite = { id: string; fullName?: string; name?: string; email?: string };
+export type UserLite = {
+  id: string;
+  fullName?: string;
+  name?: string;
+  email?: string;
+};
 
 const USERNAME_CACHE_KEY = "userNameCache.v1";
 let __USER_NAME_CACHE: Record<string, string> = (() => {
@@ -559,19 +630,17 @@ let __USER_NAME_CACHE: Record<string, string> = (() => {
   }
 })();
 
-// ⭐ Cache toàn bộ danh sách customers
 let __CUSTOMERS_LOADED = false;
 let __LOADING_CUSTOMERS: Promise<void> | null = null;
 
-/** Pre-load toàn bộ customers vào cache (chỉ gọi 1 lần) */
 async function preloadCustomers() {
   if (__CUSTOMERS_LOADED) return;
   if (__LOADING_CUSTOMERS) return __LOADING_CUSTOMERS;
 
   __LOADING_CUSTOMERS = (async () => {
     try {
-      const res = await api.get('/Users/customers', {
-        params: { page: 1, pageSize: 1000 }
+      const res = await api.get("/Users/customers", {
+        params: { page: 1, pageSize: 1000 },
       });
 
       const customers = res.data?.data || [];
@@ -612,7 +681,6 @@ function pickName(u: any): string | undefined {
   );
 }
 
-/** Gọi API lấy tên user - Staff dùng /Users/customers */
 async function fetchUserById(id: string): Promise<string | null> {
   try {
     try {
@@ -621,12 +689,12 @@ async function fetchUserById(id: string): Promise<string | null> {
       if (name) return name;
     } catch (err: any) {
       if (err?.response?.status === 403) {
-        // Staff có thể không có quyền GET /Users/{id}; fallback xuống /Users/customers
+        // không có quyền, fallback dưới
       }
     }
 
-    const customersRes = await api.get('/Users/customers', {
-      params: { page: 1, pageSize: 100 }
+    const customersRes = await api.get("/Users/customers", {
+      params: { page: 1, pageSize: 100 },
     });
 
     const customers = customersRes.data?.data || [];
@@ -644,7 +712,6 @@ async function fetchUserById(id: string): Promise<string | null> {
   }
 }
 
-/** Lấy tên 1 userId (có cache). Nếu không lấy được → fallback "Khách #xxxx" */
 export async function getUserNameById(userId?: string): Promise<string> {
   const id = (userId || "").trim();
   if (!id) return "";
@@ -657,8 +724,9 @@ export async function getUserNameById(userId?: string): Promise<string> {
   return finalName;
 }
 
-/** Lấy tên theo mảng userId. Pre-load customers trước, rồi lấy từ cache */
-export async function getUserNamesBatch(userIds: (string | undefined)[]): Promise<Record<string, string>> {
+export async function getUserNamesBatch(
+  userIds: (string | undefined)[]
+): Promise<Record<string, string>> {
   const ids = Array.from(new Set(userIds.filter((x): x is string => !!x)));
   const result: Record<string, string> = {};
 
@@ -668,7 +736,6 @@ export async function getUserNamesBatch(userIds: (string | undefined)[]): Promis
     if (__USER_NAME_CACHE[id]) {
       result[id] = __USER_NAME_CACHE[id];
     } else {
-      // Fallback nếu không tìm thấy
       result[id] = `Khách #${id.slice(-4)}`;
     }
   }
