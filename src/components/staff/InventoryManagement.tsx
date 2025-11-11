@@ -17,9 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  BatteryModel,
+  fetchModelBattery,
+} from "@/services/admin/batteryService";
+import { getCurrentUser } from "@/services/authApi";
+import { createStockRequest } from "@/services/staff/stockRequest";
+import { fetchStationById } from "@/services/admin/stationService";
 
 type ReqItem = { batteryModelId: string; quantityRequested: number };
-type Props = { stationId: string | number };
+type Props = { stationId: string };
 
 const STATUS_OPTIONS = [
   { label: "Tất cả", value: "" },
@@ -32,15 +39,21 @@ const STATUS_OPTIONS = [
   { label: "Hết pin", value: "Depleted" },
 ];
 
-const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
+const toastOpts = {
+  position: "top-right" as const,
+  autoClose: 2200,
+  closeOnClick: true,
+};
 
 /* ========= GIỮ NGUYÊN LOGIC ========= */
 const normStatus = (s?: string) => {
   const x = (s || "").trim().toLowerCase();
-  if (["full", "đầy", "available", "sẵn sàng", "ready"].includes(x)) return "Available";
+  if (["full", "đầy", "available", "sẵn sàng", "ready"].includes(x))
+    return "Available";
   if (["inuse", "in use", "đang sử dụng"].includes(x)) return "InUse";
   if (["charging", "đang sạc", "chargingnow"].includes(x)) return "Charging";
-  if (["maintenance", "bảo trì", "maintaining"].includes(x)) return "Maintenance";
+  if (["maintenance", "bảo trì", "maintaining"].includes(x))
+    return "Maintenance";
   if (["reserved", "đã đặt trước"].includes(x)) return "Reserved";
   if (["faulty", "lỗi", "error"].includes(x)) return "Faulty";
   if (["depleted", "hết pin", "empty"].includes(x)) return "Depleted";
@@ -121,6 +134,59 @@ export default function InventoryManagement({ stationId }: Props) {
     fetchInventory();
   }, [stationId]);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [models, setModels] = useState<BatteryModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [quantity, setQuantity] = useState<number>(0);
+  const [note, setNote] = useState("");
+  const [myStationId, setMyStationId] = useState<string>("");
+  const [myStationName, setMyStationName] = useState<string>("");
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user?.stationId) setMyStationId(user.stationId);
+
+        const station = await fetchStationById(user.stationId);
+        setMyStationName(station?.name || "Không rõ tên trạm");
+
+        const batteryModels = await fetchModelBattery();
+        setModels(batteryModels);
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu model hoặc user:", err);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleSubmitStockRequest = async () => {
+    if (!selectedModel || quantity <= 0) {
+      toast.warning("Vui lòng chọn model và nhập số lượng hợp lệ.", toastOpts);
+      return;
+    }
+
+    try {
+      await createStockRequest({
+        stationId: myStationId,
+        batteryModelId: selectedModel,
+        quantity,
+        staffNote: note,
+      });
+      toast.success("Đã gửi yêu cầu nhập kho thành công.", toastOpts);
+      setCreateOpen(false);
+      setSelectedModel("");
+      setQuantity(0);
+      setNote("");
+      fetchInventory(); // refresh lại
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Gửi yêu cầu thất bại.",
+        toastOpts
+      );
+    }
+  };
+
   /* ====== FILTER (GIỮ LOGIC) ====== */
   useEffect(() => {
     const s = (search || "").trim().toLowerCase();
@@ -131,7 +197,9 @@ export default function InventoryManagement({ stationId }: Props) {
         return normStatus(b.status) === status;
       })
       .filter((b) => (modelFilter ? modelKey(b) === modelFilter : true))
-      .filter((b) => (s ? (b.serialNumber || "").toLowerCase().includes(s) : true));
+      .filter((b) =>
+        s ? (b.serialNumber || "").toLowerCase().includes(s) : true
+      );
     setList(filtered);
   }, [all, status, modelFilter, search]);
 
@@ -143,7 +211,10 @@ export default function InventoryManagement({ stationId }: Props) {
       if (!key) continue;
       if (!map.has(key)) map.set(key, modelLabel(b));
     }
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label,
+    }));
   }, [all]);
 
   /* ====== HEADER TOTAL ====== */
@@ -196,12 +267,13 @@ export default function InventoryManagement({ stationId }: Props) {
     setReqItems((arr) => arr.filter((_, idx) => idx !== i));
 
   const submitRequest = async () => {
+    // Lọc các item hợp lệ
     const items = reqItems
       .map((x) => ({
         batteryModelId: x.batteryModelId,
-        quantityRequested: Number(x.quantityRequested),
+        quantity: Number(x.quantityRequested),
       }))
-      .filter((x) => x.batteryModelId && x.quantityRequested > 0);
+      .filter((x) => x.batteryModelId && x.quantity > 0);
 
     if (items.length === 0) {
       toast.warning("Thêm ít nhất 1 model và số lượng > 0", {
@@ -212,15 +284,28 @@ export default function InventoryManagement({ stationId }: Props) {
     }
 
     try {
-      await createReplenishmentRequest({ stationId, reason, items });
-      toast.success("Đã gửi yêu cầu nhập pin. Đợi Admin duyệt.", {
+      // Gửi song song từng request riêng biệt
+      await Promise.all(
+        items.map((item) =>
+          createStockRequest({
+            stationId: String(stationId), // ép kiểu string nếu cần
+            batteryModelId: item.batteryModelId,
+            quantity: item.quantity,
+            staffNote: reason || undefined, // optional
+          })
+        )
+      );
+
+      toast.success("Đã gửi tất cả yêu cầu nhập pin.", {
         ...toastOpts,
         toastId: "inv-req-success",
       });
+
+      // Reset form
       setReqOpen(false);
       setReqItems([{ batteryModelId: "", quantityRequested: 0 }]);
       setReason("");
-      fetchInventory();
+      fetchInventory(); // refresh
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -237,7 +322,8 @@ export default function InventoryManagement({ stationId }: Props) {
     if (k === "Charging") return "bg-blue-100 text-blue-700";
     if (k === "Maintenance") return "bg-gray-200 text-gray-700";
     if (k === "Depleted") return "bg-red-100 text-red-700";
-    if (k === "Reserved" || isReservedFlag(b)) return "bg-yellow-100 text-yellow-700";
+    if (k === "Reserved" || isReservedFlag(b))
+      return "bg-yellow-100 text-yellow-700";
     if (k === "InUse") return "bg-purple-100 text-purple-700";
     return "bg-slate-100 text-slate-700";
   };
@@ -246,11 +332,14 @@ export default function InventoryManagement({ stationId }: Props) {
 
   return (
     <div className="container mx-auto grid gap-6">
-
       {/* ✅ CARD TỔNG QUAN (đồng nhất UI Hàng Chờ) */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
-        <h2 className="text-2xl font-bold text-orange-600 mb-1">Tổng quan kho</h2>
-        <p className="text-gray-600 text-sm mb-4">Số lượng pin theo trạng thái</p>
+        <h2 className="text-2xl font-bold text-orange-600 mb-1">
+          Tổng quan kho
+        </h2>
+        <p className="text-gray-600 text-sm mb-4">
+          Số lượng pin theo trạng thái
+        </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
@@ -275,10 +364,12 @@ export default function InventoryManagement({ stationId }: Props) {
           <div className="mt-4 flex items-center justify-between rounded-xl border border-amber-300 bg-amber-50 p-4">
             <div className="flex items-center gap-2 text-amber-700">
               <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm">Tồn kho thấp! Hãy yêu cầu nhập thêm pin.</span>
+              <span className="text-sm">
+                Tồn kho thấp! Hãy yêu cầu nhập thêm pin.
+              </span>
             </div>
             <button
-              onClick={() => setReqOpen(true)}
+              onClick={() => setCreateOpen(true)}
               className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
             >
               <Plus className="w-4 h-4 inline mr-1" />
@@ -290,10 +381,11 @@ export default function InventoryManagement({ stationId }: Props) {
 
       {/* ✅ CARD BỘ LỌC (đồng nhất UI Hàng Chờ) */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
-        <h3 className="text-xl font-semibold text-orange-600 mb-4">Danh sách pin</h3>
+        <h3 className="text-xl font-semibold text-orange-600 mb-4">
+          Danh sách pin
+        </h3>
 
         <div className="flex flex-wrap items-center gap-3 mb-4">
-
           <input
             className="h-10 w-56 rounded-lg border-2 border-gray-300 px-3 text-sm focus:ring-2 focus:ring-orange-300"
             placeholder="Tìm serial..."
@@ -305,7 +397,9 @@ export default function InventoryManagement({ stationId }: Props) {
           <div className="w-56">
             <Select
               value={modelFilter || "__all__"}
-              onValueChange={(val) => setModelFilter(val === "__all__" ? "" : val)}
+              onValueChange={(val) =>
+                setModelFilter(val === "__all__" ? "" : val)
+              }
             >
               <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
                 <SelectValue placeholder="Model" />
@@ -332,14 +426,16 @@ export default function InventoryManagement({ stationId }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((o) => (
-                  <SelectItem key={o.value || "ALL"} value={o.value || "__all__"}>
+                  <SelectItem
+                    key={o.value || "ALL"}
+                    value={o.value || "__all__"}
+                  >
                     {o.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
         </div>
 
         {/* ✅ PHẦN BẢNG — GIỮ NGUYÊN */}
@@ -379,15 +475,25 @@ export default function InventoryManagement({ stationId }: Props) {
                     className="odd:bg-white even:bg-gray-50 hover:bg-orange-50/40"
                   >
                     <td className="px-4 py-3">{idx + 1}</td>
-                    <td className="px-4 py-3 font-mono">{b.serialNumber || "—"}</td>
-                    <td className="px-4 py-3">{b.batteryModelName || b.batteryModelId}</td>
+                    <td className="px-4 py-3 font-mono">
+                      {b.serialNumber || "—"}
+                    </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badgeClass(b)}`}>
+                      {b.batteryModelName || b.batteryModelId}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${badgeClass(
+                          b
+                        )}`}
+                      >
                         {displayStatusVI(b.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {b.updatedAt ? new Date(b.updatedAt).toLocaleString() : "—"}
+                      {b.updatedAt
+                        ? new Date(b.updatedAt).toLocaleString()
+                        : "—"}
                     </td>
                   </tr>
                 ))}
@@ -402,7 +508,10 @@ export default function InventoryManagement({ stationId }: Props) {
           <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between mb-4">
               <h3 className="text-lg font-semibold">Yêu cầu nhập pin</h3>
-              <button onClick={() => setReqOpen(false)} className="p-2 hover:bg-gray-50 rounded-lg">
+              <button
+                onClick={() => setReqOpen(false)}
+                className="p-2 hover:bg-gray-50 rounded-lg"
+              >
                 <X />
               </button>
             </div>
@@ -416,7 +525,9 @@ export default function InventoryManagement({ stationId }: Props) {
             />
 
             <div className="mb-4">
-              <p className="font-medium text-sm mb-2">Danh sách model & số lượng</p>
+              <p className="font-medium text-sm mb-2">
+                Danh sách model & số lượng
+              </p>
               {reqItems.map((item, i) => (
                 <div key={i} className="flex gap-2 mb-2">
                   <input
@@ -426,7 +537,9 @@ export default function InventoryManagement({ stationId }: Props) {
                     onChange={(e) =>
                       setReqItems((arr) =>
                         arr.map((x, idx) =>
-                          idx === i ? { ...x, batteryModelId: e.target.value } : x
+                          idx === i
+                            ? { ...x, batteryModelId: e.target.value }
+                            : x
                         )
                       )
                     }
@@ -439,7 +552,12 @@ export default function InventoryManagement({ stationId }: Props) {
                     onChange={(e) =>
                       setReqItems((arr) =>
                         arr.map((x, idx) =>
-                          idx === i ? { ...x, quantityRequested: Number(e.target.value) } : x
+                          idx === i
+                            ? {
+                                ...x,
+                                quantityRequested: Number(e.target.value),
+                              }
+                            : x
                         )
                       )
                     }
@@ -463,7 +581,110 @@ export default function InventoryManagement({ stationId }: Props) {
               </button>
             </div>
 
-            <p className="mt-3 text-xs text-gray-500">Bạn có thể thêm nhiều model khác nhau.</p>
+            <p className="mt-3 text-xs text-gray-500">
+              Bạn có thể thêm nhiều model khác nhau.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {createOpen && (
+        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
+          <div className="bg-white w-full max-w-xl rounded-2xl p-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Tạo yêu cầu nhập pin
+              </h3>
+              <button
+                onClick={() => setCreateOpen(false)}
+                className="p-2 hover:bg-gray-50 rounded-lg"
+              >
+                <X />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Tên trạm */}
+              <div>
+                <label className="block text-sm mb-1">Trạm</label>
+                <input
+                  type="text"
+                  value={myStationName}
+                  readOnly
+                  className="w-full border rounded-lg px-3 py-2 bg-gray-100 text-gray-700"
+                />
+              </div>
+
+              {/* Ghi chú chung */}
+              <div>
+                <label className="block text-sm mb-1">Ghi chú chung</label>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2"
+                  rows={3}
+                  placeholder="VD: Chuẩn bị cho đợt cao điểm"
+                />
+              </div>
+
+              <div className="grid gap-3 max-h-96 overflow-y-auto">
+                {models.map((m) => {
+                  const qty =
+                    reqItems.find((x) => x.batteryModelId === m.id)
+                      ?.quantityRequested || 0;
+                  return (
+                    <div key={m.id} className="flex items-center gap-3 w-full">
+                      {/* Tên model chiếm nhiều diện tích hơn */}
+                      <span className="flex-[4] min-w-0 font-medium">
+                        {m.name}
+                      </span>
+                      {/* Ô nhập số lượng */}
+                      <input
+                        type="number"
+                        min={0}
+                        value={qty}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setReqItems((prev) => {
+                            const exists = prev.find(
+                              (x) => x.batteryModelId === m.id
+                            );
+                            if (exists) {
+                              return prev.map((x) =>
+                                x.batteryModelId === m.id
+                                  ? { ...x, quantityRequested: val }
+                                  : x
+                              );
+                            } else {
+                              return [
+                                ...prev,
+                                {
+                                  batteryModelId: m.id,
+                                  quantityRequested: val,
+                                },
+                              ];
+                            }
+                          });
+                        }}
+                        className="flex-1 border rounded-lg px-3 py-2"
+                        placeholder="Số lượng"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Nút gửi */}
+              <div className="text-right">
+                <button
+                  onClick={submitRequest}
+                  className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                >
+                  Gửi yêu cầu
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
