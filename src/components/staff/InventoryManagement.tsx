@@ -652,14 +652,6 @@ export default function InventoryManagement({ stationId }: Props) {
               </h3>
               <button
                 onClick={() => setCreateOpen(false)}
-      {/* Modal kiểm tra pin */}
-      {inspectOpen && selectedBattery && (
-        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">
-            <div className="flex justify-between mb-4">
-              <h3 className="text-lg font-semibold">Kiểm tra pin</h3>
-              <button
-                onClick={() => setInspectOpen(false)}
                 className="p-2 hover:bg-gray-50 rounded-lg"
               >
                 <X />
@@ -746,6 +738,24 @@ export default function InventoryManagement({ stationId }: Props) {
                   Gửi yêu cầu
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {inspectOpen && selectedBattery && (
+        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+            <div className="flex justify-between mb-4">
+              <h3 className="text-lg font-semibold">Kiểm tra pin</h3>
+              <button
+                onClick={() => setInspectOpen(false)}
+                className="p-2 hover:bg-gray-50 rounded-lg"
+              >
+                <X />
+              </button>
+            </div>
+
             <div className="space-y-2 mb-4 text-sm">
               <p>
                 <span className="font-semibold">Serial:</span>{" "}
@@ -787,9 +797,7 @@ export default function InventoryManagement({ stationId }: Props) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm mb-1">
-                Ghi chú (tùy chọn)
-              </label>
+              <label className="block text-sm mb-1">Ghi chú (tùy chọn)</label>
               <input
                 value={inspectNote}
                 onChange={(e) => setInspectNote(e.target.value)}
