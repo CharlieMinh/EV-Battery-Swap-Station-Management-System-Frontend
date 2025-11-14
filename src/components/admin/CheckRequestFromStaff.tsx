@@ -7,10 +7,6 @@ import {
   reviewStockRequest,
   ReviewStockRequestPayload,
 } from "@/services/admin/requestPin";
-import {
-  addBatteryToStation,
-  AddBatteryPayload,
-} from "@/services/admin/batteryService";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -76,17 +72,6 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
             adminNote: adminNote || "",
           };
           await reviewStockRequest(req.id, payload);
-        })
-      );
-
-      await Promise.all(
-        group.requests.map(async (req) => {
-          const payload: AddBatteryPayload = {
-            stationId: group.requests[0].stationId,
-            batteryModelId: req.batteryModelId,
-            quantity: req.quantity,
-          };
-          await addBatteryToStation(payload);
         })
       );
 

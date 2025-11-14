@@ -111,13 +111,6 @@ export function AdminDashboardPage({
   const [unreadCount, setUnreadCount] = useState(0);
   const [batteryRequests, setBatteryRequests] = useState<BatteryRequest[]>([]);
 
-  const batteryHealth = [
-    { range: "90-100%", count: 145, color: "#22c55e" },
-    { range: "70-89%", count: 87, color: "#f59e0b" },
-    { range: "50-69%", count: 23, color: "#ef4444" },
-    { range: "Below 50%", count: 8, color: "#991b1b" },
-  ];
-
   const alerts = [
     {
       id: "1",
@@ -148,17 +141,6 @@ export function AdminDashboardPage({
       station: "All Stations",
     },
   ];
-
-  const kpiData = {
-    totalRevenue: 267000,
-    totalSwaps: 12847,
-    activeStations: 24,
-    totalCustomers: 8547,
-    avgSwapTime: 2.8,
-    systemUptime: 99.9,
-    customerSatisfaction: 4.8,
-    batteryEfficiency: 94.2,
-  };
 
   // KPI states
   const [activeStations, setActiveStations] = useState<number | null>(null);
@@ -637,9 +619,7 @@ export function AdminDashboardPage({
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {activeSection === "overview" && (
-              <AdminOverview batteryHealth={batteryHealth} kpiData={kpiData} />
-            )}
+            {activeSection === "overview" && <AdminOverview />}
 
             {activeSection === "stations" && <StationManagement />}
 

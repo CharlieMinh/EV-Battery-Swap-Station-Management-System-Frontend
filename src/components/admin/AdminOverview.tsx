@@ -27,12 +27,7 @@ interface RevenueMonth {
   revenue: number;
 }
 
-interface AdminOverviewProps {
-  batteryHealth: any[];
-  kpiData: any;
-}
-
-export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
+export function AdminOverview() {
   const { t } = useLanguage();
   const [revenueData, setRevenueData] = useState<RevenueMonth[]>([]);
 
@@ -81,6 +76,7 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
   const [batteryData, setBatteryData] = useState<
     { name: string; count: number; color: string }[]
   >([]);
+  const [batteryTotal, setBatteryTotal] = useState(0);
 
   useEffect(() => {
     async function loadData() {
@@ -106,6 +102,7 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
         );
 
         setBatteryData(pieData);
+        setBatteryTotal(allBatteries.length);
       } catch (error) {
         console.error("Error loading battery data:", error);
       }
@@ -113,12 +110,63 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
     loadData();
   }, []);
 
+  const totalRevenueThisYear = revenueData.reduce(
+    (sum, item) => sum + item.revenue,
+    0
+  );
+  const totalModels = batteryData.length;
+
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-widest text-slate-500">
+              {t("admin.totalRevenue") || "Doanh thu năm"}
+            </p>
+            <p className="text-3xl font-semibold text-slate-900 mt-2">
+              {totalRevenueThisYear.toLocaleString("vi-VN")}₫
+            </p>
+            <p className="text-xs text-emerald-600 mt-1">
+              {t("admin.revenueTrendsDesc") || "Tổng hợp 12 tháng gần nhất"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-widest text-slate-500">
+              {t("admin.totalStationBatteries") || "Tổng pin trong hệ thống"}
+            </p>
+            <p className="text-3xl font-semibold text-slate-900 mt-2">
+              {batteryTotal} pin
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {totalModels} {t("admin.modelsLabel") || "mẫu pin đang hoạt động"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-widest text-slate-500">
+              {t("admin.lastUpdated") || "Lần cập nhật gần nhất"}
+            </p>
+            <p className="text-3xl font-semibold text-slate-900 mt-2">
+              {new Date().toLocaleDateString("vi-VN")}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {t("admin.dataRefreshHint") ||
+                "Dữ liệu được làm mới tự động mỗi 24 giờ"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border border-orange-200 rounded-lg">
+        <Card className="rounded-3xl border border-slate-100 shadow-sm bg-white/90">
           <CardHeader>
-            <CardTitle className="text-orange-600">
+            <CardTitle className="text-slate-900">
               {t("admin.revenueTrends")}
             </CardTitle>
             <CardDescription>{t("admin.revenueTrendsDesc")}</CardDescription>
@@ -158,9 +206,9 @@ export function AdminOverview({ batteryHealth, kpiData }: AdminOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border border-orange-200 rounded-lg">
+        <Card className="rounded-3xl border border-slate-100 shadow-sm bg-white/90">
           <CardHeader>
-            <CardTitle className="text-orange-600">
+            <CardTitle className="text-slate-900">
               {t("admin.totalStationBatteries") || "Tổng pin các trạm"}
             </CardTitle>
             <CardDescription>
