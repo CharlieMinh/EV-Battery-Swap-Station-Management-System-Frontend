@@ -118,50 +118,6 @@ export function AdminOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-widest text-slate-500">
-              {t("admin.totalRevenue") || "Doanh thu năm"}
-            </p>
-            <p className="text-3xl font-semibold text-slate-900 mt-2">
-              {totalRevenueThisYear.toLocaleString("vi-VN")}₫
-            </p>
-            <p className="text-xs text-emerald-600 mt-1">
-              {t("admin.revenueTrendsDesc") || "Tổng hợp 12 tháng gần nhất"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-widest text-slate-500">
-              {t("admin.totalStationBatteries") || "Tổng pin trong hệ thống"}
-            </p>
-            <p className="text-3xl font-semibold text-slate-900 mt-2">
-              {batteryTotal} pin
-            </p>
-            <p className="text-xs text-slate-500 mt-1">
-              {totalModels} {t("admin.modelsLabel") || "mẫu pin đang hoạt động"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-widest text-slate-500">
-              {t("admin.lastUpdated") || "Lần cập nhật gần nhất"}
-            </p>
-            <p className="text-3xl font-semibold text-slate-900 mt-2">
-              {new Date().toLocaleDateString("vi-VN")}
-            </p>
-            <p className="text-xs text-slate-500 mt-1">
-              {t("admin.dataRefreshHint") ||
-                "Dữ liệu được làm mới tự động mỗi 24 giờ"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="rounded-3xl border border-slate-100 shadow-sm bg-white/90">

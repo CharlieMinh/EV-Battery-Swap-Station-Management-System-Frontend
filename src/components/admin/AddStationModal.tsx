@@ -2,6 +2,7 @@ import React from "react";
 import { geocodeAddress } from "../map/geocode";
 import { createStation } from "@/services/admin/stationService";
 import { X } from "lucide-react";
+import { toast } from "react-toastify";
 
 export interface AddStationModalProps {
   onClose: () => void;
@@ -41,8 +42,8 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
       const coords = await geocodeAddress(fullAddress, formData.city);
 
       if (!coords) {
-        alert(
-          "❌ Không thể lấy tọa độ từ địa chỉ đã nhập.\nVui lòng kiểm tra lại hoặc nhập cụ thể hơn."
+        toast.error(
+          "Không thể lấy tọa độ từ địa chỉ đã nhập. Vui lòng kiểm tra lại hoặc nhập cụ thể hơn."
         );
         setLoading(false);
         return;
@@ -60,12 +61,12 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
       };
 
       await createStation(newStation);
-      alert("✅ Thêm trạm thành công!");
+      toast.success("Thêm trạm thành công!");
       onSuccess();
       onClose();
     } catch (error) {
       console.error("❌ Lỗi khi tạo trạm:", error);
-      alert("Đã xảy ra lỗi khi thêm trạm. Vui lòng thử lại.");
+      toast.error("Đã xảy ra lỗi khi thêm trạm. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
