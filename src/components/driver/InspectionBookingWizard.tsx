@@ -27,7 +27,6 @@ interface Slot {
     slotStartTime: string;
     slotEndTime: string;
     isAvailable: boolean;
-    // optional fields from API (not required for current UI but kept for future use)
     totalCapacity?: number;
     currentReservations?: number;
     availableSlots?: number;
@@ -56,7 +55,6 @@ export function InspectionBookingWizard({
     const [bookingDate, setBookingDate] = useState<Date | undefined>(undefined);
     const [slots, setSlots] = useState<Slot[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
-    // Lưu slotStartTime và slotEndTime theo yêu cầu
     const [slotStartTime, setSlotStartTime] = useState<string>("");
     const [slotEndTime, setSlotEndTime] = useState<string>("");
 
@@ -66,7 +64,6 @@ export function InspectionBookingWizard({
 
     const totalSteps = 4;
 
-    // Fetch stations khi mở dialog
     useEffect(() => {
         if (isOpen) {
             const fetchStations = async () => {
@@ -78,7 +75,7 @@ export function InspectionBookingWizard({
                     );
                     setStations(response.data.items);
                 } catch (error: any) {
-                    toast.error("Không thể tải danh sách trạm");
+                    toast.error(t("driver.inspection.errorLoadStations"));
                 } finally {
                     setIsLoadingStations(false);
                 }
@@ -87,9 +84,7 @@ export function InspectionBookingWizard({
         }
     }, [isOpen]);
 
-    // Gọi API lấy slots khả dụng dựa trên trạm + ngày + complaintId
     useEffect(() => {
-        // Reset khi đổi trạm/ngày
         setSelectedSlot(null);
         setSlotStartTime("");
         setSlotEndTime("");
@@ -115,7 +110,6 @@ export function InspectionBookingWizard({
                     }
                 );
 
-                // Map dữ liệu trả về sang cấu trúc Slot đang dùng
                 const apiSlots: Slot[] = (response.data || []).map((s: any) => ({
                     slotStartTime: s.slotStartTime,
                     slotEndTime: s.slotEndTime,
@@ -128,7 +122,7 @@ export function InspectionBookingWizard({
                 setSlots(apiSlots);
             } catch (error: any) {
                 const apiMsg = error?.response?.data?.error?.message || error?.response?.data?.message;
-                toast.error(apiMsg || "Không thể tải danh sách khung giờ. Vui lòng thử lại.");
+                toast.error(apiMsg || t("driver.inspection.errorLoadSlots"));
                 setSlots([]);
             } finally {
                 setIsLoadingSlots(false);
@@ -143,7 +137,6 @@ export function InspectionBookingWizard({
         setSelectedSlot(null);
     };
 
-    // ✅ Helper function: Format date theo local timezone (tránh lệch múi giờ UTC)
     const formatDateForAPI = (date: Date): string => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -153,14 +146,13 @@ export function InspectionBookingWizard({
 
     const handleConfirm = async () => {
         if (!selectedStation || !bookingDate || !slotStartTime || !slotEndTime) {
-            toast.error("Vui lòng chọn đầy đủ thông tin");
+            toast.error(t("driver.inspection.errorIncompleteInfo"));
             return;
         }
 
         setIsSubmitting(true);
 
         try {
-            // ✅ FIX: Dùng formatDateForAPI thay vì toISOString để tránh lệch múi giờ
             const formattedDate = formatDateForAPI(bookingDate);
 
             const response = await axios.post(
@@ -175,11 +167,11 @@ export function InspectionBookingWizard({
                 { withCredentials: true }
             );
 
-            toast.success(response.data.message || "Lịch hẹn kiểm tra đã được đặt thành công");
+            toast.success(response.data.message || t("driver.inspection.successBooked"));
             onSuccess();
             onClose();
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Không thể đặt lịch kiểm tra. Vui lòng thử lại.";
+            const msg = error.response?.data?.message || t("driver.inspection.errorBookFailed");
             toast.error(msg);
         } finally {
             setIsSubmitting(false);
@@ -190,15 +182,14 @@ export function InspectionBookingWizard({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Đặt lịch kiểm tra pin</DialogTitle>
+                    <DialogTitle>{t("driver.inspection.dialogTitle")}</DialogTitle>
                     {bookingStep < totalSteps && (
                         <DialogDescription>
-                            Hoàn thành đặt lịch trong {totalSteps - bookingStep} bước nữa
+                            {t("driver.inspection.dialogDescription")} {totalSteps - bookingStep} {t("driver.inspection.dialogDescriptionSteps")}
                         </DialogDescription>
                     )}
                 </DialogHeader>
 
-                {/* Progress bar */}
                 <div className="flex items-center justify-between mb-6">
                     {[1, 2, 3, 4].map((step) => (
                         <React.Fragment key={step}>
@@ -218,10 +209,9 @@ export function InspectionBookingWizard({
                     ))}
                 </div>
 
-                {/* BƯỚC 1: CHỌN TRẠM */}
                 {bookingStep === 1 && (
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Chọn trạm kiểm tra</h3>
+                        <h3 className="text-lg font-medium">{t("driver.inspection.step1Title")}</h3>
                         {isLoadingStations ? (
                             <div className="flex justify-center items-center h-40">
                                 <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
@@ -268,10 +258,9 @@ export function InspectionBookingWizard({
                     </div>
                 )}
 
-                {/* BƯỚC 2: CHỌN NGÀY */}
                 {bookingStep === 2 && (
                     <div className="space-y-6 flex flex-col items-center">
-                        <h3 className="text-lg font-medium">Chọn ngày</h3>
+                        <h3 className="text-lg font-medium">{t("driver.inspection.step2Title")}</h3>
                         <div className="flex justify-center items-center w-full">
                             <Calendar
                                 mode="single"
@@ -305,23 +294,22 @@ export function InspectionBookingWizard({
                         </div>
                         <div className="flex justify-between w-full pt-4">
                             <Button variant="outline" onClick={() => setBookingStep(1)}>
-                                <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
+                                <ArrowLeft className="w-4 h-4 mr-2" /> {t("driver.inspection.buttonPrevious")}
                             </Button>
                             <Button
                                 className="bg-orange-500 text-white"
                                 onClick={() => setBookingStep(3)}
                                 disabled={!bookingDate}
                             >
-                                {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
+                                {t("driver.inspection.buttonNext")} <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {/* BƯỚC 3: CHỌN GIỜ */}
                 {bookingStep === 3 && (
                     <div className="space-y-6">
-                        <h3 className="text-lg font-medium">Chọn khung giờ</h3>
+                        <h3 className="text-lg font-medium">{t("driver.inspection.step3Title")}</h3>
                         <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2">
                             {isLoadingSlots ? (
                                 <div className="col-span-4 flex justify-center py-12">
@@ -353,40 +341,39 @@ export function InspectionBookingWizard({
                                     );
                                 })
                             ) : (
-                                <p className="col-span-4 text-center text-gray-500 py-16">Không có khung giờ trống</p>
+                                <p className="col-span-4 text-center text-gray-500 py-16">{t("driver.inspection.noSlots")}</p>
                             )}
                         </div>
                         <div className="flex justify-between w-full pt-4">
                             <Button variant="outline" onClick={() => setBookingStep(2)}>
-                                <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
+                                <ArrowLeft className="w-4 h-4 mr-2" /> {t("driver.inspection.buttonPrevious")}
                             </Button>
                             <Button
                                 className="bg-orange-500 text-white"
                                 onClick={() => setBookingStep(4)}
                                 disabled={!selectedSlot}
                             >
-                                {t('driver.next')} <ArrowRight className="w-4 h-4 ml-2" />
+                                {t("driver.inspection.buttonNext")} <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {/* BƯỚC 4: XÁC NHẬN */}
                 {bookingStep === 4 && (
                     <div className="space-y-6">
-                        <h3 className="text-lg font-medium">Xác nhận lịch hẹn</h3>
+                        <h3 className="text-lg font-medium">{t("driver.inspection.step4Title")}</h3>
                         <Card>
                             <CardContent className="p-6 space-y-4 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Trạm kiểm tra:</span>
+                                    <span className="text-gray-500">{t("driver.inspection.confirmStation")}</span>
                                     <span className="font-semibold text-right">{selectedStation?.name}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Địa chỉ:</span>
+                                    <span className="text-gray-500">{t("common.address")}</span>
                                     <span className="font-semibold text-right">{selectedStation?.address}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Ngày & Giờ:</span>
+                                    <span className="text-gray-500">{t("driver.inspection.confirmTime")}</span>
                                     <span className="font-semibold text-right">
                                         {bookingDate?.toLocaleDateString('vi-VN')}, {selectedSlot?.slotStartTime.substring(0, 5)}
                                     </span>
@@ -396,13 +383,13 @@ export function InspectionBookingWizard({
 
                         <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
                             <p className="text-sm text-blue-800">
-                                <strong>Lưu ý:</strong> Vui lòng mang theo xe và giấy tờ liên quan đến trạm vào đúng giờ đã hẹn để kiểm tra pin.
+                                <strong>{t("driver.inspection.confirmNote")}</strong> {t("driver.inspection.confirmNoteText")}
                             </p>
                         </div>
 
                         <div className="flex justify-between pt-4">
                             <Button variant="outline" onClick={() => setBookingStep(3)} disabled={isSubmitting}>
-                                <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
+                                <ArrowLeft className="w-4 h-4 mr-2" /> {t("driver.inspection.buttonPrevious")}
                             </Button>
                             <Button
                                 className="bg-orange-500 text-white"
@@ -412,10 +399,10 @@ export function InspectionBookingWizard({
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang xử lý...
+                                        {t("driver.inspection.buttonConfirming")}
                                     </>
                                 ) : (
-                                    'Xác nhận lịch hẹn'
+                                    t("driver.inspection.confirmButton")
                                 )}
                             </Button>
                         </div>

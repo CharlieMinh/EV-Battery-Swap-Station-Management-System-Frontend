@@ -21,8 +21,6 @@ import Swal from "sweetalert2";
 import useGeoLocation from "../map/useGeoLocation";
 import { fetchStations, Station } from "../../services/admin/stationService";
 
-// --- Logic (Giữ nguyên) ---
-
 interface Vehicle {
     id: string;
     compatibleBatteryModelId: string;
@@ -38,9 +36,9 @@ interface SubscriptionPlan {
     name: string;
     description: string;
     monthlyPrice: number;
-    maxSwapsPerMonth: number | null; // Sửa: Cho phép null
-    features?: string[]; // (Cái này có vẻ không được dùng, nhưng giữ nguyên)
-    benefits: string; // 👈 Thêm benefits (dựa trên file PricingSection)
+    maxSwapsPerMonth: number | null;
+    features?: string[];
+    benefits: string;
     batteryModel: {
         id: string;
         name: string;
@@ -62,7 +60,6 @@ interface Payment {
 export function SubscriptionPlansPage() {
     const { t } = useLanguage();
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-    // Flow mới: không cần chọn xe khi mua gói
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -71,25 +68,21 @@ export function SubscriptionPlansPage() {
 
     const [isLoading, setIsLoading] = useState(false);
 
-    // Bộ lọc client-side
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
     const [battery, setBattery] = useState<string>("ALL");
 
-    // Phân trang client-side
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(9);
 
     const navigate = useNavigate();
 
-    // Thêm states cho việc tìm trạm gần nhất
     const location = useGeoLocation();
     const [stations, setStations] = useState<Station[] | null>(null);
     const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
-    // Debounce search
     useEffect(() => {
         const handler = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
         return () => clearTimeout(handler);
@@ -97,11 +90,9 @@ export function SubscriptionPlansPage() {
 
     const handlePayWithVNPay = () => {
         if (payment && payment.paymentUrl) {
-            // Redirect to VNPay payment gateway
-            // VNPay will redirect back to /payment-result after payment
             window.location.href = decodeURIComponent(payment.paymentUrl);
         } else {
-            toast.error("Không tìm thấy link thanh toán VNPay.");
+            toast.error(t("driver.subscription.errorVNPayLink"));
         }
     };
 
@@ -120,21 +111,19 @@ export function SubscriptionPlansPage() {
 
             setIsPaymentModalOpen(false);
 
-            // Hiển thị alert tùy chỉnh với 2 nút lựa chọn
             const result = await Swal.fire({
                 icon: "success",
-                title: "Đơn hàng đã được tạo",
-                html: "Hãy đến trạm gần nhất để thanh toán.",
+                title: t("driver.subscription.cashSuccessTitle"),
+                html: t("driver.subscription.cashSuccessMessage"),
                 showCancelButton: true,
                 confirmButtonColor: "#f97316",
                 cancelButtonColor: "#6b7280",
-                confirmButtonText: "Tìm trạm gần nhất",
-                cancelButtonText: "Để sau",
+                confirmButtonText: t("driver.subscription.cashFindNearest"),
+                cancelButtonText: t("driver.subscription.cashLater"),
                 allowOutsideClick: false,
             });
 
             if (result.isConfirmed) {
-                // Người dùng chọn "Tìm trạm gần nhất"
                 setIsWaitingForLocation(true);
             }
 
@@ -161,7 +150,7 @@ export function SubscriptionPlansPage() {
             setPayment(response.data);
             setIsPaymentModalOpen(true);
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Không thể tạo đơn hàng.";
+            const msg = error.response?.data?.message || t("driver.subscription.errorCreateOrderGeneric");
             toast.error(msg);
         } finally {
             setIsLoading(false);
@@ -177,19 +166,17 @@ export function SubscriptionPlansPage() {
                         withCredentials: true,
                     }
                 );
-                // Lọc và sắp xếp
                 const sortedData = (res.data as SubscriptionPlan[])
                     .filter(p => p.monthlyPrice > 0)
                     .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
                 setPlans(sortedData);
             } catch (error) {
-                toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
+                toast.error(t("driver.subscription.errorFetchPlans"));
             }
         };
         getSubscriptionPlans();
     }, []);
 
-    // Fetch danh sách trạm khi component mount
     useEffect(() => {
         const getAllStations = async () => {
             try {
@@ -202,7 +189,6 @@ export function SubscriptionPlansPage() {
         getAllStations();
     }, []);
 
-    // Xử lý khi có vị trí người dùng và cần tìm trạm
     useEffect(() => {
         if (isWaitingForLocation && location.loaded && !location.error && location.coordinates) {
             const userLocation = {
@@ -224,8 +210,8 @@ export function SubscriptionPlansPage() {
             setIsWaitingForLocation(false);
             Swal.fire({
                 icon: "error",
-                title: "Lỗi xác định vị trí",
-                text: `${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`,
+                title: t("driver.subscription.geoErrorTitle"),
+                text: `${location.error.message}. ${t("driver.subscription.geoErrorInstruction")}`,
                 confirmButtonColor: "#f97316",
             });
         }
@@ -239,9 +225,6 @@ export function SubscriptionPlansPage() {
     ]);
 
 
-    // Flow mới: không cần tải danh sách xe khi mua gói
-
-    // Danh sách loại pin từ dữ liệu
     const batteryOptions = useMemo(() => {
         const set = new Set<string>();
         plans.forEach(p => {
@@ -250,7 +233,6 @@ export function SubscriptionPlansPage() {
         return Array.from(set).sort();
     }, [plans]);
 
-    // Áp dụng lọc client-side
     const filteredPlans = useMemo(() => {
         let list = [...plans];
         if (debouncedSearch) {
@@ -271,7 +253,6 @@ export function SubscriptionPlansPage() {
         return list;
     }, [plans, debouncedSearch, minPrice, maxPrice, battery]);
 
-    // Tính toán phân trang client-side
     const total = filteredPlans.length;
     const maxPage = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, maxPage);
@@ -283,7 +264,6 @@ export function SubscriptionPlansPage() {
 
     const handleSelectPlan = (plan: SubscriptionPlan) => {
         setSelectedPlan(plan);
-        // Hiển thị dialog xác nhận trước khi đăng ký
         setIsConfirmDialogOpen(true);
     };
 
@@ -294,29 +274,24 @@ export function SubscriptionPlansPage() {
         }
     };
 
-    // --- JSX (Đã làm đẹp) ---
-
     return (
-        // ✅ Sửa: Thêm container style giống Homepage
         <div className="py-12 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* ✅ Sửa: Thêm tiêu đề phụ và style lại */}
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-                        Chọn gói thuê pin phù hợp
+                <div className="text-center mb-12">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+                        {t("driver.subscription.listTitle")}
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">Chọn một gói dịch vụ phù hợp nhất với nhu cầu di chuyển của bạn.</p>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">{t("driver.subscription.subtitle")}</p>
                 </div>
 
-                {/* Filters */}
                 <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div className="md:col-span-2">
-                            <Label className="mb-1 block">Tìm theo tên</Label>
+                            <Label className="mb-1 block">{t("driver.subscription.searchLabel")}</Label>
                             <div className="relative">
                                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <Input
-                                    placeholder="Nhập tên gói..."
+                                    placeholder={t("driver.subscription.listSearchPlaceholder")}
                                     className="pl-8"
                                     value={search}
                                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -324,11 +299,11 @@ export function SubscriptionPlansPage() {
                             </div>
                         </div>
                         <div>
-                            <Label className="mb-1 block">Giá tối thiểu</Label>
+                            <Label className="mb-1 block">{t("driver.subscription.minPriceLabel")}</Label>
                             <div className="relative">
                                 <Input
                                     type="text"
-                                    placeholder="VD: 100.000"
+                                    placeholder={t("driver.subscription.minPricePlaceholder")}
                                     value={minPrice ? Number(minPrice).toLocaleString('vi-VN') : ''}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/\D/g, '');
@@ -340,11 +315,11 @@ export function SubscriptionPlansPage() {
                             </div>
                         </div>
                         <div>
-                            <Label className="mb-1 block">Giá tối đa</Label>
+                            <Label className="mb-1 block">{t("driver.subscription.maxPriceLabel")}</Label>
                             <div className="relative">
                                 <Input
                                     type="text"
-                                    placeholder="VD: 1.000.000"
+                                    placeholder={t("driver.subscription.maxPricePlaceholder")}
                                     value={maxPrice ? Number(maxPrice).toLocaleString('vi-VN') : ''}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/\D/g, '');
@@ -356,13 +331,13 @@ export function SubscriptionPlansPage() {
                             </div>
                         </div>
                         <div>
-                            <Label className="mb-1 block">Loại pin</Label>
+                            <Label className="mb-1 block">{t("driver.subscription.batteryTypeLabel")}</Label>
                             <Select value={battery} onValueChange={(v) => { setBattery(v); setPage(1); }}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Tất cả" />
+                                    <SelectValue placeholder={t("driver.subscription.allOption")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ALL">Tất cả</SelectItem>
+                                    <SelectItem value="ALL">{t("driver.subscription.allOption")}</SelectItem>
                                     {batteryOptions.map(b => (
                                         <SelectItem key={b} value={b}>{b}</SelectItem>
                                     ))}
@@ -374,7 +349,6 @@ export function SubscriptionPlansPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {pagedPlans.map((plan, index) => {
-                        // Tách lợi ích (giống PricingSection)
                         const features = (plan.benefits || "").split('\n').filter(f => f.trim() !== "" && f.trim() !== "✓");
 
 
@@ -386,7 +360,6 @@ export function SubscriptionPlansPage() {
                             >
 
 
-                                {/* ✅ Sửa: Tên gói to lên, giá nhỏ xuống, căn giữa */}
                                 <CardHeader className="text-center pt-10 pb-6">
                                     <CardTitle className="text-2xl font-bold text-gray-900 h-16">
                                         {plan.name}
@@ -395,7 +368,7 @@ export function SubscriptionPlansPage() {
                                         <span className="text-3xl font-bold text-orange-600 tracking-tight">
                                             {plan.monthlyPrice.toLocaleString('vi-VN')}
                                         </span>
-                                        <span className="text-lg font-medium text-gray-500 ml-1"> VND/tháng</span>
+                                        <span className="text-lg font-medium text-gray-500 ml-1">{t("driver.subscription.currencyPerMonth")}</span>
                                     </div>
                                     <CardDescription className="pt-4 text-base text-gray-600 h-24 overflow-hidden">
                                         {plan.description}
@@ -407,18 +380,15 @@ export function SubscriptionPlansPage() {
                                         <li className="flex items-start">
                                             <CheckCircle className="w-5 h-5 text-orange-500 mr-2.5 flex-shrink-0" />
                                             <span className="text-gray-600">
-                                                {/* Hiển thị "Không giới hạn" nếu maxSwapsPerMonth là null */}
-                                                {plan.maxSwapsPerMonth ? `${plan.maxSwapsPerMonth} lượt đổi/tháng` : "Đổi pin không giới hạn"}
+                                                {plan.maxSwapsPerMonth ? `${plan.maxSwapsPerMonth} ${t("driver.subscription.listSwapsPerMonth")}` : t("driver.subscription.unlimited")}
                                             </span>
                                         </li>
-                                        {/* Lặp qua các lợi ích (benefits) */}
                                         {features.map((feature, featureIndex) => (
                                             <li key={featureIndex} className="flex items-start">
                                                 <CheckCircle className="w-5 h-5 text-orange-500 mr-2.5 flex-shrink-0" />
                                                 <span className="text-gray-600">{feature.replace('✓', '').trim()}</span>
                                             </li>
                                         ))}
-                                        {/* ❌ Bỏ: Dòng "Loại pin" */}
                                     </ul>
                                     <Button
                                         className={`w-full py-5 text-base font-semibold rounded-lg shadow-md transition-all duration-300 bg-white text-orange-600 border-2 border-orange-500 hover:bg-orange-50"
@@ -426,7 +396,7 @@ export function SubscriptionPlansPage() {
 
                                         onClick={() => handleSelectPlan(plan)}
                                     >
-                                        Chọn gói
+                                        {t("driver.subscription.selectPlan")}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -434,14 +404,13 @@ export function SubscriptionPlansPage() {
                     })}
                 </div>
 
-                {/* Pagination */}
                 {total > 0 && (
                     <div className="mt-8 flex items-center justify-between">
                         <div className="text-sm text-gray-600">
-                            Tổng: {total.toLocaleString('vi-VN')} gói
+                            {t("driver.subscription.totalPlans")} {total.toLocaleString('vi-VN')} {t("driver.subscription.totalPlansUnit")}
                         </div>
                         <div className="flex items-center gap-3">
-                            <Label className="text-sm">Hiển thị</Label>
+                            <Label className="text-sm">{t("driver.subscription.pageSizeLabel")}</Label>
                             <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
                                 <SelectTrigger className="w-24">
                                     <SelectValue />
@@ -458,15 +427,15 @@ export function SubscriptionPlansPage() {
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage <= 1}
                                 >
-                                    Trang trước
+                                    {t("driver.subscription.pagination.prev")}
                                 </Button>
-                                <span className="text-sm">Trang {currentPage}/{maxPage}</span>
+                                <span className="text-sm">{t("driver.subscription.pagination.page")} {currentPage}/{maxPage}</span>
                                 <Button
                                     variant="outline"
                                     onClick={() => setPage(p => Math.min(maxPage, p + 1))}
                                     disabled={currentPage >= maxPage}
                                 >
-                                    Trang sau
+                                    {t("driver.subscription.pagination.next")}
                                 </Button>
                             </div>
                         </div>
@@ -474,32 +443,31 @@ export function SubscriptionPlansPage() {
                 )}
 
                 {filteredPlans.length === 0 && (
-                    <p className="text-center text-gray-500 text-lg py-12">Không tìm thấy gói nào phù hợp với tiêu chí lọc.</p>
+                    <p className="text-center text-gray-500 text-lg py-12">{t("driver.subscription.emptyNoPlans")}</p>
                 )}
 
-                {/* Dialog Xác Nhận Đăng Ký Gói */}
                 {selectedPlan && (
                     <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
                         <DialogContent className="max-w-lg rounded-xl">
                             <DialogHeader className="text-center">
                                 <DialogTitle className="text-2xl font-bold text-gray-900">
-                                    Xác nhận đăng ký gói
+                                    {t("driver.subscription.confirmTitle")}
                                 </DialogTitle>
                                 <DialogDescription className="text-base text-gray-600 pt-4">
-                                    Bạn có chắc chắn muốn đăng ký gói{" "}
+                                    {t("driver.subscription.confirmMessage")}{" "}
                                     <span className="font-bold text-orange-600">{selectedPlan.name}</span>?
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="my-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-sm text-blue-900 font-medium mb-2">
-                                    📌 Lưu ý quan trọng:
+                                    {t("driver.subscription.importantNote")}
                                 </p>
                                 <p className="text-sm text-blue-800">
-                                    Gói này chỉ áp dụng với những xe có model pin{" "}
+                                    {t("driver.subscription.applicableBatteryIntro")}{" "}
                                     <span className="font-bold">{selectedPlan.batteryModel.name}</span>.
                                     <br />
-                                    Hãy đảm bảo bạn sở hữu xe với model pin này trước khi mua gói.
+                                    {t("driver.subscription.applicableBatteryEnsure")}
                                 </p>
                             </div>
 
@@ -509,7 +477,7 @@ export function SubscriptionPlansPage() {
                                     onClick={() => setIsConfirmDialogOpen(false)}
                                     disabled={isLoading}
                                 >
-                                    Hủy
+                                    {t("common.cancel")}
                                 </Button>
                                 <Button
                                     className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6"
@@ -517,31 +485,30 @@ export function SubscriptionPlansPage() {
                                     disabled={isLoading}
                                 >
                                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Xác nhận đăng ký
+                                    {t("driver.subscription.confirmButton")}
                                 </Button>
                             </div>
                         </DialogContent>
                     </Dialog>
                 )}
 
-                {/* --- Dialog Thanh Toán (Làm đẹp) --- */}
                 {payment && (
                     <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
                         <DialogContent className="max-w-md rounded-xl">
                             <DialogHeader className="text-center">
-                                <DialogTitle className="text-2xl font-bold text-gray-900">Hoàn tất thanh toán</DialogTitle>
+                                <DialogTitle className="text-2xl font-bold text-gray-900">{t("driver.subscription.payment.title")}</DialogTitle>
                                 <DialogDescription className="text-base text-gray-600 pt-2">
-                                    Đơn hàng của bạn đã được tạo. Vui lòng chọn phương thức.
+                                    {t("driver.subscription.payment.description")}
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="my-6 space-y-3 border-t border-b py-6">
                                 <div className="flex justify-between text-base">
-                                    <span className="text-gray-600">Gói dịch vụ:</span>
+                                    <span className="text-gray-600">{t("driver.subscription.payment.planLabel")}</span>
                                     <span className="font-medium text-gray-800 text-right">{payment.planName}</span>
                                 </div>
                                 <div className="flex justify-between items-baseline text-lg font-bold">
-                                    <span>Tổng cộng:</span>
+                                    <span>{t("driver.subscription.payment.totalLabel")}</span>
                                     <span className="text-3xl font-extrabold text-orange-600">
                                         {payment.amount.toLocaleString('vi-VN')} VND
                                     </span>
@@ -555,7 +522,7 @@ export function SubscriptionPlansPage() {
                                     disabled={isLoading}
                                 >
                                     <CreditCard className="mr-2 h-5 w-5" />
-                                    Thanh toán ngay bằng VNPay
+                                    {t("driver.subscription.payment.payWithVNPay")}
                                 </Button>
 
                                 <Button
@@ -565,7 +532,7 @@ export function SubscriptionPlansPage() {
                                     disabled={isLoading}
                                 >
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Landmark className="mr-2 h-5 w-5" />}
-                                    Thanh toán tiền mặt (Tại trạm)
+                                    {t("driver.subscription.payment.payWithCashAtStation")}
                                 </Button>
                             </div>
                         </DialogContent>
