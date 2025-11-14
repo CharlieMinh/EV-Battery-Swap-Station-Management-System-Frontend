@@ -1,22 +1,36 @@
-// src/components/staff/RequestBattery.tsx
+// src/components/staff/SendRequestList.tsx
 import React, { useEffect, useState } from "react";
 import { Calendar, Package, User, CheckCircle, Edit } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import CheckRequest from "./CheckRequest";
-import {
-  fetchBatteryRequests,
-  BatteryRequest,
-} from "@/services/admin/batteryService";
+import { getMyStockRequests } from "@/services/staff/stockRequest";
 import { toast } from "react-toastify";
+import CheckSendRequest from "./CheckSendRequest";
+
+interface StockRequest {
+  id: string;
+  stationId: string;
+  stationName: string;
+  batteryModelId: string;
+  batteryModelName: string;
+  quantity: number;
+  requestedByStaffId: string;
+  requestedByStaffName: string | null;
+  requestedByAdminName?: string | null; // nếu có admin duyệt
+  requestDate: string;
+  status: string; // string từ API
+  staffNote?: string | null;
+}
 
 interface GroupedRequest {
   createdAt: string;
-  requests: BatteryRequest[];
-  adminName: string;
+  requests: StockRequest[];
+  adminName: string | null; // Admin/Người duyệt
+  staffName: string | null; // Staff/Người tạo
   stationName: string;
   totalItems: number;
-  status: number;
+  status: string;
 }
 
 const toastOpts = {
@@ -25,16 +39,15 @@ const toastOpts = {
   closeOnClick: true,
 };
 
-// 🔔 đảm bảo 1 action = 1 thông báo
 const TOAST_ID = {
-  fetchOk: "rb-fetch-ok",
-  fetchErr: "rb-fetch-err",
-  openInfo: "rb-open-modal",
-  closeInfo: "rb-close-modal",
+  fetchOk: "sr-fetch-ok",
+  fetchErr: "sr-fetch-err",
+  openInfo: "sr-open-modal",
+  closeInfo: "sr-close-modal",
 };
 
-const RequestBattery = () => {
-  const [requests, setRequests] = useState<BatteryRequest[]>([]);
+const SendRequestList = () => {
+  const [requests, setRequests] = useState<StockRequest[]>([]);
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupedRequest | null>(
@@ -42,26 +55,22 @@ const RequestBattery = () => {
   );
   const [showCheckModal, setShowCheckModal] = useState(false);
 
-  // Fetch requests từ API (GIỮ NGUYÊN LUỒNG)
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const data = await fetchBatteryRequests();
+      const data = await getMyStockRequests();
       setRequests(data);
       groupRequestsByCreatedAt(data);
 
       toast.success(
         data?.length
-          ? `Đã tải ${data.length} yêu cầu nhập pin.`
-          : "Không có yêu cầu nhập pin.",
+          ? `Đã tải ${data.length} yêu cầu.`
+          : "Không có yêu cầu nào.",
         { ...toastOpts, toastId: TOAST_ID.fetchOk }
       );
     } catch (error: any) {
       console.error("Error fetching requests:", error);
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể tải yêu cầu.";
+      const msg = error?.message || "Không thể tải yêu cầu.";
       toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
@@ -72,8 +81,8 @@ const RequestBattery = () => {
     fetchRequests();
   }, []);
 
-  // Gộp các requests có cùng createdAt (±3s), cùng admin & station (GIỮ NGUYÊN THUẬT TOÁN)
-  const groupRequestsByCreatedAt = (data: BatteryRequest[]) => {
+  // Gộp các request ±5s cùng staff & station
+  const groupRequestsByCreatedAt = (data: StockRequest[]) => {
     if (!data || data.length === 0) {
       setGroupedRequests([]);
       return;
@@ -81,30 +90,30 @@ const RequestBattery = () => {
 
     const sorted = [...data].sort(
       (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        new Date(a.requestDate).getTime() - new Date(b.requestDate).getTime()
     );
 
-    const grouped: { [key: string]: BatteryRequest[] } = {};
+    const grouped: { [key: string]: StockRequest[] } = {};
 
     sorted.forEach((request) => {
-      const requestTime = new Date(request.createdAt).getTime();
+      const requestTime = new Date(request.requestDate).getTime();
 
       const existingKey = Object.keys(grouped).find((key) => {
         const group = grouped[key];
         const first = group[0];
         const timeDiff = Math.abs(
-          requestTime - new Date(first.createdAt).getTime()
+          requestTime - new Date(first.requestDate).getTime()
         );
-        const sameAdmin =
-          request.requestedByAdminName === first.requestedByAdminName;
+        const sameStaff =
+          request.requestedByStaffName === first.requestedByStaffName;
         const sameStation = request.stationName === first.stationName;
-        return timeDiff <= 3000 && sameAdmin && sameStation;
+        return timeDiff <= 5000 && sameStaff && sameStation;
       });
 
       if (existingKey) {
         grouped[existingKey].push(request);
       } else {
-        const dateKey = new Date(request.createdAt).toISOString().split(".")[0];
+        const dateKey = new Date(request.requestDate).toISOString();
         grouped[dateKey] = [request];
       }
     });
@@ -118,12 +127,13 @@ const RequestBattery = () => {
         );
 
         return {
-          createdAt: items[0].createdAt,
+          createdAt: items[0].requestDate,
           requests: items,
-          adminName: items[0].requestedByAdminName,
+          staffName: items[0].requestedByStaffName,
+          adminName: items[0].requestedByAdminName ?? null,
           stationName: items[0].stationName,
           totalItems,
-          status: allSameStatus ? items[0].status : 0,
+          status: allSameStatus ? items[0].status : "PendingAdminReview",
         };
       }
     );
@@ -147,21 +157,21 @@ const RequestBattery = () => {
     });
   };
 
-  const getStatusBadge = (status: number) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 0:
+      case "PendingAdminReview":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
             Chờ xác nhận
           </span>
         );
-      case 1:
+      case "Approved":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
             Đã xác nhận
           </span>
         );
-      case 2:
+      case "Rejected":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
             Đã từ chối
@@ -176,11 +186,10 @@ const RequestBattery = () => {
     setSelectedGroup(group);
     setShowCheckModal(true);
     toast.info(
-      group.status === 0 ? "Mở kiểm tra lô hàng." : "Mở chi tiết lô hàng.",
-      {
-        ...toastOpts,
-        toastId: TOAST_ID.openInfo,
-      }
+      group.status === "PendingAdminReview"
+        ? "Mở kiểm tra yêu cầu."
+        : "Mở chi tiết yêu cầu.",
+      { ...toastOpts, toastId: TOAST_ID.openInfo }
     );
   };
 
@@ -191,10 +200,9 @@ const RequestBattery = () => {
       ...toastOpts,
       toastId: TOAST_ID.closeInfo,
     });
-    fetchRequests(); // Refresh danh sách sau khi xong (giữ nguyên ý định)
+    fetchRequests();
   };
 
-  /* ======= Loading (đồng bộ style) ======= */
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -208,19 +216,17 @@ const RequestBattery = () => {
 
   return (
     <div className="container mx-auto space-y-6">
-      {/* Header card đồng bộ */}
+      {/* Header */}
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-bold text-orange-600">
-            Yêu cầu nhập pin
+            Yêu cầu gửi pin
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Quản lý các yêu cầu nhập pin từ Admin
-          </p>
+          <p className="text-sm text-gray-600">Danh sách các yêu cầu gửi pin</p>
         </CardHeader>
       </Card>
 
-      {/* List / Empty state */}
+      {/* List */}
       {groupedRequests.length === 0 ? (
         <Card className="rounded-2xl border border-orange-200">
           <CardContent className="py-12">
@@ -241,9 +247,13 @@ const RequestBattery = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Lô hàng #{groupedRequests.length - index}
+                      Yêu cầu #{groupedRequests.length - index}
                     </CardTitle>
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>{group.staffName}</span>
+                      </div>
                       <div className="flex items-center gap-1">
                         <User className="w-4 h-4" />
                         <span>{group.adminName}</span>
@@ -264,7 +274,6 @@ const RequestBattery = () => {
 
               <CardContent>
                 <div className="space-y-3">
-                  {/* Items trong lô */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {group.requests.map((req) => (
                       <div
@@ -281,7 +290,6 @@ const RequestBattery = () => {
                     ))}
                   </div>
 
-                  {/* Tổng + Action */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t">
                     <div className="text-sm text-gray-600">
                       <span className="font-semibold">Tổng số lượng:</span>{" "}
@@ -291,38 +299,31 @@ const RequestBattery = () => {
                       pin
                     </div>
 
-                    {group.status === 0 ? (
-                      <Button
-                        onClick={() => handleCheckRequest(group)}
-                        className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700"
-                      >
+                    <Button
+                      onClick={() => handleCheckRequest(group)}
+                      className={`h-10 rounded-lg ${
+                        group.status === "PendingAdminReview"
+                          ? "bg-orange-600 hover:bg-orange-700"
+                          : "border border-orange-600 text-orange-600 hover:bg-orange-50"
+                      }`}
+                    >
+                      {group.status === "PendingAdminReview" ? (
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Kiểm tra hàng
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleCheckRequest(group)}
-                        variant="outline"
-                        className="h-10 rounded-lg border-orange-600 text-orange-600 hover:bg-orange-50"
-                      >
+                      ) : (
                         <Edit className="w-4 h-4 mr-2" />
-                        Xem chi tiết
-                      </Button>
-                    )}
+                      )}
+                      {group.status === "PendingAdminReview"
+                        ? "Kiểm tra"
+                        : "Xem chi tiết"}
+                    </Button>
                   </div>
 
-                  {/* Notes nếu đã xử lý (GIỮ LOGIC) */}
-                  {group.requests[0].staffNotes && (
+                  {group.requests[0].staffNote && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
                         <span className="font-semibold">Ghi chú:</span>{" "}
-                        {group.requests[0].staffNotes}
+                        {group.requests[0].staffNote}
                       </p>
-                      {group.requests[0].handledByStaffName && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Xử lý bởi: {group.requests[0].handledByStaffName}
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>
@@ -332,12 +333,12 @@ const RequestBattery = () => {
         </div>
       )}
 
-      {/* Modal kiểm tra/chỉnh sửa (GIỮ) */}
+      {/* Modal kiểm tra */}
       {showCheckModal && selectedGroup && (
-        <CheckRequest group={selectedGroup} onClose={handleCloseModal} />
+        <CheckSendRequest group={selectedGroup} onClose={handleCloseModal} />
       )}
     </div>
   );
 };
 
-export default RequestBattery;
+export default SendRequestList;

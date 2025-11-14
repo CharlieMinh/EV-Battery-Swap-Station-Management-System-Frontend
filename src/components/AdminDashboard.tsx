@@ -64,6 +64,7 @@ import {
 import { fetchBatteryRequests } from "@/services/admin/batteryService";
 import UserProfile from "./admin/UserProfile";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
+import { SubscriptionPlansPage } from "./driver/SubscriptionPlansPage";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -415,6 +416,16 @@ export function AdminDashboardPage({
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton
+                      onClick={() => setActiveSection("subcription-plans")}
+                      isActive={activeSection === "subcription-plans"}
+                      className="h-[50px]"
+                    >
+                      <Battery className="w-4 h-4" />
+                      <span>Gói pin</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
                       onClick={() => setActiveSection("customers")}
                       isActive={activeSection === "customers"}
                       className="h-[50px]"
@@ -510,6 +521,7 @@ export function AdminDashboardPage({
                   {activeSection === "overview" && t("admin.overview")}
                   {activeSection === "stations" && t("admin.stations")}
                   {activeSection === "batteries" && t("admin.batteries")}
+                  {activeSection === "subcription-plans" && "Gói pin"}
                   {activeSection === "customers" && t("admin.customers")}
                   {activeSection === "staff" && t("admin.staff")}
                   {activeSection === "add-account" && "Thêm người dùng"}
@@ -656,6 +668,8 @@ export function AdminDashboardPage({
             {activeSection === "stations" && <StationManagement />}
 
             {activeSection === "batteries" && <BatteryFleetManagement />}
+
+            {activeSection === "subcription-plans" && <SubscriptionPlansPage />}
 
             {activeSection === "customers" && <CustomerManagement />}
 

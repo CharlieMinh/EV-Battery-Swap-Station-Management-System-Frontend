@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { BatteryStationTable } from "./BatteryStationTable";
+import AdminPendingRequests from "./AddPendingRequest";
 
 // Màu đại diện cho từng trạng thái pin
 const STATUS_COLORS: Record<string, string> = {
@@ -163,6 +164,8 @@ export function BatteryFleetManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <AdminPendingRequests />
 
       <div className="col-span-full">
         <BatteryStationTable onDataUpdate={handleReload} />
