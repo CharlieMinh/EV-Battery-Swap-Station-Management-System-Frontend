@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/button";
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import axios from "axios";
+import { useLanguage } from "../LanguageContext";
 
 export function PaymentResult() {
+    const { t } = useLanguage();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
     const [paymentStatus, setPaymentStatus] = useState<"success" | "failure" | "error">("error");
-    const [paymentType, setPaymentType] = useState<string>("subscription"); // "subscription" or "payperswap"
+    const [paymentType, setPaymentType] = useState<string>("subscription");
     const [txnRef, setTxnRef] = useState<string>("");
     const [amount, setAmount] = useState<string>("");
     const [responseCode, setResponseCode] = useState<string>("");
@@ -18,14 +20,12 @@ export function PaymentResult() {
 
     useEffect(() => {
         const processPayment = () => {
-            // Check if this is from backend redirect (has 'status' param)
             const backendStatus = searchParams.get("status");
-            const type = searchParams.get("type") || "subscription"; // Default to subscription
+            const type = searchParams.get("type") || "subscription";
 
             console.log("Processing payment result. Backend status:", backendStatus, "Type:", type);
 
             if (backendStatus) {
-                // Already processed by backend - just display result
                 console.log("✅ Payment already processed by backend");
                 setPaymentStatus(backendStatus as any);
                 setPaymentType(type);
@@ -34,8 +34,6 @@ export function PaymentResult() {
                 setResponseCode(searchParams.get("code") || "");
                 setIsLoading(false);
             } else {
-                // Direct from VNPay - this shouldn't happen with our current setup
-                // But handle it just in case
                 console.warn("⚠️ Received VNPay params directly without backend processing");
                 const vnpResponseCode = searchParams.get("vnp_ResponseCode");
                 const vnpTransactionStatus = searchParams.get("vnp_TransactionStatus");
@@ -46,7 +44,6 @@ export function PaymentResult() {
                 setAmount(vnpAmount || "");
                 setResponseCode(vnpResponseCode || "");
 
-                // Check if payment was successful based on VNPay response codes
                 if (vnpResponseCode === "00" && vnpTransactionStatus === "00") {
                     setPaymentStatus("success");
                 } else {
@@ -65,7 +62,6 @@ export function PaymentResult() {
     };
 
     const handleRetry = () => {
-        // Redirect dựa trên loại thanh toán
         if (paymentType === "payperswap") {
             navigate("/driver", { state: { initialSection: "booking" } });
         } else {
@@ -79,7 +75,7 @@ export function PaymentResult() {
                 <Card className="w-full max-w-md">
                     <CardContent className="pt-12 pb-8 text-center">
                         <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-                        <p className="text-gray-600 text-lg">Đang xử lý kết quả thanh toán...</p>
+                        <p className="text-gray-600 text-lg">{t("driver.paymentResult.processing")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -96,12 +92,12 @@ export function PaymentResult() {
                                 <CheckCircle className="w-12 h-12 text-green-600" />
                             </div>
                             <CardTitle className="text-3xl font-bold text-green-600 mb-3">
-                                Thanh toán thành công!
+                                {t("driver.paymentResult.titleSuccess")}
                             </CardTitle>
                             <CardDescription className="text-lg text-gray-600">
                                 {paymentType === "payperswap"
-                                    ? "Đặt lịch đổi pin của bạn đã được xác nhận thành công."
-                                    : "Gói đăng ký của bạn đã được kích hoạt thành công."}
+                                    ? t("driver.paymentResult.successBookingMessage")
+                                    : t("driver.paymentResult.successSubscriptionMessage")}
                             </CardDescription>
                         </>
                     ) : paymentStatus === "failure" ? (
@@ -110,10 +106,10 @@ export function PaymentResult() {
                                 <XCircle className="w-12 h-12 text-red-600" />
                             </div>
                             <CardTitle className="text-3xl font-bold text-red-600 mb-3">
-                                Thanh toán thất bại
+                                {t("driver.paymentResult.titleFailure")}
                             </CardTitle>
                             <CardDescription className="text-lg text-gray-600">
-                                Giao dịch không thành công. Vui lòng thử lại.
+                                {t("driver.paymentResult.descriptionFailure")}
                             </CardDescription>
                         </>
                     ) : (
@@ -122,30 +118,29 @@ export function PaymentResult() {
                                 <AlertCircle className="w-12 h-12 text-yellow-600" />
                             </div>
                             <CardTitle className="text-3xl font-bold text-yellow-600 mb-3">
-                                Có lỗi xảy ra
+                                {t("driver.paymentResult.titleError")}
                             </CardTitle>
                             <CardDescription className="text-lg text-gray-600">
-                                {errorMessage || "Không thể xác nhận trạng thái thanh toán. Vui lòng kiểm tra lại."}
+                                {errorMessage || t("driver.paymentResult.errorMessage")}
                             </CardDescription>
                         </>
                     )}
                 </CardHeader>
 
                 <CardContent className="px-8 pb-12">
-                    {/* Transaction Details */}
                     <div className="bg-gray-50 rounded-lg p-6 mb-6 space-y-3">
-                        <h3 className="font-semibold text-gray-800 mb-4 text-lg">Chi tiết giao dịch</h3>
+                        <h3 className="font-semibold text-gray-800 mb-4 text-lg">{t("driver.paymentResult.transactionDetailsTitle")}</h3>
 
                         {txnRef && (
                             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                                <span className="text-gray-600">Mã giao dịch:</span>
+                                <span className="text-gray-600">{t("driver.paymentResult.transactionIdLabel")}</span>
                                 <span className="font-medium text-gray-800">{txnRef}</span>
                             </div>
                         )}
 
                         {amount && (
                             <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                                <span className="text-gray-600">Số tiền:</span>
+                                <span className="text-gray-600">{t("driver.paymentResult.amountLabel")}</span>
                                 <span className="font-bold text-orange-600 text-lg">
                                     {(parseInt(amount) / 100).toLocaleString('vi-VN')} VND
                                 </span>
@@ -154,67 +149,64 @@ export function PaymentResult() {
 
                         {responseCode && paymentStatus === "failure" && (
                             <div className="flex justify-between items-center py-2">
-                                <span className="text-gray-600">Mã lỗi:</span>
+                                <span className="text-gray-600">{t("driver.paymentResult.errorCodeLabel")}</span>
                                 <span className="font-medium text-red-600">{responseCode}</span>
                             </div>
                         )}
 
                         <div className="flex justify-between items-center py-2">
-                            <span className="text-gray-600">Trạng thái:</span>
+                            <span className="text-gray-600">{t("driver.paymentResult.statusLabel")}</span>
                             <span className={`font-semibold ${paymentStatus === "success" ? "text-green-600" :
                                 paymentStatus === "failure" ? "text-red-600" :
                                     "text-yellow-600"
                                 }`}>
-                                {paymentStatus === "success" ? "Thành công" :
-                                    paymentStatus === "failure" ? "Thất bại" :
-                                        "Không xác định"}
+                                {paymentStatus === "success" ? t("driver.paymentResult.statusSuccess") :
+                                    paymentStatus === "failure" ? t("driver.paymentResult.statusFailure") :
+                                        t("driver.paymentResult.statusUnknown")}
                             </span>
                         </div>
                     </div>
 
-                    {/* Success Message */}
                     {paymentStatus === "success" && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                             {paymentType === "payperswap" ? (
                                 <p className="text-green-800 text-sm">
-                                    ✓ Lịch hẹn đổi pin của bạn đã được xác nhận.
+                                    {t("driver.paymentResult.noteBookingConfirmed")}
                                     <br />
-                                    ✓ Vui lòng đến trạm đúng giờ đã đặt để thực hiện đổi pin.
+                                    {t("driver.paymentResult.noteArriveOnTime")}
                                     <br />
-                                    ✓ Bạn có thể xem chi tiết lịch hẹn trong mục "Lịch hẹn của tôi".
+                                    {t("driver.paymentResult.noteViewAppointment")}
                                 </p>
                             ) : (
                                 <p className="text-green-800 text-sm">
-                                    ✓ Gói đăng ký đã được kích hoạt và có hiệu lực trong 30 ngày.
+                                    {t("driver.paymentResult.noteSubscriptionActive")}
                                     <br />
-                                    ✓ Bạn có thể bắt đầu sử dụng dịch vụ đổi pin ngay bây giờ.
+                                    {t("driver.paymentResult.noteSubscriptionCanUseNow")}
                                 </p>
                             )}
                         </div>
                     )}
 
-                    {/* Failure Message */}
                     {paymentStatus === "failure" && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                             <p className="text-red-800 text-sm font-medium mb-2">
-                                Lý do có thể:
+                                {t("driver.paymentResult.failureReasonsTitle")}
                             </p>
                             <ul className="text-red-700 text-sm list-disc list-inside space-y-1">
-                                <li>Số dư tài khoản không đủ</li>
-                                <li>Thông tin thẻ không chính xác</li>
-                                <li>Giao dịch bị hủy bởi người dùng</li>
-                                <li>Lỗi kết nối với ngân hàng</li>
+                                <li>{t("driver.paymentResult.failureReasonBalance")}</li>
+                                <li>{t("driver.paymentResult.failureReasonCardInfo")}</li>
+                                <li>{t("driver.paymentResult.failureReasonCancelled")}</li>
+                                <li>{t("driver.paymentResult.failureReasonBankError")}</li>
                             </ul>
                         </div>
                     )}
 
-                    {/* Action Buttons */}
                     <div className="flex gap-4 mt-8">
                         <Button
                             onClick={handleBackToDashboard}
                             className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-6 text-base"
                         >
-                            Về trang chủ
+                            {t("driver.paymentResult.buttonBackToDashboard")}
                         </Button>
 
                         {paymentStatus !== "success" && (
@@ -223,7 +215,7 @@ export function PaymentResult() {
                                 variant="outline"
                                 className="flex-1 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold py-6 text-base"
                             >
-                                Thử lại
+                                {t("driver.paymentResult.buttonRetry")}
                             </Button>
                         )}
                     </div>

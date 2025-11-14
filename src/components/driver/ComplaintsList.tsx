@@ -14,7 +14,6 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { InspectionBookingWizard } from "./InspectionBookingWizard";
 
-// Enum cho trạng thái khiếu nại
 enum ComplaintStatus {
     PendingScheduling = 0,
     Scheduled = 1,
@@ -25,7 +24,6 @@ enum ComplaintStatus {
     Resolved = 6,
 }
 
-// Interface cho khiếu nại
 interface BatteryComplaint {
     id: string;
     status: ComplaintStatus;
@@ -45,15 +43,12 @@ export function ComplaintsList() {
     const [complaints, setComplaints] = useState<BatteryComplaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Filters
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [stationFilter, setStationFilter] = useState<string>("all");
 
-    // Pagination
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(9);
 
-    // State cho dialog đặt lịch
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
     const [selectedComplaint, setSelectedComplaint] = useState<BatteryComplaint | null>(null);
 
@@ -66,7 +61,7 @@ export function ComplaintsList() {
             );
             setComplaints(response.data);
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Không thể tải danh sách khiếu nại";
+            const msg = error.response?.data?.message || t('driver.complaints.errorLoadFailed');
             toast.error(msg);
         } finally {
             setIsLoading(false);
@@ -77,47 +72,42 @@ export function ComplaintsList() {
         fetchComplaints();
     }, []);
 
-    // Unique station names for filter
     const stationOptions = useMemo(() => {
         const set = new Set<string>();
         complaints.forEach((c) => c.stationName && set.add(c.stationName));
         return Array.from(set).sort();
     }, [complaints]);
 
-    // Map status sang văn bản và màu sắc
     const getStatusInfo = (status: ComplaintStatus) => {
         switch (status) {
             case ComplaintStatus.PendingScheduling:
-                return { text: "Chờ đặt lịch", color: "bg-yellow-500", icon: Clock };
+                return { text: t('driver.complaints.statusPending'), color: "bg-yellow-500", icon: Clock };
             case ComplaintStatus.Scheduled:
-                return { text: "Đã đặt lịch", color: "bg-blue-500", icon: Calendar };
+                return { text: t('driver.complaints.statusScheduled'), color: "bg-blue-500", icon: Calendar };
             case ComplaintStatus.CheckedIn:
-                return { text: "Đã check-in", color: "bg-purple-500", icon: CheckCircle };
+                return { text: t('driver.complaints.statusCheckedIn'), color: "bg-purple-500", icon: CheckCircle };
             case ComplaintStatus.Investigating:
-                return { text: "Đang kiểm tra", color: "bg-orange-500", icon: AlertCircle };
+                return { text: t('driver.complaints.statusInspecting'), color: "bg-orange-500", icon: AlertCircle };
             case ComplaintStatus.Confirmed:
-                return { text: "Đã xác nhận lỗi", color: "bg-red-500", icon: AlertCircle };
+                return { text: t('driver.complaints.statusConfirmed'), color: "bg-red-500", icon: AlertCircle };
             case ComplaintStatus.Rejected:
-                return { text: "Bị từ chối", color: "bg-gray-500", icon: XCircle };
+                return { text: t('driver.complaints.statusRejected'), color: "bg-gray-500", icon: XCircle };
             case ComplaintStatus.Resolved:
-                return { text: "Đã giải quyết", color: "bg-green-500", icon: CheckCircle };
+                return { text: t('driver.complaints.statusResolved'), color: "bg-green-500", icon: CheckCircle };
             default:
-                return { text: "Không xác định", color: "bg-gray-400", icon: AlertCircle };
+                return { text: t('driver.complaints.statusUnknown'), color: "bg-gray-400", icon: AlertCircle };
         }
     };
 
-    // Handler đặt lịch kiểm tra
     const handleScheduleInspection = (complaint: BatteryComplaint) => {
         setSelectedComplaint(complaint);
         setIsBookingDialogOpen(true);
     };
 
     const handleBookingSuccess = () => {
-        // Refresh danh sách sau khi đặt lịch thành công
         fetchComplaints();
     };
 
-    // Filter (client-side)
     const filteredComplaints = useMemo(() => {
         return complaints.filter((c) => {
             const statusOk = statusFilter === "all" || String(c.status) === statusFilter;
@@ -126,7 +116,6 @@ export function ComplaintsList() {
         });
     }, [complaints, statusFilter, stationFilter]);
 
-    // Pagination derive
     const total = filteredComplaints.length;
     const maxPage = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, maxPage);
@@ -135,7 +124,6 @@ export function ComplaintsList() {
         return filteredComplaints.slice(start, start + pageSize);
     }, [filteredComplaints, currentPage, pageSize]);
 
-    // Reset page when filters change
     useEffect(() => {
         setPage(1);
     }, [statusFilter, stationFilter]);
@@ -147,45 +135,44 @@ export function ComplaintsList() {
     };
 
     return (
-        <div className="py-14 bg-gray-50">
+        <div className="py-12 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-10 md:mb-14">
-                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
-                        Khiếu nại của tôi
+                <div className="text-center mb-12">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+                        {t('driver.complaints.title')}
                     </h2>
-                    <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                        Theo dõi và quản lý các khiếu nại về pin bạn đã báo cáo.
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                        {t('driver.complaints.description')}
                     </p>
                 </div>
 
-                {/* Filters */}
                 <div className="mb-8 bg-white/70 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm">
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-600">Trạng thái</label>
+                            <label className="text-sm font-medium text-gray-600">{t('driver.complaints.filterStatus')}</label>
                             <select
                                 className="h-11 rounded-md border border-gray-300 bg-white px-3 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
-                                <option value="all">Tất cả</option>
-                                <option value={ComplaintStatus.PendingScheduling}>Chờ đặt lịch</option>
-                                <option value={ComplaintStatus.Scheduled}>Đã đặt lịch</option>
-                                <option value={ComplaintStatus.CheckedIn}>Đã check-in</option>
-                                <option value={ComplaintStatus.Investigating}>Đang kiểm tra</option>
-                                <option value={ComplaintStatus.Confirmed}>Xác nhận lỗi</option>
-                                <option value={ComplaintStatus.Rejected}>Từ chối</option>
-                                <option value={ComplaintStatus.Resolved}>Đã giải quyết</option>
+                                <option value="all">{t('driver.history.filterAllStatus')}</option>
+                                <option value={ComplaintStatus.PendingScheduling}>{t('driver.complaints.statusPending')}</option>
+                                <option value={ComplaintStatus.Scheduled}>{t('driver.complaints.statusScheduled')}</option>
+                                <option value={ComplaintStatus.CheckedIn}>{t('driver.complaints.statusCheckedIn')}</option>
+                                <option value={ComplaintStatus.Investigating}>{t('driver.complaints.statusInspecting')}</option>
+                                <option value={ComplaintStatus.Confirmed}>{t('driver.complaints.statusConfirmed')}</option>
+                                <option value={ComplaintStatus.Rejected}>{t('driver.complaints.statusRejected')}</option>
+                                <option value={ComplaintStatus.Resolved}>{t('driver.complaints.statusResolved')}</option>
                             </select>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-600">Trạm</label>
+                            <label className="text-sm font-medium text-gray-600">{t('driver.complaints.filterStation')}</label>
                             <select
                                 className="h-11 rounded-md border border-gray-300 bg-white px-3 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                 value={stationFilter}
                                 onChange={(e) => setStationFilter(e.target.value)}
                             >
-                                <option value="all">Tất cả trạm</option>
+                                <option value="all">{t('driver.complaints.filterAllStations')}</option>
                                 {stationOptions.map((name) => (
                                     <option key={name} value={name}>{name}</option>
                                 ))}
@@ -193,12 +180,12 @@ export function ComplaintsList() {
                         </div>
                         <div className="flex flex-col gap-2 md:justify-end">
                             <div className="flex gap-2 md:justify-end mt-6">
-                                <Button variant="outline" onClick={clearAll} className="h-11">Xoá bộ lọc</Button>
+                                <Button variant="outline" onClick={clearAll} className="h-11">{t('driver.complaints.clearFilters')}</Button>
                             </div>
                         </div>
                     </div>
                     <div className="mt-4 text-sm text-gray-600">
-                        Có <span className="font-semibold text-gray-900">{total}</span> khiếu nại phù hợp
+                        {t('driver.complaints.found')} <span className="font-semibold text-gray-900">{total}</span> {t('driver.complaints.matchingComplaints')}
                     </div>
                 </div>
 
@@ -210,9 +197,9 @@ export function ComplaintsList() {
                     <Card className="max-w-2xl mx-auto">
                         <CardContent className="text-center py-12">
                             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-xl text-gray-600">Bạn chưa có khiếu nại nào</p>
+                            <p className="text-xl text-gray-600">{t('driver.complaints.noComplaints')}</p>
                             <p className="text-gray-500 mt-2">
-                                Nếu gặp vấn đề với pin, hãy báo cáo từ lịch sử giao dịch.
+                                {t('driver.complaints.noComplaintsDesc')}
                             </p>
                         </CardContent>
                     </Card>
@@ -220,10 +207,10 @@ export function ComplaintsList() {
                     <Card className="max-w-2xl mx-auto">
                         <CardContent className="text-center py-12">
                             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-xl text-gray-600">Không tìm thấy khiếu nại nào phù hợp</p>
-                            <p className="text-gray-500 mt-2">Hãy thử thay đổi từ khoá hoặc bộ lọc</p>
+                            <p className="text-xl text-gray-600">{t('driver.complaints.noMatchingComplaints')}</p>
+                            <p className="text-gray-500 mt-2">{t('driver.complaints.changeFilters')}</p>
                             <div className="mt-6">
-                                <Button onClick={clearAll}>Đặt lại bộ lọc</Button>
+                                <Button onClick={clearAll}>{t('driver.complaints.resetFilters')}</Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -254,23 +241,23 @@ export function ComplaintsList() {
                                         </div>
 
                                         <CardDescription className="text-sm text-gray-600">
-                                            Báo cáo: {reportTime}
+                                            {t('driver.complaints.reportTime')} {reportTime}
                                         </CardDescription>
                                     </CardHeader>
 
                                     <CardContent className="flex-grow space-y-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-700">Trạm:</p>
+                                            <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.stationLabel')}</p>
                                             <p className="text-base md:text-lg text-gray-900">{complaint.stationName}</p>
                                         </div>
 
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-700">Serial pin:</p>
+                                            <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.serialLabel')}</p>
                                             <p className="text-base md:text-lg text-gray-900">{complaint.issuedBatterySerial}</p>
                                         </div>
 
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-700">Nội dung:</p>
+                                            <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.contentLabel')}</p>
                                             <p className="text-sm md:text-base text-gray-600 line-clamp-3">
                                                 {complaint.complaintDetails}
                                             </p>
@@ -283,14 +270,14 @@ export function ComplaintsList() {
                                                     onClick={() => handleScheduleInspection(complaint)}
                                                 >
                                                     <Calendar className="w-4 h-4 mr-2" />
-                                                    Đặt lịch kiểm tra
+                                                    {t('driver.complaints.scheduleInspection')}
                                                 </Button>
                                             </div>
                                         )}
 
                                         {complaint.scheduledDate && (
                                             <div className="pt-2">
-                                                <p className="text-sm font-semibold text-gray-700">Lịch hẹn:</p>
+                                                <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.scheduledTime')}</p>
                                                 <p className="text-sm text-blue-600">
                                                     {new Date(complaint.scheduledDate).toLocaleString("vi-VN")}
                                                 </p>
@@ -299,7 +286,7 @@ export function ComplaintsList() {
 
                                         {complaint.resolutionDetails && (
                                             <div className="pt-2 border-t">
-                                                <p className="text-sm font-semibold text-gray-700">Kết quả:</p>
+                                                <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.resolutionLabel')}</p>
                                                 <p className="text-sm text-green-600">{complaint.resolutionDetails}</p>
                                             </div>
                                         )}
@@ -309,11 +296,10 @@ export function ComplaintsList() {
                         })}
                     </div>
                 )}
-                {/* Pagination */}
                 {!isLoading && total > 0 && (
                     <div className="mt-8 flex flex-col md:flex-row md:items-center gap-4 justify-between">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                            Hiển thị
+                            {t('driver.complaints.showing')}
                             <select
                                 className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm shadow-sm"
                                 value={String(pageSize)}
@@ -324,11 +310,11 @@ export function ComplaintsList() {
                             >
                                 {[6, 9, 12, 18, 24].map((n) => (
                                     <option key={n} value={n}>
-                                        {n} / trang
+                                        {n} {t('driver.complaints.perPage')}
                                     </option>
                                 ))}
                             </select>
-                            <span className="ml-2">Tổng: {total}</span>
+                            <span className="ml-2">{t('driver.complaints.total')} {total}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -337,24 +323,23 @@ export function ComplaintsList() {
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={currentPage <= 1}
                             >
-                                Trang trước
+                                {t('driver.complaints.prevPage')}
                             </Button>
                             <span className="text-sm text-gray-700">
-                                Trang {currentPage}/{maxPage}
+                                {t('driver.complaints.page')} {currentPage}/{maxPage}
                             </span>
                             <Button
                                 variant="outline"
                                 onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
                                 disabled={currentPage >= maxPage}
                             >
-                                Trang sau
+                                {t('driver.complaints.nextPage')}
                             </Button>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Dialog đặt lịch kiểm tra */}
             {selectedComplaint && (
                 <InspectionBookingWizard
                     isOpen={isBookingDialogOpen}

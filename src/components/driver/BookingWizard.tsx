@@ -1,10 +1,10 @@
-import React, { useState } from 'react'; // Giữ lại useState
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Calendar } from '../ui/calendar';
-import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2, Info, CreditCard, Landmark } from 'lucide-react'; // Giữ lại icons
+import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2, Info, CreditCard, Landmark } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { Badge } from '../ui/badge';
 
@@ -49,13 +49,11 @@ interface SubscriptionInfo {
   swapsLimit: number | null;
   subscriptionPlan: {
     name: string;
-    batteryModelId?: string; // dùng để so khớp với xe
+    batteryModelId?: string;
     maxSwapsPerMonth?: number;
   };
 }
 
-
-// ✅ SỬA LẠI PROPS: onConfirm nhận thêm paymentMethod
 interface BookingWizardProps {
   isOpen: boolean;
   onClose: () => void;
@@ -126,7 +124,6 @@ export function BookingWizard({
       return;
     }
 
-    // Tìm gói phù hợp theo BatteryModel của xe
     const matchedSub = subscriptionInfoList.find(
       (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
     );
@@ -137,14 +134,12 @@ export function BookingWizard({
       const hasRemainingSwaps = limit === null || count < limit;
 
       if (hasRemainingSwaps) {
-        // Có gói và còn lượt -> hiện dialog hỏi
         setPendingVehicle(vehicle);
         setShowPackageConfirmDialog(true);
-        return; // Chưa set vehicle, đợi user chọn
+        return;
       }
     }
 
-    // Không có gói hoặc hết lượt -> chọn xe và load giá lẻ
     onVehicleSelect(vehicle);
     setIsUsingSubscription(false);
     setIsLoadingPrice(true);
@@ -178,7 +173,6 @@ export function BookingWizard({
       setIsUsingSubscription(false);
       setShowPackageConfirmDialog(false);
 
-      // Load giá lẻ
       setIsLoadingPrice(true);
       setSwapPrice(null);
       try {
@@ -235,7 +229,6 @@ export function BookingWizard({
             <h3 className="text-lg font-medium">{t('driver.selectVehicle')}</h3>
             <div className="max-h-64 overflow-y-auto pr-2 space-y-3">
               {vehicles.map((vehicle) => {
-                // Tìm gói phù hợp theo BatteryModel của xe
                 const vehicleSub = subscriptionInfoList.find(
                   (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
                 );
@@ -247,12 +240,12 @@ export function BookingWizard({
                   let usageText = "";
                   let remainingText = "";
                   if (limit === null) {
-                    usageText = `Đã dùng ${count} lượt`;
-                    remainingText = "Không giới hạn";
+                    usageText = `${t('driver.booking.usedSwaps')} ${count} ${t('driver.booking.swaps')}`;
+                    remainingText = t('driver.booking.unlimited');
                   } else {
                     const remaining = limit - count;
 
-                    remainingText = `${remaining}/${limit} lượt`;
+                    remainingText = `${remaining}/${limit} ${t('driver.booking.swaps')}`;
                     if (count >= limit) isLimitReached = true;
                   }
                   vehicleSubInfo = {
@@ -278,21 +271,21 @@ export function BookingWizard({
                           <div className="space-y-1.5 flex-1 min-w-0">
                             <p className="font-bold text-sm truncate">{vehicle.vehicleModelFullName || vehicle.brand}</p>
                             <p className="text-xs text-gray-600">
-                              Biển số: <span className="font-semibold">{vehicle.plate}</span>
+                              {t('driver.booking.plateLabel')} <span className="font-semibold">{vehicle.plate}</span>
                             </p>
                             <p className="text-xs text-gray-500 truncate">
-                              Pin: {vehicle.compatibleBatteryModelName}
+                              {t('driver.booking.pinLabel')} {vehicle.compatibleBatteryModelName}
                             </p>
                             <div className="pt-1">
                               {vehicleSubInfo ? (
                                 vehicleSubInfo.isLimitReached ? (
                                   <Badge variant="destructive" className="text-xs">
-                                    Hết lượt: {vehicleSubInfo.usageText}
+                                    {t('driver.booking.outOfSwaps')} {vehicleSubInfo.usageText}
                                   </Badge>
                                 ) : (
                                   <div className="space-y-1">
                                     <Badge className="bg-green-600 text-white text-xs whitespace-normal">
-                                      Xe có thể sử dụng: {vehicleSubInfo.planName}
+                                      {t('driver.booking.canUsePackage')} {vehicleSubInfo.planName}
                                     </Badge>
                                     <p className="text-xs text-green-700">
                                       {vehicleSubInfo.usageText}
@@ -300,7 +293,7 @@ export function BookingWizard({
                                   </div>
                                 )
                               ) : (
-                                <Badge variant="secondary" className="text-xs">Trả lẻ</Badge>
+                                <Badge variant="secondary" className="text-xs">{t('driver.booking.payPerSwapOnly')}</Badge>
                               )}
                             </div>
                           </div>
@@ -317,17 +310,17 @@ export function BookingWizard({
             {selectedVehicle && selectedVehicleSub && (
               <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
                 <p className="text-sm font-semibold text-green-800 mb-1">
-                  Xe này có gói: {selectedVehicleSub.subscriptionPlan.name}
+                  {t('driver.booking.vehicleHasPackage')} {selectedVehicleSub.subscriptionPlan.name}
                 </p>
                 <p className="text-xs text-green-700">
                   {(() => {
                     const limit = selectedVehicleSub.swapsLimit ?? selectedVehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
                     const count = selectedVehicleSub.currentMonthSwapCount;
                     if (limit === null) {
-                      return `Đã dùng ${count} lượt (Không giới hạn)`;
+                      return `${t('driver.booking.usedSwaps')} ${count} ${t('driver.booking.swaps')} (${t('driver.booking.unlimited')})`;
                     }
                     const remaining = limit - count;
-                    return `Còn lại ${remaining}/${limit} lượt trong tháng`;
+                    return `${t('driver.booking.remainingSwaps')} ${remaining}/${limit} ${t('driver.booking.perMonthSwaps')}`;
                   })()}
                 </p>
               </div>
@@ -336,7 +329,7 @@ export function BookingWizard({
               <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg">
                 <p className="text-xs text-blue-800 flex items-center">
                   <Info className="w-4 h-4 inline mr-1 flex-shrink-0" />
-                  <span>Xe này sẽ thanh toán theo lượt</span>
+                  <span>{t('driver.booking.noPackageNote')}</span>
                 </p>
               </div>
             )}
@@ -348,7 +341,6 @@ export function BookingWizard({
           </div>
         )}
 
-        {/* BƯỚC 2: CHỌN NGÀY  */}
         {bookingStep === 2 && (
           <div className="space-y-6 flex flex-col items-center">
             <h3 className="text-lg font-medium">{t('driver.booking.selectDateTitle')}</h3>
@@ -387,7 +379,6 @@ export function BookingWizard({
           </div>
         )}
 
-        {/* BƯỚC 3: CHỌN GIỜ  */}
         {bookingStep === 3 && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{t('driver.chooseTimeSlot')}</h3>
@@ -395,9 +386,8 @@ export function BookingWizard({
               <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                {/* Cột trái: Grid slots */}
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600 font-medium">Chọn khung giờ:</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('driver.booking.selectTimeSlot')}</p>
                   <div className="grid grid-cols-2 gap-2 max-h-[60vh] sm:max-h-[420px] overflow-y-auto pr-2">
                     {slots.length > 0 ? slots.map((slot) => {
                       const now = new Date();
@@ -441,10 +431,10 @@ export function BookingWizard({
                             <div className={`text-xs ${isSlotDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
                               {availableSlots > 0 ? (
                                 <span className="font-medium text-green-600">
-                                  Còn {availableSlots} chỗ
+                                  {t('driver.booking.availableSpots')} {availableSlots} {t('driver.booking.spots')}
                                 </span>
                               ) : (
-                                <span className="font-medium text-red-600">Đã đầy</span>
+                                <span className="font-medium text-red-600">{t('driver.booking.full')}</span>
                               )}
                             </div>
                           </div>
@@ -454,36 +444,33 @@ export function BookingWizard({
                   </div>
                 </div>
 
-                {/* Cột phải: Thông tin chi tiết slot đã chọn */}
                 <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50 min-h-[22rem]">
                   {selectedSlot ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between border-b border-gray-300 pb-3">
-                        <h4 className="text-md font-bold text-gray-900">Thông tin khung giờ</h4>
+                        <h4 className="text-md font-bold text-gray-900">{t('driver.booking.slotInfo')}</h4>
                         <CheckCircle className="w-5 h-5 text-green-500" />
                       </div>
 
                       <div className="space-y-3">
-                        {/* Giờ bắt đầu */}
                         <div className="flex items-start justify-between">
                           <span className="text-sm text-gray-600 flex items-center">
                             <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Giờ bắt đầu:
+                            {t('driver.booking.startTime')}
                           </span>
                           <span className="text-sm font-bold text-orange-600">
                             {selectedSlot.slotStartTime.substring(0, 5)}
                           </span>
                         </div>
 
-                        {/* Giờ kết thúc */}
                         <div className="flex items-start justify-between">
                           <span className="text-sm text-gray-600 flex items-center">
                             <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Giờ kết thúc:
+                            {t('driver.booking.endTime')}
                           </span>
                           <span className="text-sm font-bold text-orange-600">
                             {selectedSlot.slotEndTime.substring(0, 5)}
@@ -491,48 +478,44 @@ export function BookingWizard({
                         </div>
 
                         <div className="border-t border-gray-300 pt-3 mt-3">
-                          {/* Số lượng đã đặt */}
                           <div className="flex items-start justify-between mb-2">
                             <span className="text-sm text-gray-600 flex items-center">
                               <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                               </svg>
-                              Đã đặt:
+                              {t('driver.booking.reserved')}
                             </span>
                             <span className="text-sm font-bold text-gray-900">
                               {selectedSlot.currentReservations}
                             </span>
                           </div>
 
-                          {/* Sức chứa */}
                           <div className="flex items-start justify-between mb-3">
                             <span className="text-sm text-gray-600 flex items-center">
                               <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
-                              Sức chứa:
+                              {t('driver.booking.capacity')}
                             </span>
                             <span className="text-sm font-bold text-gray-900">
                               {selectedSlot.totalCapacity}
                             </span>
                           </div>
 
-                          {/* Còn trống */}
                           <div className="mt-3 p-2 bg-white rounded-md border border-gray-200">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Còn trống:</span>
+                              <span className="text-sm text-gray-600">{t('driver.booking.available')}</span>
                               <span className={`text-lg font-bold ${selectedSlot.totalCapacity - selectedSlot.currentReservations > 0
                                 ? 'text-green-600'
                                 : 'text-red-600'
                                 }`}>
-                                {selectedSlot.totalCapacity - selectedSlot.currentReservations} chỗ
+                                {selectedSlot.totalCapacity - selectedSlot.currentReservations} {t('driver.booking.spots')}
                               </span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Trạng thái */}
                       <div className={`mt-4 p-3 rounded-lg border ${selectedSlot.isAvailable
                         ? 'bg-green-50 border-green-200'
                         : 'bg-red-50 border-red-200'
@@ -541,14 +524,14 @@ export function BookingWizard({
                           {selectedSlot.isAvailable ? (
                             <>
                               <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span className="text-sm font-medium text-green-700">Khung giờ còn chỗ</span>
+                              <span className="text-sm font-medium text-green-700">{t('driver.booking.slotAvailable')}</span>
                             </>
                           ) : (
                             <>
                               <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span className="text-sm font-medium text-red-700">Khung giờ đã đầy</span>
+                              <span className="text-sm font-medium text-red-700">{t('driver.booking.slotFull')}</span>
                             </>
                           )}
                         </div>
@@ -559,8 +542,8 @@ export function BookingWizard({
                       <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm text-gray-500 font-medium mb-1">Chưa chọn khung giờ</p>
-                      <p className="text-xs text-gray-400">Chọn một khung giờ bên trái để xem chi tiết</p>
+                      <p className="text-sm text-gray-500 font-medium mb-1">{t('driver.booking.noSlotSelected')}</p>
+                      <p className="text-xs text-gray-400">{t('driver.booking.selectSlotToView')}</p>
                     </div>
                   )}
                 </div>
@@ -592,85 +575,79 @@ export function BookingWizard({
                 </div>
                 <hr />
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Hình thức</span>
-                  {isUsingSubscription ? (<span className="font-semibold text-green-600">Sử dụng gói thuê (Miễn phí)</span>) : (<span className="font-semibold text-blue-600">Thanh toán theo lượt</span>)}
+                  <span className="text-gray-500">{t('driver.booking.paymentType')}</span>
+                  {isUsingSubscription ? (<span className="font-semibold text-green-600">{t('driver.booking.subscriptionFree')}</span>) : (<span className="font-semibold text-blue-600">{t('driver.booking.perSwapPayment')}</span>)}
                 </div>
                 {!isUsingSubscription && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Phí đổi pin</span>
+                    <span className="text-gray-500">{t('driver.booking.swapFee')}</span>
                     {isLoadingPrice ? (<Loader2 className="h-4 w-4 animate-spin text-gray-500" />) : (<span className="font-semibold text-lg text-orange-600">{swapPrice ? `${swapPrice.toLocaleString('vi-VN')} VND` : "N/A"}</span>)}
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* ✅ KHỐI CHỌN PHƯƠNG THỨC THANH TOÁN (Dùng HTML Radio) */}
             {!isUsingSubscription && !isLoadingPrice && swapPrice && swapPrice > 0 && (
               <div className="space-y-3">
-                <h4 className="text-md font-medium">Chọn phương thức thanh toán:</h4>
-                <div className="space-y-2"> {/* Bọc các label trong div */}
+                <h4 className="text-md font-medium">{t('driver.booking.selectPaymentMethod')}</h4>
+                <div className="space-y-2">
                   <label htmlFor="pay-vnpay" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
                     <input
                       type="radio"
                       id="pay-vnpay"
                       name="paymentMethod"
-                      value="0" // Giá trị là string "1"
+                      value="0"
                       checked={selectedPayMethod === 0}
                       onChange={handlePaymentMethodChange}
-                      className="form-radio h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300" // Tailwind classes cho radio
+                      className="form-radio h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300"
                     />
                     <CreditCard className="w-5 h-5 text-blue-600" />
-                    <span className="flex-grow">Thanh toán ngay bằng VNPay</span>
+                    <span className="flex-grow">{t('driver.booking.payNowVNPay')}</span>
                   </label>
 
-
-                  {/* Lựa chọn Cash */}
                   <label htmlFor="pay-cash" className={`flex items-center space-x-3 p-4 border rounded-md cursor-pointer transition-colors ${selectedPayMethod === 1 ? 'border-orange-500 bg-orange-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
                     <input
                       type="radio"
                       id="pay-cash"
                       name="paymentMethod"
-                      value="1" // Giá trị là string "0"
+                      value="1"
                       checked={selectedPayMethod === 1}
                       onChange={handlePaymentMethodChange}
-                      className="form-radio h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300" // Tailwind classes cho radio
+                      className="form-radio h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300"
                     />
                     <Landmark className="w-5 h-5 text-green-600" />
-                    <span className="flex-grow">Thanh toán tiền mặt tại trạm</span>
+                    <span className="flex-grow">{t('driver.booking.payCashAtStation')}</span>
                   </label>
                 </div>
 
-                {/* ⭐ CẢNH BÁO VI PHẠM CHO TIỀN MẶT */}
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start space-x-3">
                   <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-800">
-                    <p className="font-semibold mb-1">Lưu ý khi đổi pin theo lượt:</p>
+                    <p className="font-semibold mb-1">{t('driver.booking.perSwapWarning')}</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
-                      <li>Hủy lịch trong vòng 1 giờ trước giờ hẹn sẽ bị tính <strong>1 lần vi phạm</strong></li>
-                      <li>Không đến đúng giờ với slot bạn đã đặt sẽ bị tính <strong>1 lần vi phạm</strong></li>
-                      <li>Vi phạm 3 lần trở lên sẽ <strong>không được phép thanh toán tiền mặt</strong></li>
+                      <li>{t('driver.booking.cancelWithin1Hour')} <strong>{t('driver.booking.violation')}</strong></li>
+                      <li>{t('driver.booking.noShowViolation')} <strong>{t('driver.booking.violation')}</strong></li>
+                      <li>{t('driver.booking.threeViolations')} <strong>{t('driver.booking.noCashPayment')}</strong></li>
                     </ul>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ⭐ CẢNH BÁO TRỪ QUOTA NGAY CHO GÓI */}
             {isUsingSubscription && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-3">
                 <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-semibold mb-1">Lưu ý khi sử dụng gói đăng ký:</p>
+                  <p className="font-semibold mb-1">{t('driver.booking.subscriptionWarning')}</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Lượt đổi pin <strong>sẽ được trừ ngay</strong> khi xác nhận đặt lịch</li>
-                    <li>Nếu bạn <strong>hủy lịch trước 1 giờ</strong> so với giờ hẹn, <strong>lượt sẽ được hoàn lại</strong>.</li>
-                    <li>Nếu bạn <strong>hủy trong vòng 1 giờ</strong> trước giờ hẹn hoặc <strong>không đến checkin</strong>, <strong>lượt sẽ không được hoàn</strong>.</li>
+                    <li>{t('driver.booking.quotaDeductedImmediately')}</li>
+                    <li>{t('driver.booking.cancelBefore1Hour')} <strong>{t('driver.booking.quotaRefunded')}</strong>.</li>
+                    <li>{t('driver.booking.cancelWithin1HourNoRefund')} <strong>{t('driver.booking.noCheckInNoRefund')}</strong>, <strong>{t('driver.booking.quotaNotRefunded')}</strong>.</li>
                   </ul>
                 </div>
               </div>
             )}
 
-            {/* Nút điều hướng (Giữ nguyên logic) */}
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => onStepChange(3)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> {t('driver.back')}
@@ -683,14 +660,13 @@ export function BookingWizard({
                 {isBooking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isBooking ? t('driver.processing') :
                   (isUsingSubscription ? t('driver.confirmAndBook') :
-                    (selectedPayMethod === 1 ? "Xác nhận đặt tiền mặt" :
-                      "Tiến hành thanh toán VNPay"))}
+                    (selectedPayMethod === 1 ? t('driver.booking.confirmCashBooking') :
+                      t('driver.booking.proceedVNPay')))}
               </Button>
             </div>
           </div>
         )}
 
-        {/* BƯỚC 5: THÀNH CÔNG (Giữ nguyên) */}
         {bookingStep === 5 && (
           <div className="text-center space-y-4 py-8">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
@@ -708,18 +684,15 @@ export function BookingWizard({
 
       </DialogContent>
 
-      {/* Dialog Xác Nhận Sử Dụng Gói */}
       {pendingVehicle && (
         <Dialog open={showPackageConfirmDialog} onOpenChange={setShowPackageConfirmDialog}>
           <DialogContent className="max-w-md rounded-xl">
             <DialogHeader className="text-center">
               <DialogTitle className="text-xl font-bold text-gray-900">
-                Xe này có gói đăng ký
+                {t('driver.booking.vehicleHasSubscription')}
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-600 pt-3">
-                Xe <span className="font-bold">{pendingVehicle.plate}</span> có thể sử dụng gói đăng ký.
-                <br />
-                Bạn muốn đặt lịch theo gói hay thanh toán lẻ?
+                {t('driver.vehicle')} <span className="font-bold">{pendingVehicle.plate}</span> {t('driver.booking.selectPaymentOrPackage')}
               </DialogDescription>
             </DialogHeader>
 
@@ -736,12 +709,12 @@ export function BookingWizard({
               return (
                 <div className="my-4 p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
                   <p className="text-sm font-semibold text-green-900">
-                    Gói: {vehicleSub.subscriptionPlan.name}
+                    {t('driver.booking.plan')} {vehicleSub.subscriptionPlan.name}
                   </p>
                   <p className="text-sm text-green-800">
                     {remaining !== null
-                      ? `Còn lại ${remaining}/${limit} lượt trong tháng`
-                      : `Đã dùng ${count} lượt (Không giới hạn)`}
+                      ? `${t('driver.booking.remainingSwaps')} ${remaining}/${limit} ${t('driver.booking.perMonthSwaps')}`
+                      : `${t('driver.booking.usedSwaps')} ${count} ${t('driver.booking.swaps')} (${t('driver.booking.unlimited')})`}
                   </p>
                 </div>
               );
@@ -752,14 +725,14 @@ export function BookingWizard({
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-5 text-base rounded-lg"
                 onClick={handleConfirmUsePackage}
               >
-                Sử dụng gói đăng ký (Miễn phí)
+                {t('driver.booking.useSubscriptionFree')}
               </Button>
               <Button
                 variant="outline"
                 className="w-full border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold py-5 text-base rounded-lg"
                 onClick={handleConfirmPayPerSwap}
               >
-                Thanh toán theo lượt
+                {t('driver.booking.perSwapPayment')}
               </Button>
             </div>
           </DialogContent>

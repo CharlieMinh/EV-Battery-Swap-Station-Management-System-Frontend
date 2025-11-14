@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios"; // 👈 Thêm
+import axios from "axios";
 import {
   Card,
   CardContent,
@@ -13,12 +13,11 @@ import { Label } from "../ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
-import { Edit, Mail, PhoneCallIcon, User, Loader2, AlertCircle, RefreshCcw, Camera, Upload } from "lucide-react"; // 👈 Thêm Camera, Upload
+import { Edit, Mail, PhoneCallIcon, User, Loader2, AlertCircle, RefreshCcw, Camera, Upload, Lock, Eye, EyeOff, Calendar, Clock } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
-import { toast } from "react-toastify"; // 👈 Thêm
-import { showError, showSuccess } from "../ui/alert"; // 👈 Sửa đường dẫn (giả sử nó ở /ui)
+import { toast } from "react-toastify";
+import { showError, showSuccess } from "../ui/alert";
 
-// ✅ Interface này giờ sẽ ở nội bộ
 interface UserData {
   id: string;
   email: string;
@@ -27,31 +26,49 @@ interface UserData {
   role: string;
   createdAt: string;
   lastLogin: string;
-  profilePictureUrl?: string; // 👈 Thêm field này
+  profilePictureUrl?: string;
 }
 
-// ❌ Xóa DriverProfileProps
-
-export function DriverProfile() { // 👈 Xóa props
+export function DriverProfile() {
   const { t } = useLanguage();
 
-  // ✅ Thêm state để quản lý data, loading, error
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [showChangePassword, setShowChangePassword] = useState<boolean>(false);
+
+  function getRoleBadgeColor(role: string) {
+    switch (role) {
+      case "Admin":
+        return "bg-blue-500 text-white border-blue-500";
+      case "Driver":
+        return "bg-orange-500 text-white border-orange-500";
+      case "Staff":
+        return "bg-green-500 text-white border-green-500";
+      default:
+        return "bg-gray-400 text-white border-gray-400";
+    }
+  }
+
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
-  // ✅ State cho input (giữ nguyên)
   const [name, setName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
-  // ✅ State cho upload ảnh
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Hàm fetchProfile (chuyển từ Dashboard vào đây)
+  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [isChangingPassword, setIsChangingPassword] = useState<boolean>(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState<boolean>(false);
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+
   const fetchProfile = async () => {
     setLoading(true);
     setError(null);
@@ -60,42 +77,36 @@ export function DriverProfile() { // 👈 Xóa props
         withCredentials: true,
       });
       setUserData(res.data);
-      // Cập nhật state của input sau khi fetch
       setName(res.data.name || "");
       setPhoneNumber(res.data.phoneNumber || "");
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng:", error);
-      setError("Không thể tải thông tin cá nhân. Vui lòng thử lại.");
+      console.error(t("driver.history.errorLoadFailed"), error);
+      setError(t("driver.profile.errorLoadFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Gọi fetchProfile khi component mount
   useEffect(() => {
     fetchProfile();
-  }, []); // [] = chạy 1 lần duy nhất
+  }, []);
 
-  // ✅ Hàm xử lý chọn file
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      showError("Lỗi!", "Vui lòng chọn file ảnh (JPEG, PNG)");
+      showError(t("common.error"), t("driver.profile.errorInvalidFileType"));
       return;
     }
 
-    // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
-      showError("Lỗi!", "Kích thước file không được vượt quá 10MB");
+      showError(t("common.error"), t("driver.profile.errorFileTooLarge"));
       return;
     }
 
     setSelectedFile(file);
 
-    // Create preview URL
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
@@ -103,7 +114,6 @@ export function DriverProfile() { // 👈 Xóa props
     reader.readAsDataURL(file);
   };
 
-  // ✅ Hàm upload ảnh
   const handleUploadPhoto = async () => {
     if (!selectedFile || !userData) return;
 
@@ -125,24 +135,23 @@ export function DriverProfile() { // 👈 Xóa props
         }
       );
 
-      showSuccess("Cập nhật ảnh đại diện thành công!");
+      showSuccess(t("driver.profile.successUploadAvatar"));
       setSelectedFile(null);
       setPreviewUrl(null);
-      await fetchProfile(); // Tải lại profile
+      await fetchProfile();
     } catch (error: any) {
       const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
       if (backendErrorMessage) {
-        showError("Không thể tải ảnh lên!", backendErrorMessage);
+        showError(t("driver.profile.errorUploadFailed"), backendErrorMessage);
       } else {
-        showError("Không thể tải ảnh lên!", "Lỗi không xác định");
+        showError(t("driver.profile.errorUploadFailed"), t("driver.profile.errorUnknown"));
       }
     } finally {
       setIsUploading(false);
     }
   };
 
-  // ✅ Hàm hủy chọn ảnh
-  const handleCancelPhoto = () => {
+  const handleCancelUpload = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) {
@@ -150,11 +159,10 @@ export function DriverProfile() { // 👈 Xóa props
     }
   };
 
-  // ✅ Hàm handleUpdateProfile (chuyển từ Dashboard vào đây)
   const handleUpdateProfile = async () => {
-    if (!userData) return; // Không có data thì không làm gì
+    if (!userData) return;
 
-    setIsUpdating(true); // Bật loading nút
+    setIsUpdating(true);
     try {
       const formData = new FormData();
       formData.append('Name', name);
@@ -171,21 +179,65 @@ export function DriverProfile() { // 👈 Xóa props
         }
       );
 
-      showSuccess("Cập nhật thông tin thành công!");
-      fetchProfile(); // Tải lại data mới sau khi cập nhật
+      showSuccess(t("driver.profile.successUpdateInfo"));
+      fetchProfile();
     } catch (error: any) {
       const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
       if (backendErrorMessage) {
-        showError("Không thể cập nhật thông tin!", backendErrorMessage);
+        showError(t("driver.profile.errorUpdateFailed"), backendErrorMessage);
       } else {
-        showError("Không thể cập nhật thông tin!", "Lỗi không xác định");
+        showError(t("driver.profile.errorUpdateFailed"), t("driver.profile.errorUnknown"));
       }
     } finally {
-      setIsUpdating(false); // Tắt loading nút
+      setIsUpdating(false);
     }
   };
 
-  // --- Render Logic ---
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showError(t("common.error"), t("driver.password.errorEmptyFields"));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showError(t("common.error"), t("driver.password.errorTooShort"));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showError(t("common.error"), t("driver.password.errorMismatch"));
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await axios.post(
+        "http://localhost:5194/api/v1/Users/change-password",
+        {
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      showSuccess(t("driver.password.successChanged"));
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      const backendErrorMessage = error?.response?.data?.error || error?.response?.data?.message;
+      if (backendErrorMessage) {
+        showError(t("driver.password.errorChangeFailed"), backendErrorMessage);
+      } else {
+        showError(t("driver.password.errorChangeFailed"), t("driver.profile.errorUnknown"));
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -193,7 +245,7 @@ export function DriverProfile() { // 👈 Xóa props
         <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
           <CardContent className="flex flex-col items-center justify-center h-64">
             <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
-            <p className="mt-4 text-lg text-gray-600">Đang tải thông tin cá nhân...</p>
+            <p className="mt-4 text-lg text-gray-600">{t("driver.profile.loadingMessage")}</p>
           </CardContent>
         </Card>
       </div>
@@ -206,9 +258,9 @@ export function DriverProfile() { // 👈 Xóa props
         <Card className="border-2 border-red-200 shadow-xl bg-red-50 rounded-3xl p-6 sm:p-10">
           <CardContent className="flex flex-col items-center justify-center h-64">
             <AlertCircle className="w-12 h-12 text-red-500" />
-            <p className="mt-4 text-lg text-red-700 font-semibold">{error || "Không tìm thấy dữ liệu người dùng."}</p>
+            <p className="mt-4 text-lg text-red-700 font-semibold">{error || t("driver.profile.errorNotFound")}</p>
             <Button onClick={fetchProfile} className="mt-4 bg-orange-600 hover:bg-orange-700 text-white">
-              <RefreshCcw className="w-4 h-4 mr-2" /> Thử lại
+              <RefreshCcw className="w-4 h-4 mr-2" /> {t("driver.profile.retryButton")}
             </Button>
           </CardContent>
         </Card>
@@ -216,166 +268,302 @@ export function DriverProfile() { // 👈 Xóa props
     );
   }
 
-  // Nếu không loading, không error, và có userData
   return (
-    <div className="max-w-6xl mx-auto space-y-10 animate-fade-in px-8 lg:px-16 py-10">
-      {/* Header */}
-      <div className="text-center mb-2">
-        <h1 className="text-4xl font-bold text-orange-600 tracking-tight">
-          {t("driver.profile.title")}
-        </h1>
-      </div>
+    <div className="py-12 bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-16">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+            {t("driver.profile.title")}
+          </h2>
+        </div>
 
-      {/* Profile Card */}
-      <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
-        <CardHeader className="text-center pb-4">
-          <div className="flex flex-col items-center space-y-4">
-            {/* Avatar với nút upload */}
-            <div className="relative group">
-              <Avatar className="w-28 h-28 shadow-lg border-4 border-orange-500">
-                {previewUrl || userData.profilePictureUrl ? (
-                  <AvatarImage
-                    src={previewUrl || userData.profilePictureUrl}
-                    alt={name}
-                    className="object-cover"
-                  />
-                ) : null}
-                <AvatarFallback className="text-4xl font-bold text-orange-600 bg-orange-100">
-                  {name ? name.charAt(0).toUpperCase() : 'U'}
-                </AvatarFallback>
-              </Avatar>
-
-              {/* Nút upload overlay */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                type="button"
-              >
-                <Camera className="w-8 h-8 text-white" />
-              </button>
-
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </div>
-
-            {/* Nút upload/cancel nếu có file được chọn */}
-            {selectedFile && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleUploadPhoto}
-                  disabled={isUploading}
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm"
-                  size="sm"
-                >
-                  {isUploading ? (
-                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4 mr-1" />
-                  )}
-                  {isUploading ? "Đang tải..." : "Tải ảnh lên"}
-                </Button>
-                <Button
-                  onClick={handleCancelPhoto}
-                  disabled={isUploading}
-                  variant="outline"
-                  className="text-sm"
-                  size="sm"
-                >
-                  Hủy
-                </Button>
+        <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+          <CardContent>
+            <div className="flex flex-col items-center">
+              <div className="relative group mb-2">
+                <Avatar className="w-28 h-28 shadow-lg border-4 border-orange-500">
+                  {previewUrl || userData.profilePictureUrl ? (
+                    <AvatarImage
+                      src={previewUrl || userData.profilePictureUrl}
+                      alt={name}
+                      className="object-cover"
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-4xl font-bold text-orange-600 bg-orange-100">
+                    {name ? name.charAt(0).toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                {editMode && (
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      type="button"
+                    >
+                      <Camera className="w-8 h-8 text-white" />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </>
+                )}
               </div>
-            )}
-
-            <div>
-              <h3 className="text-3xl font-semibold text-gray-900">
-                {userData.name} {/* Hiển thị tên từ data gốc */}
-              </h3>
-              <Badge className="mt-3 px-5 py-2 text-base bg-orange-500 text-white shadow-sm hover:bg-orange-600 transition-all">
+              {editMode && selectedFile && (
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    onClick={handleUploadPhoto}
+                    disabled={isUploading}
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                    size="sm"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-1" />
+                    )}
+                    {isUploading ? t("driver.profile.uploading") : t("driver.profile.uploadAvatar")}
+                  </Button>
+                  <Button
+                    onClick={handleCancelUpload}
+                    disabled={isUploading}
+                    variant="outline"
+                    className="text-sm"
+                    size="sm"
+                  >
+                    {t("driver.profile.cancelUpload")}
+                  </Button>
+                </div>
+              )}
+              <h2 className="text-xl font-bold text-gray-900 mt-2">
+                {userData.name}
+              </h2>
+              <div className={`mt-2 px-4 py-1.5 rounded-full text-sm font-semibold border-2 ${getRoleBadgeColor(userData.role)}`}>
                 {userData.role === "Driver"
                   ? t("role.driver")
                   : userData.role === "Admin"
                     ? t("role.admin")
                     : t("role.staff")}
-              </Badge>
+              </div>
             </div>
-          </div>
-        </CardHeader>
 
-        <CardContent className="space-y-8 px-2 sm:px-8 lg:px-14 pb-10">
-          <Separator className="bg-orange-300" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User className="w-4 h-4" />
+                  <span className="font-medium">{t("driver.fullName")}</span>
+                </div>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-6 border-b border-gray-400 focus:outline-none w-full"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium pl-6">
+                    {userData.name || t("driver.profile.notUpdated")}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Mail className="w-4 h-4" />
+                  <span className="font-medium">{t("driver.email")}</span>
+                </div>
+                <p className="text-gray-900 font-medium break-all pl-6">
+                  {userData.email}
+                </p>
+              </div>
 
-          {/* Inputs mỗi dòng */}
-          <div className="space-y-6">
-            <div>
-              <Label
-                htmlFor="name"
-                className="text-gray-700 text-sm font-semibold flex items-center" // Thêm flex
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <PhoneCallIcon className="w-4 h-4" />
+                  <span className="font-medium">{t("driver.phone")}</span>
+                </div>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="pl-6 border-b border-gray-400 focus:outline-none w-full"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium pl-6">
+                    {userData.phoneNumber || t("driver.profile.notUpdated")}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">{t("driver.profile.createdAt")}</span>
+                </div>
+                <p className="text-gray-900 font-medium pl-6">
+                  {new Date(userData.createdAt).toLocaleDateString("vi-VN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-8">
+              {!editMode ? (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  onClick={() => setEditMode(true)}
+                >
+                  {t("driver.profile.editInfo")}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                    onClick={handleUpdateProfile}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? t("driver.profile.saving") : t("driver.profile.saveChanges")}
+                  </button>
+                  <button
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
+                    onClick={() => {
+                      setEditMode(false);
+                      setPhoneNumber(userData.phoneNumber || "");
+                      setName(userData.name || "");
+                    }}
+                  >
+                    {t("driver.profile.cancel")}
+                  </button>
+                </>
+              )}
+              <button
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
+                onClick={() => setShowChangePassword((prev) => !prev)}
               >
-                <User className="w-4 h-4 mr-1.5 text-blue-600" /> {/* Sửa style */}
-                {t("driver.fullName")}
-              </Label>
-              <Input
-                id="name"
-                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
-                value={name} // Dùng state 'name'
-                onChange={(e) => setName(e.target.value)}
-              />
+                {showChangePassword ? t("driver.profile.cancelChangePassword") : t("driver.profile.changePassword")}
+              </button>
             </div>
 
-            <div>
-              <Label
-                htmlFor="email"
-                className="text-gray-700 text-sm font-semibold flex items-center" // Thêm flex
-              >
-                <Mail className="w-4 h-4 mr-1.5 text-blue-600" /> {/* Sửa style */}
-                {t("driver.email")}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
-                value={userData.email || ""} // Dùng userData
-                disabled={true}
-              />
-            </div>
-
-            <div>
-              <Label
-                htmlFor="phone"
-                className="text-gray-700 text-sm font-semibold flex items-center" // Thêm flex
-              >
-                <PhoneCallIcon className="w-4 h-4 mr-1.5 text-blue-600" /> {/* Sửa style */}
-                {t("driver.phone")}
-              </Label>
-              <Input
-                id="phone"
-                className="mt-2 w-full text-base py-3 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
-                value={phoneNumber} // Dùng state 'phoneNumber'
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={handleUpdateProfile} // 👈 Gọi hàm nội bộ
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md mt-8 py-3 text-lg rounded-xl transition-all"
-            disabled={isUpdating} // 👈 Thêm disabled
-          >
-            {isUpdating ? (
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" /> // 👈 Thêm loading
-            ) : (
-              <Edit className="w-5 h-5 mr-2" />
+            {showChangePassword && (
+              <div className="mt-8 w-full max-w-3xl mx-auto">
+                <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-2xl font-bold text-orange-600 flex items-center">
+                      <Lock className="w-6 h-6 mr-2" />
+                      {t("driver.password.title")}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {t("driver.password.description")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 px-2 sm:px-8 lg:px-14 pb-10">
+                    <Separator className="bg-orange-300" />
+                    <div className="space-y-6">
+                      <div>
+                        <Label
+                          htmlFor="currentPassword"
+                          className="text-gray-700 text-sm font-semibold flex items-center"
+                        >
+                          <Lock className="w-4 h-4 mr-1.5 text-orange-600" />
+                          {t("driver.password.currentPassword")}
+                        </Label>
+                        <div className="relative mt-2">
+                          <Input
+                            id="currentPassword"
+                            type={showCurrentPassword ? "text" : "password"}
+                            className="w-full text-base py-3 pr-10 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder={t("driver.password.placeholderCurrent")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="newPassword"
+                          className="text-gray-700 text-sm font-semibold flex items-center"
+                        >
+                          <Lock className="w-4 h-4 mr-1.5 text-orange-600" />
+                          {t("driver.password.newPassword")}
+                        </Label>
+                        <div className="relative mt-2">
+                          <Input
+                            id="newPassword"
+                            type={showNewPassword ? "text" : "password"}
+                            className="w-full text-base py-3 pr-10 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder={t("driver.password.placeholderNew")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="confirmPassword"
+                          className="text-gray-700 text-sm font-semibold flex items-center"
+                        >
+                          <Lock className="w-4 h-4 mr-1.5 text-orange-600" />
+                          {t("driver.password.confirmPassword")}
+                        </Label>
+                        <div className="relative mt-2">
+                          <Input
+                            id="confirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="w-full text-base py-3 pr-10 border-2 border-orange-400 focus:border-orange-500 focus:ring-orange-500"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder={t("driver.password.placeholderConfirm")}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleChangePassword}
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-md mt-8 py-3 text-lg rounded-xl transition-all"
+                      disabled={isChangingPassword}
+                    >
+                      {isChangingPassword ? (
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      ) : (
+                        <Lock className="w-5 h-5 mr-2" />
+                      )}
+                      {isChangingPassword ? t("driver.password.changing") : t("driver.password.changeButton")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             )}
-            {isUpdating ? "Đang cập nhật..." : t("driver.profile.editProfile")}
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

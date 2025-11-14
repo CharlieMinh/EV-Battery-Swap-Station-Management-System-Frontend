@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
-// import { Badge } from "../components/ui/badge"; // Dòng này có vẻ không dùng, có thể xóa nếu không cần
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useLanguage } from "../components/LanguageContext";
 import {
@@ -25,7 +24,6 @@ import {
   History,
   User as UserIcon,
   LogOut,
-  // Zap, // Dòng này có vẻ không dùng, có thể xóa nếu không cần
   Bell,
   HeadphonesIcon,
   Car,
@@ -36,21 +34,16 @@ import {
 } from "lucide-react";
 import { User } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
-
-// Import driver components
-// import { StationMap } from "../components/driver/StationMap"; // Dòng này có vẻ không dùng, có thể xóa nếu không cần
 import { StationList } from "../components/driver/StationList";
 import { SubscriptionPlansPage } from "../components/driver/SubscriptionPlansPage";
 import { BookingWizard } from "../components/driver/BookingWizard";
 import { QRCodeDialog } from "../components/driver/QRCodeDialog";
 import { SwapStatus } from "../components/driver/SwapStatus";
 import { SubscriptionStatus } from "../components/driver/SubscriptionStatus";
-import { SwapHistory } from "../components/driver/SwapHistory"; // 👈 Giữ import
+import { SwapHistory } from "../components/driver/SwapHistory";
 import { DriverProfile } from "../components/driver/DriverProfile";
-import { DriverSupport } from "../components/driver/DriverSupport";
 import { MyVehicle } from "../components/driver/MyVehicle";
 import { toast } from "react-toastify";
-// ❌ Xóa showError, showSuccess (Đã chuyển sang DriverProfile)
 import { MyPaymentsPage } from "./driver/MyPaymentsPage";
 import { ComplaintsList } from "./driver/ComplaintsList";
 
@@ -59,7 +52,6 @@ interface DriverDashboardProps {
   onLogout: () => void;
 }
 
-// Interface này giữ nguyên (vì BookingWizard và SubscriptionStatus cần)
 interface SubscriptionInfo {
   id: string;
   startDate: string;
@@ -77,7 +69,6 @@ interface SubscriptionInfo {
   vehicle: { id: string; plate: string; model: string; } | null;
 }
 
-// Các interface này giữ nguyên (vì BookingWizard và MyVehicle cần)
 interface Slot {
   slotStartTime: string;
   slotEndTime: string;
@@ -109,8 +100,6 @@ interface Station {
   primaryImageUrl: string | null;
   isOpenNow: boolean;
 }
-
-
 
 export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const location = useLocation();
@@ -169,7 +158,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     fetchSubscriptionData();
   }, []);
 
-  // ✅ THÊM: Handler để refresh subscription sau khi hủy
   const handleRefreshSubscriptions = async () => {
     try {
       const infoResponse = await axios.get(
@@ -183,7 +171,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
   };
 
-  // (useEffect fetchData (lấy xe) không đổi)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -198,7 +185,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     fetchData();
   }, []);
 
-  // (useEffect fetchStations không đổi)
   useEffect(() => {
     const fetchStations = async () => {
       try {
@@ -213,9 +199,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     fetchStations();
   }, []);
 
-  // ❌ XÓA useEffect fetchProfile
-
-  // (handleRefreshVehicles không đổi)
   const handleRefreshVehicles = async () => {
     try {
       const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
@@ -227,7 +210,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
   };
 
-  // (fetchAvailableSlots không đổi)
   const fetchAvailableSlots = async () => {
     if (!selectedStation || !selectedVehicle || !bookingDate) return;
     setIsLoadingSlots(true);
@@ -255,18 +237,13 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     navigate("/");
   };
 
-  // ❌ XÓA hàm showCancelReservation
-  // ❌ XÓA hàm hideCancelReservation
-  // ❌ XÓA hàm handleCancelReservation
 
-  // (useEffect fetchAvailableSlots không đổi)
   useEffect(() => {
     if (bookingDialog && selectedStation && selectedVehicle && bookingDate) {
       fetchAvailableSlots();
     }
   }, [bookingDialog, selectedStation, selectedVehicle, bookingDate]);
 
-  // (openBookingWizard không đổi)
   const openBookingWizard = (stationId: string) => {
     setSelectedStation(stationId);
     setBookingStep(1);
@@ -278,24 +255,17 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     setBookingDialog(true);
   };
 
-  // (handleBooking không đổi)
   const handleBooking = () => {
     if (selectedStation) {
       openBookingWizard(selectedStation);
     }
   };
 
-  // ❌ XÓA hàm getReservation
-
-  // ❌ XÓA hàm fetchProfile
-
-  // ✅ SỬA LẠI handleConfirmBooking (xóa setActiveReservation và getReservation)
   const handleConfirmBooking = async (
     isUsingSub: boolean,
     price: number | null,
     paymentMethodParam: number | null
   ) => {
-    // 1. Validation cơ bản (giữ nguyên)
     if (!selectedStation || !selectedVehicle || !bookingDate || !selectedSlot) {
       toast.error(t("driver.booking.errorValidation"));
       return;
@@ -304,7 +274,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     setIsBooking(true);
 
     if (isUsingSub) {
-      // --- LUỒNG 1: DÙNG GÓI (MIỄN PHÍ) ---
       try {
         const response = await axios.post(
           "http://localhost:5194/api/v1/slot-reservations",
@@ -320,16 +289,14 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
         );
         toast.success(t("driver.booking.success"));
         setBookingResult(response.data);
-        // ❌ XÓA: setActiveReservation(response.data); // SwapStatus sẽ tự fetch
         setBookingStep(5);
       } catch (error: any) {
         console.error("Lỗi khi đặt lịch bằng gói:", error);
 
-        // ⭐ Lấy message lỗi từ nhiều nguồn có thể
         const backendErrorMessage =
-          error?.response?.data?.error?.message ||  // Lỗi có wrapper
-          error?.response?.data?.message ||         // Lỗi thông thường
-          error?.message ||                         // Network error
+          error?.response?.data?.error?.message ||
+          error?.response?.data?.message ||
+          error?.message ||
           t("driver.booking.errorGeneric");
 
         toast.error(backendErrorMessage);
@@ -338,7 +305,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
       }
 
     } else {
-      // --- LUỒNG 2: ĐẶT LẺ (TRẢ TIỀN NGAY) ---
       if (price === null || price <= 0) {
         toast.error("Không thể xác định giá đổi pin. Vui lòng chọn lại xe.");
         setIsBooking(false);
@@ -369,14 +335,13 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
 
         const result = response.data;
 
-        // ⭐ Kiểm tra success trước để bắt lỗi từ backend
         if (!result.success) {
           toast.error(result.message || "Không thể tạo đặt lịch.");
           setIsBooking(false);
           return;
         }
 
-        if (methodToUse === 0) { // VNPay
+        if (methodToUse === 0) {
           if (result.paymentUrl) {
             toast.loading("Đang chuyển hướng đến cổng thanh toán...");
             window.location.href = result.paymentUrl;
@@ -385,13 +350,11 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             toast.error(result.message || "Không thể tạo link thanh toán VNPay.");
             setIsBooking(false);
           }
-        } else { // Cash (methodToUse === 1)
+        } else {
           if (result.qrCode) {
             toast.success(result.message || "Đặt lịch thanh toán tiền mặt thành công!");
             setBookingResult(result);
-            // ❌ XÓA: setActiveReservation(result); // SwapStatus sẽ tự fetch
             setBookingStep(5);
-            // ❌ XÓA: getReservation(); // SwapStatus sẽ tự fetch
             setIsBooking(false);
           } else {
             console.error("Failed to create Cash reservation:", result);
@@ -402,12 +365,11 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
       } catch (error: any) {
         console.error("Lỗi khi gọi API tạo thanh toán:", error);
 
-        // ⭐ Lấy message lỗi từ nhiều nguồn có thể
         const backendErrorMessage =
-          error?.response?.data?.message ||           // Lỗi thông thường
-          error?.response?.data?.error?.message ||    // Lỗi có wrapper
-          error?.response?.data?.errors?.Amount?.[0] ||  // Validation error
-          error?.message ||                           // Network error
+          error?.response?.data?.message ||
+          error?.response?.data?.error?.message ||
+          error?.response?.data?.errors?.Amount?.[0] ||
+          error?.message ||
           "Không thể tạo yêu cầu thanh toán. Vui lòng thử lại.";
 
         toast.error(backendErrorMessage);
@@ -416,7 +378,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
   };
 
-  // (formatDateForApi không đổi)
   const formatDateForApi = (date: Date): string => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -427,7 +388,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
-        {/* Sidebar (Giữ nguyên) */}
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center p-2 bg-orange-500 ">
@@ -491,14 +451,13 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    {/* ✅ SỬA LẠI onClick: Xóa getReservation() */}
                     <SidebarMenuButton
                       onClick={() => { setActiveSection("swap"); }}
                       isActive={activeSection === "swap"}
                       className="h-[60px]"
                     >
                       <Battery className="w-4 h-4" />
-                      <span>{t("driver.swap")}</span>
+                      <span>Lịch đã đặt</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -531,16 +490,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       <span>{t("driver.profile")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {/* <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("support")}
-                      isActive={activeSection === "support"}
-                      className="h-[60px]"
-                    >
-                      <HeadphonesIcon className="w-4 h-4" />
-                      <span>{t("driver.support")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem> */}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -566,9 +515,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
           </SidebarFooter>
         </Sidebar>
 
-        {/* Sidebar Inset (Giữ nguyên) */}
         <SidebarInset>
-          {/* Header (Giữ nguyên) */}
           <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
             <div className="flex justify-between items-center h-16 px-4">
               <div className="flex items-center space-x-2">
@@ -594,7 +541,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             </div>
           </header>
 
-          {/* Main Content (Giữ nguyên cấu trúc) */}
           <main className="flex-1 p-6">
             {activeSection === "map" && (
               <div className="space-y-6">
@@ -632,7 +578,6 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
             )}
             {activeSection === "swap" && (
               <div className="space-y-6">
-                {/* ✅ SỬA LẠI: Xóa props */}
                 <SwapStatus
                   onQRDialog={() => setQrDialog(true)}
                   onNavigateToBooking={() => setActiveSection("map")}
@@ -642,7 +587,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
 
             {activeSection === "history" && (
               <div className="space-y-6">
-                <SwapHistory /> {/* 👈 Đã xóa props */}
+                <SwapHistory />
               </div>
             )}
 
@@ -661,12 +606,10 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                 />
               </div>
             )}
-            {activeSection === "support" && <DriverSupport />}
           </main>
         </SidebarInset>
       </div>
 
-      {/* Dialogs (Giữ nguyên) */}
       <BookingWizard
         isOpen={bookingDialog}
         onClose={() => setBookingDialog(false)}
@@ -678,7 +621,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
         selectedVehicle={selectedVehicle}
         bookingDate={bookingDate}
         selectedSlot={selectedSlot}
-        bookingResult={bookingResult} // 👈 Giữ lại, dùng cho QRCodeDialog
+        bookingResult={bookingResult}
         isLoadingSlots={isLoadingSlots}
         isBooking={isBooking}
         onStepChange={setBookingStep}
@@ -693,7 +636,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
       <QRCodeDialog
         isOpen={qrDialog}
         onClose={() => setQrDialog(false)}
-        bookingResult={bookingResult} // 👈 Giữ lại
+        bookingResult={bookingResult}
       />
     </SidebarProvider>
   );
