@@ -7,30 +7,47 @@ import {
     CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { Edit, Car, Delete, Check, CheckCircle, XCircle, Loader2, Landmark, CreditCard, Search } from "lucide-react";
+import {
+    Edit,
+    Delete,
+    CheckCircle,
+    Loader2,
+    Landmark,
+    CreditCard,
+    Search,
+    Plus,
+} from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../ui/select";
 import Swal from "sweetalert2";
 import useGeoLocation from "../map/useGeoLocation";
 import { fetchStations, Station } from "../../services/admin/stationService";
+import {
+    createSubscriptionPlan,
+    deleteSubscriptionPlan,
+    SubscriptionPlanRequest,
+    updateSubscriptionPlan,
+} from "@/services/admin/subscriptionPlans";
 
-interface Vehicle {
-    id: string;
-    compatibleBatteryModelId: string;
-    vin: string;
-    plate: string;
-    brand: string;
-    vehicleModelFullName?: string;
-    compatibleBatteryModelName?: string;
-    photoUrl?: string;
-}
+// Interfaces đã được gộp
 interface SubscriptionPlan {
     id: string;
     name: string;
@@ -43,6 +60,7 @@ interface SubscriptionPlan {
         id: string;
         name: string;
     };
+    isActive: boolean;
 }
 
 interface Payment {
@@ -56,127 +74,107 @@ interface Payment {
     message: string;
 }
 
+interface CurrentUser {
+    id: string;
+    email: string;
+    role: string;
+}
+
+const getCurrentUser = async (): Promise<CurrentUser | null> => {
+    try {
+        const response = await axios.get("/api/v1/auth/me");
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching current user:", error);
+        return null;
+    }
+};
 
 export function SubscriptionPlansPage() {
     const { t } = useLanguage();
+    const navigate = useNavigate();
+
+    // ===== Common States =====
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
+    // ===== User/Payment States =====
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [payment, setPayment] = useState<Payment | null>(null);
 
-    const [isLoading, setIsLoading] = useState(false);
-
+    // ===== Filter & Pagination States =====
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [minPrice, setMinPrice] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<string>("");
     const [battery, setBattery] = useState<string>("ALL");
-
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(9);
 
-    const navigate = useNavigate();
-
+    // ===== Location States =====
     const location = useGeoLocation();
     const [stations, setStations] = useState<Station[] | null>(null);
     const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
+    // ===== Admin Role & Form States =====
+    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+    const [userLoading, setUserLoading] = useState(true);
+    const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+    const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+    const [formData, setFormData] = useState<SubscriptionPlanRequest>({
+        name: "",
+        description: "",
+        monthlyPrice: 0,
+        maxSwapsPerMonth: 0,
+        benefits: "",
+        refundPolicy: "",
+        batteryModelId: "",
+    });
+
+    // ===== Effects =====
+
+    // 1. Debounce Search
     useEffect(() => {
-        const handler = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+        const handler = setTimeout(
+            () => setDebouncedSearch(search.trim().toLowerCase()),
+            300
+        );
         return () => clearTimeout(handler);
     }, [search]);
 
-    const handlePayWithVNPay = () => {
-        if (payment && payment.paymentUrl) {
-            window.location.href = decodeURIComponent(payment.paymentUrl);
-        } else {
-            toast.error(t("driver.subscription.errorVNPayLink"));
-        }
-    };
+    // 2. Fetch User Role
+    useEffect(() => {
+        const fetchUser = async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            setUserLoading(false);
+        };
+        fetchUser();
+    }, []);
 
-
-    const handlePayWithCash = async () => {
-        if (!payment || !payment.paymentId) return;
-
-        setIsLoading(true);
-
+    // 3. Fetch Plans
+    const fetchPlans = async () => {
         try {
-            const response = await axios.post(
-                `http://localhost:5194/api/v1/payments/${payment.paymentId}/select-cash`,
-                {},
+            const res = await axios.get(
+                "http://localhost:5194/api/v1/subscription-plans",
                 { withCredentials: true }
             );
-
-            setIsPaymentModalOpen(false);
-
-            const result = await Swal.fire({
-                icon: "success",
-                title: t("driver.subscription.cashSuccessTitle"),
-                html: t("driver.subscription.cashSuccessMessage"),
-                showCancelButton: true,
-                confirmButtonColor: "#f97316",
-                cancelButtonColor: "#6b7280",
-                confirmButtonText: t("driver.subscription.cashFindNearest"),
-                cancelButtonText: t("driver.subscription.cashLater"),
-                allowOutsideClick: false,
-            });
-
-            if (result.isConfirmed) {
-                setIsWaitingForLocation(true);
-            }
-
-        } catch (error: any) {
-            const msg = error.response?.data?.message || "Không thể chọn phương thức tiền mặt.";
-            toast.error(msg);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCreatePendingSubscription = async (plan: SubscriptionPlan) => {
-        setIsLoading(true);
-
-        try {
-            const response = await axios.post(
-                "http://localhost:5194/api/v1/subscriptions/create-pending",
-                {
-                    subscriptionPlanId: plan.id,
-                },
-                { withCredentials: true }
-            );
-
-            setPayment(response.data);
-            setIsPaymentModalOpen(true);
-        } catch (error: any) {
-            const msg = error.response?.data?.message || t("driver.subscription.errorCreateOrderGeneric");
-            toast.error(msg);
-        } finally {
-            setIsLoading(false);
+            const sortedData = (res.data as SubscriptionPlan[])
+                .filter((p) => p.monthlyPrice > 0)
+                .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+            setPlans(sortedData);
+        } catch (error) {
+            toast.error(t("driver.subscription.errorFetchPlans") || "Lỗi lấy dữ liệu");
         }
     };
 
     useEffect(() => {
-        const getSubscriptionPlans = async () => {
-            try {
-                const res = await axios.get(
-                    "http://localhost:5194/api/v1/subscription-plans",
-                    {
-                        withCredentials: true,
-                    }
-                );
-                const sortedData = (res.data as SubscriptionPlan[])
-                    .filter(p => p.monthlyPrice > 0)
-                    .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-                setPlans(sortedData);
-            } catch (error) {
-                toast.error(t("driver.subscription.errorFetchPlans"));
-            }
-        };
-        getSubscriptionPlans();
+        fetchPlans();
     }, []);
 
+    // 4. Fetch Stations (cho tính năng tìm trạm khi thanh toán tiền mặt)
     useEffect(() => {
         const getAllStations = async () => {
             try {
@@ -189,15 +187,19 @@ export function SubscriptionPlansPage() {
         getAllStations();
     }, []);
 
+    // 5. Handle Location Logic
     useEffect(() => {
-        if (isWaitingForLocation && location.loaded && !location.error && location.coordinates) {
+        if (
+            isWaitingForLocation &&
+            location.loaded &&
+            !location.error &&
+            location.coordinates
+        ) {
             const userLocation = {
                 lat: location.coordinates.lat,
                 lng: location.coordinates.lng,
             };
-
             setIsWaitingForLocation(false);
-
             navigate("/map", {
                 state: {
                     userLocation,
@@ -215,19 +217,14 @@ export function SubscriptionPlansPage() {
                 confirmButtonColor: "#f97316",
             });
         }
-    }, [
-        isWaitingForLocation,
-        location.loaded,
-        location.error,
-        location.coordinates,
-        navigate,
-        stations,
-    ]);
+    }, [isWaitingForLocation, location, navigate, stations, t]);
 
+    // ===== Computed Logic =====
+    const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
 
     const batteryOptions = useMemo(() => {
         const set = new Set<string>();
-        plans.forEach(p => {
+        plans.forEach((p) => {
             if (p.batteryModel?.name) set.add(p.batteryModel.name);
         });
         return Array.from(set).sort();
@@ -236,18 +233,18 @@ export function SubscriptionPlansPage() {
     const filteredPlans = useMemo(() => {
         let list = [...plans];
         if (debouncedSearch) {
-            list = list.filter(p => p.name.toLowerCase().includes(debouncedSearch));
+            list = list.filter((p) => p.name.toLowerCase().includes(debouncedSearch));
         }
         if (minPrice) {
             const min = Number(minPrice);
-            if (!isNaN(min)) list = list.filter(p => p.monthlyPrice >= min);
+            if (!isNaN(min)) list = list.filter((p) => p.monthlyPrice >= min);
         }
         if (maxPrice) {
             const max = Number(maxPrice);
-            if (!isNaN(max)) list = list.filter(p => p.monthlyPrice <= max);
+            if (!isNaN(max)) list = list.filter((p) => p.monthlyPrice <= max);
         }
         if (battery && battery !== "ALL") {
-            list = list.filter(p => p.batteryModel?.name === battery);
+            list = list.filter((p) => p.batteryModel?.name === battery);
         }
         list.sort((a, b) => a.monthlyPrice - b.monthlyPrice);
         return list;
@@ -261,7 +258,7 @@ export function SubscriptionPlansPage() {
         return filteredPlans.slice(start, start + pageSize);
     }, [filteredPlans, currentPage, pageSize]);
 
-
+    // ===== User Actions =====
     const handleSelectPlan = (plan: SubscriptionPlan) => {
         setSelectedPlan(plan);
         setIsConfirmDialogOpen(true);
@@ -274,16 +271,157 @@ export function SubscriptionPlansPage() {
         }
     };
 
+    const handleCreatePendingSubscription = async (plan: SubscriptionPlan) => {
+        setIsLoading(true);
+        try {
+            const response = await axios.post(
+                "http://localhost:5194/api/v1/subscriptions/create-pending",
+                {
+                    subscriptionPlanId: plan.id,
+                },
+                { withCredentials: true }
+            );
+            setPayment(response.data);
+            setIsPaymentModalOpen(true);
+        } catch (error: any) {
+            const msg = error.response?.data?.message || t("driver.subscription.errorCreateOrderGeneric");
+            toast.error(msg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePayWithVNPay = () => {
+        if (payment && payment.paymentUrl) {
+            window.location.href = decodeURIComponent(payment.paymentUrl);
+        } else {
+            toast.error(t("driver.subscription.errorVNPayLink"));
+        }
+    };
+
+    const handlePayWithCash = async () => {
+        if (!payment || !payment.paymentId) return;
+        setIsLoading(true);
+        try {
+            await axios.post(
+                `http://localhost:5194/api/v1/payments/${payment.paymentId}/select-cash`,
+                {},
+                { withCredentials: true }
+            );
+            setIsPaymentModalOpen(false);
+            const result = await Swal.fire({
+                icon: "success",
+                title: t("driver.subscription.cashSuccessTitle"),
+                html: t("driver.subscription.cashSuccessMessage"),
+                showCancelButton: true,
+                confirmButtonColor: "#f97316",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: t("driver.subscription.cashFindNearest"),
+                cancelButtonText: t("driver.subscription.cashLater"),
+                allowOutsideClick: false,
+            });
+            if (result.isConfirmed) {
+                setIsWaitingForLocation(true);
+            }
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Error selecting cash payment.";
+            toast.error(msg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ===== Admin Actions =====
+    const handleAddPlan = () => {
+        setEditingPlan(null);
+        setFormData({
+            name: "",
+            description: "",
+            monthlyPrice: 0,
+            maxSwapsPerMonth: 0,
+            benefits: "",
+            refundPolicy: "",
+            batteryModelId: "",
+        });
+        setIsAddEditModalOpen(true);
+    };
+
+    const handleEditPlan = (planId: string) => {
+        const plan = plans.find((p) => p.id === planId);
+        if (!plan) return;
+        setEditingPlan(plan);
+        setFormData({
+            name: plan.name,
+            description: plan.description,
+            monthlyPrice: plan.monthlyPrice,
+            maxSwapsPerMonth: plan.maxSwapsPerMonth ?? 0,
+            benefits: plan.benefits,
+            refundPolicy: plan.benefits, // Logic cũ của bạn dùng benefits làm refundPolicy
+            batteryModelId: plan.batteryModel.id,
+        });
+        setIsAddEditModalOpen(true);
+    };
+
+    const handleDeletePlan = async (planId: string) => {
+        const result = await Swal.fire({
+            icon: "warning",
+            title: "Xóa gói",
+            text: "Bạn có chắc chắn muốn xóa gói này? Hành động này không thể hoàn tác.",
+            showCancelButton: true,
+            confirmButtonColor: "#d32f2f",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Xóa",
+            cancelButtonText: "Hủy",
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await deleteSubscriptionPlan(planId);
+                toast.success("Gói đã được xóa thành công");
+                setPlans(plans.filter((p) => p.id !== planId));
+            } catch (error: any) {
+                const msg = error.response?.data?.message || "Không thể xóa gói.";
+                toast.error(msg);
+            }
+        }
+    };
+
+    if (userLoading) {
+        return (
+            <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+            </div>
+        );
+    }
+
     return (
         <div className="py-12 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
-                        {t("driver.subscription.listTitle")}
-                    </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">{t("driver.subscription.subtitle")}</p>
+
+                {/* Header Section */}
+                <div className="text-center mb-12 flex items-center justify-between flex-col md:flex-row">
+                    <div className="flex-1 w-full">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+                            {isAdmin ? "Quản lý gói thuê pin" : t("driver.subscription.listTitle")}
+                        </h2>
+                        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                            {isAdmin
+                                ? "Quản lý các gói dịch vụ và trạm giao dịch."
+                                : t("driver.subscription.subtitle")}
+                        </p>
+                    </div>
+                    {isAdmin && (
+                        <Button
+                            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-5 rounded-lg shadow-md flex items-center gap-2 mt-4 md:mt-0"
+                            onClick={handleAddPlan}
+                        >
+                            <Plus className="w-5 h-5" />
+                            Thêm gói mới
+                        </Button>
+                    )}
                 </div>
 
+                {/* Filters Section */}
                 <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div className="md:col-span-2">
@@ -347,18 +485,21 @@ export function SubscriptionPlansPage() {
                     </div>
                 </div>
 
+                {/* Plans Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {pagedPlans.map((plan, index) => {
+                    {pagedPlans.map((plan) => {
                         const features = (plan.benefits || "").split('\n').filter(f => f.trim() !== "" && f.trim() !== "✓");
-
 
                         return (
                             <Card
                                 key={plan.id}
-                                className={`flex flex-col relative rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 bg-white"
-                                    }`}
+                                className="flex flex-col relative rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 bg-white"
                             >
-
+                                {isAdmin && (
+                                    <div className="absolute top-4 right-4 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                        ADMIN
+                                    </div>
+                                )}
 
                                 <CardHeader className="text-center pt-10 pb-6">
                                     <CardTitle className="text-2xl font-bold text-gray-900 h-16">
@@ -390,20 +531,41 @@ export function SubscriptionPlansPage() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <Button
-                                        className={`w-full py-5 text-base font-semibold rounded-lg shadow-md transition-all duration-300 bg-white text-orange-600 border-2 border-orange-500 hover:bg-orange-50"
-                                            }`}
 
-                                        onClick={() => handleSelectPlan(plan)}
-                                    >
-                                        {t("driver.subscription.selectPlan")}
-                                    </Button>
+                                    {/* Action Buttons: Different for Admin vs User */}
+                                    {!isAdmin ? (
+                                        <Button
+                                            className="w-full py-5 text-base font-semibold rounded-lg shadow-md transition-all duration-300 bg-white text-orange-600 border-2 border-orange-500 hover:bg-orange-50"
+                                            onClick={() => handleSelectPlan(plan)}
+                                        >
+                                            {t("driver.subscription.selectPlan")}
+                                        </Button>
+                                    ) : (
+                                        <div className="space-y-2 pt-4">
+                                            <Button
+                                                className="w-full py-4 text-base font-semibold rounded-lg shadow-md transition-all duration-300 bg-orange-500 hover:bg-orange-600 text-white"
+                                                onClick={() => handleEditPlan(plan.id)}
+                                            >
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Chỉnh sửa
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                className="w-full py-4 text-base font-semibold rounded-lg shadow-md"
+                                                onClick={() => handleDeletePlan(plan.id)}
+                                            >
+                                                <Delete className="w-4 h-4 mr-2" />
+                                                Xóa
+                                            </Button>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         )
                     })}
                 </div>
 
+                {/* Pagination */}
                 {total > 0 && (
                     <div className="mt-8 flex items-center justify-between">
                         <div className="text-sm text-gray-600">
@@ -446,6 +608,9 @@ export function SubscriptionPlansPage() {
                     <p className="text-center text-gray-500 text-lg py-12">{t("driver.subscription.emptyNoPlans")}</p>
                 )}
 
+                {/* ========= Modals ========= */}
+
+                {/* 1. Confirmation Dialog (User) */}
                 {selectedPlan && (
                     <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
                         <DialogContent className="max-w-lg rounded-xl">
@@ -492,6 +657,7 @@ export function SubscriptionPlansPage() {
                     </Dialog>
                 )}
 
+                {/* 2. Payment Dialog (User) */}
                 {payment && (
                     <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
                         <DialogContent className="max-w-md rounded-xl">
@@ -538,6 +704,177 @@ export function SubscriptionPlansPage() {
                         </DialogContent>
                     </Dialog>
                 )}
+
+                {/* 3. Add/Edit Plan Dialog (Admin) */}
+                {isAdmin && (
+                    <Dialog open={isAddEditModalOpen} onOpenChange={setIsAddEditModalOpen}>
+                        <DialogContent className="max-w-2xl rounded-xl">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-bold text-gray-900">
+                                    {editingPlan ? "Chỉnh sửa gói thuê pin" : "Thêm gói thuê pin mới"}
+                                </DialogTitle>
+                                <DialogDescription className="text-gray-600">
+                                    Nhập thông tin chi tiết về gói thuê pin. Các trường có dấu * là bắt buộc.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 mt-4">
+                                <div>
+                                    <Label>Tên gói *</Label>
+                                    <Input
+                                        placeholder="Nhập tên gói..."
+                                        value={formData.name}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, name: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Mô tả *</Label>
+                                    <Input
+                                        placeholder="Nhập mô tả..."
+                                        value={formData.description}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, description: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Giá thuê hàng tháng *</Label>
+                                        <Input
+                                            type="number"
+                                            placeholder="Nhập giá VND"
+                                            value={formData.monthlyPrice}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    monthlyPrice: Number(e.target.value),
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Số lượt đổi tối đa / tháng</Label>
+                                        <Input
+                                            type="number"
+                                            placeholder="0 = không giới hạn"
+                                            value={formData.maxSwapsPerMonth ?? 0}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    maxSwapsPerMonth: Number(e.target.value),
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>Ưu đãi / Lợi ích</Label>
+                                    <textarea
+                                        className="w-full border border-gray-300 rounded-md p-2"
+                                        rows={3}
+                                        placeholder="Nhập mỗi ưu đãi 1 dòng..."
+                                        value={formData.benefits}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, benefits: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Chính sách hoàn tiền</Label>
+                                    <textarea
+                                        className="w-full border border-gray-300 rounded-md p-2"
+                                        rows={2}
+                                        placeholder="Nhập chính sách hoàn tiền (nếu có)..."
+                                        value={formData.refundPolicy}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, refundPolicy: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Loại pin *</Label>
+                                    <Select
+                                        value={formData.batteryModelId}
+                                        onValueChange={(v) =>
+                                            setFormData({ ...formData, batteryModelId: v })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Chọn loại pin" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {batteryOptions.map((b) => {
+                                                // Logic tìm ID pin từ tên pin trong danh sách plans hiện có
+                                                // Lưu ý: Cách này chỉ work nếu plans đã load và có đủ loại pin
+                                                const plan = plans.find(
+                                                    (p) => p.batteryModel?.name === b
+                                                );
+                                                if (!plan) return null;
+                                                return (
+                                                    <SelectItem
+                                                        key={plan.batteryModel.id}
+                                                        value={plan.batteryModel.id}
+                                                    >
+                                                        {b}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-6">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsAddEditModalOpen(false)}
+                                    disabled={isLoading}
+                                >
+                                    Hủy
+                                </Button>
+                                <Button
+                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                    disabled={isLoading}
+                                    onClick={async () => {
+                                        try {
+                                            setIsLoading(true);
+                                            if (editingPlan) {
+                                                await updateSubscriptionPlan(editingPlan.id, {
+                                                    ...formData,
+                                                    isActive: editingPlan.isActive,
+                                                });
+                                                toast.success("Cập nhật gói thuê pin thành công!");
+                                            } else {
+                                                await createSubscriptionPlan(formData);
+                                                toast.success("Thêm gói thuê pin mới thành công!");
+                                            }
+                                            setIsAddEditModalOpen(false);
+                                            fetchPlans();
+                                        } catch (err: any) {
+                                            toast.error(
+                                                err.response?.data?.message ||
+                                                "Có lỗi xảy ra, vui lòng thử lại."
+                                            );
+                                        } finally {
+                                            setIsLoading(false);
+                                        }
+                                    }}
+                                >
+                                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    {editingPlan ? "Lưu thay đổi" : "Thêm mới"}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                )}
+
             </div>
         </div>
     );
