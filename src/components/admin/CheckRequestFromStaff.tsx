@@ -9,6 +9,7 @@ import {
 } from "@/services/admin/requestPin";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useLanguage } from "../LanguageContext";
 
 interface GroupedSendRequest {
   createdAt: string;
@@ -32,6 +33,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useLanguage();
   const [note, setNote] = useState(group.staffNote || "");
   const [adminNote, setAdminNote] = useState("");
   const [staffName, setStaffName] = useState(group.staffName || "");
@@ -46,10 +48,10 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
 
     setLoadingStaff(true);
     fetchStaffById(staffId)
-      .then((staff) => setStaffName(staff.name || group.staffName || "Unknown"))
-      .catch(() => setStaffName(group.staffName || "Unknown"))
+      .then((staff) => setStaffName(staff.name || group.staffName || t("admin.unknown")))
+      .catch(() => setStaffName(group.staffName || t("admin.unknown")))
       .finally(() => setLoadingStaff(false));
-  }, [group.requests, group.staffName]);
+  }, [group.requests, group.staffName, t]);
 
   const formatDateTime = (iso: string) =>
     new Date(iso).toLocaleString("vi-VN", {
@@ -75,12 +77,12 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
         })
       );
 
-      toast.success("Cung cấp pin thành công!");
+      toast.success(t("admin.providePinSuccess"));
       onClose();
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Có lỗi xảy ra khi cung cấp pin.");
+      toast.error(t("admin.providePinError"));
     } finally {
       setSubmitting(false);
     }
@@ -100,7 +102,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
           {/* Header */}
           <div className="sticky top-0 bg-white p-6 border-b border-gray-100 z-10 flex justify-between items-center">
             <h2 className="text-2xl font-bold text-orange-600">
-              {isEditable ? "Chi tiết yêu cầu gửi" : "Xem yêu cầu gửi"}
+              {isEditable ? t("admin.requestDetailTitle") : t("admin.viewRequest")}
             </h2>
             <Button variant="secondary" size="sm" onClick={onClose}>
               <X className="w-5 h-5" />
@@ -112,7 +114,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
             <Card className="border border-orange-200">
               <CardHeader>
                 <CardTitle className="text-orange-600">
-                  Thông tin chung
+                  {t("admin.generalInfo")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -120,7 +122,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                   <div className="flex items-center gap-2">
                     <User className="w-5 h-5 text-gray-500" />{" "}
                     <span>
-                      Người gửi: {loadingStaff ? "Đang tải..." : staffName}
+                      {t("admin.sender")}: {loadingStaff ? t("admin.loading") : staffName}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -133,19 +135,19 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5 text-gray-500" />{" "}
-                    <span>Tổng: {group.totalItems} pin</span>
+                    <span>{t("admin.total")}: {group.totalItems} {t("admin.batteryUnit")}</span>
                   </div>
                 </div>
 
                 {isEditable && (
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ghi chú của Admin
+                      {t("admin.adminNotes")}
                     </label>
                     <textarea
                       className="w-full border rounded p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
                       rows={5}
-                      placeholder="Nhập ghi chú của Admin, ví dụ: kiểm tra số lượng, kiểm tra tình trạng pin..."
+                      placeholder={t("admin.adminNotesPlaceholder")}
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                     />
@@ -155,7 +157,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                 {note && (
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ghi chú của Nhân viên
+                      {t("admin.staffNotes")}
                     </label>
                     <div className="w-full border rounded p-3 text-sm bg-gray-50">
                       {note}
@@ -168,7 +170,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
             {/* Chi tiết pin */}
             <Card className="border border-blue-200">
               <CardHeader>
-                <CardTitle className="text-blue-600">Chi Tiết Pin</CardTitle>
+                <CardTitle className="text-blue-600">{t("admin.batteryDetails")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -196,7 +198,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                         <p className="text-2xl font-bold text-orange-600">
                           x{request.quantity}
                         </p>
-                        <p className="text-xs text-gray-500">Số lượng</p>
+                        <p className="text-xs text-gray-500">{t("admin.quantity")}</p>
                       </div>
                     </div>
                   ))}
@@ -207,7 +209,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
             {/* Footer buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={onClose}>
-                Đóng
+                {t("common.close")}
               </Button>
               {isEditable && (
                 <Button
@@ -215,7 +217,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                   disabled={submitting}
                   onClick={handleProvidePin}
                 >
-                  {submitting ? "Đang xử lý..." : "Cung cấp Pin"}
+                  {submitting ? t("admin.processing") : t("admin.providePin")}
                 </Button>
               )}
             </div>

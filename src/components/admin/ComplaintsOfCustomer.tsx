@@ -15,6 +15,7 @@ import {
 import { fetchCustomerById } from "@/services/admin/customerAdminService";
 import { fetchSwapById } from "@/services/swaps";
 import { Button } from "../ui/button";
+import { useLanguage } from "../LanguageContext";
 
 /** 🕒 Format ngày theo giờ Việt Nam */
 function formatVNDate(dateString: string | null): string {
@@ -27,14 +28,17 @@ function formatVNDate(dateString: string | null): string {
 
 /** 📘 Map trạng thái khiếu nại */
 /** 📘 Map trạng thái khiếu nại từ số sang tên ngắn */
-const statusLabels: Record<number, string> = {
-  0: "Chờ đặt lịch",
-  1: "Đã đặt lịch",
-  2: "Đã check-in",
-  3: "Đang kiểm tra",
-  4: "Xác nhận lỗi hệ thống/bảo hành",
-  5: "Từ chối (Lỗi do người dùng)",
-  6: "Đã giải quyết",
+const getStatusLabel = (status: number, t: (key: string) => string): string => {
+  const statusMap: Record<number, string> = {
+    0: t("admin.statusAwaitingSchedule"),
+    1: t("admin.statusScheduled"),
+    2: t("admin.statusCheckedIn"),
+    3: t("admin.statusUnderReview"),
+    4: t("admin.statusSystemError"),
+    5: t("admin.statusUserError"),
+    6: t("admin.statusResolved"),
+  };
+  return statusMap[status] || String(status);
 };
 
 const statusColors: Record<number, string> = {
@@ -47,18 +51,8 @@ const statusColors: Record<number, string> = {
   6: "bg-green-100 text-green-800", // Đã giải quyết
 };
 
-function getStatusLabel(status: string | number): {
-  label: string;
-  color: string;
-} {
-  const statusNumber = typeof status === "string" ? Number(status) : status;
-  return {
-    label: statusLabels[statusNumber] ?? String(status),
-    color: statusColors[statusNumber] ?? "bg-gray-100 text-gray-800",
-  };
-}
-
 const ComplaintsOfCustomer: React.FC = () => {
+  const { t } = useLanguage();
   const [complaints, setComplaints] = useState<BatteryComplaintResponse[]>([]);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [completedAtMap, setCompletedAtMap] = useState<Record<string, string>>(
@@ -151,26 +145,26 @@ const ComplaintsOfCustomer: React.FC = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="animate-spin w-6 h-6 mr-2" /> Đang tải dữ liệu...
+        <Loader2 className="animate-spin w-6 h-6 mr-2" /> {t("admin.loading")}
       </div>
     );
 
   if (complaints.length === 0)
     return (
-      <p className="text-center text-gray-500 mt-6">Không có khiếu nại nào.</p>
+      <p className="text-center text-gray-500 mt-6">{t("admin.noComplaints")}</p>
     );
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4 text-gray-800">
-        Danh sách khiếu nại người dùng
+        {t("admin.complaintsList")}
       </h2>
 
       {/* 🔎 Ô lọc */}
       <div className="flex items-center gap-2 mb-4 max-w-md">
         <Search className="w-4 h-4 text-gray-500" />
         <Input
-          placeholder="Tìm theo tên người khiếu nại..."
+          placeholder={t("admin.searchByReporter")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border-gray-300"
@@ -187,30 +181,32 @@ const ComplaintsOfCustomer: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Battery className="w-5 h-5 text-blue-500" />
-                Khiếu nại #{c.id.slice(0, 8)}
+                {t("admin.complaint")} #{c.id.slice(0, 8)}
               </CardTitle>
               <CardDescription>
-                Báo cáo ngày: {formatVNDate(c.reportDate)}
+                {t("admin.reportDate")} {formatVNDate(c.reportDate)}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-3 text-sm">
               <p className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-700">Người gửi: </span>
-                {userNames[c.reportedByUserId] || "Không rõ"}
+                <span className="font-medium text-gray-700">{t("admin.reporter")}</span>
+                {userNames[c.reportedByUserId] || t("admin.unknown")}
               </p>
 
               <p className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-gray-500" />
-                <span className="font-medium text-gray-700">Trạm: </span>
-                {c.stationName || "Không xác định"}
+                <span className="font-medium text-gray-700">{t("admin.stationName")}</span>
+                {c.stationName || t("admin.unknown")}
               </p>
 
               <p>
-                <span className="font-medium text-gray-700">Trạng thái: </span>
+                <span className="font-medium text-gray-700">{t("admin.statusTitle")}</span>
                 {(() => {
-                  const { label, color } = getStatusLabel(c.status);
+                  const statusNumber = typeof c.status === "string" ? Number(c.status) : c.status;
+                  const label = getStatusLabel(statusNumber, t);
+                  const color = statusColors[statusNumber] ?? "bg-gray-100 text-gray-800";
                   return (
                     <span
                       className={`px-2 py-1 rounded-full text-sm font-medium ${color}`}
@@ -223,7 +219,7 @@ const ComplaintsOfCustomer: React.FC = () => {
 
               <p>
                 <span className="font-medium text-gray-700">
-                  Nội dung khiếu nại:{" "}
+                  {t("admin.complaintDetails")}
                 </span>
                 {c.complaintDetails}
               </p>
@@ -250,11 +246,11 @@ const ComplaintsOfCustomer: React.FC = () => {
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
         >
-          Trước
+          {t("admin.prev")}
         </Button>
 
         <div className="flex items-center space-x-1">
-          <span className="text-gray-700 text-sm">Trang</span>
+          <span className="text-gray-700 text-sm">{t("admin.page")}</span>
           <Input
             type="number"
             min={1}
@@ -278,7 +274,7 @@ const ComplaintsOfCustomer: React.FC = () => {
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
         >
-          Sau
+          {t("admin.next")}
         </Button>
       </div>
     </div>

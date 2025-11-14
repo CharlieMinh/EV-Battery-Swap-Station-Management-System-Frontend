@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AddPinToStation } from "./AddPinToStation";
+import { useLanguage } from "../LanguageContext";
 
 interface BatteryStationTableProps {
   onDataUpdate?: () => void;
@@ -31,6 +32,7 @@ interface BatteryStationTableProps {
 export function BatteryStationTable({
   onDataUpdate,
 }: BatteryStationTableProps) {
+  const { t } = useLanguage();
   const [batteries, setBatteries] = useState<Battery[]>([]);
   const [models, setModels] = useState<BatteryModel[]>([]);
   const [stations, setStations] = useState<any[]>([]);
@@ -114,7 +116,7 @@ export function BatteryStationTable({
     return (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        Đang tải dữ liệu...
+        {t("admin.loadingData")}
       </div>
     );
 
@@ -123,13 +125,13 @@ export function BatteryStationTable({
       <Card className="mt-6 shadow-md border border-orange-200 w-full">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-center">
           <CardTitle className="text-lg font-semibold text-orange-500">
-            🔋 Thông tin pin các trạm
+            {t("admin.batteryStationInfo")}
           </CardTitle>
 
           <div className="mt-3 sm:mt-0 flex items-center space-x-2">
             <Input
               type="text"
-              placeholder="Tìm theo tên trạm..."
+              placeholder={t("admin.searchByStationName")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-56"
@@ -137,10 +139,10 @@ export function BatteryStationTable({
 
             <Select onValueChange={setSelectedModel} defaultValue="all">
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder={t("admin.all")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="all">{t("admin.all")}</SelectItem>
                 {models.map((m) => (
                   <SelectItem key={m.id} value={m.name}>
                     {m.name}
@@ -154,7 +156,7 @@ export function BatteryStationTable({
         <CardContent>
           {stationStats.length === 0 ? (
             <div className="text-center text-gray-500 py-6">
-              Không có dữ liệu trạm nào.
+              {t("admin.noStationData")}
             </div>
           ) : (
             <>
@@ -162,14 +164,14 @@ export function BatteryStationTable({
                 <table className="min-w-full border border-gray-200 text-sm">
                   <thead className="bg-gray-100 text-gray-700">
                     <tr>
-                      <th className="p-3 text-left">Trạm</th>
-                      <th className="p-3 text-center">Tổng pin</th>
-                      <th className="p-3 text-center">Đang sử dụng</th>
-                      <th className="p-3 text-center">Đang sạc</th>
-                      <th className="p-3 text-center">Đã sẵn sàng</th>
-                      <th className="p-3 text-center">Bảo trì</th>
-                      <th className="p-3 text-center">Đặt trước</th>
-                      <th className="p-3 text-center">Hành động</th>
+                      <th className="p-3 text-left">{t("admin.stationLabel")}</th>
+                      <th className="p-3 text-center">{t("admin.totalBatteries")}</th>
+                      <th className="p-3 text-center">{t("admin.inUse")}</th>
+                      <th className="p-3 text-center">{t("admin.charging")}</th>
+                      <th className="p-3 text-center">{t("admin.ready")}</th>
+                      <th className="p-3 text-center">{t("admin.maintenance")}</th>
+                      <th className="p-3 text-center">{t("admin.reserved")}</th>
+                      <th className="p-3 text-center">{t("admin.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -203,7 +205,7 @@ export function BatteryStationTable({
                               setOpenModal(true);
                             }}
                           >
-                            Cung cấp pin
+                            {t("admin.providePin")}
                           </Button>
                         </td>
                       </tr>
@@ -220,11 +222,11 @@ export function BatteryStationTable({
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Trước
+                  {t("admin.prev")}
                 </Button>
 
                 <div className="flex items-center space-x-1">
-                  <span className="text-gray-700 text-sm">Trang</span>
+                  <span className="text-gray-700 text-sm">{t("admin.page")}</span>
                   <Input
                     type="number"
                     min={1}
@@ -248,7 +250,7 @@ export function BatteryStationTable({
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Sau
+                  {t("admin.next")}
                 </Button>
               </div>
             </>
@@ -262,7 +264,7 @@ export function BatteryStationTable({
           className="max-w-lg bg-white/90 backdrop-blur-md border border-orange-200 shadow-xl rounded-2xl"
           aria-describedby={undefined}
         >
-          <DialogTitle className="sr-only">Thêm pin vào trạm</DialogTitle>
+          <DialogTitle className="sr-only">{t("admin.addBatteryToStation")}</DialogTitle>
           <AddPinToStation
             stationId={selectedStation?.stationId}
             stationName={selectedStation?.stationName}

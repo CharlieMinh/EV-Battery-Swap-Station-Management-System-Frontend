@@ -26,6 +26,7 @@ import { geocodeAddress } from "../map/geocode";
 import { toast } from "react-toastify";
 import { StationHistoryList } from "./StationHistoryList";
 import { getAllPayments, Payment } from "@/services/admin/payment";
+import { useLanguage } from "../LanguageContext";
 
 const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
@@ -70,6 +71,7 @@ const formatTime = (timeString: string | null | undefined): string => {
 };
 
 export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
+  const { t } = useLanguage();
   const [stationDetail, setStationDetail] = useState<StationDetail | null>(
     null
   );
@@ -122,12 +124,12 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
             }));
           }
         } catch (error) {
-          console.error("Không thể geocode địa chỉ mới:", error);
+          console.error(t("admin.geocodeError"), error);
         }
       }, 800); // debounce tránh spam API
       return () => clearTimeout(timeout);
     }
-  }, [formData.address, formData.city, isEditing]);
+  }, [formData.address, formData.city, isEditing, t]);
 
   const [batteryCount, setBatteryCount] = useState<number | 0>(0);
 
@@ -146,10 +148,10 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
       await updateStation(stationId, updatedData);
       setStationDetail(updatedData as StationDetail);
       setIsEditing(false);
-      toast.success("Cập nhật trạm thành công!");
+      toast.success(t("admin.updateStationSuccess"));
     } catch (error) {
-      console.error("Lỗi khi cập nhật trạm:", error);
-      toast.error("Không thể lưu thay đổi, vui lòng thử lại!");
+      console.error(t("admin.updateStationError"), error);
+      toast.error(t("admin.saveChangesError"));
     } finally {
       setSaving(false);
     }
@@ -201,7 +203,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     return (
       <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
         <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
-          Đang tải dữ liệu...
+          {t("admin.loadingData")}
         </div>
       </div>
     );
@@ -210,10 +212,10 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
     return (
       <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
-          Không tìm thấy dữ liệu trạm.
+          {t("admin.stationNotFound")}
           <div className="mt-4 flex justify-end">
             <Button variant="outline" onClick={onClose}>
-              Đóng
+              {t("common.close")}
             </Button>
           </div>
         </div>
@@ -235,7 +237,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   const openingTime = formatTime(openTime);
   const closingTime = formatTime(closeTime);
 
-  const statusText = stationDetail.isActive ? "Hoạt động" : "Ngừng hoạt động";
+  const statusText = stationDetail.isActive ? t("admin.activeStatus") : t("admin.inactiveStatus");
   const statusColor = stationDetail.isActive
     ? "bg-green-500 text-white"
     : "bg-red-500 text-white";
@@ -304,8 +306,8 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                         }
                         className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
                       >
-                        <option value="1">Hoạt động</option>
-                        <option value="0">Ngừng hoạt động</option>
+                        <option value="1">{t("admin.activeStatus")}</option>
+                        <option value="0">{t("admin.inactiveStatus")}</option>
                       </select>
                     </div>
                   ) : (
@@ -316,7 +318,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                           : "bg-red-500 text-white"
                       } mt-2 text-sm`}
                     >
-                      {stationDetail.isActive ? "Hoạt động" : "Ngừng hoạt động"}
+                      {stationDetail.isActive ? t("admin.activeStatus") : t("admin.inactiveStatus")}
                     </Badge>
                   )}
                 </div>
@@ -328,7 +330,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                   className="border-gray-300 hover:bg-gray-100"
                   onClick={() => setMode("history")}
                 >
-                  <List className="w-4 h-4 mr-2" /> Xem Nhật ký ({logCount})
+                  <List className="w-4 h-4 mr-2" /> {t("admin.viewHistory")} ({logCount})
                 </Button>
                 {!isEditing ? (
                   <Button
@@ -336,7 +338,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                     className="bg-blue-500 hover:bg-blue-600"
                     onClick={handleEditClick}
                   >
-                    <Settings className="w-4 h-4 mr-2" /> Chỉnh sửa cấu hình
+                    <Settings className="w-4 h-4 mr-2" /> {t("admin.editConfig")}
                   </Button>
                 ) : (
                   <>
@@ -346,7 +348,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                       onClick={handleSave}
                       disabled={saving}
                     >
-                      {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                      {saving ? t("admin.saving") : t("admin.saveChanges")}
                     </Button>
                     <Button
                       variant="outline"
@@ -364,7 +366,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                         });
                       }}
                     >
-                      Hủy thay đổi
+                      {t("admin.cancelChanges")}
                     </Button>
                   </>
                 )}
@@ -374,13 +376,13 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
             {/* Thông tin cơ bản */}
             <Card className="mt-8 bg-white border border-orange-100">
               <h2 className="text-2xl font-bold mb-5 text-orange-700 border-b pb-3 border-orange-100">
-                Thông tin cơ bản
+                {t("admin.basicInfo")}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5 text-sm">
                 <div className="flex items-center space-x-2">
                   <Zap className="w-5 h-5 text-blue-500" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0">
-                    Mã trạm:
+                    {t("admin.stationCode")}:
                   </span>
                   <span className="text-gray-900 font-mono text-base">
                     {stationDetail.displayId}
@@ -389,7 +391,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 <div className="flex items-center space-x-4 whitespace-nowrap">
                   <Clock className="w-5 h-5 text-purple-500" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0">
-                    Thời gian hoạt động:
+                    {t("admin.operatingHours")}:
                   </span>
                   <span className="text-gray-900 text-base">
                     {openingTime} - {closingTime}
@@ -398,16 +400,16 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 <div className="flex items-center space-x-2">
                   <Phone className="w-5 h-5 text-teal-500" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0">
-                    Số điện thoại:
+                    {t("admin.phoneLabel")}:
                   </span>
                   <span className="text-gray-900 text-base">
-                    {phoneNumber || "Không có"}
+                    {phoneNumber || t("admin.notAvailable")}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <MapPin className="w-5 h-5 text-red-500" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0">
-                    Thành phố:
+                    {t("admin.cityLabel")}:
                   </span>
                   {isEditing ? (
                     <input
@@ -423,7 +425,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 <div className="flex items-start space-x-2 col-span-1 sm:col-span-2">
                   <MapPin className="w-5 h-5 text-red-500 mt-1 shrink-0" />
                   <span className="font-semibold text-gray-700 w-32 shrink-0 mt-1">
-                    Địa chỉ chi tiết:
+                    {t("admin.detailedAddress")}:
                   </span>
                   {isEditing ? (
                     <input
@@ -442,24 +444,24 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
 
             {/* Hiệu suất & Dung lượng */}
             <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
-              Hiệu suất & Dung lượng
+              {t("admin.performanceCapacity")}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
               <StatItem
                 icon={Zap}
-                title="Tổng lượt đổi pin"
+                title={t("admin.totalSwaps")}
                 value={swapCounts.toLocaleString()}
                 color="text-blue-600"
               />
               <StatItem
                 icon={DollarSign}
-                title="Doanh thu (tháng)"
+                title={t("admin.monthlyRevenue")}
                 value={formatCurrency(stationRevenue)}
                 color="text-green-600"
               />
               <StatItem
                 icon={BatteryCharging}
-                title="Số pin hiện có"
+                title={t("admin.currentBatteries")}
                 value={`${batteryCount}`}
                 color="text-orange-600"
               />
@@ -472,7 +474,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 onClick={onClose}
                 className="border-gray-300 hover:bg-gray-100"
               >
-                Đóng
+                {t("common.close")}
               </Button>
             </div>
           </>
@@ -485,10 +487,10 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                 onClick={() => setMode("info")}
                 className="border-gray-300"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
+                <ArrowLeft className="w-4 h-4 mr-2" /> {t("admin.back")}
               </Button>
               <h2 className="text-2xl font-bold text-gray-800">
-                Lịch sử giao dịch – {stationDetail.name}
+                {t("admin.transactionHistory")} – {stationDetail.name}
               </h2>
             </div>
             <StationHistoryList stationId={stationDetail.id} />

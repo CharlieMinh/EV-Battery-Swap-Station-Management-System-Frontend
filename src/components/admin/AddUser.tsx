@@ -70,7 +70,7 @@ export function AddUser() {
       setStations(mappedItems);
     } catch (error) {
       console.error("Error fetching stations:", error);
-      toast.error("Không thể tải danh sách trạm.");
+      toast.error(t("admin.cannotLoadStations"));
     }
   };
 
@@ -93,23 +93,23 @@ export function AddUser() {
     const phoneRegex = /^(0|\+84)\d{9,10}$/;
 
     if (!formData.email.trim() || !emailRegex.test(formData.email)) {
-      return "Email không hợp lệ.";
+      return t("admin.emailInvalid");
     }
 
     if (!passwordRegex.test(formData.password)) {
-      return "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+      return t("admin.passwordRequirement");
     }
 
     if (!formData.name.trim()) {
-      return "Họ và tên không được để trống.";
+      return t("admin.nameRequired");
     }
 
     if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      return "Số điện thoại không hợp lệ.";
+      return t("admin.phoneInvalid");
     }
 
     if (formData.role === "1" && !formData.stationId) {
-      return "Vui lòng chọn trạm cho nhân viên Staff.";
+      return t("admin.stationRequired");
     }
 
     return null;
@@ -139,10 +139,10 @@ export function AddUser() {
 
     try {
       const response = await api.post("/api/v1/Users", payload);
-      toast.success("Thêm người dùng thành công!");
+      toast.success(t("admin.addUserSuccess"));
       setFormData(initialUserData);
     } catch (error) {
-      let errorMessage = "Đã xảy ra lỗi không xác định.";
+      let errorMessage = t("admin.errorOccurred");
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         if (status === 409)
@@ -158,14 +158,14 @@ export function AddUser() {
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
       <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl">
         <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center">
-          {"Thêm người dùng"}
+          {t("admin.addUserTitle")}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EMAIL */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email <span className="text-red-500">*</span>
+              {t("admin.email")} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -174,7 +174,7 @@ export function AddUser() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập email..."
+              placeholder={t("admin.enterEmail")}
             />
           </div>
 
@@ -184,7 +184,7 @@ export function AddUser() {
               htmlFor="password"
               className="block text-sm font-medium mb-1"
             >
-              Mật khẩu <span className="text-red-500">*</span>
+              {t("admin.password")} <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -193,14 +193,14 @@ export function AddUser() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập mật khẩu..."
+              placeholder={t("admin.enterPassword")}
             />
           </div>
 
           {/* NAME */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
-              Họ và tên <span className="text-red-500">*</span>
+              {t("admin.fullName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -209,7 +209,7 @@ export function AddUser() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập họ và tên..."
+              placeholder={t("admin.enterName")}
             />
           </div>
 
@@ -219,7 +219,7 @@ export function AddUser() {
               htmlFor="phoneNumber"
               className="block text-sm font-medium mb-1"
             >
-              Số điện thoại
+              {t("admin.phone")}
             </label>
             <input
               type="text"
@@ -227,14 +227,14 @@ export function AddUser() {
               value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập số điện thoại..."
+              placeholder={t("admin.enterPhone")}
             />
           </div>
 
           {/* ROLE */}
           <div>
             <label htmlFor="role" className="block text-sm font-medium mb-1">
-              Vai trò <span className="text-red-500">*</span>
+              {t("admin.roleLabel")} <span className="text-red-500">*</span>
             </label>
             <select
               id="role"
@@ -257,7 +257,7 @@ export function AddUser() {
                 htmlFor="stationId"
                 className="block text-sm font-medium mb-1"
               >
-                Chọn trạm <span className="text-red-500">*</span>
+                {t("admin.selectStation")} <span className="text-red-500">*</span>
               </label>
               <select
                 id="stationId"
@@ -266,7 +266,7 @@ export function AddUser() {
                 required
                 className="w-full px-4 py-2 border rounded-lg"
               >
-                <option value="">-- Chọn trạm --</option>
+                <option value="">{t("admin.selectStationPlaceholder")}</option>
                 {stations.map((station) => (
                   <option key={station.id} value={station.id}>
                     {station.name} - {station.address}
@@ -279,12 +279,12 @@ export function AddUser() {
           {/* STATUS */}
           <div>
             <label htmlFor="status" className="block text-sm font-medium mb-1">
-              Trạng thái
+              {t("admin.statusLabel")}
             </label>
             <input
               type="text"
               id="status"
-              value={formData.status === 0 ? "Hoạt động" : "Ngưng hoạt động"}
+              value={formData.status === 0 ? t("admin.activeStatus") : t("admin.inactiveStatus")}
               readOnly
               className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
@@ -300,7 +300,7 @@ export function AddUser() {
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
           >
-            {isLoading ? "Đang xử lý..." : "Thêm người dùng"}
+            {isLoading ? t("admin.processing") : t("admin.addUserTitle")}
           </button>
         </form>
       </div>

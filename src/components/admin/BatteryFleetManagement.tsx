@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { BatteryStationTable } from "./BatteryStationTable";
 import AdminPendingRequests from "./AddPendingRequest";
+import { useLanguage } from "../LanguageContext";
 
 // Màu đại diện cho từng trạng thái pin
 const STATUS_COLORS: Record<string, string> = {
@@ -26,16 +27,8 @@ const ALL_STATUSES = [
   "Maintenance",
 ];
 
-const BATTERY_STATUS_VN: Record<string, string> = {
-  Full: "Sẵn sàng",
-  Reserved: "Đặt trước",
-  InUse: "Đang sử dụng",
-  Charging: "Đang sạc",
-  Depleted: "Cạn pin",
-  Maintenance: "Bảo trì",
-};
-
 export function BatteryFleetManagement() {
+  const { t } = useLanguage();
   const [batteries, setBatteries] = useState<Battery[]>([]);
   const [loading, setLoading] = useState(true);
   const [reloadTrigger, setReloadTrigger] = useState(0);
@@ -56,6 +49,15 @@ export function BatteryFleetManagement() {
   }, [reloadTrigger]);
 
   const handleReload = () => setReloadTrigger((prev) => prev + 1);
+
+  const BATTERY_STATUS_VN: Record<string, string> = {
+    Full: t("admin.batteryStatusReady"),
+    Reserved: t("admin.batteryStatusReserved"),
+    InUse: t("admin.batteryStatusInUse"),
+    Charging: t("admin.batteryStatusCharging"),
+    Depleted: t("admin.batteryStatusDepleted"),
+    Maintenance: t("admin.batteryStatusMaintenance"),
+  };
 
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -80,7 +82,7 @@ export function BatteryFleetManagement() {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Đang tải dữ liệu pin...
+        {t("admin.loadingBatteries")}
       </div>
     );
 
@@ -91,7 +93,7 @@ export function BatteryFleetManagement() {
         <Card className="shadow-md border border-orange-200">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-orange-500">
-              🔋 Tổng quan bộ pin
+              {t("admin.batteryFleetOverview")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,7 +127,7 @@ export function BatteryFleetManagement() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
-                  Không có dữ liệu pin nào để hiển thị
+                  {t("admin.noBatteryData")}
                 </div>
               )}
             </div>
@@ -136,7 +138,7 @@ export function BatteryFleetManagement() {
         <Card className="shadow-md border border-orange-200">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-orange-500">
-              📘 Trạng thái pin chi tiết
+              {t("admin.batteryStatusDetail")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -156,7 +158,7 @@ export function BatteryFleetManagement() {
                     </span>
                   </div>
                   <span className="font-semibold text-gray-800">
-                    {item.value} pin
+                    {item.value} {t("admin.batteryUnit")}
                   </span>
                 </div>
               ))}

@@ -4,6 +4,7 @@ import { addBatteryToStation } from "@/services/admin/batteryService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 
 interface AddPinToStationProps {
   stationId: string;
@@ -18,6 +19,7 @@ export function AddPinToStation({
   onClose,
   onSuccess,
 }: AddPinToStationProps) {
+  const { t } = useLanguage();
   const [batteryModels, setBatteryModels] = useState<
     { id: string; name: string }[]
   >([]);
@@ -38,12 +40,12 @@ export function AddPinToStation({
         });
         setQuantities(initQuantities);
       } catch (error) {
-        console.error("Không thể tải danh sách mẫu pin:", error);
-        toast.error("Không thể tải danh sách mẫu pin");
+        console.error(t("admin.cannotLoadBatteryModels"), error);
+        toast.error(t("admin.cannotLoadBatteryModels"));
       }
     };
     loadModels();
-  }, []);
+  }, [t]);
 
   const handleChangeQuantity = (modelId: string, value: string) => {
     // Chỉ cho phép nhập số hoặc xóa hết
@@ -61,7 +63,7 @@ export function AddPinToStation({
       }));
 
     if (payload.length === 0) {
-      toast.warning("Vui lòng nhập số lượng cho ít nhất một loại pin");
+      toast.warning(t("admin.enterAtLeastOneBattery"));
       return;
     }
 
@@ -74,12 +76,12 @@ export function AddPinToStation({
           quantity: item.quantity,
         });
       }
-      toast.success("Thêm pin vào trạm thành công!");
+      toast.success(t("admin.addBatterySuccess"));
       onClose();
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Thêm pin thất bại");
+      toast.error(t("admin.addBatteryFailed"));
     } finally {
       setLoading(false);
     }
@@ -87,9 +89,9 @@ export function AddPinToStation({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-semibold text-center">Thêm pin vào trạm</h2>
+      <h2 className="text-xl font-semibold text-center">{t("admin.addBatteryToStation")}</h2>
       <p className="text-center font-medium">
-        Trạm: <span className="text-orange-500">{stationName}</span>
+        {t("admin.stationLabel")}: <span className="text-orange-500">{stationName}</span>
       </p>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -109,14 +111,14 @@ export function AddPinToStation({
 
       <div className="flex justify-end gap-3 pt-4">
         <Button variant="outline" onClick={onClose}>
-          Hủy
+          {t("admin.cancel")}
         </Button>
         <Button
           onClick={handleAddBatteries}
           disabled={loading}
           className="bg-orange-500 hover:bg-orange-700"
         >
-          {loading ? "Đang thêm..." : "Thêm pin"}
+          {loading ? t("admin.adding") : t("admin.addBattery")}
         </Button>
       </div>
     </div>

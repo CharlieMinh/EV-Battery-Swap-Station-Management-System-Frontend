@@ -3,6 +3,7 @@ import { Package, CheckCircle, XCircle, X, User, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BatteryRequest } from "@/services/admin/batteryService";
+import { useLanguage } from "../LanguageContext";
 
 interface GroupedRequest {
   createdAt: string;
@@ -22,6 +23,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   group,
   onClose,
 }) => {
+  const { t } = useLanguage();
   const formatDateTime = (isoString: string) => {
     const date = new Date(isoString);
     return date.toLocaleString("vi-VN", {
@@ -47,10 +49,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold text-orange-600">
-                Chi Tiết Lô Hàng
+                {t("admin.shipmentDetail")}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                Xem thông tin chi tiết lô hàng đã gửi
+                {t("admin.viewShipmentDetail")}
               </p>
             </div>
             <Button
@@ -70,7 +72,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <Card className="border border-orange-200">
             <CardHeader>
               <CardTitle className="text-orange-600">
-                Thông Tin Lô Hàng
+                {t("admin.shipmentInfo")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -78,14 +80,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Người gửi</p>
+                    <p className="text-sm text-gray-500">{t("admin.sender")}</p>
                     <p className="font-semibold">{group.adminName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Thời gian gửi</p>
+                    <p className="text-sm text-gray-500">{t("admin.sendTime")}</p>
                     <p className="font-semibold">
                       {formatDateTime(group.createdAt)}
                     </p>
@@ -94,16 +96,16 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Trạm nhận hàng</p>
+                    <p className="text-sm text-gray-500">{t("admin.receivingStation")}</p>
                     <p className="font-semibold">{group.stationName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Tổng số lượng</p>
+                    <p className="text-sm text-gray-500">{t("admin.totalQuantity")}</p>
                     <p className="font-semibold text-orange-600">
-                      {group.totalItems} pin
+                      {group.totalItems} {t("admin.batteryUnit")}
                     </p>
                   </div>
                 </div>
@@ -114,7 +116,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           {/* Chi tiết pin */}
           <Card className="border border-blue-200">
             <CardHeader>
-              <CardTitle className="text-blue-600">Chi Tiết Pin</CardTitle>
+              <CardTitle className="text-blue-600">{t("admin.batteryDetails")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -142,7 +144,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       <p className="text-2xl font-bold text-orange-600">
                         x{request.quantity}
                       </p>
-                      <p className="text-xs text-gray-500">Số lượng</p>
+                      <p className="text-xs text-gray-500">{t("admin.quantity")}</p>
                     </div>
                   </div>
                 ))}
@@ -153,7 +155,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           {/* Trạng thái xử lý */}
           <Card className="border border-green-200">
             <CardHeader>
-              <CardTitle className="text-green-600">Trạng Thái Xử Lý</CardTitle>
+              <CardTitle className="text-green-600">{t("admin.processingStatus")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -168,21 +170,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                           {request.batteryModelName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Số lượng: x{request.quantity}
+                          {t("admin.quantity")}: x{request.quantity}
                         </p>
                       </div>
                       <div>
                         {request.status === 0 ? (
                           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                            Chờ xác nhận
+                            {t("admin.pending")}
                           </span>
                         ) : request.status === 1 ? (
                           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                            Đã xác nhận
+                            {t("admin.confirmed")}
                           </span>
                         ) : (
                           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                            Đã từ chối
+                            {t("admin.rejected")}
                           </span>
                         )}
                       </div>
@@ -193,7 +195,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       <div className="grid grid-cols-2 gap-3 text-sm border-t pt-3">
                         <div>
                           <p className="text-gray-500 text-xs mb-0.5">
-                            Người xử lý
+                            {t("admin.handler")}
                           </p>
                           <p className="font-medium text-gray-900">
                             {request.handledByStaffName}
@@ -201,7 +203,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         </div>
                         <div>
                           <p className="text-gray-500 text-xs mb-0.5">
-                            Thời gian cập nhật
+                            {t("admin.updateTime")}
                           </p>
                           <p className="font-medium text-gray-900 text-xs">
                             {formatDateTime(request.updatedAt)}
@@ -214,7 +216,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     {request.staffNotes && (
                       <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
                         <p className="text-gray-500 text-xs mb-1">
-                          Ghi chú từ nhân viên:
+                          {t("admin.staffNotes")}:
                         </p>
                         <p className="text-gray-900 text-sm">
                           {request.staffNotes}
@@ -233,20 +235,20 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Đã xử lý bởi</p>
+                    <p className="text-sm text-gray-600">{t("admin.handledBy")}</p>
                     <p className="font-semibold">
-                      {group.requests[0].handledByStaffName || "N/A"}
+                      {group.requests[0].handledByStaffName || t("admin.notAvailable")}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Trạng thái lô hàng</p>
+                    <p className="text-sm text-gray-600">{t("admin.shipmentStatus")}</p>
                     {group.status === 1 ? (
                       <span className="inline-flex items-center gap-1 text-green-600 font-semibold">
-                        <CheckCircle className="w-4 h-4" /> Đã xác nhận
+                        <CheckCircle className="w-4 h-4" /> {t("admin.confirmed")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
-                        <XCircle className="w-4 h-4" /> Đã từ chối
+                        <XCircle className="w-4 h-4" /> {t("admin.rejected")}
                       </span>
                     )}
                   </div>
@@ -262,7 +264,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             onClick={onClose}
             className="w-full bg-orange-600 hover:bg-orange-700"
           >
-            Đóng
+            {t("common.close")}
           </Button>
         </div>
       </div>

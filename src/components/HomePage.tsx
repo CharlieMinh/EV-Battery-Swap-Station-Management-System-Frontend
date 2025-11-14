@@ -812,7 +812,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Testimonials Section */}
-      <section 
+      {/* <section 
         className="py-20 bg-gradient-to-b from-white via-orange-50/30 to-white relative overflow-hidden min-h-[600px]"
         ref={(el: HTMLDivElement | null) => {
           if (el) {
@@ -869,7 +869,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             </div>
           </>
         )}
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer 

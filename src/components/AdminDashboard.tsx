@@ -94,15 +94,15 @@ export function AdminDashboardPage({
     { id: "batteries", label: t("admin.batteries"), icon: Battery },
     {
       id: "subcription-plans",
-      label: "Gói pin",
+      label: t("admin.subscriptionPlans"),
       icon: DollarSign,
     },
     { id: "customers", label: t("admin.customers"), icon: Users },
     { id: "staff", label: t("admin.staff"), icon: UserCheck },
-    { id: "add-account", label: "Thêm người dùng", icon: Zap },
-    { id: "request-history", label: "Lịch sử yêu cầu", icon: Package },
-    { id: "complaint", label: "Phản hồi & khiếu nại", icon: MessageCircle },
-    { id: "profile", label: "Thông tin cá nhân", icon: UserCircle },
+    { id: "add-account", label: t("admin.addUser"), icon: Zap },
+    { id: "request-history", label: t("admin.requestHistory"), icon: Package },
+    { id: "complaint", label: t("admin.complaints"), icon: MessageCircle },
+    { id: "profile", label: t("admin.personalInfo"), icon: UserCircle },
   ];
 
   // Notification states
@@ -376,7 +376,7 @@ export function AdminDashboardPage({
                   FPTFAST
                 </span>
                 <span className="text-xs uppercase tracking-widest text-slate-500">
-                  Admin Control
+                  {t("admin.adminControl")}
                 </span>
               </div>
             </div>
@@ -414,7 +414,7 @@ export function AdminDashboardPage({
                   {user.name}
                 </p>
                 <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
-                  Admin
+                  {t("role.admin")}
                 </p>
               </div>
               <Button
@@ -439,14 +439,13 @@ export function AdminDashboardPage({
                   {activeSection === "overview" && t("admin.overview")}
                   {activeSection === "stations" && t("admin.stations")}
                   {activeSection === "batteries" && t("admin.batteries")}
-                  {activeSection === "subcription-plans" && "Gói pin"}
+                  {activeSection === "subcription-plans" && t("admin.subscriptionPlans")}
                   {activeSection === "customers" && t("admin.customers")}
                   {activeSection === "staff" && t("admin.staff")}
-                  {activeSection === "add-account" && "Thêm người dùng"}
-                  {activeSection === "request-history" &&
-                    "Lịch sử yêu cầu gửi pin"}
-                  {activeSection === "complaint" && "Phản hồi và khiếu nại"}
-                  {activeSection === "profile" && "Thông tin cá nhân"}
+                  {activeSection === "add-account" && t("admin.addUser")}
+                  {activeSection === "request-history" && t("admin.sendBatteryRequestHistory")}
+                  {activeSection === "complaint" && t("admin.complaints")}
+                  {activeSection === "profile" && t("admin.personalInfo")}
                 </h1>
               </div>
 
@@ -468,11 +467,11 @@ export function AdminDashboardPage({
 
                   <PopoverContent className="w-80 p-2">
                     <h3 className="text-sm font-semibold text-orange-600 mb-2">
-                      Thông báo
+                      {t("admin.notifications")}
                     </h3>
                     {notifications.length === 0 ? (
                       <p className="text-gray-500 text-sm">
-                        Không có thông báo nào
+                        {t("admin.noNotifications")}
                       </p>
                     ) : (
                       <div className="max-h-64 overflow-y-auto">
@@ -494,7 +493,7 @@ export function AdminDashboardPage({
                             </p>
                             {n.mergedIds && n.mergedIds.length > 1 && (
                               <p className="text-xs text-orange-600 mt-1">
-                                Gộp {n.mergedIds.length} thông báo
+                                {t("admin.mergedNotifications").replace("{count}", String(n.mergedIds.length))}
                               </p>
                             )}
                           </div>
@@ -515,15 +514,13 @@ export function AdminDashboardPage({
                 <div className="rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-amber-500 text-white p-6 md:p-8 shadow-xl flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-wider text-white/80">
-                      Bảng điều khiển admin
+                      {t("admin.dashboardTitle")}
                     </p>
                     <p className="text-3xl font-semibold mt-1">
-                      Chào {user.name} 👋
+                      {t("admin.greetingHello").replace("{name}", user.name)}
                     </p>
                     <p className="text-sm text-white/80 mt-2 max-w-xl">
-                      Theo dõi trạng thái hệ thống, hiệu suất trạm và đội ngũ
-                      trong thời gian thực. Các số liệu chính được cập nhật mỗi
-                      24 giờ.
+                      {t("admin.dashboardDesc")}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -531,14 +528,14 @@ export function AdminDashboardPage({
                       className="bg-white text-orange-600 hover:bg-white/90 shadow-lg"
                       onClick={() => setActiveSection("stations")}
                     >
-                      Xem trạm hoạt động
+                      {t("admin.viewActiveStations")}
                     </Button>
                     <Button
                       variant="outline"
                       className="text-white border-white/40 hover:bg-white/10"
                       onClick={() => setActiveSection("request-history")}
                     >
-                      Yêu cầu gần đây
+                      {t("admin.recentRequests")}
                     </Button>
                   </div>
                 </div>

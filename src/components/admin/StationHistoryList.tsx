@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Zap, Clock, DollarSign, User } from "lucide-react";
 import { fetchHistoryStationById } from "@/services/admin/stationService";
+import { useLanguage } from "../LanguageContext";
 
 export interface SwapTransaction {
   id: string;
@@ -36,6 +37,7 @@ interface StationHistoryListProps {
 export const StationHistoryList: React.FC<StationHistoryListProps> = ({
   stationId,
 }) => {
+  const { t } = useLanguage();
   const [transactions, setTransactions] = useState<SwapTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,13 +57,13 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
 
   if (loading)
     return (
-      <div className="text-center py-6 text-gray-500">Đang tải lịch sử...</div>
+      <div className="text-center py-6 text-gray-500">{t("admin.loadingHistory")}</div>
     );
 
   if (transactions.length === 0)
     return (
       <div className="text-center py-6 text-gray-400">
-        Chưa có giao dịch đổi pin nào.
+        {t("admin.noSwapTransactions")}
       </div>
     );
 
@@ -92,7 +94,7 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                       <Clock className="w-4 h-4" /> {formatTime(tx.completedAt)}
                     </p>
                     <p className="text-base font-semibold text-gray-900">
-                      {tx.vehicleLicensePlate || "Xe chưa rõ"}
+                      {tx.vehicleLicensePlate || t("admin.vehicleUnknown")}
                     </p>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <User className="w-4 h-4" /> {tx.userEmail}
@@ -100,7 +102,7 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">{tx.status}</p>
+                  <p className="text-sm text-gray-500">{tx.status || t("admin.completed")}</p>
                   <p className="text-lg font-bold text-green-600 flex items-center justify-end gap-1">
                     {formatCurrency(tx.swapFee)}
                   </p>
