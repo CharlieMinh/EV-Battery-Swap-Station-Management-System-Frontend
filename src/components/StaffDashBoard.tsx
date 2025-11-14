@@ -9,9 +9,10 @@ import {
   LogOut,
   Save,
   Bell,
-  BadgeCheck, // tab Xác nhận gói
+  BadgeCheck, // tab Xác nhận thanh toán
   Package,
-  MessageCircle, // icon cho tab Yêu cầu nhập pin
+  MessageCircle, // icon cho tab Khiếu nại
+  UserPlus, // 🔹 icon cho tab Tạo khách hàng (Driver)
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -39,6 +40,13 @@ import InventoryManagement from "./staff/InventoryManagement";
 import Revenue from "./staff/Revenue";
 import CashPaymentManagement from "./staff/CashPaymentManagement";
 import RequestBattery from "../components/staff/RequestBattery";
+import SendRequestList from "./staff/SendRequestList";
+
+// 🔹 TÁCH RIÊNG:
+// - StaffAddDriver: màn tạo khách hàng (Driver)
+// - StaffCustomerManagement: màn quản lý khách hàng của trạm
+import StaffAddDriver from "./staff/StaffAddDriver";
+import StaffCustomerManagement from "./staff/StaffCustomerManagement";
 
 import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
@@ -52,7 +60,6 @@ import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 import { toast } from "react-toastify";
-import SendRequestList from "./staff/SendRequestList";
 
 type TabKey =
   | "profile"
@@ -63,7 +70,11 @@ type TabKey =
   | "send-requests"
   | "revenue"
   | "approvals"
-  | "complaint";
+  | "complaint"
+  // 🔹 TAB TẠO KHÁCH HÀNG (Driver)
+  | "staff-add-driver"
+  // 🔹 TAB QUẢN LÝ KHÁCH HÀNG (Driver)
+  | "staff-customers";
 
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
@@ -139,6 +150,18 @@ export default function StaffDashboard({
     () => [
       { key: "profile", label: "Thông tin cá nhân", icon: UserCircle },
       { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
+      // 🔹 TAB TẠO KHÁCH HÀNG (Driver) RIÊNG
+      {
+        key: "staff-add-driver",
+        label: "Thêm khách hàng",
+        icon: UserPlus,
+      },
+      // 🔹 TAB QUẢN LÝ KHÁCH HÀNG (Driver)
+      {
+        key: "staff-customers",
+        label: "Danh sách khách hàng",
+        icon: ClipboardList,
+      },
       // { key: "transactions", label: "Giao dịch", icon: CreditCard }, // Tạm thời ẩn
       { key: "inventory", label: "Kho pin", icon: Warehouse },
       { key: "requests", label: "Yêu cầu nhận pin", icon: Package },
@@ -302,7 +325,6 @@ export default function StaffDashboard({
                 </h1>
               </div>
 
-              {/* ✅ Sửa lỗi câu className ở đây */}
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
                 <Popover open={notifOpen} onOpenChange={setNotifOpen}>
@@ -419,6 +441,10 @@ export default function StaffDashboard({
                 {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
                 {active === "complaint" && <ComplaintsOfCustomer />}
+                {/* 🔹 TAB TẠO KHÁCH HÀNG (Driver) RIÊNG */}
+                {active === "staff-add-driver" && <StaffAddDriver />}
+                {/* 🔹 TAB QUẢN LÝ KHÁCH HÀNG (Driver) */}
+                {active === "staff-customers" && <StaffCustomerManagement />}
               </>
             )}
           </main>
