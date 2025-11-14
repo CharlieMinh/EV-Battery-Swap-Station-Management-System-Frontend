@@ -88,6 +88,23 @@ export function AdminDashboardPage({
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("overview");
 
+  const navigationItems = [
+    { id: "overview", label: t("admin.overview"), icon: BarChart3 },
+    { id: "stations", label: t("admin.stations"), icon: MapPin },
+    { id: "batteries", label: t("admin.batteries"), icon: Battery },
+    {
+      id: "subcription-plans",
+      label: "Gói pin",
+      icon: DollarSign,
+    },
+    { id: "customers", label: t("admin.customers"), icon: Users },
+    { id: "staff", label: t("admin.staff"), icon: UserCheck },
+    { id: "add-account", label: "Thêm người dùng", icon: Zap },
+    { id: "request-history", label: "Lịch sử yêu cầu", icon: Package },
+    { id: "complaint", label: "Phản hồi & khiếu nại", icon: MessageCircle },
+    { id: "profile", label: "Thông tin cá nhân", icon: UserCircle },
+  ];
+
   // Notification states
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -361,148 +378,67 @@ export function AdminDashboardPage({
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gray-50 flex w-full">
-        <Sidebar>
-          <SidebarHeader>
-            <div className="bg-orange-500 flex items-center p-2">
-              <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
+      <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
+        <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl">
+          <SidebarHeader className="p-5 border-b border-slate-200">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
                   src="src/assets/logoEV2.png"
                   alt="FPTFAST Logo"
-                  className="w-10 h-9 rounded-lg"
+                  className="w-11 h-10 rounded-xl"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg text-white font-semibold">
-                  F P T F A S T
+                <span className="text-lg font-semibold tracking-wide">
+                  FPTFAST
                 </span>
-                <span className="text-sm font-medium text-gray-100">Admin</span>
+                <span className="text-xs uppercase tracking-widest text-slate-500">
+                  Admin Control
+                </span>
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
+          <SidebarContent className="px-4 py-4">
+            <SidebarGroup className="p-0">
               <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("overview")}
-                      isActive={activeSection === "overview"}
-                      className="h-[50px]"
-                    >
-                      <BarChart3 className="w-4 h-4" />
-                      <span>{t("admin.overview")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("stations")}
-                      isActive={activeSection === "stations"}
-                      className="h-[50px]"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      <span>{t("admin.stations")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("batteries")}
-                      isActive={activeSection === "batteries"}
-                      className="h-[50px]"
-                    >
-                      <Battery className="w-4 h-4" />
-                      <span>{t("admin.batteries")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("subcription-plans")}
-                      isActive={activeSection === "subcription-plans"}
-                      className="h-[50px]"
-                    >
-                      <Battery className="w-4 h-4" />
-                      <span>Gói pin</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("customers")}
-                      isActive={activeSection === "customers"}
-                      className="h-[50px]"
-                    >
-                      <Users className="w-4 h-4" />
-                      <span>{t("admin.customers")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("staff")}
-                      isActive={activeSection === "staff"}
-                      className="h-[50px]"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                      <span>{t("admin.staff")}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("add-account")}
-                      isActive={activeSection === "add-account"}
-                      className="h-[50px]"
-                    >
-                      <Zap className="w-4 h-4" />
-                      <span>Thêm người dùng</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("request-history")}
-                      isActive={activeSection === "request-history"}
-                      className="h-[50px]"
-                    >
-                      <Package className="w-4 h-4" />
-                      <span>Lịch sử yêu cầu</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("complaint")}
-                      isActive={activeSection === "complaint"}
-                      className="h-[50px]"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>Phản hồi và khiếu nại</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setActiveSection("profile")}
-                      isActive={activeSection === "profile"}
-                      className="h-[50px]"
-                    >
-                      <UserCircle className="w-4 h-4" />
-                      <span>Thông tin cá nhân</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                <SidebarMenu className="gap-2">
+                  {navigationItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          onClick={() => setActiveSection(item.id)}
+                          isActive={activeSection === item.id}
+                          className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
+          <SidebarFooter className="px-4 pb-4">
+            <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-sm font-semibold truncate text-slate-900">
+                  {user.name}
+                </p>
+                <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
+                  Admin
+                </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="shrink-0"
+                className="shrink-0 border-slate-200 text-slate-700 hover:bg-slate-100"
                 onClick={onLogout}
               >
                 <LogOut className="w-4 h-4" />
@@ -511,10 +447,10 @@ export function AdminDashboardPage({
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset>
+        <SidebarInset className="bg-transparent">
           {/* Header */}
-          <header className="bg-gray-50 border-b border-gray-200 sticky top-0 z-40">
-            <div className="flex justify-between items-center h-16 px-4">
+          <header className="bg-white/80 backdrop-blur-xl border-b border-orange-100 sticky top-0 z-40 shadow-sm">
+            <div className="flex justify-between items-center h-16 px-6">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
@@ -592,71 +528,111 @@ export function AdminDashboardPage({
           {/* System Overview KPIs */}
           {/* System Overview KPIs — chỉ hiển thị khi KHÔNG phải trang UserProfile */}
           {activeSection !== "profile" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 m-6 mb-0">
-              <Card className="border border-orange-200 rounded-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-orange-600">
-                        {t("admin.totalRevenue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {totalRevenue?.toLocaleString("vi-VN")}₫
-                      </p>
-                    </div>
-                    <span className="text-green-500 font-semibold text-lg">
-                      VND
-                    </span>
+            <>
+              <section className="mx-6 mt-6">
+                <div className="rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-amber-500 text-white p-6 md:p-8 shadow-xl flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm uppercase tracking-wider text-white/80">
+                      Bảng điều khiển admin
+                    </p>
+                    <p className="text-3xl font-semibold mt-1">
+                      Chào {user.name} 👋
+                    </p>
+                    <p className="text-sm text-white/80 mt-2 max-w-xl">
+                      Theo dõi trạng thái hệ thống, hiệu suất trạm và đội ngũ
+                      trong thời gian thực. Các số liệu chính được cập nhật mỗi
+                      24 giờ.
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      className="bg-white text-orange-600 hover:bg-white/90 shadow-lg"
+                      onClick={() => setActiveSection("stations")}
+                    >
+                      Xem trạm hoạt động
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="text-white border-white/40 hover:bg-white/10"
+                      onClick={() => setActiveSection("request-history")}
+                    >
+                      Yêu cầu gần đây
+                    </Button>
+                  </div>
+                </div>
+              </section>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 m-6 mt-4">
+                <Card className="border-0 shadow-md rounded-2xl bg-white/90">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-orange-100 rounded-2xl text-orange-600">
+                        <DollarSign className="w-5 h-5" />
+                      </div>
+                      <Badge className="bg-emerald-100 text-emerald-600">
+                        VND
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {t("admin.totalRevenue")}
+                    </p>
+                    <p className="text-3xl font-semibold mt-2">
+                      {totalRevenue?.toLocaleString("vi-VN")}₫
+                    </p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-6 border border-orange-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-orange-600">
+                <Card className="border-0 shadow-md rounded-2xl bg-white/90">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-sky-100 rounded-2xl text-sky-600">
+                        <Battery className="w-5 h-5" />
+                      </div>
+                      <Badge className="bg-sky-50 text-sky-600">
                         {t("admin.totalSwaps")}
-                      </p>
-                      <p className="text-2xl font-bold">{totalSwaps}</p>
+                      </Badge>
                     </div>
-                    <Battery className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-3xl font-semibold">
+                      {totalSwaps ?? "..."}
+                    </p>
 
-              <Card>
-                <CardContent className="p-6 border border-orange-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-orange-600">
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-md rounded-2xl bg-white/90">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-purple-100 rounded-2xl text-purple-600">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <Badge className="bg-purple-50 text-purple-600">
                         {t("admin.activeStations")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {activeStations !== null ? activeStations : "…"}
-                      </p>
+                      </Badge>
                     </div>
-                    <MapPin className="w-8 h-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-3xl font-semibold">
+                      {activeStations !== null ? activeStations : "…"}
+                    </p>
 
-              <Card>
-                <CardContent className="p-6 border border-orange-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-orange-600">
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-md rounded-2xl bg-white/90">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-rose-100 rounded-2xl text-rose-600">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <Badge className="bg-rose-50 text-rose-600">
                         {t("admin.customers")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {totalCustomers !== null ? totalCustomers : "..."}
-                      </p>
+                      </Badge>
                     </div>
-                    <Users className="w-8 h-8 text-orange-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    <p className="text-3xl font-semibold">
+                      {totalCustomers !== null ? totalCustomers : "..."}
+                    </p>
+
+                  </CardContent>
+                </Card>
+              </div>
+            </>
           )}
 
           {/* Main Content */}
