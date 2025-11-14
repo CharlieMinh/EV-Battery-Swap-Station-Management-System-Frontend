@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -38,10 +38,11 @@ import {
   Pen,
   CreditCardIcon,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
-import MapView from "./map/MapView";
+import MapPreview from "./map/MapPreview";
 import { fetchStations, Station } from "../services/admin/stationService";
 import type { User } from "../App";
 import { get } from "http";
@@ -70,6 +71,10 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   const location = useGeoLocation();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   const [stations, setStations] = useState<Station[] | null>(null);
+  const [isVisible, setIsVisible] = useState<Record<string, boolean>>({});
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const features = [
     {
@@ -169,6 +174,54 @@ export function Homepage({ user, onLogout }: HomepageProps) {
     getAllStations();
   }, []);
 
+  // Scroll handler for navbar animation with throttling
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          setIsScrolled(scrollPosition > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible((prev) => ({
+              ...prev,
+              [entry.target.id]: true,
+            }));
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    Object.values(sectionRefs.current).forEach((ref) => {
+      if (ref && observerRef.current) {
+        observerRef.current.observe(ref);
+      }
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
   const handleFineNearestStation = () => {
     if (location.loaded && !location.error) {
       const userLocation = {
@@ -206,61 +259,160 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   }
 
   return (
-    <div className="h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className="bg-orange-500 border-b border-gray-200 fixed top-0 z-50 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              {/* Thay thế logo cũ bằng logo mới */}
-              <img
-                src="src/assets/logoEV2.png "
-                alt="FPTFAST Logo"
-                className="w-18 h-16 mr-3"
-              />
-              <span className="text-3xl font-bold text-white">
-                F P T F A S T
+      <nav 
+        className={`fixed top-0 z-50 ${
+          isScrolled 
+            ? "bg-white/90 backdrop-blur-md shadow-xl rounded-2xl" 
+            : "bg-transparent backdrop-blur-sm rounded-none"
+        }`}
+        style={{
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '100%',
+          maxWidth: isScrolled ? '1280px' : '100%',
+          paddingTop: isScrolled ? '0.5rem' : '1rem',
+          paddingBottom: isScrolled ? '0.5rem' : '1rem',
+          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'max-width, padding, background-color, border-radius'
+        }}
+      >
+        <div className={`mx-auto transition-all duration-300 ease-out ${
+          isScrolled ? "px-6 max-w-7xl w-full" : "w-full px-4 sm:px-6 lg:px-8"
+        }`}>
+          <div 
+            className="flex items-center justify-between w-full"
+            style={{
+              height: isScrolled ? '3.5rem' : '4rem',
+              transition: 'height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            <div className="flex items-center group cursor-pointer flex-shrink-0">
+              {/* Logo bo tròn, giữ độ nét */}
+              <div
+                className="rounded-full border border-orange-100 shadow-lg group-hover:shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 overflow-hidden"
+                style={{
+                  width: isScrolled ? '3rem' : '4rem',
+                  height: isScrolled ? '3rem' : '4rem',
+                  marginRight: '0.75rem',
+                  transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <img
+                  src="src/assets/logoEV2.png "
+                  alt="FPTFAST Logo"
+                  className="w-full h-full"
+                  style={{ objectFit: 'contain', imageRendering: 'auto' }}
+                />
+              </div>
+              <span 
+                className="font-bold tracking-wide ease-out group-hover:text-orange-700 whitespace-nowrap text-orange-600"
+                style={{
+                  fontSize: isScrolled ? '1.25rem' : '1.875rem',
+                  lineHeight: isScrolled ? '1.75rem' : '2.25rem',
+                  transition: 'font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1), line-height 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                  willChange: 'font-size, line-height'
+                }}
+              >
+                {isScrolled ? "FPTFAST" : "F P T F A S T"}
               </span>
             </div>
 
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center flex-1 justify-center">
               <a
                 href="#features"
-                className="text-white hover:text-yellow-300 transition duration-300"
+                className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
+                style={{
+                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
+                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
+                  fontSize: isScrolled ? '0.95rem' : '1rem',
+                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
                 {t("nav.features")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#pricing"
-                className="text-white hover:text-yellow-300 transition duration-300"
+                className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
+                style={{
+                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
+                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
+                  fontSize: isScrolled ? '0.95rem' : '1rem',
+                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
                 {t("nav.pricing")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#stations"
-                className="text-white hover:text-yellow-300 transition duration-300"
+                className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
+                style={{
+                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
+                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
+                  fontSize: isScrolled ? '0.95rem' : '1rem',
+                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
                 {t("nav.stations")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#contact"
-                className="text-white hover:text-yellow-300 transition duration-300"
+                className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
+                style={{
+                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
+                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
+                  fontSize: isScrolled ? '0.95rem' : '1rem',
+                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
                 {t("nav.contact")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center flex-shrink-0">
               {!user ? (
                 <>
-                  <LanguageSwitcher />
-                  <Button variant="outline" onClick={() => navigate("/login")}>
+                  <div>
+                    <LanguageSwitcher />
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate("/login")}
+                    className="border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 transition-colors duration-300 whitespace-nowrap"
+                    style={{
+                      marginLeft: isScrolled ? '0.5rem' : '2rem',
+                      padding: '0.5rem 1rem',
+                      height: isScrolled ? '2.25rem' : '2.5rem',
+                      fontSize: isScrolled ? '0.9375rem' : '1rem',
+                      transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  >
                     {t("nav.signIn")}
                   </Button>
                   <Button
                     onClick={() => navigate("/register")}
-                    className="bg-black text-white hover:bg-gray-800 flex items-center space-x-2"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-colors duration-300 transform hover:scale-105 whitespace-nowrap"
+                    style={{
+                      marginLeft: isScrolled ? '0.5rem' : '1.5rem',
+                      padding: '0.5rem 1rem',
+                      height: isScrolled ? '2.25rem' : '2.5rem',
+                      fontSize: isScrolled ? '0.9375rem' : '1rem',
+                      transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
                   >
                     {t("nav.getStarted")}
+                    <Sparkles 
+                      className="animate-pulse"
+                      style={{
+                        width: isScrolled ? '0.875rem' : '1rem',
+                        height: isScrolled ? '0.875rem' : '1rem',
+                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                    />
                   </Button>
                 </>
               ) : (
@@ -268,16 +420,36 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="relative h-10 w-auto justify-start text-white hover:bg-orange-600 hover:text-white px-3"
+                      className="relative justify-start text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-all duration-300 will-change-transform"
+                      style={{
+                        height: isScrolled ? '2rem' : '2.5rem',
+                        padding: isScrolled ? '0.5rem' : '0.75rem'
+                      }}
                     >
-                      <Avatar className="h-8 w-8 mr-2">
+                      <Avatar 
+                        className="mr-2 transition-all duration-500 ease-out will-change-transform"
+                        style={{
+                          width: isScrolled ? '1.5rem' : '2rem',
+                          height: isScrolled ? '1.5rem' : '2rem'
+                        }}
+                      >
                         <AvatarImage
                           src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`}
                           alt={user.name}
                         />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback style={{ fontSize: isScrolled ? '0.75rem' : '1rem' }}>
+                          {user.name.charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{user.name}</span>
+                      <span 
+                        className="font-medium whitespace-nowrap transition-all duration-500 ease-out"
+                        style={{
+                          fontSize: isScrolled ? '0.875rem' : '1rem',
+                          display: isScrolled ? 'none' : 'inline'
+                        }}
+                      >
+                        {user.name}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -349,17 +521,37 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-100 to-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <Badge className="mb-4 bg-orange-100 text-orange-800">
+      <section className="relative bg-gradient-to-br from-orange-50 via-white to-orange-50 min-h-screen flex items-center pt-32 pb-20 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-orange-100/40 to-transparent rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-24 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-[1600px] mx-auto min-h-[70vh]">
+            <div 
+              className={`space-y-6 transition-all duration-1000 ${
+                isVisible["hero-text"] 
+                  ? "opacity-100 translate-y-0" 
+                  : "opacity-0 translate-y-10"
+              }`}
+              ref={(el: HTMLDivElement | null) => {
+                if (el) {
+                  el.id = "hero-text";
+                  sectionRefs.current["hero-text"] = el;
+                }
+              }}
+            >
+              <Badge className="mb-4 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-800 border-orange-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+                <Sparkles className="w-4 h-4 animate-spin-slow" />
                 {t("home.hero.badge")}
               </Badge>
-              <h1 className="text-4xl md:text-6xl text-orange-900 mb-6">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-orange-600 via-orange-700 to-orange-600 bg-clip-text text-transparent mb-6 leading-tight animate-gradient">
                 {t("home.hero.title")}
               </h1>
-              <p className="text-xl text-orange-800 mb-8">
+              <p className="text-xl md:text-2xl text-gray-700 mb-8 leading-relaxed">
                 {t("home.hero.subtitle")}
               </p>
 
@@ -368,53 +560,75 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   size="lg"
                   onClick={handleFineNearestStation}
                   disabled={isButtonDisabled}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 group"
                 >
                   {t("home.hero.findStation")}
-                  <MapPin className="w-4 h-4 ml-2" />
+                  <MapPin className="w-5 h-5 ml-2 group-hover:animate-bounce" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
                   onClick={() => handleNavigateToDashboard("map")}
+                  className="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
                 >
-                  <Play className="w-4 h-4 mr-2" />
+                  <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   {"Đặt lịch"}
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 text-center">
-                <div>
-                  <div className="text-2xl text-orange-900">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-orange-100">
+                  <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent mb-2">
                     {t("home.hero.avgSwapTime")}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-600 font-medium">
                     {t("home.hero.avgSwapTimeLabel")}
                   </div>
                 </div>
-                <div>
-                  <div className="text-2xl text-orange-900">
+                <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-orange-100">
+                  <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent mb-2">
                     {t("home.hero.availability")}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-600 font-medium">
                     {t("home.hero.availabilityLabel")}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1751355356724-7df0dda28b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMHZlaGljbGUlMjBjaGFyZ2luZyUyMHN0YXRpb24lMjBtb2Rlcm58ZW58MXx8fHwxNzU3NTE1OTMzfDA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Modern EV charging station"
-                className="w-full h-96 object-cover rounded-lg shadow-2xl"
-              />
-              <div className="absolute -bottom-4 -left-4 bg-white p-4 rounded-lg shadow-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-gray-600">
-                    12 {t("home.hero.batteriesAvailable")}
-                  </span>
+            <div 
+              className={`relative transition-all duration-1000 delay-300 ${
+                isVisible["hero-image"] 
+                  ? "opacity-100 translate-x-0" 
+                  : "opacity-0 translate-x-10"
+              }`}
+              ref={(el: HTMLDivElement | null) => {
+                if (el) {
+                  el.id = "hero-image";
+                  sectionRefs.current["hero-image"] = el;
+                }
+              }}
+            >
+              <div className="relative group">
+                <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1751355356724-7df0dda28b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMHZlaGljbGUlMjBjaGFyZ2luZyUyMHN0YXRpb24lMjBtb2Rlcm58ZW58MXx8fHwxNzU3NTE1OTMzfDA&ixlib=rb-4.1.0&q=80&w=1080"
+                  alt="Modern EV charging station"
+                  className="relative w-full h-96 md:h-[500px] object-cover rounded-2xl shadow-2xl transform transition-all duration-500 group-hover:scale-105"
+                />
+                <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-2xl border border-orange-100 transform transition-all duration-300 hover:scale-110 hover:shadow-3xl">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-4 h-4 bg-orange-500 rounded-full animate-ping absolute"></div>
+                      <div className="w-4 h-4 bg-orange-500 rounded-full relative"></div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">12</div>
+                      <span className="text-sm text-gray-600 font-medium">
+                        {t("home.hero.batteriesAvailable")}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -439,236 +653,325 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section> */}
 
       {/* Features Section */}
-      <section id="features" className="py-15 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
-              {t("features.title")}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("features.subtitle")}
-            </p>
-          </div>
+      <section 
+        id="features" 
+        className="py-20 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden min-h-[600px]"
+        ref={(el: HTMLDivElement | null) => {
+          if (el) {
+            el.id = "features";
+            sectionRefs.current["features"] = el;
+          }
+        }}
+      >
+        {isVisible["features"] && (
+          <>
+            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <div className="text-center mb-16 animate-fade-up">
+                <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600">
+                  Tại sao lại chọn FFAST
+                </h2>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  {t("features.subtitle")}
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center">
-                <CardHeader>
-                  <div className="mx-auto mb-4">{feature.icon}</div>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+              <div className="relative feature-energy-line">
+                <span className="energy-wave" aria-hidden="true"></span>
+                <span className="energy-node" aria-hidden="true"></span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 py-6 overflow-visible">
+                  {features.map((feature, index) => (
+                    <Card 
+                      key={index} 
+                      className="feature-card feature-card-animate text-center group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-orange-200 bg-white/80 backdrop-blur-sm h-full min-h-[280px]"
+                      style={{
+                        "--feature-fade-delay": `${index * 0.12}s`,
+                        "--feature-pulse-delay": `${index * 0.25}s`
+                      } as React.CSSProperties}
+                    >
+                      <CardHeader>
+                        <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl w-20 h-20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                          {feature.icon}
+                        </div>
+                        <CardTitle className="text-xl font-bold group-hover:text-orange-600 transition-colors duration-300">
+                          {feature.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors duration-300">
+                          {feature.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Map Preview Section */}
-      <section id="stations" className="py-15 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
-              {t("stations.title")}
-            </h2>
-            <p className="text-xl text-gray-600">{t("stations.subtitle")}</p>
-          </div>
+      <section 
+        id="stations" 
+        className="py-20 bg-gradient-to-b from-gray-50 to-white relative min-h-[600px]"
+        ref={(el: HTMLDivElement | null) => {
+          if (el) {
+            el.id = "stations";
+            sectionRefs.current["stations"] = el;
+          }
+        }}
+      >
+        {isVisible["stations"] && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16 animate-fade-up">
+              <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600 mb-4">
+                {t("stations.title")}
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">{t("stations.subtitle")}</p>
+            </div>
 
-          <Card>
-            <CardContent className="p-8">
-              <div className="bg-orange-50 rounded-lg h-96 flex items-center justify-center mb-6">
-                <div className="text-center">
-                  <MapView />
-
+            <Card className="border-2 border-orange-100 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.01] bg-white/90 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.15s" }}>
+              <CardContent className="p-8">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl h-96 flex items-center justify-center mb-6 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+                  <div className="relative z-10 w-full h-full flex flex-col items-center justify-center px-4">
+                    <MapPreview />
+                  </div>
+                </div>
+                <div className="flex justify-center mb-6">
                   <Button
                     onClick={handleFineNearestStation}
                     disabled={isButtonDisabled}
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 px-6 py-3 rounded-full"
                   >
-                    {t("stations.viewFullMap")}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {t("home.hero.findStation")}
+                    <MapPin className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <CheckCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                  <h4 className="text-gray-900 mb-1">
-                    {t("stations.downtownHub")}
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    12 {t("home.hero.batteriesAvailable")}
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { name: t("stations.downtownHub"), batteries: "12", color: "orange", status: "available" },
+                    { name: t("stations.mallStation"), batteries: "8", color: "orange", status: "available" },
+                    { name: t("stations.airportTerminal"), batteries: null, color: "yellow", status: "maintenance" },
+                  ].map((station, index) => (
+                    <div 
+                      key={index}
+                      className="text-center p-6 rounded-xl bg-gradient-to-br from-white to-gray-50 hover:from-orange-50 hover:to-orange-100 border-2 border-transparent hover:border-orange-200 transition-all duration-300 transform hover:scale-105 hover:shadow-lg group animate-fade-up"
+                      style={{ animationDelay: `${0.3 + index * 0.15}s` }}
+                    >
+                      <div className="relative inline-block mb-3">
+                        <CheckCircle className={`w-10 h-10 text-${station.color}-500 mx-auto group-hover:scale-110 transition-transform duration-300`} />
+                        <div className={`absolute inset-0 w-10 h-10 text-${station.color}-500 rounded-full animate-ping opacity-20`}></div>
+                      </div>
+                      <h4 className="text-gray-900 mb-2 font-bold text-lg group-hover:text-orange-600 transition-colors">
+                        {station.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 font-medium">
+                        {station.batteries 
+                          ? `${station.batteries} ${t("home.hero.batteriesAvailable")}`
+                          : t("stations.maintenanceMode")
+                        }
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <div className="text-center">
-                  <CheckCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                  <h4 className="text-gray-900 mb-1">
-                    {t("stations.mallStation")}
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    8 {t("home.hero.batteriesAvailable")}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <CheckCircle className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                  <h4 className="text-gray-900 mb-1">
-                    {t("stations.airportTerminal")}
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    {t("stations.maintenanceMode")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </section>
 
       {/* Pricing Section */}
-      <PricingSection></PricingSection>
+      <section 
+        id="pricing" 
+        className="py-20 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden"
+        ref={(el: HTMLDivElement | null) => {
+          if (el) {
+            el.id = "pricing";
+            sectionRefs.current["pricing"] = el;
+          }
+        }}
+      >
+        {isVisible["pricing"] && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16 animate-fade-up">
+              <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600 mb-4">
+                {t("pricing.title")}
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                {t("pricing.subtitle")}
+              </p>
+            </div>
+            <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+              <PricingSection />
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Testimonials Section */}
-      <section className="py-15 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl text-gray-900 mb-4">
-              {t("testimonials.title")}
-            </h2>
-            <p className="text-xl text-gray-600">
-              {t("testimonials.subtitle")}
-            </p>
-          </div>
+      <section 
+        className="py-20 bg-gradient-to-b from-white via-orange-50/30 to-white relative overflow-hidden min-h-[600px]"
+        ref={(el: HTMLDivElement | null) => {
+          if (el) {
+            el.id = "testimonials";
+            sectionRefs.current["testimonials"] = el;
+          }
+        }}
+      >
+        {isVisible["testimonials"] && (
+          <>
+            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <div className="text-center mb-16 animate-fade-up">
+                <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600 mb-4">
+                  {t("testimonials.title")}
+                </h2>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                  {t("testimonials.subtitle")}
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <div className="flex items-center space-x-1 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                      />
-                    ))}
-                  </div>
-                  <CardTitle>{testimonial.name}</CardTitle>
-                  <CardDescription>{testimonial.role}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">"{testimonial.comment}"</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {testimonials.map((testimonial, index) => (
+                  <Card 
+                    key={index}
+                    className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-orange-200 bg-white/90 backdrop-blur-sm animate-fade-up"
+                    style={{ animationDelay: `${index * 180}ms` }}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center space-x-1 mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-5 h-5 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform duration-300"
+                            style={{ transitionDelay: `${i * 50}ms` }}
+                          />
+                        ))}
+                      </div>
+                      <CardTitle className="text-xl font-bold group-hover:text-orange-600 transition-colors">
+                        {testimonial.name}
+                      </CardTitle>
+                      <CardDescription className="text-base font-medium">
+                        {testimonial.role}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 leading-relaxed italic text-lg group-hover:text-gray-800 transition-colors">
+                        "{testimonial.comment}"
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Footer */}
-      <footer id="contact" className="bg-orange-500 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="">
-                  <img
-                    src="src/assets/logoEV2.png "
-                    alt="FPTFAST Logo"
-                    className="w-18 h-16 mr-3"
-                  />
+      <footer 
+        id="contact" 
+        className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white py-16 relative overflow-hidden min-h-[400px]"
+        ref={(el: HTMLElement | null) => {
+          if (el) {
+            el.id = "contact";
+            sectionRefs.current["contact"] = el as HTMLDivElement;
+          }
+        }}
+      >
+        {isVisible["contact"] && (
+          <>
+            <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="animate-fade-up">
+                  <div className="flex items-center mb-4 group">
+                    <div
+                      className="rounded-full border border-white/50 shadow-xl mr-3 transition-all duration-500 group-hover:scale-105 group-hover:rotate-3 overflow-hidden"
+                      style={{ width: "4.25rem", height: "4.25rem" }}
+                    >
+                      <img
+                        src="src/assets/logoEV2.png "
+                        alt="FPTFAST Logo"
+                        className="w-full h-full"
+                        style={{ objectFit: "contain", imageRendering: "auto" }}
+                      />
+                    </div>
+                    <span className="text-3xl font-bold text-white group-hover:text-yellow-200 transition-colors">
+                      F P T F A S T
+                    </span>
+                  </div>
+                  <p className="text-orange-50 mb-4 leading-relaxed">{t("footer.description")}</p>
                 </div>
-                <span className="text-3xl font-bold text-white">
-                  F P T F A S T
-                </span>
+
+                <div className="animate-fade-up" style={{ animationDelay: "0.15s" }}>
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.services")}</h4>
+                  <ul className="space-y-3 text-orange-50">
+                    {[
+                      t("footer.batterySwap"),
+                      t("footer.findStations"),
+                      t("footer.subscriptionPlans"),
+                      t("footer.enterpriseSolutions"),
+                    ].map((item, index) => (
+                      <li key={index}>
+                        <a 
+                          href="#" 
+                          className="hover:text-yellow-200 transition-colors duration-300 flex items-center group"
+                        >
+                          <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                          <span className="group-hover:translate-x-2 transition-transform duration-300">{item}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="animate-fade-up" style={{ animationDelay: "0.3s" }}>
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.support")}</h4>
+                  <ul className="space-y-3 text-orange-50">
+                    {[
+                      t("footer.helpCenter"),
+                      t("footer.faqs"),
+                      t("footer.contactSupport"),
+                      t("footer.roadsideAssistance"),
+                    ].map((item, index) => (
+                      <li key={index}>
+                        <a 
+                          href="#" 
+                          className="hover:text-yellow-200 transition-colors duration-300 flex items-center group"
+                        >
+                          <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                          <span className="group-hover:translate-x-2 transition-transform duration-300">{item}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="animate-fade-up" style={{ animationDelay: "0.45s" }}>
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.contact")}</h4>
+                  <div className="space-y-4 text-orange-50">
+                    <div className="flex items-center group hover:text-yellow-200 transition-colors duration-300">
+                      <div className="p-2 bg-white/20 rounded-lg mr-3 group-hover:bg-white/30 transition-colors">
+                        <Phone className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium">038626028</span>
+                    </div>
+                    <div className="flex items-center group hover:text-yellow-200 transition-colors duration-300">
+                      <div className="p-2 bg-white/20 rounded-lg mr-3 group-hover:bg-white/30 transition-colors">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium">FPTFAST@fpt.edu.vn</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-white-400 mb-4">{t("footer.description")}</p>
-              {/* <div className="flex space-x-4">
-                <Facebook className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-                <Twitter className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-                <Instagram className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-              </div> */}
             </div>
-
-            <div>
-              <h4 className="text-lg mb-4">{t("footer.services")}</h4>
-              <ul className="space-y-2 text-white-400">
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.batterySwap")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.findStations")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.subscriptionPlans")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.enterpriseSolutions")}
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg mb-4">{t("footer.support")}</h4>
-              <ul className="space-y-2 text-white-400">
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.helpCenter")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.faqs")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.contactSupport")}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    {t("footer.roadsideAssistance")}
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg mb-4">{t("footer.contact")}</h4>
-              <div className="space-y-2 text-white-400">
-                <div className="flex items-center">
-                  <Phone className="w-4 h-4 mr-2" />
-                  <span>038626028</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
-                  <span>FPTFAST@fpt.edu.vn</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-white">{t("footer.copyright")}</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-white-400 hover:text-white">
-                {t("footer.privacyPolicy")}
-              </a>
-              <a href="#" className="text-white-400 hover:text-white">
-                {t("footer.termsOfService")}
-              </a>
-            </div>
-          </div> */}
-        </div>
+          </>
+        )}
       </footer>
     </div>
   );

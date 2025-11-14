@@ -104,14 +104,8 @@ export function PricingSection() {
     }, [t]); // Thêm t vào dependencies
 
     return (
-        <section id="pricing" className="py-20 bg-gray-50"> {/* Section giữ nguyên style */}
+        <section className="py-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-                        {t("pricing.title")}
-                    </h2>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">{t("pricing.subtitle")}</p>
-                </div>
 
                 {loading && (
                     <div className="flex justify-center items-center h-64">
