@@ -427,7 +427,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       className="h-[60px]"
                     >
                       <Pen className="w-4 h-4" />
-                      Đăng ký gói
+                      <span>{t("driver.subscribePlans")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -437,7 +437,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       className="h-[60px]"
                     >
                       <CreditCardIcon className="w-4 h-4" />
-                      <span>Hóa đơn chờ</span>
+                      <span>{t("driver.myPayments")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -457,7 +457,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       className="h-[60px]"
                     >
                       <Battery className="w-4 h-4" />
-                      <span>Lịch đã đặt</span>
+                      <span>{t("driver.bookings")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -477,7 +477,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                       className="h-[60px]"
                     >
                       <AlertCircle className="w-4 h-4" />
-                      <span>Khiếu nại của tôi</span>
+                      <span>{t("driver.myComplaints")}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
@@ -523,11 +523,11 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                 <h1 className="text-xl font-semibold text-orange-600">
                   {activeSection === "map" && t("driver.findStations")}
                   {activeSection === "mycar" && t("driver.mycar")}
-                  {activeSection === "my-payments" && "Hóa đơn chờ"}
-                  {activeSection === "subscription" && "Đăng ký gói"}
-                  {activeSection === "swap" && t("driver.swap")}
+                  {activeSection === "my-payments" && t("driver.myPayments")}
+                  {activeSection === "subscription" && t("driver.subscribePlans")}
+                  {activeSection === "swap" && t("driver.bookings")}
                   {activeSection === "history" && t("driver.history")}
-                  {activeSection === "complaints" && "Khiếu nại của tôi"}
+                  {activeSection === "complaints" && t("driver.myComplaints")}
                   {activeSection === "profile" && t("driver.profile")}
                   {activeSection === "support" && t("driver.support")}
                 </h1>
