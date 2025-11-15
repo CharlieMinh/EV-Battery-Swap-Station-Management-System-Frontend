@@ -1378,7 +1378,7 @@ const translations = {
     "admin.noRequestsCreated": "No battery requests created yet",
     "admin.shipmentNumber": "Shipment #",
     "admin.totalQuantity": "Total quantity:",
-    "admin.batteries": "batteries",
+    "admin.batteries": "Batteries",
     "admin.viewDetails": "View Details",
     "admin.notes": "Notes:",
     "admin.handledBy": "Handled by:",
@@ -1401,6 +1401,13 @@ const translations = {
     "admin.statusSystemError": "System Error/Warranty",
     "admin.statusUserError": "Rejected (User Error)",
     "admin.statusResolved": "Resolved",
+    "admin.Active": "Active",
+    "admin.Blocked": "Blocked",
+    "admin.totalStationBatteries": "Battery Types in System",
+    "admin.updateProfile": "Update Profile",
+    "admin.totalStationBatteriesDesc":
+      "Chart showing total number of batteries at all stations",
+    "admin.charging": "Charging",
     
     // StationManagement Component
     "admin.enterStationName": "Enter station name...",
@@ -3019,7 +3026,7 @@ const translations = {
     "admin.noRequestsCreated": "Chưa có yêu cầu gửi pin nào được tạo",
     "admin.shipmentNumber": "Lô hàng #",
     "admin.totalQuantity": "Tổng số lượng:",
-    "admin.batteries": "pin",
+    "admin.batteries": "Pin",
     "admin.viewDetails": "Xem chi tiết",
     "admin.notes": "Ghi chú:",
     "admin.handledBy": "Xử lý bởi:",
@@ -3183,6 +3190,7 @@ const translations = {
     "admin.updateProfile": "Cập nhật hồ sơ",
     "admin.totalStationBatteriesDesc":
       "Biểu đồ thể hiện tổng số lượng pin tại tất cả các trạm",
+    "admin.charging": "Đang sạc",
 
     // Admin Battery Management
     "admin.sevenDays": "7 ngày",

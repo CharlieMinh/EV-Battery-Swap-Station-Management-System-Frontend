@@ -531,8 +531,7 @@ export function AdminDashboardPage({
                       {t("admin.viewActiveStations")}
                     </Button>
                     <Button
-                      variant="outline"
-                      className="text-white border-white/40 hover:bg-white/10"
+                      className="bg-white text-orange-600 hover:bg-white/90 shadow-lg"
                       onClick={() => setActiveSection("request-history")}
                     >
                       {t("admin.recentRequests")}

@@ -768,12 +768,6 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       <h4 className="text-gray-900 mb-2 font-bold text-lg group-hover:text-orange-600 transition-colors">
                         {station.name}
                       </h4>
-                      <p className="text-sm text-gray-600 font-medium">
-                        {station.batteries 
-                          ? `${station.batteries} ${t("home.hero.batteriesAvailable")}`
-                          : t("stations.maintenanceMode")
-                        }
-                      </p>
                     </div>
                   ))}
                 </div>

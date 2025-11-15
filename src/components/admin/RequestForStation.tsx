@@ -185,7 +185,6 @@ export const RequestForStation: React.FC = () => {
     rejected: groupedRequests.filter((g) => g.status === 2).length,
   };
 
-  const { t } = useLanguage();
 
   if (loading && groupedRequests.length === 0) {
     return (
