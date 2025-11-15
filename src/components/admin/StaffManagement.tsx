@@ -75,7 +75,7 @@ export function StaffManagement() {
   const totalPages = Math.max(1, Math.ceil(filteredStaff.length / pageSize));
 
   if (isLoading) {
-    return <div className="text-center py-6">Đang tải nhân viên...</div>;
+    return <div className="text-center py-6">{t("admin.loadingStaff")}</div>;
   }
 
   return (
@@ -96,7 +96,7 @@ export function StaffManagement() {
           {showFilter && (
             <Input
               type="text"
-              placeholder="Tìm theo tên..."
+              placeholder={t("admin.searchByName")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-64"
@@ -108,12 +108,12 @@ export function StaffManagement() {
       {/* Danh sách nhân viên */}
       <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
-          <CardTitle className="text-orange-600">Danh sách nhân viên</CardTitle>
+          <CardTitle className="text-orange-600">{t("admin.staffList")}</CardTitle>
         </CardHeader>
         <CardContent>
           {paginatedStaff.length === 0 ? (
             <div className="text-center text-gray-500 py-6">
-              Không có nhân viên nào.
+              {t("admin.noStaff")}
             </div>
           ) : (
             <div className="space-y-4">
@@ -168,11 +168,11 @@ export function StaffManagement() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Trước
+              {t("admin.prev")}
             </Button>
 
             <div className="flex items-center space-x-1">
-              <span className="text-gray-700 text-sm">Trang</span>
+              <span className="text-gray-700 text-sm">{t("admin.page")}</span>
               <Input
                 type="number"
                 min={1}
@@ -196,7 +196,7 @@ export function StaffManagement() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Sau
+              {t("admin.next")}
             </Button>
           </div>
         </CardContent>

@@ -83,7 +83,7 @@ export function CustomerManagement() {
   );
 
   if (isLoading) {
-    return <div className="text-center py-6">Đang tải khách hàng...</div>;
+    return <div className="text-center py-6">{t("admin.loadingCustomers")}</div>;
   }
 
   return (
@@ -104,7 +104,7 @@ export function CustomerManagement() {
           {showFilter && (
             <Input
               type="text"
-              placeholder="Tìm theo tên..."
+              placeholder={t("admin.searchByName")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-64"
@@ -117,13 +117,13 @@ export function CustomerManagement() {
       <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
           <CardTitle className="text-orange-600">
-            Danh sách khách hàng
+            {t("admin.customerList")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {paginatedCustomers.length === 0 ? (
             <div className="text-center text-gray-500 py-6">
-              Không có khách hàng nào.
+              {t("admin.noCustomers")}
             </div>
           ) : (
             <div className="space-y-4">
@@ -149,14 +149,14 @@ export function CustomerManagement() {
                               : "bg-red-500 text-white"
                           }
                         >
-                          {customer.status === "Active" ? "Hoạt động" : "Chặn"}
+                          {customer.status === "Active" ? t("admin.activeStatus") : t("admin.blocked")}
                         </Badge>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div>
-                      <span className="text-gray-500">Tổng lần thay pin: </span>
+                      <span className="text-gray-500">{t("admin.totalSwapsLabel")}</span>
                       <span className="font-medium">
                         {customer.totalReservations.toLocaleString()}
                       </span>
@@ -185,11 +185,11 @@ export function CustomerManagement() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Trước
+              {t("admin.prev")}
             </Button>
 
             <div className="flex items-center space-x-1">
-              <span className="text-gray-700 text-sm">Trang</span>
+              <span className="text-gray-700 text-sm">{t("admin.page")}</span>
               <Input
                 type="number"
                 min={1}
@@ -213,7 +213,7 @@ export function CustomerManagement() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Sau
+              {t("admin.next")}
             </Button>
           </div>
         </CardContent>

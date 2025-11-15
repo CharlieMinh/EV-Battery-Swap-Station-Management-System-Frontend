@@ -8,6 +8,7 @@ import { fetchStaffById } from "@/services/admin/staffAdminService";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { User, Package } from "lucide-react";
 import CheckRequestFromStaff from "./CheckRequestFromStaff";
+import { useLanguage } from "../LanguageContext";
 
 interface GroupedRequest {
   createdAt: string;
@@ -18,6 +19,7 @@ interface GroupedRequest {
 }
 
 const AdminPendingRequests: React.FC = () => {
+  const { t } = useLanguage();
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupedRequest | null>(
@@ -34,7 +36,7 @@ const AdminPendingRequests: React.FC = () => {
         requests.map(async (req) => {
           if (!staffCache[req.requestedByStaffId]) {
             const staff = await fetchStaffById(req.requestedByStaffId);
-            staffCache[req.requestedByStaffId] = staff.name || "Unknown";
+            staffCache[req.requestedByStaffId] = staff.name || t("admin.unknown");
           }
         })
       );
@@ -79,7 +81,7 @@ const AdminPendingRequests: React.FC = () => {
     fetchAndGroupRequests();
   }, []);
 
-  if (loading) return <p>Đang tải...</p>;
+  if (loading) return <p>{t("admin.loading")}</p>;
 
   return (
     <div className="space-y-4">
@@ -88,14 +90,14 @@ const AdminPendingRequests: React.FC = () => {
           key={index}
           className="relative border-orange-400 bg-orange-50 shadow-sm"
         >
-          {/* Dấu chấm cảnh báo “!” nhấp nháy */}
+          {/* Dấu chấm cảnh báo "!" nhấp nháy */}
           <span className="absolute top-3 left-3 text-orange-600 text-2xl font-bold animate-pulse">
             !
           </span>
 
           <CardHeader>
             <CardTitle className="text-orange-700 font-semibold pl-8">
-              Yêu cầu #{index + 1}
+              {t("admin.request")} #{index + 1}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -116,7 +118,7 @@ const AdminPendingRequests: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-orange-500" />
                   <span className="font-medium text-orange-600">
-                    Tổng pin: {group.totalItems}
+                    {t("admin.totalBatteries")}: {group.totalItems}
                   </span>
                 </div>
               </div>
@@ -126,7 +128,7 @@ const AdminPendingRequests: React.FC = () => {
                 className="ml-auto bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                 onClick={() => setSelectedGroup(group)} // mở modal
               >
-                Xem chi tiết
+                {t("admin.viewDetails")}
               </button>
             </div>
           </CardContent>

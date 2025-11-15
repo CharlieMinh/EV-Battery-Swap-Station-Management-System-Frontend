@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { changePassword } from "@/services/admin/customerAdminService";
+import { useLanguage } from "../LanguageContext";
 
 export default function ChangePassword() {
+  const { t } = useLanguage();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -12,12 +14,12 @@ export default function ChangePassword() {
     e.preventDefault();
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("Vui lòng điền đầy đủ thông tin.");
+      toast.error(t("admin.fillAllFields"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu mới và xác nhận mật khẩu không khớp.");
+      toast.error(t("admin.passwordMismatch"));
       return;
     }
 
@@ -28,13 +30,13 @@ export default function ChangePassword() {
         newPassword,
         confirmPassword,
       });
-      toast.success("Đổi mật khẩu thành công!");
+      toast.success(t("admin.changePasswordSuccess"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
       console.error("Error changing password:", error);
-      toast.error(error.response?.data?.message || "Đổi mật khẩu thất bại.");
+      toast.error(error.response?.data?.message || t("admin.changePasswordFailed"));
     } finally {
       setLoading(false);
     }
@@ -42,11 +44,11 @@ export default function ChangePassword() {
 
   return (
     <div className="w-full max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6 border-t-4 border-orange-500">
-      <h2 className="text-2xl font-bold mb-6 text-center">Đổi mật khẩu</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">{t("admin.changePassword")}</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium mb-1">
-            Mật khẩu hiện tại
+            {t("admin.currentPassword")}
           </label>
           <input
             type="password"
@@ -58,7 +60,7 @@ export default function ChangePassword() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Mật khẩu mới</label>
+          <label className="block text-sm font-medium mb-1">{t("admin.newPassword")}</label>
           <input
             type="password"
             value={newPassword}
@@ -70,7 +72,7 @@ export default function ChangePassword() {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Xác nhận mật khẩu mới
+            {t("admin.confirmNewPassword")}
           </label>
           <input
             type="password"
@@ -86,7 +88,7 @@ export default function ChangePassword() {
           disabled={loading}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all"
         >
-          {loading ? "Đang xử lý..." : "Đổi mật khẩu"}
+          {loading ? t("admin.processing") : t("admin.changePassword")}
         </button>
       </form>
     </div>

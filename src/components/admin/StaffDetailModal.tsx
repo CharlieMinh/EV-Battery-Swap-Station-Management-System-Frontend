@@ -79,15 +79,15 @@ const getRoleNumber = (role: string | number): number => {
   }
 };
 
-const getRoleText = (role: string | number): string => {
+const getRoleText = (role: string | number, t: (key: string) => string): string => {
   const roleNum = typeof role === "number" ? role : getRoleNumber(role);
   switch (roleNum) {
     case 0:
-      return "Tài xế";
+      return t("role.driver");
     case 1:
-      return "Nhân viên";
+      return t("role.staff");
     case 2:
-      return "Quản lý";
+      return t("role.admin");
     default:
       return "N/A";
   }
@@ -166,12 +166,12 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
         profilePicture: formData.profilePicture,
-        role: getRoleText(formData.role),
+        role: getRoleText(formData.role, t),
         status: formData.status === "0" ? "Active" : "Inactive",
       });
     } catch (error) {
       console.error("Error updating staff:", error);
-      toast.error("Cập nhật thất bại!");
+      toast.error(t("admin.updateFailed"));
     } finally {
       setLoading(false);
     }
@@ -214,11 +214,11 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       case "phoneNumber":
         return formData.phoneNumber || staffDetail.phoneNumber;
       case "role":
-        return getRoleText(formData.role);
+        return getRoleText(formData.role, t);
       case "profilePicture":
         return formData.profilePicture || staffDetail.profilePicture;
       case "status":
-        return formData.status === "0" ? "Đang hoạt động" : "Ngừng hoạt động";
+        return formData.status === "0" ? t("admin.activeStatus") : t("admin.inactiveStatus");
       default:
         return "";
     }
@@ -270,7 +270,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       label: t("admin.station"),
       value:
         stations.find((s) => s.id === formData.stationId)?.name ||
-        "Chưa có trạm",
+        t("admin.noStation"),
       editable: true,
     },
     {
@@ -383,7 +383,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                   }}
                   className="border-gray-300 hover:bg-gray-100"
                 >
-                  Hủy thay đổi
+                  {t("admin.cancelChanges")}
                 </Button>
               </>
             )}
@@ -409,9 +409,9 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                       }
                       className="border rounded-md p-1 text-gray-700"
                     >
-                      <option value={"0"}>Tài xế</option>
-                      <option value={"1"}>Nhân viên</option>
-                      <option value={"2"}>Quản lý</option>
+                      <option value={"0"}>{t("role.driver")}</option>
+                      <option value={"1"}>{t("role.staff")}</option>
+                      <option value={"2"}>{t("role.admin")}</option>
                     </select>
                   ) : item.key === "status" ? (
                     <select
@@ -421,8 +421,8 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                       }
                       className="border rounded-md p-1 text-gray-700"
                     >
-                      <option value={"0"}>Đang hoạt động</option>
-                      <option value={"1"}>Ngừng hoạt động</option>
+                      <option value={"0"}>{t("admin.activeStatus")}</option>
+                      <option value={"1"}>{t("admin.inactiveStatus")}</option>
                     </select>
                   ) : item.key === "stationId" ? (
                     <select
@@ -432,7 +432,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                       }
                       className="border rounded-md p-1 text-gray-700 w-full"
                     >
-                      <option value="">Chọn trạm</option>
+                      <option value="">{t("admin.selectStationPlaceholder")}</option>
                       {stations.map((st) => (
                         <option key={st.id} value={st.id}>
                           {st.name}
@@ -503,7 +503,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
             onClick={handleClose}
             className="border-gray-300 hover:bg-gray-100"
           >
-            Đóng
+            {t("common.close")}
           </Button>
         </div>
       </div>

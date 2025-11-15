@@ -102,7 +102,7 @@ export function StationManagement() {
           {showFilter && (
             <Input
               type="text"
-              placeholder="Nhập tên trạm..."
+              placeholder={t("admin.enterStationName")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-48"
@@ -138,7 +138,7 @@ export function StationManagement() {
       <div className="grid gap-4">
         {filteredStations.length === 0 ? (
           <p className="text-gray-500 italic text-center py-6">
-            Không có trạm nào phù hợp.
+            {t("admin.noMatchingStations")}
           </p>
         ) : (
           filteredStations.map((station) => (
@@ -177,7 +177,7 @@ export function StationManagement() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Số pin: </span>
+                          <span className="text-gray-500">{t("admin.batteryCount")}</span>
                           <span className="font-medium">
                             {batteryCount[station.id] ?? 0}
                           </span>
@@ -216,11 +216,11 @@ export function StationManagement() {
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
         >
-          Trước
+          {t("admin.prev")}
         </Button>
 
         <div className="flex items-center space-x-1">
-          <span className="text-gray-700 text-sm">Trang</span>
+          <span className="text-gray-700 text-sm">{t("admin.page")}</span>
           <Input
             type="number"
             min={1}
@@ -243,7 +243,7 @@ export function StationManagement() {
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
         >
-          Sau
+          {t("admin.next")}
         </Button>
       </div>
     </div>

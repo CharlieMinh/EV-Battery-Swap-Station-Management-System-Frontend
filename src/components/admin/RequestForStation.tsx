@@ -18,6 +18,7 @@ import {
 import { RequestDetailModal } from "./RequestDetailModal";
 import { fetchStations } from "@/services/admin/stationService";
 import { Input } from "../ui/input";
+import { useLanguage } from "../LanguageContext";
 
 interface GroupedRequest {
   createdAt: string;
@@ -138,24 +139,26 @@ export const RequestForStation: React.FC = () => {
     });
   };
 
+  const { t } = useLanguage();
+
   const getStatusBadge = (status: number) => {
     switch (status) {
       case 0:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-            Chờ xác nhận
+            {t("admin.pending")}
           </span>
         );
       case 1:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            Đã xác nhận
+            {t("admin.confirmed")}
           </span>
         );
       case 2:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-            Đã từ chối
+            {t("admin.rejected")}
           </span>
         );
       default:
@@ -182,12 +185,14 @@ export const RequestForStation: React.FC = () => {
     rejected: groupedRequests.filter((g) => g.status === 2).length,
   };
 
+  const { t } = useLanguage();
+
   if (loading && groupedRequests.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("admin.loading")}</p>
         </div>
       </div>
     );
@@ -199,10 +204,10 @@ export const RequestForStation: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-orange-600">
-            Lịch Sử Gửi Pin Đến Trạm
+            {t("admin.batteryRequestHistory")}
           </h2>
           <p className="text-gray-600 mt-1">
-            Theo dõi các lô hàng pin đã gửi đến các trạm
+            {t("admin.batteryRequestHistoryDesc")}
           </p>
         </div>
         <select
@@ -210,7 +215,7 @@ export const RequestForStation: React.FC = () => {
           onChange={(e) => setSelectedStation(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
         >
-          <option value="Tất cả">Tất cả trạm</option>
+          <option value="Tất cả">{t("admin.allStations")}</option>
           {stations.map((station) => (
             <option key={station.id} value={station.name}>
               {station.name}
@@ -224,7 +229,7 @@ export const RequestForStation: React.FC = () => {
         <Card className="border-orange-200">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-500">Tổng lô hàng</p>
+              <p className="text-xs text-gray-500">{t("admin.totalShipments")}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {formatNumber(stats.total)}
               </p>
@@ -236,7 +241,7 @@ export const RequestForStation: React.FC = () => {
         <Card className="border-yellow-200">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-500">Chờ xác nhận</p>
+              <p className="text-xs text-gray-500">{t("admin.pending")}</p>
               <p className="text-2xl font-bold text-yellow-600">
                 {formatNumber(stats.pending)}
               </p>
@@ -248,7 +253,7 @@ export const RequestForStation: React.FC = () => {
         <Card className="border-green-200">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-500">Đã xác nhận</p>
+              <p className="text-xs text-gray-500">{t("admin.confirmed")}</p>
               <p className="text-2xl font-bold text-green-600">
                 {formatNumber(stats.confirmed)}
               </p>
@@ -260,7 +265,7 @@ export const RequestForStation: React.FC = () => {
         <Card className="border-red-200">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
-              <p className="text-xs text-gray-500">Đã từ chối</p>
+              <p className="text-xs text-gray-500">{t("admin.rejected")}</p>
               <p className="text-2xl font-bold text-red-600">
                 {formatNumber(stats.rejected)}
               </p>
@@ -275,8 +280,8 @@ export const RequestForStation: React.FC = () => {
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="font-medium">Chưa có lô hàng nào</p>
-            <p className="text-sm mt-1">Chưa có yêu cầu gửi pin nào được tạo</p>
+            <p className="font-medium">{t("admin.noShipments")}</p>
+            <p className="text-sm mt-1">{t("admin.noRequestsCreated")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -290,7 +295,7 @@ export const RequestForStation: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Lô hàng #
+                      {t("admin.shipmentNumber")}
                       {filteredGroups.length -
                         ((currentPage - 1) * itemsPerPage + index)}
                     </CardTitle>
@@ -332,11 +337,11 @@ export const RequestForStation: React.FC = () => {
 
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div className="text-sm text-gray-600">
-                      <span className="font-semibold">Tổng số lượng:</span>{" "}
+                      <span className="font-semibold">{t("admin.totalQuantity")}</span>{" "}
                       <span className="text-orange-600 font-bold">
                         {group.totalItems}
                       </span>{" "}
-                      pin
+                      {t("admin.batteries")}
                     </div>
 
                     <Button
@@ -345,19 +350,19 @@ export const RequestForStation: React.FC = () => {
                       className="border-gray-400 text-gray-700 hover:bg-gray-50"
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Xem chi tiết
+                      {t("admin.viewDetails")}
                     </Button>
                   </div>
 
                   {group.requests[0].staffNotes && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Ghi chú:</span>{" "}
+                        <span className="font-semibold">{t("admin.notes")}</span>{" "}
                         {group.requests[0].staffNotes}
                       </p>
                       {group.requests[0].handledByStaffName && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Xử lý bởi: {group.requests[0].handledByStaffName}
+                          {t("admin.handledBy")} {group.requests[0].handledByStaffName}
                         </p>
                       )}
                     </div>
@@ -377,11 +382,11 @@ export const RequestForStation: React.FC = () => {
           disabled={currentPage <= 1}
           onClick={() => setCurrentPage((p) => p - 1)}
         >
-          Trước
+          {t("admin.prev")}
         </Button>
 
         <div className="flex items-center space-x-1">
-          <span className="text-gray-700 text-sm">Trang</span>
+          <span className="text-gray-700 text-sm">{t("admin.page")}</span>
           <Input
             type="number"
             min={1}
@@ -408,7 +413,7 @@ export const RequestForStation: React.FC = () => {
           disabled={currentPage >= (totalPages || 1)}
           onClick={() => setCurrentPage((p) => p + 1)}
         >
-          Sau
+          {t("admin.next")}
         </Button>
       </div>
       {/* Detail Modal */}

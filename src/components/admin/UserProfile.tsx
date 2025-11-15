@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User, Mail, Phone, Calendar, Clock, Upload } from "lucide-react";
 import ChangePassword from "./ChangePassword";
+import { useLanguage } from "../LanguageContext";
 
 const CLOUD_NAME = "dt8hbvtd7";
 const UPLOAD_PRESET = "FPTFast";
@@ -27,6 +28,7 @@ interface UserProfileData {
 }
 
 export default function UserProfile() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -57,14 +59,14 @@ export default function UserProfile() {
           stationId: data.stationId,
         });
       } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error);
-        toast.error("Không thể tải thông tin người dùng.");
+        console.error(t("admin.errorLoadingUser"), error);
+        toast.error(t("admin.cannotLoadUser"));
       } finally {
         setLoading(false);
       }
     };
     fetchUser();
-  }, []);
+  }, [t]);
 
   // Mapping role string sang số theo backend
   // handleUpload
@@ -102,13 +104,13 @@ export default function UserProfile() {
 
         setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
 
-        toast.success("🎉 Tải ảnh lên và lưu thành công!");
+        toast.success(t("admin.uploadSuccess"));
       } else {
-        toast.error("Không thể tải ảnh lên Cloudinary!");
+        toast.error(t("admin.uploadFailed"));
       }
     } catch (error) {
       console.error("Lỗi upload:", error);
-      toast.error("Đã xảy ra lỗi khi tải ảnh!");
+      toast.error(t("admin.uploadError"));
     } finally {
       setUploading(false);
     }
@@ -130,11 +132,11 @@ export default function UserProfile() {
 
       await updateUser(user.id, payload);
       setUser((prev) => (prev ? { ...prev, ...payload } : prev));
-      toast.success("Cập nhật thông tin thành công!");
+      toast.success(t("admin.updateSuccess"));
       setEditMode(false);
     } catch (error) {
       console.error(error);
-      toast.error("Không thể cập nhật thông tin.");
+      toast.error(t("admin.updateFailed"));
     }
   };
 
@@ -168,7 +170,7 @@ export default function UserProfile() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("admin.loading")}</p>
         </div>
       </div>
     );
@@ -180,7 +182,7 @@ export default function UserProfile() {
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <p className="text-gray-700 font-medium">
-            Không tìm thấy thông tin người dùng.
+            {t("admin.userNotFound")}
           </p>
         </div>
       </div>
@@ -192,7 +194,7 @@ export default function UserProfile() {
       <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 border-b">
           <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5 text-orange-600" /> Thông tin cá nhân
+            <User className="w-5 h-5 text-orange-600" /> {t("admin.personalInfo")}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -259,7 +261,7 @@ export default function UserProfile() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Mail className="w-4 h-4" />
-                <span className="font-medium">Email</span>
+                <span className="font-medium">{t("admin.emailLabel")}</span>
               </div>
               <p className="text-gray-900 font-medium break-all pl-6">
                 {user.email}
@@ -269,7 +271,7 @@ export default function UserProfile() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4" />
-                <span className="font-medium">Số điện thoại</span>
+                <span className="font-medium">{t("admin.phoneLabel")}</span>
               </div>
               {editMode ? (
                 <input
@@ -285,7 +287,7 @@ export default function UserProfile() {
                 />
               ) : (
                 <p className="text-gray-900 font-medium pl-6">
-                  {user.phoneNumber || "Chưa cập nhật"}
+                  {user.phoneNumber || t("admin.notUpdated")}
                 </p>
               )}
             </div>
@@ -293,7 +295,7 @@ export default function UserProfile() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
-                <span className="font-medium">Mã người dùng</span>
+                <span className="font-medium">{t("admin.userId")}</span>
               </div>
               <p className="text-gray-900 font-mono text-sm break-all pl-6">
                 {user.id}
@@ -303,7 +305,7 @@ export default function UserProfile() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
-                <span className="font-medium">Ngày tạo tài khoản</span>
+                <span className="font-medium">{t("admin.createdDate")}</span>
               </div>
               <p className="text-gray-900 font-medium pl-6">
                 {new Date(user.createdAt).toLocaleDateString("vi-VN", {
@@ -317,7 +319,7 @@ export default function UserProfile() {
             <div className="space-y-2 md:col-span-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="w-4 h-4" />
-                <span className="font-medium">Đăng nhập gần nhất</span>
+                <span className="font-medium">{t("admin.lastLoginDate")}</span>
               </div>
               <p className="text-gray-900 font-medium pl-6">
                 {new Date(user.lastLogin).toLocaleString("vi-VN", {
@@ -340,7 +342,7 @@ export default function UserProfile() {
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
             onClick={() => setEditMode(true)}
           >
-            Chỉnh sửa thông tin
+            {t("admin.editInfo")}
           </button>
         ) : (
           <>
@@ -348,13 +350,13 @@ export default function UserProfile() {
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
               onClick={handleSave}
             >
-              Lưu thay đổi
+              {t("admin.saveChanges")}
             </button>
             <button
               className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
               onClick={handleCancel}
             >
-              Hủy
+              {t("admin.cancel")}
             </button>
           </>
         )}
@@ -364,7 +366,7 @@ export default function UserProfile() {
           className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
           onClick={() => setShowChangePassword((prev) => !prev)}
         >
-          {showChangePassword ? "Hủy đổi mật khẩu" : "Đổi mật khẩu"}
+          {showChangePassword ? t("admin.cancelChangePassword") : t("admin.changePassword")}
         </button>
       </div>
 

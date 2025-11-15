@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { useLanguage } from "../LanguageContext";
 
 // Type definitions
 export type NotificationWithDetails = NotificationData & {
@@ -28,42 +29,42 @@ const getRequestsByIds = (
   return requests.filter((req) => ids.includes(req.id));
 };
 
-const getStatusInfo = (status: number) => {
+const getStatusInfo = (status: number, t: (key: string) => string) => {
   const statusMap = {
     0: {
-      label: "Đang chờ",
+      label: t("admin.pending"),
       color: "bg-yellow-100 text-yellow-800 border-yellow-300",
       icon: Clock,
     },
     1: {
-      label: "Đã xác nhận",
+      label: t("admin.confirmed"),
       color: "bg-green-100 text-green-800 border-green-300",
       icon: CheckCircle,
     },
     2: {
-      label: "Đã từ chối",
+      label: t("admin.rejected"),
       color: "bg-red-100 text-red-800 border-red-300",
       icon: XCircle,
     },
   };
   return (
     statusMap[status as keyof typeof statusMap] || {
-      label: "Không xác định",
+      label: t("admin.unknown"),
       color: "bg-gray-100 text-gray-800 border-gray-300",
       icon: Clock,
     }
   );
 };
 
-const formatTimeAgo = (dateString: string): string => {
+const formatTimeAgo = (dateString: string, t: (key: string) => string): string => {
   const seconds = Math.floor(
     (Date.now() - new Date(dateString).getTime()) / 1000
   );
 
-  if (seconds < 60) return "Vừa xong";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
-  return `${Math.floor(seconds / 86400)} ngày trước`;
+  if (seconds < 60) return t("admin.justNow");
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} ${t("admin.minutesAgo")}`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} ${t("admin.hoursAgo")}`;
+  return `${Math.floor(seconds / 86400)} ${t("admin.daysAgo")}`;
 };
 
 // Component: Notification Item
@@ -74,11 +75,12 @@ interface NotificationItemProps {
   onViewDetail: (notification: NotificationData) => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({
+const NotificationItem: React.FC<NotificationItemProps & { t: (key: string) => string }> = ({
   notification,
   requests,
   onMarkAsRead,
   onViewDetail,
+  t,
 }) => {
   // Lấy relatedRequestIds từ mergedIds hoặc relatedEntityId
   const relatedRequestIds =
@@ -124,10 +126,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           {/* Title */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <p className="text-sm font-medium text-gray-900">
-              Yêu cầu gửi {totalQuantity} pin ({totalBatteryTypes} loại)
+              {t("admin.requestSend")} {totalQuantity} {t("admin.batteryUnit")} ({totalBatteryTypes} {t("admin.types")})
             </p>
             <span className="text-xs text-gray-500 whitespace-nowrap">
-              {formatTimeAgo(notification.createdAt)}
+              {formatTimeAgo(notification.createdAt, t)}
             </span>
           </div>
 
@@ -140,7 +142,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
               <div className="flex flex-wrap gap-1.5">
                 {group.requests.map((req) => {
-                  const statusInfo = getStatusInfo(req.status);
+                  const statusInfo = getStatusInfo(req.status, t);
                   const StatusIcon = statusInfo.icon;
 
                   return (
@@ -172,7 +174,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
             >
               <Eye className="w-3 h-3" />
-              Xem chi tiết
+              {t("admin.viewDetails")}
             </button>
 
             {!notification.isRead && (
@@ -183,7 +185,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 }}
                 className="text-xs text-gray-600 hover:text-gray-700 font-medium"
               >
-                Đánh dấu đã đọc
+                {t("admin.markAsRead")}
               </button>
             )}
           </div>
@@ -201,6 +203,7 @@ interface NotificationBellProps {
 export const NotificationBell: React.FC<NotificationBellProps> = ({
   onViewDetail,
 }) => {
+  const { t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [requests, setRequests] = useState<BatteryRequest[]>([]);
@@ -293,10 +296,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         {/* Header */}
         <div className="p-4 border-b bg-orange-50">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900">Thông báo</h3>
+            <h3 className="font-semibold text-gray-900">{t("admin.notifications")}</h3>
             {unreadCount > 0 && (
               <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium border border-orange-200">
-                {unreadCount} chưa đọc
+                {unreadCount} {t("admin.unread")}
               </span>
             )}
           </div>
@@ -306,12 +309,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         <div className="max-h-[500px] overflow-y-auto p-3">
           {loading ? (
             <div className="text-center py-8 text-gray-500 text-sm">
-              Đang tải...
+              {t("admin.loading")}
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">Không có thông báo nào</p>
+              <p className="text-sm">{t("admin.noNotifications")}</p>
             </div>
           ) : (
             notifications.map((notification) => (
@@ -321,6 +324,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                 requests={requests}
                 onMarkAsRead={handleMarkAsRead}
                 onViewDetail={handleViewDetail}
+                t={t}
               />
             ))
           )}

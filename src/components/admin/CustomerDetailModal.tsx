@@ -81,15 +81,15 @@ const getRoleNumber = (role: string | number): number => {
   }
 };
 
-const getRoleText = (role: string | number): string => {
+const getRoleText = (role: string | number, t: (key: string) => string): string => {
   const roleNum = typeof role === "number" ? role : getRoleNumber(role);
   switch (roleNum) {
     case 0:
-      return "Tài xế";
+      return t("role.driver");
     case 1:
-      return "Nhân viên";
+      return t("role.staff");
     case 2:
-      return "Quản lý";
+      return t("role.admin");
     default:
       return "N/A";
   }
@@ -175,7 +175,7 @@ const CustomerDetailModal = ({
       <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
         <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
           <Loader2 className="animate-spin w-6 h-6 inline-block mr-2 text-orange-600" />
-          Đang tải dữ liệu khách hàng...
+          {t("admin.loadingCustomerData")}
         </div>
       </div>
     );
@@ -188,9 +188,9 @@ const CustomerDetailModal = ({
       case "phoneNumber":
         return formData.phoneNumber || customerDetail.phoneNumber;
       case "role":
-        return getRoleText(formData.role);
+        return getRoleText(formData.role, t);
       case "status":
-        return formData.status === "0" ? "Đang hoạt động" : "Ngừng hoạt động";
+        return formData.status === "0" ? t("admin.activeStatus") : t("admin.inactiveStatus");
       default:
         return "";
     }
@@ -347,7 +347,7 @@ const CustomerDetailModal = ({
                   }}
                   className="border-gray-300 hover:bg-gray-100"
                 >
-                  Hủy thay đổi
+                  {t("admin.cancelChanges")}
                 </Button>
               </>
             )}
@@ -372,9 +372,9 @@ const CustomerDetailModal = ({
                       }
                       className="border rounded-md p-1 text-gray-700"
                     >
-                      <option value={"0"}>Tài xế</option>
-                      <option value={"1"}>Nhân viên</option>
-                      <option value={"2"}>Quản lý</option>
+                      <option value={"0"}>{t("role.driver")}</option>
+                      <option value={"1"}>{t("role.staff")}</option>
+                      <option value={"2"}>{t("role.admin")}</option>
                     </select>
                   ) : item.key === "status" ? (
                     <select
@@ -384,8 +384,8 @@ const CustomerDetailModal = ({
                       }
                       className="border rounded-md p-1 text-gray-700"
                     >
-                      <option value={"0"}>Đang hoạt động</option>
-                      <option value={"1"}>Ngừng hoạt động</option>
+                      <option value={"0"}>{t("admin.activeStatus")}</option>
+                      <option value={"1"}>{t("admin.inactiveStatus")}</option>
                     </select>
                   ) : (
                     <input
@@ -415,7 +415,7 @@ const CustomerDetailModal = ({
 
         {/* Hiệu suất */}
         <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
-          Hiệu suất & Dữ liệu khách hàng
+          {t("admin.performanceData")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
           <StatItem
@@ -427,7 +427,7 @@ const CustomerDetailModal = ({
           <StatItem
             icon={Zap}
             color="text-green-500"
-            label="Tổng lần thành công"
+            label={t("admin.totalCompleted")}
             value={`${formatNumber(customerDetail.completedReservations)} VND`}
           />
           <StatItem
@@ -451,7 +451,7 @@ const CustomerDetailModal = ({
             onClick={handleClose}
             className="border-gray-300 hover:bg-gray-100"
           >
-            Đóng
+            {t("common.close")}
           </Button>
         </div>
       </div>
