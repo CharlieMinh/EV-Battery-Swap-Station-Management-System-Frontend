@@ -133,11 +133,10 @@ export default function InventoryManagement({ stationId }: Props) {
   const [modelFilter, setModelFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
 
-  const [reqOpen, setReqOpen] = useState(false);
+  // dùng cho modal tạo yêu cầu
   const [reqItems, setReqItems] = useState<ReqItem[]>([
     { batteryModelId: "", quantityRequested: 0 },
   ]);
-  const [reason, setReason] = useState("");
 
   // ===== MODAL KIỂM TRA PIN =====
   const [inspectOpen, setInspectOpen] = useState(false);
@@ -272,15 +271,8 @@ export default function InventoryManagement({ stationId }: Props) {
 
   const lowStock = header.available + header.charging < 20;
 
-  /* ====== REQUEST PIN (KEEP LOGIC) ====== */
-  const addReqItem = () =>
-    setReqItems((x) => [...x, { batteryModelId: "", quantityRequested: 0 }]);
-
-  const removeReqItem = (i: number) =>
-    setReqItems((arr) => arr.filter((_, idx) => idx !== i));
-
+  /* ===== REQUEST PIN (GIỮ LOGIC) ====== */
   const submitRequest = async () => {
-    // Lọc các item hợp lệ
     const items = reqItems
       .map((x) => ({
         batteryModelId: x.batteryModelId,
@@ -297,14 +289,13 @@ export default function InventoryManagement({ stationId }: Props) {
     }
 
     try {
-      // Gửi song song từng request riêng biệt
       await Promise.all(
         items.map((item) =>
           createStockRequest({
-            stationId: String(stationId), // ép kiểu string nếu cần
+            stationId: String(stationId),
             batteryModelId: item.batteryModelId,
             quantity: item.quantity,
-            staffNote: note || "", // optional
+            staffNote: note || "",
           })
         )
       );
@@ -314,11 +305,10 @@ export default function InventoryManagement({ stationId }: Props) {
         toastId: "inv-req-success",
       });
 
-      // Reset form
-      setReqOpen(false);
+      setCreateOpen(false);
       setReqItems([{ batteryModelId: "", quantityRequested: 0 }]);
-      setReason("");
-      fetchInventory(); // refresh
+      setNote("");
+      fetchInventory();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -343,8 +333,8 @@ export default function InventoryManagement({ stationId }: Props) {
 
   /* ===== HANDLER KIỂM TRA PIN ===== */
   const openInspectModal = (b: BatteryUnit) => {
-    const k = normStatus(b.status); // Available / InUse / Charging / ...
-    const backend = clientStatusToBackend(k); // giữ nguyên logic map sang enum BE
+    const k = normStatus(b.status);
+    const backend = clientStatusToBackend(k);
 
     setSelectedBattery(b);
     setInspectStatus(backend);
@@ -377,7 +367,7 @@ export default function InventoryManagement({ stationId }: Props) {
 
   return (
     <div className="container mx-auto grid gap-6">
-      {/* CARD tổng quan, giữ nguyên logic */}
+      {/* CARD tổng quan kho */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
         <h2 className="text-2xl font-bold text-orange-600 mb-1">
           Tổng quan kho
@@ -406,81 +396,87 @@ export default function InventoryManagement({ stationId }: Props) {
         </div>
 
         {lowStock && (
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-amber-300 bg-amber-50 p-4">
-            <div className="flex items-center gap-2 text-amber-700">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm">
-                Tồn kho thấp! Hãy yêu cầu nhập thêm pin.
-              </span>
-            </div>
-            <button
-              onClick={() => setCreateOpen(true)}
-              className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
-            >
-              <Plus className="w-4 h-4 inline mr-1" />
-              Tạo yêu cầu
-            </button>
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="text-sm">
+              Tồn kho thấp! Hãy yêu cầu nhập thêm pin.
+            </span>
           </div>
         )}
       </section>
 
       {/* Danh sách pin */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
+        {/* Hàng tiêu đề */}
         <h3 className="text-xl font-semibold text-orange-600 mb-4">
           Danh sách pin
         </h3>
 
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <input
-            className="h-10 w-56 rounded-lg border-2 border-gray-300 px-3 text-sm focus:ring-2 focus:ring-orange-300"
-            placeholder="Tìm serial..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Hàng filter + nút Tạo yêu cầu (cùng một hàng) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              className="h-10 w-56 rounded-lg border-2 border-gray-300 px-3 text-sm focus:ring-2 focus:ring-orange-300"
+              placeholder="Tìm serial..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
-          {/* Model */}
-          <div className="w-56">
-            <Select
-              value={modelFilter || "__all__"}
-              onValueChange={(val) =>
-                setModelFilter(val === "__all__" ? "" : val)
-              }
-            >
-              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Tất cả model</SelectItem>
-                {modelOptions.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Model */}
+            <div className="w-56">
+              <Select
+                value={modelFilter || "__all__"}
+                onValueChange={(val) =>
+                  setModelFilter(val === "__all__" ? "" : val)
+                }
+              >
+                <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
+                  <SelectValue placeholder="Tất cả model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Tất cả model</SelectItem>
+                  {modelOptions.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status */}
+            <div className="w-56">
+              <Select
+                value={status || "__all__"}
+                onValueChange={(val) =>
+                  setStatus(val === "__all__" ? "" : val)
+                }
+              >
+                <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem
+                      key={o.value || "ALL"}
+                      value={o.value || "__all__"}
+                    >
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Status */}
-          <div className="w-56">
-            <Select
-              value={status || "__all__"}
-              onValueChange={(val) => setStatus(val === "__all__" ? "" : val)}
-            >
-              <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((o) => (
-                  <SelectItem
-                    key={o.value || "ALL"}
-                    value={o.value || "__all__"}
-                  >
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Nút tạo yêu cầu bên phải, cùng hàng */}
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0 rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
+          >
+            <Plus className="w-4 h-4 inline mr-1" />
+            Tạo yêu cầu
+          </button>
         </div>
 
         {/* Bảng */}
@@ -556,96 +552,10 @@ export default function InventoryManagement({ stationId }: Props) {
         </div>
       </section>
 
-      {/* Modal yêu cầu nhập pin */}
-      {reqOpen && (
-        <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl">
-            <div className="flex justify-between mb-4">
-              <h3 className="text-lg font-semibold">Yêu cầu nhập pin</h3>
-              <button
-                onClick={() => setReqOpen(false)}
-                className="p-2 hover:bg-gray-50 rounded-lg"
-              >
-                <X />
-              </button>
-            </div>
-
-            <label className="block text-sm mb-1">Lý do</label>
-            <input
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 mb-4"
-              placeholder="VD: Chuẩn bị giờ cao điểm"
-            />
-
-            <div className="mb-4">
-              <p className="font-medium text-sm mb-2">
-                Danh sách model & số lượng
-              </p>
-              {reqItems.map((item, i) => (
-                <div key={i} className="flex gap-2 mb-2">
-                  <input
-                    className="flex-1 border rounded-lg px-3 py-2"
-                    placeholder="BatteryModelId"
-                    value={item.batteryModelId}
-                    onChange={(e) =>
-                      setReqItems((arr) =>
-                        arr.map((x, idx) =>
-                          idx === i
-                            ? { ...x, batteryModelId: e.target.value }
-                            : x
-                        )
-                      )
-                    }
-                  />
-                  <input
-                    type="number"
-                    className="w-32 border rounded-lg px-3 py-2"
-                    placeholder="Số lượng"
-                    value={item.quantityRequested}
-                    onChange={(e) =>
-                      setReqItems((arr) =>
-                        arr.map((x, idx) =>
-                          idx === i
-                            ? {
-                                ...x,
-                                quantityRequested: Number(e.target.value),
-                              }
-                            : x
-                        )
-                      )
-                    }
-                  />
-                  <button
-                    onClick={() => removeReqItem(i)}
-                    className="px-3 py-2 border rounded-lg hover:bg-gray-50"
-                  >
-                    Xóa
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-right">
-              <button
-                onClick={submitRequest}
-                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
-              >
-                Gửi yêu cầu
-              </button>
-            </div>
-
-            <p className="mt-3 text-xs text-gray-500">
-              Bạn có thể thêm nhiều model khác nhau.
-            </p>
-          </div>
-        </div>
-      )}
-
+      {/* Modal TẠO YÊU CẦU NHẬP PIN */}
       {createOpen && (
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-xl rounded-2xl p-6 shadow-2xl">
-            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 Tạo yêu cầu nhập pin
@@ -659,7 +569,6 @@ export default function InventoryManagement({ stationId }: Props) {
             </div>
 
             <div className="space-y-4">
-              {/* Tên trạm */}
               <div>
                 <label className="block text-sm mb-1">Trạm</label>
                 <input
@@ -670,7 +579,6 @@ export default function InventoryManagement({ stationId }: Props) {
                 />
               </div>
 
-              {/* Ghi chú chung */}
               <div>
                 <label className="block text-sm mb-1">Ghi chú chung</label>
                 <textarea
@@ -689,11 +597,9 @@ export default function InventoryManagement({ stationId }: Props) {
                       ?.quantityRequested || 0;
                   return (
                     <div key={m.id} className="flex items-center gap-3 w-full">
-                      {/* Tên model chiếm nhiều diện tích hơn */}
                       <span className="flex-[4] min-w-0 font-medium">
                         {m.name}
                       </span>
-                      {/* Ô nhập số lượng */}
                       <input
                         type="number"
                         min={0}
@@ -729,7 +635,6 @@ export default function InventoryManagement({ stationId }: Props) {
                 })}
               </div>
 
-              {/* Nút gửi */}
               <div className="text-right">
                 <button
                   onClick={submitRequest}
@@ -743,6 +648,7 @@ export default function InventoryManagement({ stationId }: Props) {
         </div>
       )}
 
+      {/* Modal KIỂM TRA PIN */}
       {inspectOpen && selectedBattery && (
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">

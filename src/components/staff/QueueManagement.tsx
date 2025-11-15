@@ -235,10 +235,11 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
-      toast.success("Đã tải danh sách lượt đặt.", {
-        ...toastOpts,
-        toastId: TOAST_ID.fetchOk,
-      });
+      // ❌ bỏ toast thành công để không hiện thông báo khi vào màn / làm mới
+      // toast.success("Đã tải danh sách lượt đặt.", {
+      //   ...toastOpts,
+      //   toastId: TOAST_ID.fetchOk,
+      // });
     } catch (e) {
       setList([]);
       toast.error("Không thể tải danh sách lượt đặt lịch.");
@@ -604,10 +605,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
             <Button
               onClick={() => {
-                toast.info("Đang làm mới danh sách...", {
-                  ...toastOpts,
-                  toastId: TOAST_ID.refreshInfo,
-                });
+                // ❌ bỏ toast "Đang làm mới danh sách..."
                 fetchList();
               }}
               variant="outline"

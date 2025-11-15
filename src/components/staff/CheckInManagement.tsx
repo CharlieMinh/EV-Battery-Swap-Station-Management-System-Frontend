@@ -36,12 +36,15 @@ export default function CheckInManagement({
     if (now - lockRef.current < 1000) return;
     lockRef.current = now;
 
+    // Gửi raw QR cho cha xử lý (giữ nguyên logic)
     onDetected(text);
 
+    // vẫn tính preview để dùng làm toastId (tránh spam trùng id)
     const preview =
       text.length > 48 ? text.slice(0, 45).trim() + "..." : text.trim();
 
-    toast.success(`Đã quét mã: ${preview}`, {
+    // 🔔 CHỈ ĐỔI NỘI DUNG THÔNG BÁO, KHÔNG HIỆN DÃY KÝ TỰ QR
+    toast.success("Đã quét mã thành công.", {
       ...toastOpts,
       toastId: `qr-success-${preview}`,
     });
@@ -127,7 +130,7 @@ export default function CheckInManagement({
           />
         </div>
 
-        {/* ✅ Giữ phần thông báo lỗi nhưng XOÁ phần input tay */}
+        {/* ✅ Thông báo lỗi */}
         {err && <p className="text-xs text-red-600 mt-2">{err}</p>}
 
         <p className="mt-3 text-xs text-gray-500 text-center">
