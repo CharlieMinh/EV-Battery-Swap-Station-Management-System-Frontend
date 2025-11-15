@@ -447,12 +447,12 @@ export function SubscriptionPlansPage() {
         <div className="text-center mb-16 flex items-center justify-between">
           <div className="flex-1">
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-              {isAdmin ? "Quản lý gói thuê pin" : "Chọn gói thuê pin phù hợp"}
+              {isAdmin ? t("driver.subscription.manageTitle") : t("driver.subscription.listTitle")}
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               {isAdmin
-                ? "Quản lý các gói dịch vụ và trạm giao dịch."
-                : "Chọn một gói dịch vụ phù hợp nhất với nhu cầu di chuyển của bạn."}
+                ? t("driver.subscription.manageSubtitle")
+                : t("driver.subscription.subtitle")}
             </p>
           </div>
           {isAdmin && (
@@ -461,7 +461,7 @@ export function SubscriptionPlansPage() {
               onClick={handleAddStation}
             >
               <Plus className="w-5 h-5" />
-              Thêm trạm
+              {t("driver.subscription.addStationButton")}
             </Button>
           )}
         </div>
@@ -470,11 +470,11 @@ export function SubscriptionPlansPage() {
         <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div className="md:col-span-2">
-              <Label className="mb-1 block">Tìm theo tên</Label>
+              <Label className="mb-1 block">{t("driver.subscription.searchLabel")}</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Nhập tên gói..."
+                  placeholder={t("driver.subscription.listSearchPlaceholder")}
                   className="pl-8"
                   value={search}
                   onChange={(e) => {
@@ -485,11 +485,11 @@ export function SubscriptionPlansPage() {
               </div>
             </div>
             <div>
-              <Label className="mb-1 block">Giá tối thiểu</Label>
+              <Label className="mb-1 block">{t("driver.subscription.minPriceLabel")}</Label>
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="VD: 100.000"
+                  placeholder={t("driver.subscription.minPricePlaceholder")}
                   value={
                     minPrice ? Number(minPrice).toLocaleString("vi-VN") : ""
                   }
@@ -505,11 +505,11 @@ export function SubscriptionPlansPage() {
               </div>
             </div>
             <div>
-              <Label className="mb-1 block">Giá tối đa</Label>
+              <Label className="mb-1 block">{t("driver.subscription.maxPriceLabel")}</Label>
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="VD: 1.000.000"
+                  placeholder={t("driver.subscription.maxPricePlaceholder")}
                   value={
                     maxPrice ? Number(maxPrice).toLocaleString("vi-VN") : ""
                   }
@@ -525,7 +525,7 @@ export function SubscriptionPlansPage() {
               </div>
             </div>
             <div>
-              <Label className="mb-1 block">Loại pin</Label>
+              <Label className="mb-1 block">{t("driver.subscription.batteryTypeLabel")}</Label>
               <Select
                 value={battery}
                 onValueChange={(v) => {
@@ -534,10 +534,10 @@ export function SubscriptionPlansPage() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Tất cả" />
+                  <SelectValue placeholder={t("driver.subscription.allOption")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="ALL">{t("driver.subscription.allOption")}</SelectItem>
                   {batteryOptions.map((b) => (
                     <SelectItem key={b} value={b}>
                       {b}
@@ -592,8 +592,8 @@ export function SubscriptionPlansPage() {
                       <CheckCircle className="w-5 h-5 text-orange-500 mr-2.5 flex-shrink-0" />
                       <span className="text-gray-600">
                         {plan.maxSwapsPerMonth
-                          ? `${plan.maxSwapsPerMonth} lượt đổi/tháng`
-                          : "Đổi pin không giới hạn"}
+                          ? `${plan.maxSwapsPerMonth} ${t("driver.subscription.listSwapsPerMonth")}`
+                          : t("driver.subscription.unlimited")}
                       </span>
                     </li>
                     {features.map((feature, featureIndex) => (
@@ -612,7 +612,7 @@ export function SubscriptionPlansPage() {
                       className={`w-full py-5 text-base font-semibold rounded-lg shadow-md transition-all duration-300 bg-white text-orange-600 border-2 border-orange-500 hover:bg-orange-50"`}
                       onClick={() => handleSelectPlan(plan)}
                     >
-                      Chọn gói
+                      {t("driver.subscription.selectPlan")}
                     </Button>
                   ) : (
                     <div className="space-y-2 pt-4">
@@ -643,10 +643,10 @@ export function SubscriptionPlansPage() {
         {total > 0 && (
           <div className="mt-8 flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Tổng: {total.toLocaleString("vi-VN")} gói
+              {t("driver.subscription.totalPlans")} {total.toLocaleString("vi-VN")} {t("driver.subscription.totalPlansUnit")}
             </div>
             <div className="flex items-center gap-3">
-              <Label className="text-sm">Hiển thị</Label>
+              <Label className="text-sm">{t("driver.subscription.pageSizeLabel")}</Label>
               <Select
                 value={String(pageSize)}
                 onValueChange={(v) => {
@@ -671,17 +671,17 @@ export function SubscriptionPlansPage() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
                 >
-                  Trang trước
+                  {t("driver.subscription.pagination.prev")}
                 </Button>
                 <span className="text-sm">
-                  Trang {currentPage}/{maxPage}
+                  {t("driver.subscription.pagination.page")} {currentPage}/{maxPage}
                 </span>
                 <Button
                   variant="outline"
                   onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
                   disabled={currentPage >= maxPage}
                 >
-                  Trang sau
+                  {t("driver.subscription.pagination.next")}
                 </Button>
               </div>
             </div>
@@ -690,7 +690,7 @@ export function SubscriptionPlansPage() {
 
         {filteredPlans.length === 0 && (
           <p className="text-center text-gray-500 text-lg py-12">
-            Không tìm thấy gói nào phù hợp với tiêu chí lọc.
+            {t("driver.subscription.emptyNoPlans")}
           </p>
         )}
 
@@ -703,10 +703,10 @@ export function SubscriptionPlansPage() {
             <DialogContent className="max-w-lg rounded-xl">
               <DialogHeader className="text-center">
                 <DialogTitle className="text-2xl font-bold text-gray-900">
-                  Xác nhận đăng ký gói
+                  {t("driver.subscription.confirmTitle")}
                 </DialogTitle>
                 <DialogDescription className="text-base text-gray-600 pt-4">
-                  Bạn có chắc chắn muốn đăng ký gói{" "}
+                  {t("driver.subscription.confirmMessage")}{" "}
                   <span className="font-bold text-orange-600">
                     {selectedPlan.name}
                   </span>
@@ -716,16 +716,16 @@ export function SubscriptionPlansPage() {
 
               <div className="my-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-900 font-medium mb-2">
-                  📌 Lưu ý quan trọng:
+                  {t("driver.subscription.importantNote")}
                 </p>
                 <p className="text-sm text-blue-800">
-                  Gói này chỉ áp dụng với những xe có model pin{" "}
+                  {t("driver.subscription.applicableBatteryIntro")}{" "}
                   <span className="font-bold">
                     {selectedPlan.batteryModel.name}
                   </span>
                   .
                   <br />
-                  Hãy đảm bảo bạn sở hữu xe với model pin này trước khi mua gói.
+                  {t("driver.subscription.applicableBatteryEnsure")}
                 </p>
               </div>
 
@@ -735,7 +735,7 @@ export function SubscriptionPlansPage() {
                   onClick={() => setIsConfirmDialogOpen(false)}
                   disabled={isLoading}
                 >
-                  Hủy
+                  {t("driver.cancel")}
                 </Button>
                 <Button
                   className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6"
@@ -745,7 +745,7 @@ export function SubscriptionPlansPage() {
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Xác nhận đăng ký
+                  {t("driver.subscription.confirmButton")}
                 </Button>
               </div>
             </DialogContent>
@@ -761,22 +761,22 @@ export function SubscriptionPlansPage() {
             <DialogContent className="max-w-md rounded-xl">
               <DialogHeader className="text-center">
                 <DialogTitle className="text-2xl font-bold text-gray-900">
-                  Hoàn tất thanh toán
+                  {t("driver.subscription.payment.title")}
                 </DialogTitle>
                 <DialogDescription className="text-base text-gray-600 pt-2">
-                  Đơn hàng của bạn đã được tạo. Vui lòng chọn phương thức.
+                  {t("driver.subscription.payment.description")}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="my-6 space-y-3 border-t border-b py-6">
                 <div className="flex justify-between text-base">
-                  <span className="text-gray-600">Gói dịch vụ:</span>
+                  <span className="text-gray-600">{t("driver.subscription.payment.planLabel")}</span>
                   <span className="font-medium text-gray-800 text-right">
                     {payment.planName}
                   </span>
                 </div>
                 <div className="flex justify-between items-baseline text-lg font-bold">
-                  <span>Tổng cộng:</span>
+                  <span>{t("driver.subscription.payment.totalLabel")}</span>
                   <span className="text-3xl font-extrabold text-orange-600">
                     {payment.amount.toLocaleString("vi-VN")} VND
                   </span>
@@ -790,7 +790,7 @@ export function SubscriptionPlansPage() {
                   disabled={isLoading}
                 >
                   <CreditCard className="mr-2 h-5 w-5" />
-                  Thanh toán ngay bằng VNPay
+                  {t("driver.subscription.payment.payWithVNPay")}
                 </Button>
 
                 <Button
@@ -804,7 +804,7 @@ export function SubscriptionPlansPage() {
                   ) : (
                     <Landmark className="mr-2 h-5 w-5" />
                   )}
-                  Thanh toán tiền mặt (Tại trạm)
+                  {t("driver.subscription.payment.payWithCashAtStation")}
                 </Button>
               </div>
             </DialogContent>
@@ -971,7 +971,7 @@ export function SubscriptionPlansPage() {
                   } catch (err: any) {
                     toast.error(
                       err.response?.data?.message ||
-                        "Có lỗi xảy ra, vui lòng thử lại."
+                      "Có lỗi xảy ra, vui lòng thử lại."
                     );
                   } finally {
                     setIsLoading(false);

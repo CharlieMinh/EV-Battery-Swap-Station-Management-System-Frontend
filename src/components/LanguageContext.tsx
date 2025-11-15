@@ -344,6 +344,10 @@ const translations = {
     "driver.history": "History",
     "driver.profile": "Profile",
     "driver.support": "Support",
+    "driver.subscribePlans": "Subscribe Plans",
+    "driver.myPayments": "Pending Payments",
+    "driver.bookings": "Booked Appointments",
+    "driver.myComplaints": "My Complaints",
     "driver.nearbyStations": "Nearby Stations",
     "driver.nearbyStationsDesc": "Find and reserve battery swap stations",
     "driver.interactiveMap": "Interactive map with real-time availability",
@@ -676,6 +680,9 @@ const translations = {
     "driver.subscription.geoErrorInstruction": "Please check your browser location settings.",
 
     // Subscription Plans Page (listing)
+    "driver.subscription.manageTitle": "Manage battery rental plans",
+    "driver.subscription.manageSubtitle": "Manage service plans and stations.",
+    "driver.subscription.addStationButton": "Add station",
     "driver.subscription.listTitle": "Choose a battery rental plan",
     "driver.subscription.subtitle": "Pick the plan that best fits your travel needs.",
     "driver.subscription.searchLabel": "Search by name",
@@ -1339,7 +1346,7 @@ const translations = {
     "admin.next": "Next",
     "admin.page": "Page",
     "admin.allOnline": "All Online",
-    
+
     // AddUser Component
     "admin.addUserTitle": "Add User",
     "admin.email": "Email",
@@ -1365,7 +1372,7 @@ const translations = {
     "admin.enterName": "Enter full name...",
     "admin.enterPhone": "Enter phone number...",
     "admin.cannotLoadStations": "Cannot load station list.",
-    
+
     // RequestForStation Component
     "admin.batteryRequestHistory": "Battery Delivery History",
     "admin.batteryRequestHistoryDesc": "Track battery shipments sent to stations",
@@ -1382,7 +1389,7 @@ const translations = {
     "admin.viewDetails": "View Details",
     "admin.notes": "Notes:",
     "admin.handledBy": "Handled by:",
-    
+
     // ComplaintsOfCustomer Component
     "admin.complaintsList": "User Complaints List",
     "admin.searchByReporter": "Search by reporter name...",
@@ -1401,12 +1408,12 @@ const translations = {
     "admin.statusSystemError": "System Error/Warranty",
     "admin.statusUserError": "Rejected (User Error)",
     "admin.statusResolved": "Resolved",
-    
+
     // StationManagement Component
     "admin.enterStationName": "Enter station name...",
     "admin.noMatchingStations": "No matching stations.",
     "admin.batteryCount": "Battery count: ",
-    
+
     // BatteryFleetManagement Component
     "admin.loadingBatteries": "Loading battery data...",
     "admin.batteryFleetOverview": "🔋 Battery Fleet Overview",
@@ -1419,7 +1426,7 @@ const translations = {
     "admin.batteryStatusCharging": "Charging",
     "admin.batteryStatusDepleted": "Depleted",
     "admin.batteryStatusMaintenance": "Maintenance",
-    
+
     // CustomerManagement Component
     "admin.loadingCustomers": "Loading customers...",
     "admin.searchByName": "Search by name...",
@@ -1427,12 +1434,12 @@ const translations = {
     "admin.noCustomers": "No customers.",
     "admin.blocked": "Blocked",
     "admin.totalSwapsLabel": "Total swaps: ",
-    
+
     // StaffManagement Component
     "admin.loadingStaff": "Loading staff...",
     "admin.staffList": "Staff List",
     "admin.noStaff": "No staff members.",
-    
+
     // UserProfile Component
     "admin.cannotLoadUser": "Cannot load user information.",
     "admin.errorLoadingUser": "Error loading user:",
@@ -1998,6 +2005,10 @@ const translations = {
     "driver.profile.editProfile": "Sửa hồ sơ",
     "driver.mycar": "Xe của tôi",
     "driver.swap": "Thay Pin",
+    "driver.subscribePlans": "Đăng ký gói",
+    "driver.myPayments": "Hóa đơn chờ",
+    "driver.bookings": "Lịch đã đặt",
+    "driver.myComplaints": "Khiếu nại của tôi",
     "driver.history": "Lịch Sử",
     "driver.profile": "Hồ Sơ",
     "driver.support": "Hỗ Trợ",
@@ -2315,6 +2326,9 @@ const translations = {
     "driver.subscription.geoErrorInstruction": "Vui lòng kiểm tra cài đặt vị trí của trình duyệt.",
 
     // Subscription Plans Page (listing)
+    "driver.subscription.manageTitle": "Quản lý gói thuê pin",
+    "driver.subscription.manageSubtitle": "Quản lý các gói dịch vụ và trạm giao dịch.",
+    "driver.subscription.addStationButton": "Thêm trạm",
     "driver.subscription.listTitle": "Chọn gói thuê pin phù hợp",
     "driver.subscription.subtitle": "Chọn một gói dịch vụ phù hợp nhất với nhu cầu di chuyển của bạn.",
     "driver.subscription.searchLabel": "Tìm theo tên",
@@ -2980,7 +2994,7 @@ const translations = {
     "admin.next": "Sau",
     "admin.page": "Trang",
     "admin.allOnline": "Tất Cả Trực Tuyến",
-    
+
     // AddUser Component
     "admin.addUserTitle": "Thêm người dùng",
     "admin.email": "Email",
@@ -3006,7 +3020,7 @@ const translations = {
     "admin.enterName": "Nhập họ và tên...",
     "admin.enterPhone": "Nhập số điện thoại...",
     "admin.cannotLoadStations": "Không thể tải danh sách trạm.",
-    
+
     // RequestForStation Component
     "admin.batteryRequestHistory": "Lịch Sử Gửi Pin Đến Trạm",
     "admin.batteryRequestHistoryDesc": "Theo dõi các lô hàng pin đã gửi đến các trạm",
@@ -3023,7 +3037,7 @@ const translations = {
     "admin.viewDetails": "Xem chi tiết",
     "admin.notes": "Ghi chú:",
     "admin.handledBy": "Xử lý bởi:",
-    
+
     // ComplaintsOfCustomer Component
     "admin.complaintsList": "Danh sách khiếu nại người dùng",
     "admin.searchByReporter": "Tìm theo tên người khiếu nại...",
@@ -3042,12 +3056,12 @@ const translations = {
     "admin.statusSystemError": "Xác nhận lỗi hệ thống/bảo hành",
     "admin.statusUserError": "Từ chối (Lỗi do người dùng)",
     "admin.statusResolved": "Đã giải quyết",
-    
+
     // StationManagement Component
     "admin.enterStationName": "Nhập tên trạm...",
     "admin.noMatchingStations": "Không có trạm nào phù hợp.",
     "admin.batteryCount": "Số pin: ",
-    
+
     // BatteryFleetManagement Component
     "admin.loadingBatteries": "Đang tải dữ liệu pin...",
     "admin.batteryFleetOverview": "🔋 Tổng quan bộ pin",
@@ -3060,7 +3074,7 @@ const translations = {
     "admin.batteryStatusCharging": "Đang sạc",
     "admin.batteryStatusDepleted": "Cạn pin",
     "admin.batteryStatusMaintenance": "Bảo trì",
-    
+
     // CustomerManagement Component
     "admin.loadingCustomers": "Đang tải khách hàng...",
     "admin.searchByName": "Tìm theo tên...",
@@ -3068,12 +3082,12 @@ const translations = {
     "admin.noCustomers": "Không có khách hàng nào.",
     "admin.blocked": "Chặn",
     "admin.totalSwapsLabel": "Tổng lần thay pin: ",
-    
+
     // StaffManagement Component
     "admin.loadingStaff": "Đang tải nhân viên...",
     "admin.staffList": "Danh sách nhân viên",
     "admin.noStaff": "Không có nhân viên nào.",
-    
+
     // UserProfile Component
     "admin.cannotLoadUser": "Không thể tải thông tin người dùng.",
     "admin.errorLoadingUser": "Lỗi khi lấy thông tin user:",
