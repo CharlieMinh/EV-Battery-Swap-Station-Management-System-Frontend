@@ -145,13 +145,6 @@ export function StaffCashPaymentManagement() {
 
       const list = response.data || [];
       setPayments(list);
-
-      toast.success(
-        list.length > 0
-          ? `Đã tải ${list.length} thanh toán tiền mặt đang chờ.`
-          : "Không có thanh toán tiền mặt nào đang chờ.",
-        { ...toastOpts, toastId: "cash-fetch" }
-      );
     } catch (err: any) {
       console.error("Error fetching payments:", err);
       const msg =

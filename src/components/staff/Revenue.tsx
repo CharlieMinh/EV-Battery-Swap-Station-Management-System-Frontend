@@ -131,13 +131,6 @@ export default function Revenue() {
       // GIỮ NGUYÊN LOGIC: chỉ lấy giao dịch đã thanh toán
       const paidOnly = list.filter((p) => isPaidStatus((p as any).status));
       setPaid(paidOnly);
-
-      toast.success(
-        paidOnly.length
-          ? `Đã tải ${paidOnly.length} giao dịch đã thanh toán.`
-          : "Không có giao dịch đã thanh toán trong khoảng ngày đã chọn.",
-        { ...toastOpts, toastId: TOAST_ID.fetchOk }
-      );
     } catch (e: any) {
       console.error("Load revenue error:", e);
       setErr("Không tải được dữ liệu doanh thu.");
