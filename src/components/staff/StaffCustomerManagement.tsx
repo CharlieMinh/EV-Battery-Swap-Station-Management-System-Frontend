@@ -5,16 +5,25 @@ import {
   Loader2,
   Phone,
   Mail,
-  UserCircle2,
+  User,
   X,
   Eye,
   Filter,
+  BarChart,
+  Zap,
+  Truck,
+  Calendar,
+  Clock,
+  Edit,
+  Save,
+  Smartphone,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
+import { useLanguage } from "../LanguageContext";
 
 import type { Customer } from "@/services/admin/customerAdminService";
 import {
@@ -30,6 +39,42 @@ const toastOpts = {
 
 const PAGE_SIZE = 10;
 
+const StatItem: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color: string;
+}> = ({ icon: Icon, label, value, color }) => (
+  <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 py-4 px-3 flex flex-col items-center text-center cursor-default">
+    <Icon className={`w-6 h-6 ${color} mb-3`} />
+    <p className="text-sm text-gray-500 font-medium leading-tight mb-3">
+      {label}
+    </p>
+    <p className="text-xl font-bold text-gray-900 mt-0.5 leading-tight">
+      {value}
+    </p>
+  </div>
+);
+
+const formatDateTime = (isoString: any) => {
+  if (!isoString) return "N/A";
+  try {
+    const date = new Date(isoString);
+    const datePart = date.toLocaleDateString("vi-VN");
+    const timePart = date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return `${datePart} ${timePart}`;
+  } catch {
+    return "Invalid Date";
+  }
+};
+
+const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
+
 /* =========================
  *  Modal xem + cập nhật hồ sơ
  * ========================= */
@@ -44,13 +89,16 @@ function CustomerDetailModal({
   onClose,
   onUpdated,
 }: DetailModalProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState(customer?.name ?? "");
   const [phone, setPhone] = useState(customer?.phoneNumber ?? "");
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     setName(customer?.name ?? "");
     setPhone(customer?.phoneNumber ?? "");
+    setIsEditing(false);
   }, [customer]);
 
   if (!customer) return null;
@@ -69,7 +117,7 @@ function CustomerDetailModal({
       });
       toast.success("Cập nhật hồ sơ khách hàng thành công.", toastOpts);
       onUpdated(updated);
-      onClose();
+      setIsEditing(false);
     } catch (error: any) {
       const msg =
         error?.response?.data?.error ||
@@ -83,155 +131,219 @@ function CustomerDetailModal({
   };
 
   const statusLabel =
-    customer.status === "Locked" ? "Bị khóa" : "Đang hoạt động";
+    customer.status === "Locked" ? t("admin.inactiveStatus") : t("admin.activeStatus");
+
+  const cancelledCount = (customer.totalReservations ?? 0) - (customer.completedReservations ?? 0);
+  const totalVehicles = 1; // TODO: Update when BE provides this data
+
+  const data = [
+    {
+      key: "name",
+      icon: User,
+      label: t("admin.name"),
+      value: isEditing ? name : (customer.name || ""),
+      editable: true,
+    },
+    {
+      key: "email",
+      icon: Mail,
+      label: t("admin.email"),
+      value: customer.email || "",
+    },
+    {
+      key: "phoneNumber",
+      icon: Smartphone,
+      label: t("admin.phone"),
+      value: isEditing ? phone : (customer.phoneNumber || ""),
+      editable: true,
+    },
+    {
+      key: "role",
+      icon: Zap,
+      label: t("admin.role"),
+      value: t("role.driver"),
+    },
+    {
+      key: "status",
+      icon: Zap,
+      label: t("admin.status"),
+      value: statusLabel,
+    },
+    {
+      icon: Calendar,
+      label: t("admin.createdAt"),
+      value: customer.createdAt ? formatDateTime(customer.createdAt) : "N/A",
+    },
+    {
+      icon: Clock,
+      label: t("admin.lastLogin"),
+      value: customer.lastLogin ? formatDateTime(customer.lastLogin) : "N/A",
+    },
+  ];
+
+  const handleClose = () => {
+    if (isEditing) {
+      setName(customer?.name ?? "");
+      setPhone(customer?.phoneNumber ?? "");
+      setIsEditing(false);
+      setTimeout(() => {
+        onClose();
+      }, 0);
+    } else {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <Card className="w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <UserCircle2 className="w-6 h-6 text-orange-500" />
-              <CardTitle className="text-lg font-semibold">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/10 backdrop-blur-sm px-4"
+      onClick={handleClose}
+    >
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto p-9 border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Nút đóng */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-orange-200">
+          <div className="flex items-center space-x-4">
+            <User className="w-11 h-11 text-orange-600 shrink-0" />
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">
                 {customer.name || "Khách hàng"}
-              </CardTitle>
+              </h1>
+              <p className="text-gray-500 text-sm mt-1">
+                {customer.email || "Không có email"}
+              </p>
             </div>
-            <span className="text-xs text-gray-500">
-              {customer.email ?? "Không có email"}
-            </span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100"
-            disabled={saving}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </CardHeader>
 
-        <CardContent className="pt-4 overflow-y-auto">
-          {/* Thông tin cá nhân */}
-          <section className="mb-5">
-            <h3 className="text-sm font-semibold text-orange-600 mb-3">
-              Thông tin cá nhân
-            </h3>
+          <div className="flex space-x-3 mt-4 sm:mt-0">
+            {!isEditing ? (
+              <Button
+                size="sm"
+                className="bg-blue-500 hover:bg-blue-600"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="w-4 h-4 mr-2" /> {t("admin.updateProfile")}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setName(customer?.name ?? "");
+                    setPhone(customer?.phoneNumber ?? "");
+                  }}
+                  className="border-gray-300 hover:bg-gray-100"
+                >
+                  {t("admin.cancelChanges")}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl border bg-gray-50 p-4">
-              <div className="space-y-2">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Tên</div>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">
-                    Số điện thoại
-                  </div>
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="VD: 0901234567"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-gray-600 mt-2">
-                  <Phone className="w-3 h-3" />
-                  <span>Mã khách hàng: {customer.id}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Email</div>
-                  <div className="px-3 py-2 rounded border bg-white text-sm flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="truncate">
-                      {customer.email || "Không có email"}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Vai trò</div>
-                  <div className="px-3 py-2 rounded border bg-gray-100 text-sm">
-                    Khách hàng
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Trạng thái</div>
-                  <div className="px-3 py-2 rounded border bg-gray-100 text-sm flex items-center gap-2">
-                    <Badge
-                      className={
-                        customer.status === "Locked"
-                          ? "bg-red-500 text-white"
-                          : "bg-emerald-500 text-white"
+        {/* Thông tin cơ bản */}
+        <Card className="mt-8 bg-white border border-orange-100 shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-5 text-orange-700 border-b pb-3 border-orange-100">
+            {t("admin.personalInfo")}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5 text-sm">
+            {data.map((item, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <item.icon className="w-5 h-5 text-gray-500" />
+                {isEditing && item.editable ? (
+                  <input
+                    type="text"
+                    value={item.key === "name" ? name : phone}
+                    onChange={(e) => {
+                      if (item.key === "name") {
+                        setName(e.target.value);
+                      } else if (item.key === "phoneNumber") {
+                        setPhone(e.target.value);
                       }
-                    >
-                      {statusLabel}
-                    </Badge>
-                    <span className="text-xs text-gray-500">
+                    }}
+                    className="border rounded-md p-1 text-gray-700 w-full"
+                  />
+                ) : (
+                  <p>
+                    <span className="font-semibold text-sm mr-2">
+                      {item.label}:
                     </span>
-                  </div>
-                </div>
+                    <span className="font-medium">{item.value}</span>
+                  </p>
+                )}
               </div>
-            </div>
-          </section>
+            ))}
+          </div>
+        </Card>
 
-          {/* Hiệu suất & dữ liệu khách hàng */}
-          <section>
-            <h3 className="text-sm font-semibold text-orange-600 mb-3">
-              Hiệu suất & dữ liệu khách hàng
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="rounded-2xl border bg-white p-3 flex flex-col">
-                <span className="text-xs text-gray-500 mb-1">
-                  Tổng lần thay pin
-                </span>
-                <span className="text-xl font-semibold text-gray-800">
-                  {customer.totalReservations ?? 0}
-                </span>
-              </div>
-              <div className="rounded-2xl border bg-white p-3 flex flex-col">
-                <span className="text-xs text-gray-500 mb-1">
-                  Tổng lần thành công
-                </span>
-                <span className="text-xl font-semibold text-emerald-600">
-                  {customer.completedReservations ?? 0}
-                </span>
-              </div>
-              <div className="rounded-2xl border bg-white p-3 flex flex-col">
-                <span className="text-xs text-gray-500 mb-1">Lượt hủy</span>
-                <span className="text-xl font-semibold text-red-500">
-                  {(customer.totalReservations ?? 0) -
-                    (customer.completedReservations ?? 0)}
-                </span>
-              </div>
-              <div className="rounded-2xl border bg-white p-3 flex flex-col">
-                <span className="text-xs text-gray-500 mb-1">
-                  Tổng phương tiện
-                </span>
-                <span className="text-xl font-semibold text-gray-800">
-                  {/* sau BE trả thêm thì sửa lại */}1
-                </span>
-              </div>
-            </div>
-          </section>
-        </CardContent>
+        {/* Hiệu suất */}
+        <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
+          {t("admin.performanceData")}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
+          <StatItem
+            icon={BarChart}
+            color="text-orange-500"
+            label={t("admin.totalSwaps")}
+            value={formatNumber(customer.totalReservations)}
+          />
+          <StatItem
+            icon={Zap}
+            color="text-green-500"
+            label={t("admin.totalCompleted")}
+            value={`${formatNumber(customer.completedReservations)} VND`}
+          />
+          <StatItem
+            icon={X}
+            color="text-red-500"
+            label={t("admin.cancelledReservations")}
+            value={formatNumber(cancelledCount)}
+          />
+          <StatItem
+            icon={Truck}
+            color="text-blue-500"
+            label={t("admin.totalVehicles")}
+            value={formatNumber(totalVehicles)}
+          />
+        </div>
 
-        <div className="flex justify-end gap-2 px-6 py-3 border-t">
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Đóng
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-            Cập nhật hồ sơ
+        {/* Footer */}
+        <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="border-gray-300 hover:bg-gray-100"
+          >
+            {t("common.close")}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
