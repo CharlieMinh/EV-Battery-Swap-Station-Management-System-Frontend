@@ -36,13 +36,13 @@ const translations = {
     "home.hero.badge": "🚗 The Future of EV Energy",
     "home.hero.title": "Fast and Reliable EV Battery Swap Stations",
     "home.hero.subtitle":
-      "Skip the wait, swap the battery. Get back on the road in under 3 minutes with our revolutionary battery swap technology.",
+      "Skip the wait, swap the battery. Get back on the road in under 30 minutes with our revolutionary battery swap technology.",
     "home.hero.findStation": "Find Station",
     "home.hero.watchDemo": "Watch Demo",
-    "home.hero.avgSwapTime": "3 min",
+    "home.hero.avgSwapTime": "30 min",
     "home.hero.avgSwapTimeLabel": "Average swap time",
-    "home.hero.availability": "24/7",
-    "home.hero.availabilityLabel": "Always available",
+    "home.hero.availability": "8h00 - 18h00",
+    "home.hero.availabilityLabel": "Operating hours",
     "home.hero.batteriesAvailable": "batteries available",
 
     // Stats
@@ -57,13 +57,13 @@ const translations = {
       "Experience the future of EV energy with our innovative battery swap technology",
     "features.ultraFast.title": "Ultra-Fast Swaps",
     "features.ultraFast.desc":
-      "Complete battery swap in under 3 minutes - faster than filling up gas",
+      "Complete battery swap in under 30 minutes - faster than filling up gas",
     "features.alwaysCharged.title": "Always Charged",
     "features.alwaysCharged.desc":
       "Get a fully charged battery every time with our smart inventory system",
     "features.nationwide.title": "Nationwide Network",
     "features.nationwide.desc":
-      "24 stations and growing across major cities and highways",
+      "All stations are available across major cities and highways",
     "features.safeReliable.title": "Safe & Reliable",
     "features.safeReliable.desc":
       "All batteries tested and certified for optimal performance and safety",
@@ -76,10 +76,10 @@ const translations = {
     "stations.mapTitle": "Interactive Station Map",
     "stations.mapDesc": "Find the nearest station with real-time availability",
     "stations.viewFullMap": "View Full Map",
-    "stations.downtownHub": "Downtown Hub",
-    "stations.mallStation": "Mall Station",
-    "stations.airportTerminal": "Airport Terminal",
-    "stations.maintenanceMode": "Maintenance mode",
+    // "stations.downtownHub": "Downtown Hub",
+    // "stations.mallStation": "Mall Station",
+    // "stations.airportTerminal": "Airport Terminal",
+    // "stations.maintenanceMode": "Maintenance mode",
 
     // Pricing
     "pricing.title": "Simple, Transparent Pricing",
@@ -1692,13 +1692,13 @@ const translations = {
     "home.hero.badge": "🚗 Tương Lai Năng Lượng EV",
     "home.hero.title": "Trạm Thay Pin EV Nhanh Chóng và Đáng Tin Cậy",
     "home.hero.subtitle":
-      "Bỏ qua thời gian chờ, thay pin ngay. Quay lại đường trong vòng chưa đầy 3 phút với công nghệ thay pin cách mạng của chúng tôi.",
+      "Bỏ qua thời gian chờ, thay pin ngay. Quay lại đường trong vòng chưa đầy 30 phút với công nghệ thay pin cách mạng của chúng tôi.",
     "home.hero.findStation": "Tìm Trạm",
     "home.hero.watchDemo": "Xem Demo",
-    "home.hero.avgSwapTime": "3 phút",
+    "home.hero.avgSwapTime": "30 phút",
     "home.hero.avgSwapTimeLabel": "Thời gian thay trung bình",
-    "home.hero.availability": "24/7",
-    "home.hero.availabilityLabel": "Luôn sẵn sàng",
+    "home.hero.availability": "8h00 - 18h00",
+    "home.hero.availabilityLabel": "Giờ hoạt động",
     "home.hero.batteriesAvailable": "pin có sẵn",
 
     // Stats
@@ -1713,13 +1713,13 @@ const translations = {
       "Trải nghiệm tương lai năng lượng EV với công nghệ thay pin sáng tạo của chúng tôi",
     "features.ultraFast.title": "Thay Pin Siêu Nhanh",
     "features.ultraFast.desc":
-      "Hoàn thành thay pin trong vòng dưới 3 phút - nhanh hơn đổ xăng",
+      "Hoàn thành thay pin trong vòng dưới 30 phút - nhanh hơn đổ xăng",
     "features.alwaysCharged.title": "Luôn Đầy Pin",
     "features.alwaysCharged.desc":
       "Luôn nhận được pin đầy với hệ thống quản lý thông minh của chúng tôi",
     "features.nationwide.title": "Mạng Lưới Toàn Quốc",
     "features.nationwide.desc":
-      "24 trạm và đang mở rộng trên các thành phố lớn và đường cao tốc",
+      "Tất cả trạm đều có sẵn trên các thành phố lớn và đường cao tốc",
     "features.safeReliable.title": "An Toàn & Đáng Tin Cậy",
     "features.safeReliable.desc":
       "Tất cả pin được kiểm tra và chứng nhận cho hiệu suất và an toàn tối ưu",
@@ -1734,10 +1734,10 @@ const translations = {
     "stations.mapDesc":
       "Tìm trạm gần nhất với tình trạng có sẵn theo thời gian thực",
     "stations.viewFullMap": "Xem Bản Đồ Đầy Đủ",
-    "stations.downtownHub": "Trung Tâm Thành Phố",
-    "stations.mallStation": "Trạm Trung Tâm Thương Mại",
-    "stations.airportTerminal": "Nhà Ga Sân Bay",
-    "stations.maintenanceMode": "Chế độ bảo trì",
+    // "stations.downtownHub": "Trung Tâm Thành Phố",
+    // "stations.mallStation": "Trạm Trung Tâm Thương Mại",
+    // "stations.airportTerminal": "Nhà Ga Sân Bay",
+    // "stations.maintenanceMode": "Chế độ bảo trì",
 
     // Pricing
     "pricing.title": "Giá Cả Đơn Giản, Minh Bạch",
@@ -2264,8 +2264,8 @@ const translations = {
     "driver.swapStatus.title": "Lịch đã đặt",
     "driver.swapStatus.description": "Xem lịch đổi pin đã đặt",
     "driver.swapStatus.errorLoadFailed": "Lỗi khi hủy lịch hẹn:",
-    "driver.swapStatus.warningNearTime": "⚠️ Đã gần giờ đặt lịch. Vui lòng cân nhắc trước khi hủy.",
-    "driver.swapStatus.warningInTime": "⚠️ Đang trong khung giờ đặt lịch. Hủy bây giờ sẽ bị hình phạt.",
+    "driver.swapStatus.warningNearTime": "Đã gần giờ đặt lịch. Vui lòng cân nhắc trước khi hủy.",
+    "driver.swapStatus.warningInTime": " Đang trong khung giờ đặt lịch. Hủy bây giờ sẽ bị hình phạt.",
     "driver.swapStatus.warningBefore1Hour": "Hủy trước 1 giờ",
     "driver.swapStatus.loadingCheck": "Đang kiểm tra lịch hẹn...",
     "driver.swapStatus.errorTitle": "Lỗi Tải Dữ Liệu",
@@ -2362,7 +2362,7 @@ const translations = {
     // Subscription confirmation dialog
     "driver.subscription.confirmTitle": "Xác nhận đăng ký gói",
     "driver.subscription.confirmMessage": "Bạn có chắc chắn muốn đăng ký gói",
-    "driver.subscription.importantNote": "📌 Lưu ý quan trọng:",
+    "driver.subscription.importantNote": "Lưu ý quan trọng:",
     "driver.subscription.applicableBatteryIntro": "Gói này chỉ áp dụng với những xe có model pin",
     "driver.subscription.applicableBatteryEnsure": "Hãy đảm bảo bạn sở hữu xe với model pin này trước khi mua gói.",
     "driver.subscription.confirmButton": "Xác nhận đăng ký",
@@ -2542,10 +2542,10 @@ const translations = {
     "driver.paymentResult.statusSuccess": "Thành công",
     "driver.paymentResult.statusFailure": "Thất bại",
     "driver.paymentResult.statusUnknown": "Không xác định",
-    "driver.paymentResult.noteViewAppointment": "✓ Bạn có thể xem chi tiết lịch hẹn trong mục 'Lịch hẹn của tôi'.",
-    "driver.paymentResult.noteBookingConfirmed": "✓ Lịch hẹn đổi pin của bạn đã được xác nhận.",
-    "driver.paymentResult.noteArriveOnTime": "✓ Vui lòng đến trạm đúng giờ đã đặt để thực hiện đổi pin.",
-    "driver.paymentResult.noteSubscriptionCanUseNow": "✓ Bạn có thể bắt đầu sử dụng dịch vụ đổi pin ngay bây giờ.",
+    "driver.paymentResult.noteViewAppointment": " Bạn có thể xem chi tiết lịch hẹn trong mục 'Lịch hẹn của tôi'.",
+    "driver.paymentResult.noteBookingConfirmed": " Lịch hẹn đổi pin của bạn đã được xác nhận.",
+    "driver.paymentResult.noteArriveOnTime": " Vui lòng đến trạm đúng giờ đã đặt để thực hiện đổi pin.",
+    "driver.paymentResult.noteSubscriptionCanUseNow": " Bạn có thể bắt đầu sử dụng dịch vụ đổi pin ngay bây giờ.",
     "driver.paymentResult.failureReasonsTitle": "Lý do có thể:",
     "driver.paymentResult.failureReasonBalance": "Số dư tài khoản không đủ",
     "driver.paymentResult.failureReasonCardInfo": "Thông tin thẻ không chính xác",
@@ -2731,14 +2731,14 @@ const translations = {
     "staff.profile.buttonChangingPassword": "Đang đổi...",
     "staff.profile.toastLoadError": "Không thể tải hồ sơ. Vui lòng thử lại!",
     "staff.profile.toastSaveWarnName": "Vui lòng nhập họ tên.",
-    "staff.profile.toastSaveSuccess": "Đã lưu hồ sơ ✅",
+    "staff.profile.toastSaveSuccess": "Đã lưu hồ sơ thành công",
     "staff.profile.toastSaveError": "Lưu hồ sơ thất bại. Vui lòng thử lại!",
     "staff.profile.toastPwdWarnNew": "Vui lòng nhập mật khẩu mới.",
     "staff.profile.toastPwdMismatch": "Xác nhận mật khẩu không khớp.",
-    "staff.profile.toastPwdSuccess": "Đổi mật khẩu thành công ✅",
+    "staff.profile.toastPwdSuccess": "Đổi mật khẩu thành công",
     "staff.profile.toastPwdError": "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại!",
     "staff.profile.toastAvatarUploading": "Đang tải ảnh lên...",
-    "staff.profile.toastAvatarSuccess": "Tải ảnh thành công ✅",
+    "staff.profile.toastAvatarSuccess": "Tải ảnh thành công",
     "staff.profile.toastAvatarInfoLater": "Sẽ cập nhật ảnh khi bạn bấm 'Sửa hồ sơ'.",
 
     // Staff Inventory Management
@@ -3101,7 +3101,7 @@ const translations = {
     "admin.errorLoadingUser": "Lỗi khi lấy thông tin user:",
     "admin.uploadError": "Đã xảy ra lỗi khi tải ảnh!",
     "admin.uploadFailed": "Không thể tải ảnh lên Cloudinary!",
-    "admin.uploadSuccess": "🎉 Tải ảnh lên và lưu thành công!",
+    "admin.uploadSuccess": "Tải ảnh lên và lưu thành công!",
     "admin.updateSuccess": "Cập nhật thông tin thành công!",
     "admin.updateFailed": "Không thể cập nhật thông tin.",
     "admin.loading": "Đang tải...",
