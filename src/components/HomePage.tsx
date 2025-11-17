@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import myImage from "../assets/FTP.jpg";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -99,8 +100,6 @@ export function Homepage({ user, onLogout }: HomepageProps) {
     },
   ];
 
-
-
   const testimonials = [
     {
       name: t("testimonials.customer1.name"),
@@ -177,7 +176,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   // Scroll handler for navbar animation with throttling
   useEffect(() => {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -261,31 +260,33 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav 
+      <nav
         className={`fixed top-0 z-50 ${
-          isScrolled 
-            ? "bg-white/90 backdrop-blur-md shadow-xl rounded-2xl" 
+          isScrolled
+            ? "bg-white/90 backdrop-blur-md shadow-xl rounded-2xl"
             : "bg-transparent backdrop-blur-sm rounded-none"
         }`}
         style={{
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '100%',
-          maxWidth: isScrolled ? '1280px' : '100%',
-          paddingTop: isScrolled ? '0.5rem' : '1rem',
-          paddingBottom: isScrolled ? '0.5rem' : '1rem',
-          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'max-width, padding, background-color, border-radius'
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: isScrolled ? "1280px" : "100%",
+          paddingTop: isScrolled ? "0.5rem" : "1rem",
+          paddingBottom: isScrolled ? "0.5rem" : "1rem",
+          transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+          willChange: "max-width, padding, background-color, border-radius",
         }}
       >
-        <div className={`mx-auto transition-all duration-300 ease-out ${
-          isScrolled ? "px-6 max-w-7xl w-full" : "w-full px-4 sm:px-6 lg:px-8"
-        }`}>
-          <div 
+        <div
+          className={`mx-auto transition-all duration-300 ease-out ${
+            isScrolled ? "px-6 max-w-7xl w-full" : "w-full px-4 sm:px-6 lg:px-8"
+          }`}
+        >
+          <div
             className="flex items-center justify-between w-full"
             style={{
-              height: isScrolled ? '3.5rem' : '4rem',
-              transition: 'height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+              height: isScrolled ? "3.5rem" : "4rem",
+              transition: "height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
             <div className="flex items-center group cursor-pointer flex-shrink-0">
@@ -293,26 +294,28 @@ export function Homepage({ user, onLogout }: HomepageProps) {
               <div
                 className="rounded-full border border-orange-100 shadow-lg group-hover:shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 overflow-hidden"
                 style={{
-                  width: isScrolled ? '3rem' : '4rem',
-                  height: isScrolled ? '3rem' : '4rem',
-                  marginRight: '0.75rem',
-                  transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                  width: isScrolled ? "3rem" : "4rem",
+                  height: isScrolled ? "3rem" : "4rem",
+                  marginRight: "0.75rem",
+                  transition:
+                    "width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 <img
                   src="src/assets/logoEV2.png "
                   alt="FPTFAST Logo"
                   className="w-full h-full"
-                  style={{ objectFit: 'contain', imageRendering: 'auto' }}
+                  style={{ objectFit: "contain", imageRendering: "auto" }}
                 />
               </div>
-              <span 
+              <span
                 className="font-bold tracking-wide ease-out group-hover:text-orange-700 whitespace-nowrap text-orange-600"
                 style={{
-                  fontSize: isScrolled ? '1.25rem' : '1.875rem',
-                  lineHeight: isScrolled ? '1.75rem' : '2.25rem',
-                  transition: 'font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1), line-height 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                  willChange: 'font-size, line-height'
+                  fontSize: isScrolled ? "1.25rem" : "1.875rem",
+                  lineHeight: isScrolled ? "1.75rem" : "2.25rem",
+                  transition:
+                    "font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1), line-height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                  willChange: "font-size, line-height",
                 }}
               >
                 {isScrolled ? "FPTFAST" : "F P T F A S T"}
@@ -324,10 +327,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 href="#features"
                 className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
                 style={{
-                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
-                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
-                  fontSize: isScrolled ? '0.95rem' : '1rem',
-                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                  marginLeft: isScrolled ? "0.5rem" : "1.5rem",
+                  marginRight: isScrolled ? "0.5rem" : "1.5rem",
+                  fontSize: isScrolled ? "0.95rem" : "1rem",
+                  transition:
+                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.features")}
@@ -337,10 +341,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 href="#pricing"
                 className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
                 style={{
-                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
-                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
-                  fontSize: isScrolled ? '0.95rem' : '1rem',
-                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                  marginLeft: isScrolled ? "0.5rem" : "1.5rem",
+                  marginRight: isScrolled ? "0.5rem" : "1.5rem",
+                  fontSize: isScrolled ? "0.95rem" : "1rem",
+                  transition:
+                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.pricing")}
@@ -350,10 +355,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 href="#stations"
                 className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
                 style={{
-                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
-                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
-                  fontSize: isScrolled ? '0.95rem' : '1rem',
-                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                  marginLeft: isScrolled ? "0.5rem" : "1.5rem",
+                  marginRight: isScrolled ? "0.5rem" : "1.5rem",
+                  fontSize: isScrolled ? "0.95rem" : "1rem",
+                  transition:
+                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.stations")}
@@ -363,10 +369,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 href="#contact"
                 className="text-orange-600 hover:text-orange-700 transition-colors duration-300 relative group px-2"
                 style={{
-                  marginLeft: isScrolled ? '0.5rem' : '1.5rem',
-                  marginRight: isScrolled ? '0.5rem' : '1.5rem',
-                  fontSize: isScrolled ? '0.95rem' : '1rem',
-                  transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                  marginLeft: isScrolled ? "0.5rem" : "1.5rem",
+                  marginRight: isScrolled ? "0.5rem" : "1.5rem",
+                  fontSize: isScrolled ? "0.95rem" : "1rem",
+                  transition:
+                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.contact")}
@@ -379,16 +386,17 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   <div>
                     <LanguageSwitcher />
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => navigate("/login")}
                     className="border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 transition-colors duration-300 whitespace-nowrap"
                     style={{
-                      marginLeft: isScrolled ? '0.5rem' : '2rem',
-                      padding: '0.5rem 1rem',
-                      height: isScrolled ? '2.25rem' : '2.5rem',
-                      fontSize: isScrolled ? '0.9375rem' : '1rem',
-                      transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                      marginLeft: isScrolled ? "0.5rem" : "2rem",
+                      padding: "0.5rem 1rem",
+                      height: isScrolled ? "2.25rem" : "2.5rem",
+                      fontSize: isScrolled ? "0.9375rem" : "1rem",
+                      transition:
+                        "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     {t("nav.signIn")}
@@ -397,20 +405,22 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                     onClick={() => navigate("/register")}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-colors duration-300 transform hover:scale-105 whitespace-nowrap"
                     style={{
-                      marginLeft: isScrolled ? '0.5rem' : '1.5rem',
-                      padding: '0.5rem 1rem',
-                      height: isScrolled ? '2.25rem' : '2.5rem',
-                      fontSize: isScrolled ? '0.9375rem' : '1rem',
-                      transition: 'margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                      marginLeft: isScrolled ? "0.5rem" : "1.5rem",
+                      padding: "0.5rem 1rem",
+                      height: isScrolled ? "2.25rem" : "2.5rem",
+                      fontSize: isScrolled ? "0.9375rem" : "1rem",
+                      transition:
+                        "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     {t("nav.getStarted")}
-                    <Sparkles 
+                    <Sparkles
                       className="animate-pulse"
                       style={{
-                        width: isScrolled ? '0.875rem' : '1rem',
-                        height: isScrolled ? '0.875rem' : '1rem',
-                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                        width: isScrolled ? "0.875rem" : "1rem",
+                        height: isScrolled ? "0.875rem" : "1rem",
+                        transition:
+                          "width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                     />
                   </Button>
@@ -422,30 +432,32 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       variant="ghost"
                       className="relative justify-start text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-all duration-300 will-change-transform"
                       style={{
-                        height: isScrolled ? '2rem' : '2.5rem',
-                        padding: isScrolled ? '0.5rem' : '0.75rem'
+                        height: isScrolled ? "2rem" : "2.5rem",
+                        padding: isScrolled ? "0.5rem" : "0.75rem",
                       }}
                     >
-                      <Avatar 
+                      <Avatar
                         className="mr-2 transition-all duration-500 ease-out will-change-transform"
                         style={{
-                          width: isScrolled ? '1.5rem' : '2rem',
-                          height: isScrolled ? '1.5rem' : '2rem'
+                          width: isScrolled ? "1.5rem" : "2rem",
+                          height: isScrolled ? "1.5rem" : "2rem",
                         }}
                       >
                         <AvatarImage
                           src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`}
                           alt={user.name}
                         />
-                        <AvatarFallback style={{ fontSize: isScrolled ? '0.75rem' : '1rem' }}>
+                        <AvatarFallback
+                          style={{ fontSize: isScrolled ? "0.75rem" : "1rem" }}
+                        >
                           {user.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <span 
+                      <span
                         className="font-medium whitespace-nowrap transition-all duration-500 ease-out"
                         style={{
-                          fontSize: isScrolled ? '0.875rem' : '1rem',
-                          display: isScrolled ? 'none' : 'inline'
+                          fontSize: isScrolled ? "0.875rem" : "1rem",
+                          display: isScrolled ? "none" : "inline",
                         }}
                       >
                         {user.name}
@@ -528,13 +540,13 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-orange-100/40 to-transparent rounded-full blur-3xl"></div>
         </div>
-        
+
         <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-24 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-[1600px] mx-auto min-h-[70vh]">
-            <div 
+            <div
               className={`space-y-6 transition-all duration-1000 ${
-                isVisible["hero-text"] 
-                  ? "opacity-100 translate-y-0" 
+                isVisible["hero-text"]
+                  ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-10"
               }`}
               ref={(el: HTMLDivElement | null) => {
@@ -577,29 +589,46 @@ export function Homepage({ user, onLogout }: HomepageProps) {
               </div>
 
               <div className="grid grid-cols-2 gap-6">
+
                 <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-orange-100">
+
                   <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent mb-2">
+
                     {t("home.hero.avgSwapTime")}
+
                   </div>
+
                   <div className="text-sm text-gray-600 font-medium">
+
                     {t("home.hero.avgSwapTimeLabel")}
+
                   </div>
+
                 </div>
+
                 <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-orange-100">
+
                   <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent mb-2">
+
                     {t("home.hero.availability")}
+
                   </div>
+
                   <div className="text-sm text-gray-600 font-medium">
+
                     {t("home.hero.availabilityLabel")}
+
                   </div>
+
                 </div>
+
               </div>
             </div>
 
-            <div 
+            <div
               className={`relative transition-all duration-1000 delay-300 ${
-                isVisible["hero-image"] 
-                  ? "opacity-100 translate-x-0" 
+                isVisible["hero-image"]
+                  ? "opacity-100 translate-x-0"
                   : "opacity-0 translate-x-10"
               }`}
               ref={(el: HTMLDivElement | null) => {
@@ -612,11 +641,11 @@ export function Homepage({ user, onLogout }: HomepageProps) {
               <div className="relative group">
                 <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                 <img
-                  src="https://images.unsplash.com/photo-1751355356724-7df0dda28b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVjdHJpYyUyMHZlaGljbGUlMjBjaGFyZ2luZyUyMHN0YXRpb24lMjBtb2Rlcm58ZW58MXx8fHwxNzU3NTE1OTMzfDA&ixlib=rb-4.1.0&q=80&w=1080"
-                  alt="Modern EV charging station"
+                  src={myImage}
+                  alt="FPT EV charging station"
                   className="relative w-full h-96 md:h-[500px] object-cover rounded-2xl shadow-2xl transform transition-all duration-500 group-hover:scale-105"
                 />
-                <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-2xl border border-orange-100 transform transition-all duration-300 hover:scale-110 hover:shadow-3xl">
+                {/* <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-2xl border border-orange-100 transform transition-all duration-300 hover:scale-110 hover:shadow-3xl">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <div className="w-4 h-4 bg-orange-500 rounded-full animate-ping absolute"></div>
@@ -629,7 +658,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       </span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -653,8 +682,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section> */}
 
       {/* Features Section */}
-      <section 
-        id="features" 
+      <section
+        id="features"
         className="py-20 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden min-h-[600px]"
         ref={(el: HTMLDivElement | null) => {
           if (el) {
@@ -669,7 +698,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               <div className="text-center mb-16 animate-fade-up">
                 <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600">
-                  Tại sao lại chọn FFAST
+                  Tại sao lại chọn chúng tôi
                 </h2>
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   {t("features.subtitle")}
@@ -681,13 +710,15 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 <span className="energy-node" aria-hidden="true"></span>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 py-6 overflow-visible">
                   {features.map((feature, index) => (
-                    <Card 
-                      key={index} 
+                    <Card
+                      key={index}
                       className="feature-card feature-card-animate text-center group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-orange-200 bg-white/80 backdrop-blur-sm h-full min-h-[280px]"
-                      style={{
-                        "--feature-fade-delay": `${index * 0.12}s`,
-                        "--feature-pulse-delay": `${index * 0.25}s`
-                      } as React.CSSProperties}
+                      style={
+                        {
+                          "--feature-fade-delay": `${index * 0.12}s`,
+                          "--feature-pulse-delay": `${index * 0.25}s`,
+                        } as React.CSSProperties
+                      }
                     >
                       <CardHeader>
                         <div className="mx-auto mb-4 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl w-20 h-20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
@@ -712,8 +743,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Map Preview Section */}
-      <section 
-        id="stations" 
+      <section
+        id="stations"
         className="py-20 bg-gradient-to-b from-gray-50 to-white relative min-h-[600px]"
         ref={(el: HTMLDivElement | null) => {
           if (el) {
@@ -728,10 +759,15 @@ export function Homepage({ user, onLogout }: HomepageProps) {
               <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600 mb-4">
                 {t("stations.title")}
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">{t("stations.subtitle")}</p>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                {t("stations.subtitle")}
+              </p>
             </div>
 
-            <Card className="border-2 border-orange-100 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.01] bg-white/90 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.15s" }}>
+            <Card
+              className="border-2 border-orange-100 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.01] bg-white/90 backdrop-blur-sm animate-fade-up"
+              style={{ animationDelay: "0.15s" }}
+            >
               <CardContent className="p-8">
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl h-96 flex items-center justify-center mb-6 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
@@ -752,18 +788,37 @@ export function Homepage({ user, onLogout }: HomepageProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { name: t("stations.downtownHub"), batteries: "12", color: "orange", status: "available" },
-                    { name: t("stations.mallStation"), batteries: "8", color: "orange", status: "available" },
-                    { name: t("stations.airportTerminal"), batteries: null, color: "yellow", status: "maintenance" },
+                    {
+                      name: t("stations.downtownHub"),
+                      batteries: "12",
+                      color: "orange",
+                      status: "available",
+                    },
+                    {
+                      name: t("stations.mallStation"),
+                      batteries: "8",
+                      color: "orange",
+                      status: "available",
+                    },
+                    {
+                      name: t("stations.airportTerminal"),
+                      batteries: null,
+                      color: "yellow",
+                      status: "maintenance",
+                    },
                   ].map((station, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="text-center p-6 rounded-xl bg-gradient-to-br from-white to-gray-50 hover:from-orange-50 hover:to-orange-100 border-2 border-transparent hover:border-orange-200 transition-all duration-300 transform hover:scale-105 hover:shadow-lg group animate-fade-up"
                       style={{ animationDelay: `${0.3 + index * 0.15}s` }}
                     >
                       <div className="relative inline-block mb-3">
-                        <CheckCircle className={`w-10 h-10 text-${station.color}-500 mx-auto group-hover:scale-110 transition-transform duration-300`} />
-                        <div className={`absolute inset-0 w-10 h-10 text-${station.color}-500 rounded-full animate-ping opacity-20`}></div>
+                        <CheckCircle
+                          className={`w-10 h-10 text-${station.color}-500 mx-auto group-hover:scale-110 transition-transform duration-300`}
+                        />
+                        <div
+                          className={`absolute inset-0 w-10 h-10 text-${station.color}-500 rounded-full animate-ping opacity-20`}
+                        ></div>
                       </div>
                       <h4 className="text-gray-900 mb-2 font-bold text-lg group-hover:text-orange-600 transition-colors">
                         {station.name}
@@ -778,8 +833,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section>
 
       {/* Pricing Section */}
-      <section 
-        id="pricing" 
+      <section
+        id="pricing"
         className="py-20 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden"
         ref={(el: HTMLDivElement | null) => {
           if (el) {
@@ -798,7 +853,10 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 {t("pricing.subtitle")}
               </p>
             </div>
-            <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+            <div
+              className="animate-fade-up"
+              style={{ animationDelay: "150ms" }}
+            >
               <PricingSection />
             </div>
           </div>
@@ -866,8 +924,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
       </section> */}
 
       {/* Footer */}
-      <footer 
-        id="contact" 
+      <footer
+        id="contact"
         className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white py-16 relative overflow-hidden min-h-[400px]"
         ref={(el: HTMLElement | null) => {
           if (el) {
@@ -898,11 +956,18 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       F P T F A S T
                     </span>
                   </div>
-                  <p className="text-orange-50 mb-4 leading-relaxed">{t("footer.description")}</p>
+                  <p className="text-orange-50 mb-4 leading-relaxed">
+                    {t("footer.description")}
+                  </p>
                 </div>
 
-                <div className="animate-fade-up" style={{ animationDelay: "0.15s" }}>
-                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.services")}</h4>
+                <div
+                  className="animate-fade-up"
+                  style={{ animationDelay: "0.15s" }}
+                >
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">
+                    {t("footer.services")}
+                  </h4>
                   <ul className="space-y-3 text-orange-50">
                     {[
                       t("footer.batterySwap"),
@@ -911,20 +976,27 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       t("footer.enterpriseSolutions"),
                     ].map((item, index) => (
                       <li key={index}>
-                        <a 
-                          href="#" 
+                        <a
+                          href="#"
                           className="hover:text-yellow-200 transition-colors duration-300 flex items-center group"
                         >
                           <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                          <span className="group-hover:translate-x-2 transition-transform duration-300">{item}</span>
+                          <span className="group-hover:translate-x-2 transition-transform duration-300">
+                            {item}
+                          </span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="animate-fade-up" style={{ animationDelay: "0.3s" }}>
-                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.support")}</h4>
+                <div
+                  className="animate-fade-up"
+                  style={{ animationDelay: "0.3s" }}
+                >
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">
+                    {t("footer.support")}
+                  </h4>
                   <ul className="space-y-3 text-orange-50">
                     {[
                       t("footer.helpCenter"),
@@ -933,20 +1005,27 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       t("footer.roadsideAssistance"),
                     ].map((item, index) => (
                       <li key={index}>
-                        <a 
-                          href="#" 
+                        <a
+                          href="#"
                           className="hover:text-yellow-200 transition-colors duration-300 flex items-center group"
                         >
                           <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                          <span className="group-hover:translate-x-2 transition-transform duration-300">{item}</span>
+                          <span className="group-hover:translate-x-2 transition-transform duration-300">
+                            {item}
+                          </span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="animate-fade-up" style={{ animationDelay: "0.45s" }}>
-                  <h4 className="text-xl font-bold mb-6 text-yellow-200">{t("footer.contact")}</h4>
+                <div
+                  className="animate-fade-up"
+                  style={{ animationDelay: "0.45s" }}
+                >
+                  <h4 className="text-xl font-bold mb-6 text-yellow-200">
+                    {t("footer.contact")}
+                  </h4>
                   <div className="space-y-4 text-orange-50">
                     <div className="flex items-center group hover:text-yellow-200 transition-colors duration-300">
                       <div className="p-2 bg-white/20 rounded-lg mr-3 group-hover:bg-white/30 transition-colors">
