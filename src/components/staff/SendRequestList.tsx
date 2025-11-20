@@ -1,6 +1,6 @@
 // src/components/staff/SendRequestList.tsx
 import React, { useEffect, useState } from "react";
-import { Calendar, Package, User, CheckCircle, Edit } from "lucide-react";
+import { Calendar, Package, User, CheckCircle, Edit, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import CheckRequest from "./CheckRequest";
@@ -198,10 +198,10 @@ const SendRequestList = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Đang tải...</p>
         </div>
       </div>
     );

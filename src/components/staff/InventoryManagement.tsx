@@ -9,7 +9,7 @@ import {
   updateBatteryStatus,
   type BatteryStatusBackend,
 } from "../../services/staff/staffApi";
-import { AlertTriangle, Plus, X } from "lucide-react";
+import { AlertTriangle, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   Select,
@@ -518,7 +518,10 @@ export default function InventoryManagement({ stationId }: Props) {
               {loading && (
                 <tr>
                   <td colSpan={6} className="text-center py-6 text-gray-500">
-                    Đang tải…
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                      <span>Đang tải…</span>
+                    </div>
                   </td>
                 </tr>
               )}

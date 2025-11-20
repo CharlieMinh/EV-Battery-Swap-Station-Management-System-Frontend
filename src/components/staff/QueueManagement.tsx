@@ -9,7 +9,7 @@ import {
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
-import { ClipboardCheck, RefreshCw } from "lucide-react";
+import { ClipboardCheck, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   fetchReservationDetail,
@@ -653,7 +653,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       colSpan={7}
                       className="px-4 py-8 text-center text-gray-500"
                     >
-                      Đang tải…
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                        <span>Đang tải…</span>
+                      </div>
                     </td>
                   </tr>
                 )}
