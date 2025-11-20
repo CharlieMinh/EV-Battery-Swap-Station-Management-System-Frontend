@@ -49,13 +49,6 @@ const RequestBattery = () => {
       const data = await fetchBatteryRequests();
       setRequests(data);
       groupRequestsByCreatedAt(data);
-
-      toast.success(
-        data?.length
-          ? `Đã tải ${data.length} yêu cầu nhập pin.`
-          : "Không có yêu cầu nhập pin.",
-        { ...toastOpts, toastId: TOAST_ID.fetchOk }
-      );
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       const msg =

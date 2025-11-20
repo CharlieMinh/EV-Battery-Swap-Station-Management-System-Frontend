@@ -61,13 +61,6 @@ const SendRequestList = () => {
       const data = await getMyStockRequests();
       setRequests(data);
       groupRequestsByCreatedAt(data);
-
-      toast.success(
-        data?.length
-          ? `Đã tải ${data.length} yêu cầu.`
-          : "Không có yêu cầu nào.",
-        { ...toastOpts, toastId: TOAST_ID.fetchOk }
-      );
     } catch (error: any) {
       console.error("Error fetching requests:", error);
       const msg = error?.message || "Không thể tải yêu cầu.";

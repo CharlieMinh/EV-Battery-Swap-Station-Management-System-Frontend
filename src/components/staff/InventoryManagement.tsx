@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import {
   BatteryModel,
   fetchModelBattery,
@@ -133,6 +135,11 @@ export default function InventoryManagement({ stationId }: Props) {
   const [modelFilter, setModelFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
 
+  // Phân trang
+  const [page, setPage] = useState(1);
+  const [inputPage, setInputPage] = useState(1);
+  const [pageSize] = useState(20); // 20 pin mỗi trang
+
   // dùng cho modal tạo yêu cầu
   const [reqItems, setReqItems] = useState<ReqItem[]>([
     { batteryModelId: "", quantityRequested: 0 },
@@ -213,7 +220,21 @@ export default function InventoryManagement({ stationId }: Props) {
         s ? (b.serialNumber || "").toLowerCase().includes(s) : true
       );
     setList(filtered);
+    setPage(1); // Reset về trang 1 khi filter thay đổi
+    setInputPage(1);
   }, [all, status, modelFilter, search]);
+
+  // Pagination - danh sách pin đã phân trang
+  const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+  const paginatedList = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return list.slice(start, start + pageSize);
+  }, [list, page, pageSize]);
+
+  // Đồng bộ inputPage với page khi page thay đổi
+  useEffect(() => {
+    setInputPage(page);
+  }, [page]);
 
   /* ====== MODEL OPTIONS ====== */
   const modelOptions = useMemo(() => {
@@ -511,12 +532,12 @@ export default function InventoryManagement({ stationId }: Props) {
               )}
 
               {!loading &&
-                list.map((b, idx) => (
+                paginatedList.map((b, idx) => (
                   <tr
                     key={b.batteryId || b.serialNumber || idx}
                     className="odd:bg-white even:bg-gray-50 hover:bg-orange-50/40"
                   >
-                    <td className="px-4 py-3">{idx + 1}</td>
+                    <td className="px-4 py-3">{(page - 1) * pageSize + idx + 1}</td>
                     <td className="px-4 py-3 font-mono">
                       {b.serialNumber || "—"}
                     </td>
@@ -550,6 +571,48 @@ export default function InventoryManagement({ stationId }: Props) {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {list.length > 0 && (
+          <div className="flex justify-center items-center space-x-3 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Trước
+            </Button>
+
+            <div className="flex items-center space-x-1">
+              <span className="text-gray-700 text-sm">Trang</span>
+              <Input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={inputPage}
+                onChange={(e) => setInputPage(Number(e.target.value))}
+                onBlur={() => {
+                  let newPage = inputPage;
+                  if (isNaN(newPage) || newPage < 1) newPage = 1;
+                  if (newPage > totalPages) newPage = totalPages;
+                  setPage(newPage);
+                }}
+                className="w-16 text-center text-sm"
+              />
+              <span className="text-gray-700 text-sm">/ {totalPages}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Modal TẠO YÊU CẦU NHẬP PIN */}
