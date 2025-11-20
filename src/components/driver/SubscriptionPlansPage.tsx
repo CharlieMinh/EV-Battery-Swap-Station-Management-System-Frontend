@@ -294,7 +294,57 @@ export function SubscriptionPlansPage() {
       batteryModelId: "",
     });
     setFormIsActive(true); // Mặc định gói mới là active
+    setDisplayMonthlyPrice("");
+    setDisplayMaxSwaps("");
     setIsAddEditModalOpen(true);
+  };
+
+  // Format số khi nhập cho monthlyPrice
+  const handleMonthlyPriceChange = (value: string) => {
+    // Loại bỏ tất cả ký tự không phải số
+    const numericValue = value.replace(/[^\d]/g, "");
+    // Chỉ cho phép nhập số hoặc xóa hết
+    if (numericValue === "" || /^\d+$/.test(numericValue)) {
+      // Format ngay với dấu chấm khi nhập
+      if (numericValue === "") {
+        setFormData({
+          ...formData,
+          monthlyPrice: 0,
+        });
+        setDisplayMonthlyPrice("");
+      } else {
+        const numValue = Number(numericValue);
+        setFormData({
+          ...formData,
+          monthlyPrice: numValue,
+        });
+        setDisplayMonthlyPrice(numValue.toLocaleString("vi-VN"));
+      }
+    }
+  };
+
+  // Format số khi nhập cho maxSwapsPerMonth
+  const handleMaxSwapsChange = (value: string) => {
+    // Loại bỏ tất cả ký tự không phải số
+    const numericValue = value.replace(/[^\d]/g, "");
+    // Chỉ cho phép nhập số hoặc xóa hết
+    if (numericValue === "" || /^\d+$/.test(numericValue)) {
+      // Format ngay với dấu chấm khi nhập
+      if (numericValue === "") {
+        setFormData({
+          ...formData,
+          maxSwapsPerMonth: 0,
+        });
+        setDisplayMaxSwaps("");
+      } else {
+        const numValue = Number(numericValue);
+        setFormData({
+          ...formData,
+          maxSwapsPerMonth: numValue,
+        });
+        setDisplayMaxSwaps(numValue.toLocaleString("vi-VN"));
+      }
+    }
   };
 
   const handleEditPlan = (planId: string) => {
@@ -317,8 +367,15 @@ export function SubscriptionPlansPage() {
       (plan.isActive === undefined && true); // Mặc định true nếu undefined
     console.log("Editing plan - isActive:", plan.isActive, "Setting to:", isActiveValue);
     setFormIsActive(Boolean(isActiveValue));
+    // Set display values với format
+    setDisplayMonthlyPrice(plan.monthlyPrice.toLocaleString("vi-VN"));
+    setDisplayMaxSwaps((plan.maxSwapsPerMonth ?? 0).toLocaleString("vi-VN"));
     setIsAddEditModalOpen(true);
   };
+
+  // State để lưu giá trị hiển thị (đã format) cho input
+  const [displayMonthlyPrice, setDisplayMonthlyPrice] = useState<string>("");
+  const [displayMaxSwaps, setDisplayMaxSwaps] = useState<string>("");
 
   const handleDeletePlan = async (planId: string) => {
     const result = await Swal.fire({
@@ -911,29 +968,63 @@ export function SubscriptionPlansPage() {
                 <div>
                   <Label>Giá thuê hàng tháng *</Label>
                   <Input
-                    type="number"
+                    type="text"
                     placeholder="Nhập giá VND"
-                    value={formData.monthlyPrice}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        monthlyPrice: Number(e.target.value),
-                      })
+                    value={
+                      displayMonthlyPrice ||
+                      (formData.monthlyPrice
+                        ? formData.monthlyPrice.toLocaleString("vi-VN")
+                        : "")
                     }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDisplayMonthlyPrice(value);
+                      handleMonthlyPriceChange(value);
+                    }}
+                    onBlur={() => {
+                      if (formData.monthlyPrice) {
+                        setDisplayMonthlyPrice(
+                          formData.monthlyPrice.toLocaleString("vi-VN")
+                        );
+                      }
+                    }}
+                    onFocus={() => {
+                      setDisplayMonthlyPrice(
+                        formData.monthlyPrice.toString()
+                      );
+                    }}
                   />
                 </div>
                 <div>
                   <Label>Số lượt đổi tối đa / tháng</Label>
                   <Input
-                    type="number"
+                    type="text"
                     placeholder="0 = không giới hạn"
-                    value={formData.maxSwapsPerMonth ?? 0}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        maxSwapsPerMonth: Number(e.target.value),
-                      })
+                    value={
+                      displayMaxSwaps ||
+                      (formData.maxSwapsPerMonth
+                        ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
+                        : "0")
                     }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDisplayMaxSwaps(value);
+                      handleMaxSwapsChange(value);
+                    }}
+                    onBlur={() => {
+                      if (formData.maxSwapsPerMonth) {
+                        setDisplayMaxSwaps(
+                          formData.maxSwapsPerMonth.toLocaleString("vi-VN")
+                        );
+                      } else {
+                        setDisplayMaxSwaps("0");
+                      }
+                    }}
+                    onFocus={() => {
+                      setDisplayMaxSwaps(
+                        (formData.maxSwapsPerMonth ?? 0).toString()
+                      );
+                    }}
                   />
                 </div>
               </div>
