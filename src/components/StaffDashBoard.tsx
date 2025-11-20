@@ -249,35 +249,37 @@ export default function StaffDashboard({
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gray-50 flex w-full">
-        <Sidebar>
-          <SidebarHeader>
-            <div className="bg-orange-500 flex items-center p-2">
-              <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
+      <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
+        <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl">
+          <SidebarHeader className="p-5 border-b border-slate-200">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
                   src={logo}
                   alt="FPTFAST Logo"
-                  className="w-10 h-9 rounded-lg"
+                  className="w-11 h-10 rounded-xl"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg text-white font-semibold">
-                  F P T F A S T
+                <span className="text-lg font-semibold tracking-wide">
+                  FPTFAST
                 </span>
-                <span className="text-sm font-medium text-gray-100">Staff</span>
+                <span className="text-xs uppercase tracking-widest text-slate-500">
+                  Staff
+                </span>
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
+          <SidebarContent className="px-4 py-4">
+            <SidebarGroup className="p-0">
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="gap-2">
                   {menu.map((m) => (
                     <SidebarMenuItem key={m.key}>
                       <SidebarMenuButton
                         onClick={() => setActive(m.key)}
                         isActive={active === m.key}
-                        className="h-[50px]"
+                        className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                       >
                         <m.icon className="w-4 h-4" />
                         <span>{m.label}</span>
@@ -288,23 +290,25 @@ export default function StaffDashboard({
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100 rounded">
+          <SidebarFooter className="px-4 pb-4">
+            <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
                 <AvatarFallback>
                   {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
+                <p className="text-sm font-semibold truncate text-slate-900">
                   {user.name || user.email}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
+                  Staff
+                </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="shrink-0"
+                className="shrink-0 border-slate-200 text-slate-700 hover:bg-slate-100"
                 onClick={logout}
               >
                 <LogOut className="w-4 h-4" />
@@ -315,8 +319,8 @@ export default function StaffDashboard({
 
         <SidebarInset>
           {/* Header */}
-          <header className="bg-gray-50 border-b border-gray-200 sticky top-0 z-40">
-            <div className="flex justify-between items-center h-16 px-4">
+          <header className="bg-white/80 backdrop-blur-xl border-b border-orange-100 sticky top-0 z-40 shadow-sm">
+            <div className="flex justify-between items-center h-16 px-6">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">

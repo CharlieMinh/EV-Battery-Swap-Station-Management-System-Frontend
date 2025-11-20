@@ -11,8 +11,6 @@ import { User, Mail, Phone, Calendar, Clock, Upload } from "lucide-react";
 import ChangePassword from "./ChangePassword";
 import { useLanguage } from "../LanguageContext";
 
-const CLOUD_NAME = "dt8hbvtd7";
-const UPLOAD_PRESET = "FPTFast";
 
 interface UserProfileData {
   id: string;
@@ -68,46 +66,32 @@ export default function UserProfile() {
     fetchUser();
   }, [t]);
 
-  // Mapping role string sang số theo backend
-  // handleUpload
-  // handleUpload
+  // handleUpload - Gửi file trực tiếp vào backend
   const handleUpload = async (file: File) => {
     if (!user) return;
     setUploading(true);
 
-    const form = new FormData();
-    form.append("file", file);
-    form.append("upload_preset", UPLOAD_PRESET);
-
     try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        { method: "POST", body: form }
+      // Gửi file trực tiếp vào backend
+      await updateUser(user.id, {
+        profilePicture: file, // Gửi File object trực tiếp
+        role: user.role,
+        status: user.status,
+      });
+
+      // Reload user data để lấy URL ảnh mới từ backend
+      const data = await getCurrentUser();
+      const newAvatarUrl = data.profilePictureUrl;
+      
+      setUser((prev) =>
+        prev
+          ? { ...prev, avatar: newAvatarUrl, profilePictureUrl: newAvatarUrl }
+          : prev
       );
-      const data = await response.json();
 
-      if (data.secure_url) {
-        const avatarUrl = data.secure_url;
+      setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
 
-        // Gửi payload đúng tên backend
-        await updateUser(user.id, {
-          profilePicture: avatarUrl, // đổi từ profilePicture
-          role: user.role, // giữ nguyên
-          status: user.status, // giữ nguyên
-        });
-
-        setUser((prev) =>
-          prev
-            ? { ...prev, avatar: avatarUrl, profilePictureUrl: avatarUrl }
-            : prev
-        );
-
-        setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
-
-        toast.success(t("admin.uploadSuccess"));
-      } else {
-        toast.error(t("admin.uploadFailed"));
-      }
+      toast.success(t("admin.uploadSuccess"));
     } catch (error) {
       console.error("Lỗi upload:", error);
       toast.error(t("admin.uploadError"));

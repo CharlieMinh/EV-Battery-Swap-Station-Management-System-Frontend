@@ -179,22 +179,22 @@ export function BatteryStationTable({
                       <tr key={idx} className="border-t hover:bg-gray-50">
                         <td className="p-3">{s.stationName}</td>
                         <td className="p-3 text-center font-medium">
-                          {s.total}
+                          {s.total.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center text-blue-600">
-                          {s.inUse}
+                          {s.inUse.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center text-teal-600">
-                          {s.charging}
+                          {s.charging.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center text-green-600">
-                          {s.full}
+                          {s.full.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center text-red-600">
-                          {s.maintenance}
+                          {s.maintenance.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center text-yellow-600">
-                          {s.reserved}
+                          {s.reserved.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center">
                           <Button

@@ -109,7 +109,7 @@ export function BatteryFleetManagement() {
                       label={({ name, value }) =>
                         `${
                           BATTERY_STATUS_VN[name as string] || name
-                        } (${value})`
+                        } (${value.toLocaleString("vi-VN")})`
                       }
                       labelLine={false}
                     >
@@ -119,7 +119,7 @@ export function BatteryFleetManagement() {
                     </Pie>
                     <Tooltip
                       formatter={(value, name) => [
-                        value,
+                        typeof value === 'number' ? value.toLocaleString("vi-VN") : value,
                         BATTERY_STATUS_VN[name as string] || name,
                       ]}
                     />
@@ -158,7 +158,7 @@ export function BatteryFleetManagement() {
                     </span>
                   </div>
                   <span className="font-semibold text-gray-800">
-                    {item.value} {t("admin.batteryUnit")}
+                    {item.value.toLocaleString("vi-VN")} {t("admin.batteryUnit")}
                   </span>
                 </div>
               ))}

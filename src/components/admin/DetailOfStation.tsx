@@ -330,7 +330,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                   className="border-gray-300 hover:bg-gray-100"
                   onClick={() => setMode("history")}
                 >
-                  <List className="w-4 h-4 mr-2" /> {t("admin.viewHistory")} ({logCount})
+                  <List className="w-4 h-4 mr-2" /> {t("admin.viewHistory")} ({logCount.toLocaleString("vi-VN")})
                 </Button>
                 {!isEditing ? (
                   <Button
@@ -450,7 +450,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
               <StatItem
                 icon={Zap}
                 title={t("admin.totalSwaps")}
-                value={swapCounts.toLocaleString()}
+                value={swapCounts.toLocaleString("vi-VN")}
                 color="text-blue-600"
               />
               <StatItem
@@ -462,7 +462,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
               <StatItem
                 icon={BatteryCharging}
                 title={t("admin.currentBatteries")}
-                value={`${batteryCount}`}
+                value={batteryCount.toLocaleString("vi-VN")}
                 color="text-orange-600"
               />
             </div>

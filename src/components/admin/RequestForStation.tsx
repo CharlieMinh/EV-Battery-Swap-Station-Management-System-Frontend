@@ -328,7 +328,7 @@ export const RequestForStation: React.FC = () => {
                           {req.batteryModelName}
                         </p>
                         <p className="text-lg font-bold text-orange-600 mt-1">
-                          x{req.quantity}
+                          x{req.quantity.toLocaleString("vi-VN")}
                         </p>
                       </div>
                     ))}
@@ -338,7 +338,7 @@ export const RequestForStation: React.FC = () => {
                     <div className="text-sm text-gray-600">
                       <span className="font-semibold">{t("admin.totalQuantity")}</span>{" "}
                       <span className="text-orange-600 font-bold">
-                        {group.totalItems}
+                        {group.totalItems.toLocaleString("vi-VN")}
                       </span>{" "}
                       {t("admin.batteries")}
                     </div>

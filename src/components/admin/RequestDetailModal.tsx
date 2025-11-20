@@ -105,7 +105,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <div>
                     <p className="text-sm text-gray-500">{t("admin.totalQuantity")}</p>
                     <p className="font-semibold text-orange-600">
-                      {group.totalItems} {t("admin.batteryUnit")}
+                      {group.totalItems.toLocaleString("vi-VN")} {t("admin.batteryUnit")}
                     </p>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-orange-600">
-                        x{request.quantity}
+                        x{request.quantity.toLocaleString("vi-VN")}
                       </p>
                       <p className="text-xs text-gray-500">{t("admin.quantity")}</p>
                     </div>
@@ -170,7 +170,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                           {request.batteryModelName}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {t("admin.quantity")}: x{request.quantity}
+                          {t("admin.quantity")}: x{request.quantity.toLocaleString("vi-VN")}
                         </p>
                       </div>
                       <div>

@@ -459,7 +459,7 @@ export function AdminDashboardPage({
                       <Bell className="w-4 h-4" />
                       {unreadCount > 0 && (
                         <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 text-white flex items-center justify-center">
-                          {unreadCount}
+                          {unreadCount.toLocaleString("vi-VN")}
                         </Badge>
                       )}
                     </Button>
@@ -570,7 +570,7 @@ export function AdminDashboardPage({
                       </Badge>
                     </div>
                     <p className="text-3xl font-semibold">
-                      {totalSwaps ?? "..."}
+                      {totalSwaps !== null ? totalSwaps.toLocaleString("vi-VN") : "..."}
                     </p>
 
                   </CardContent>
@@ -587,7 +587,7 @@ export function AdminDashboardPage({
                       </Badge>
                     </div>
                     <p className="text-3xl font-semibold">
-                      {activeStations !== null ? activeStations : "…"}
+                      {activeStations !== null ? activeStations.toLocaleString("vi-VN") : "…"}
                     </p>
 
                   </CardContent>
@@ -604,7 +604,7 @@ export function AdminDashboardPage({
                       </Badge>
                     </div>
                     <p className="text-3xl font-semibold">
-                      {totalCustomers !== null ? totalCustomers : "..."}
+                      {totalCustomers !== null ? totalCustomers.toLocaleString("vi-VN") : "..."}
                     </p>
 
                   </CardContent>

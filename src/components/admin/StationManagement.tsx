@@ -11,6 +11,7 @@ import {
   fetchStations,
   Station,
 } from "@/services/admin/stationService";
+import { getAllPayments, Payment } from "@/services/admin/payment";
 import AddStationModal from "./AddStationModal";
 import { DetailOfStation } from "./DetailOfStation";
 
@@ -24,6 +25,7 @@ export function StationManagement() {
   );
   const [swapCounts, setSwapCounts] = useState<Record<string, number>>({});
   const [batteryCount, setBatteryCount] = useState<Record<string, number>>({});
+  const [stationRevenue, setStationRevenue] = useState<Record<string, number>>({});
 
   // 🧭 Phân trang
   const [page, setPage] = useState(1);
@@ -70,6 +72,47 @@ export function StationManagement() {
           })
         );
         setBatteryCount(batteryCounts);
+
+        // Tính doanh thu cho từng trạm
+        try {
+          // Lấy tất cả payment hoàn tất (status = 2)
+          const payments: Payment[] = await getAllPayments({ status: 2 });
+          console.log("All payments:", payments);
+          console.log("Stations:", stations);
+          
+          // Tính doanh thu cho từng trạm
+          const revenues: Record<string, number> = {};
+          stations.forEach((station: any) => {
+            // Thử match theo cả stationId và stationName
+            const stationPayments = payments.filter(
+              (p) => 
+                p.stationId === station.id || 
+                p.stationName === station.name ||
+                (p.stationId && station.id && p.stationId.toString() === station.id.toString())
+            );
+            
+            console.log(`Station ${station.name} (${station.id}):`, {
+              matchedPayments: stationPayments.length,
+              payments: stationPayments.map(p => ({
+                id: p.id,
+                stationId: p.stationId,
+                stationName: p.stationName,
+                amount: p.amount
+              }))
+            });
+            
+            const total = stationPayments.reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0
+            );
+            revenues[station.id] = total;
+          });
+          
+          console.log("Final revenues:", revenues);
+          setStationRevenue(revenues);
+        } catch (error) {
+          console.error("Error fetching station revenue:", error);
+        }
       } catch (error) {
         console.error("Error fetching stations:", error);
       }
@@ -162,24 +205,31 @@ export function StationManagement() {
                       <h3 className="text-lg text-orange-500 font-medium">
                         {station.name}
                       </h3>
-                      <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
-                        <div>
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2 text-sm">
+                        <div className="flex items-center gap-1">
                           <span className="text-gray-500">
-                            {t("admin.swaps")}:{" "}
+                            {t("admin.swaps")}:
                           </span>
                           <span className="font-medium">
-                            {swapCounts[station.id] ?? 0}
+                            {(swapCounts[station.id] ?? 0).toLocaleString("vi-VN")}
                           </span>
                         </div>
-                        <div>
+                        <div className="flex items-center gap-1">
                           <span className="text-gray-500">
-                            {t("admin.revenue")}:{" "}
+                            {t("admin.revenue")}:
+                          </span>
+                          <span className="font-medium">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                              minimumFractionDigits: 0,
+                            }).format(stationRevenue[station.id] || 0)}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-gray-500">{t("admin.batteryCount")}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-500">{t("admin.batteryCount")}:</span>
                           <span className="font-medium">
-                            {batteryCount[station.id] ?? 0}
+                            {(batteryCount[station.id] ?? 0).toLocaleString("vi-VN")}
                           </span>
                         </div>
                       </div>

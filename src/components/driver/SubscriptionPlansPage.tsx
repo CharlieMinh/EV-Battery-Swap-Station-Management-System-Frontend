@@ -76,7 +76,7 @@ interface SubscriptionPlan {
     id: string;
     name: string;
   };
-  isActive: boolean;
+  isActive: boolean | number; // Có thể là boolean hoặc số (0/1) từ API
 }
 
 interface Payment {
@@ -160,22 +160,45 @@ export function SubscriptionPlansPage() {
     fetchUser();
   }, []);
 
+  const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+
   const fetchPlans = async () => {
     try {
       const res = await axios.get(
         "http://localhost:5194/api/v1/subscription-plans",
         { withCredentials: true }
       );
+      console.log("Raw API response:", res.data);
+      const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+      console.log("User role:", currentUser?.role, "Is Admin:", userIsAdmin);
+      
       const sortedData = (res.data as SubscriptionPlan[])
-        .filter((p) => p.monthlyPrice > 0)
+        .filter((p) => {
+          console.log("Filtering plan:", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
+          
+          // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
+          if (userIsAdmin) {
+            const pass = p.monthlyPrice > 0;
+            console.log("Admin filter - pass:", pass);
+            return pass;
+          } else {
+            // Xử lý cả trường hợp isActive là boolean hoặc số (0/1)
+            // Nếu isActive là undefined/null, coi như true (hoạt động)
+            const isActive = p.isActive === true || p.isActive === 1 || (p.isActive === undefined || p.isActive === null);
+            const pass = p.monthlyPrice > 0 && isActive;
+            console.log("Driver filter - isActive:", isActive, "pass:", pass);
+            return pass;
+          }
+        })
         .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+      
+      console.log("Filtered plans count:", sortedData.length);
       setPlans(sortedData);
     } catch (error) {
+      console.error("Error fetching plans:", error);
       toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
     }
   };
-
-  const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
 
   const handlePayWithVNPay = () => {
     if (payment && payment.paymentUrl) {
@@ -257,6 +280,7 @@ export function SubscriptionPlansPage() {
     refundPolicy: "",
     batteryModelId: "",
   });
+  const [formIsActive, setFormIsActive] = useState<boolean>(true);
 
   const handleAddStation = () => {
     setEditingPlan(null);
@@ -269,6 +293,7 @@ export function SubscriptionPlansPage() {
       refundPolicy: "",
       batteryModelId: "",
     });
+    setFormIsActive(true); // Mặc định gói mới là active
     setIsAddEditModalOpen(true);
   };
 
@@ -285,6 +310,13 @@ export function SubscriptionPlansPage() {
       refundPolicy: plan.benefits, // tạm dùng benefits làm refundPolicy nếu chưa có
       batteryModelId: plan.batteryModel.id,
     });
+    // Đảm bảo isActive là boolean, xử lý cả trường hợp là số (0/1)
+    const isActiveValue = 
+      plan.isActive === true || 
+      plan.isActive === 1 ||
+      (plan.isActive === undefined && true); // Mặc định true nếu undefined
+    console.log("Editing plan - isActive:", plan.isActive, "Setting to:", isActiveValue);
+    setFormIsActive(Boolean(isActiveValue));
     setIsAddEditModalOpen(true);
   };
 
@@ -313,6 +345,9 @@ export function SubscriptionPlansPage() {
   };
 
   useEffect(() => {
+    // Chỉ fetch plans khi đã có currentUser (để biết role)
+    if (userLoading) return;
+    
     const getSubscriptionPlans = async () => {
       try {
         const res = await axios.get(
@@ -321,16 +356,39 @@ export function SubscriptionPlansPage() {
             withCredentials: true,
           }
         );
+        console.log("Raw API response (useEffect):", res.data);
+        const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+        console.log("User role (useEffect):", currentUser?.role, "Is Admin:", userIsAdmin);
+        
         const sortedData = (res.data as SubscriptionPlan[])
-          .filter((p) => p.monthlyPrice > 0)
+          .filter((p) => {
+            console.log("Filtering plan (useEffect):", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
+            
+            // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
+            if (userIsAdmin) {
+              const pass = p.monthlyPrice > 0;
+              console.log("Admin filter (useEffect) - pass:", pass);
+              return pass;
+            } else {
+              // Xử lý cả trường hợp isActive là boolean hoặc số (0/1)
+              // Nếu isActive là undefined/null, coi như true (hoạt động)
+              const isActive = p.isActive === true || p.isActive === 1 || (p.isActive === undefined || p.isActive === null);
+              const pass = p.monthlyPrice > 0 && isActive;
+              console.log("Driver filter (useEffect) - isActive:", isActive, "pass:", pass);
+              return pass;
+            }
+          })
           .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+        
+        console.log("Filtered plans count (useEffect):", sortedData.length);
         setPlans(sortedData);
       } catch (error) {
+        console.error("Error fetching plans:", error);
         toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
       }
     };
     getSubscriptionPlans();
-  }, []);
+  }, [currentUser, userLoading]);
 
   useEffect(() => {
     const getAllStations = async () => {
@@ -934,6 +992,31 @@ export function SubscriptionPlansPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Chỉ hiển thị select isActive khi đang chỉnh sửa (không phải tạo mới) */}
+              {editingPlan && (
+                <div>
+                  <Label>Trạng thái *</Label>
+                  <Select
+                    value={formIsActive === true ? "active" : "inactive"}
+                    onValueChange={(value) => {
+                      const newValue = value === "active";
+                      console.log("Select changed - value:", value, "formIsActive:", newValue);
+                      setFormIsActive(newValue);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái">
+                        {formIsActive === true ? "Hoạt động" : "Ngừng hoạt động"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Hoạt động</SelectItem>
+                      <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-6">
@@ -952,11 +1035,17 @@ export function SubscriptionPlansPage() {
                     setIsLoading(true);
 
                     if (editingPlan) {
-                      // dùng API service update
-                      await updateSubscriptionPlan(editingPlan.id, {
+                      // Sử dụng giá trị isActive từ form state
+                      const updateData = {
                         ...formData,
-                        isActive: editingPlan.isActive,
-                      });
+                        isActive: Boolean(formIsActive),
+                      };
+                      
+                      console.log("Updating plan with data:", updateData);
+                      console.log("isActive value:", updateData.isActive, typeof updateData.isActive);
+                      
+                      // dùng API service update
+                      await updateSubscriptionPlan(editingPlan.id, updateData);
                       toast.success("Cập nhật gói thuê pin thành công!");
                     } else {
                       // dùng API service create
