@@ -29,6 +29,13 @@ export interface SwapTransaction {
   feedback: string;
   ratedAt: string;
   stationId: string;
+  checkedInByStaffName?: string;
+  completedByStaffName?: string;
+  vehicleId?: string;
+  paymentId?: string;
+  paymentStatus?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
 }
 
 // Kiểu phản hồi từ API

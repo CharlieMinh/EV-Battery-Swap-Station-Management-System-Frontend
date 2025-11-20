@@ -469,7 +469,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
         <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
           {t("admin.revenueSummary")}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-git 4 gap-6 mt-5">
           <StatItem
             icon={BarChart}
             color="text-orange-500"
