@@ -3,7 +3,7 @@ import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { MapPin, Filter, Plus, Eye } from "lucide-react";
+import { MapPin, Filter, Plus, Eye, Loader2 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import {
   fetchBatteryCountByStation,
@@ -35,10 +35,12 @@ export function StationManagement() {
   // 🧡 Filter
   const [showFilter, setShowFilter] = useState(false);
   const [filterText, setFilterText] = useState("");
+  const [loading, setLoading] = useState(true);
 
   // 🔄 Lấy danh sách trạm
   useEffect(() => {
     const getStations = async () => {
+      setLoading(true);
       try {
         const response = await fetchStations(page, pageSize);
         const stations = response.items;
@@ -115,6 +117,8 @@ export function StationManagement() {
         }
       } catch (error) {
         console.error("Error fetching stations:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -125,6 +129,17 @@ export function StationManagement() {
   const filteredStations = stationPerformance.filter((station) =>
     station.name.toLowerCase().includes(filterText.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">{t("admin.loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
