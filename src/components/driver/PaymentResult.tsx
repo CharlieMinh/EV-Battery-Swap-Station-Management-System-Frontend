@@ -74,8 +74,8 @@ export function PaymentResult() {
             <div className="min-h-screen bg-gradient-to-br from-orange-50 to-gray-50 flex items-center justify-center p-4">
                 <Card className="w-full max-w-md">
                     <CardContent className="pt-12 pb-8 text-center">
-                        <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-                        <p className="text-gray-600 text-lg">{t("driver.paymentResult.processing")}</p>
+                        <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
+                        <p className="text-gray-600">{t("driver.paymentResult.processing")}</p>
                     </CardContent>
                 </Card>
             </div>

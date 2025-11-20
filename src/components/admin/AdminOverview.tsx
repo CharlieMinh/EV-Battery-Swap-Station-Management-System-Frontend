@@ -21,6 +21,7 @@ import {
   PieChart,
 } from "recharts";
 import { fetchAllBatteries } from "@/services/admin/batteryService";
+import { Loader2 } from "lucide-react";
 
 interface RevenueMonth {
   month: string; // "YYYY-MM"
@@ -30,44 +31,49 @@ interface RevenueMonth {
 export function AdminOverview() {
   const { t } = useLanguage();
   const [revenueData, setRevenueData] = useState<RevenueMonth[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchRevenue() {
-      const data = await getMonthlyRevenue(); // API trả về [{month: "YYYY-MM", revenue: number}, ...]
+      try {
+        const data = await getMonthlyRevenue(); // API trả về [{month: "YYYY-MM", revenue: number}, ...]
 
-      const monthNames = [
-        "Tháng 1",
-        "Tháng 2",
-        "Tháng 3",
-        "Tháng 4",
-        "Tháng 5",
-        "Tháng 6",
-        "Tháng 7",
-        "Tháng 8",
-        "Tháng 9",
-        "Tháng 10",
-        "Tháng 11",
-        "Tháng 12",
-      ];
+        const monthNames = [
+          "Tháng 1",
+          "Tháng 2",
+          "Tháng 3",
+          "Tháng 4",
+          "Tháng 5",
+          "Tháng 6",
+          "Tháng 7",
+          "Tháng 8",
+          "Tháng 9",
+          "Tháng 10",
+          "Tháng 11",
+          "Tháng 12",
+        ];
 
-      const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear();
 
-      // Tạo object map để dễ lookup
-      const revenueMap: Record<number, number> = {};
-      data.forEach((d) => {
-        const date = new Date(d.month);
-        if (date.getFullYear() === currentYear) {
-          revenueMap[date.getMonth()] = d.revenue;
-        }
-      });
+        // Tạo object map để dễ lookup
+        const revenueMap: Record<number, number> = {};
+        data.forEach((d) => {
+          const date = new Date(d.month);
+          if (date.getFullYear() === currentYear) {
+            revenueMap[date.getMonth()] = d.revenue;
+          }
+        });
 
-      // Tạo mảng đầy đủ 12 tháng, nếu không có dữ liệu = 0
-      const fullData = monthNames.map((name, index) => ({
-        month: name,
-        revenue: revenueMap[index] || 0,
-      }));
+        // Tạo mảng đầy đủ 12 tháng, nếu không có dữ liệu = 0
+        const fullData = monthNames.map((name, index) => ({
+          month: name,
+          revenue: revenueMap[index] || 0,
+        }));
 
-      setRevenueData(fullData);
+        setRevenueData(fullData);
+      } catch (error) {
+        console.error("Error fetching revenue:", error);
+      }
     }
 
     fetchRevenue();
@@ -77,6 +83,7 @@ export function AdminOverview() {
     { name: string; count: number; color: string }[]
   >([]);
   const [batteryTotal, setBatteryTotal] = useState(0);
+  const [batteryLoading, setBatteryLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
@@ -105,16 +112,36 @@ export function AdminOverview() {
         setBatteryTotal(allBatteries.length);
       } catch (error) {
         console.error("Error loading battery data:", error);
+      } finally {
+        setBatteryLoading(false);
       }
     }
     loadData();
   }, []);
+
+  // Set loading false khi cả 2 API đã hoàn thành
+  useEffect(() => {
+    if (!batteryLoading && revenueData.length > 0) {
+      setLoading(false);
+    }
+  }, [batteryLoading, revenueData]);
 
   const totalRevenueThisYear = revenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
   );
   const totalModels = batteryData.length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">{t("admin.loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

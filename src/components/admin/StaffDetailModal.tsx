@@ -465,7 +465,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
           </div>
         </Card>
 
-        {/* Hiệu suất */}
+        {/* Hiệu suất
         <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
           {t("admin.revenueSummary")}
         </h2>
@@ -494,7 +494,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
             label={t("admin.totalVehicles")}
             value={formatNumber(staffDetail.recentSwapTransactions)}
           />
-        </div>
+        </div> */}
 
         {/* Footer */}
         <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">

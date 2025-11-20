@@ -1,7 +1,7 @@
 // src/components/staff/Revenue.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { listAllPayments, type Payment } from "../../services/staff/staffApi";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
@@ -403,7 +403,10 @@ export default function Revenue() {
                       colSpan={6}
                       className="px-4 py-8 text-center text-gray-500"
                     >
-                      Đang tải...
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                        <span>Đang tải...</span>
+                      </div>
                     </td>
                   </tr>
                 )}

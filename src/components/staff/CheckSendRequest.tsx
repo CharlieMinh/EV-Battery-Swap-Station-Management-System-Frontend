@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Package, User, Calendar } from "lucide-react";
+import { X, Package, User, Calendar, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { fetchStaffById } from "@/services/admin/staffAdminService"; // import API của bạn
@@ -82,7 +82,16 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5 text-gray-500" />
-                  <span>{loadingStaff ? "Đang tải..." : staffName}</span>
+                  <span>
+                    {loadingStaff ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                        Đang tải...
+                      </span>
+                    ) : (
+                      staffName
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5 text-gray-500" />

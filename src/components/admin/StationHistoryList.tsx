@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Zap, Clock, DollarSign, User } from "lucide-react";
+import { Zap, Clock, DollarSign, User, Loader2 } from "lucide-react";
 import { fetchHistoryStationById } from "@/services/admin/stationService";
 import { useLanguage } from "../LanguageContext";
 
@@ -57,7 +57,12 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
 
   if (loading)
     return (
-      <div className="text-center py-6 text-gray-500">{t("admin.loadingHistory")}</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">{t("admin.loadingHistory")}</p>
+        </div>
+      </div>
     );
 
   if (transactions.length === 0)

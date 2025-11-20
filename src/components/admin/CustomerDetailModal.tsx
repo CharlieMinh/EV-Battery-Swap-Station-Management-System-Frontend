@@ -173,9 +173,9 @@ const CustomerDetailModal = ({
   if (loading || !customerDetail) {
     return (
       <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-        <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
-          <Loader2 className="animate-spin w-6 h-6 inline-block mr-2 text-orange-600" />
-          {t("admin.loadingCustomerData")}
+        <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700 flex flex-col items-center">
+          <Loader2 className="w-8 h-8 animate-spin mb-4 text-orange-500" />
+          <p>{t("admin.loadingCustomerData")}</p>
         </div>
       </div>
     );
@@ -417,18 +417,12 @@ const CustomerDetailModal = ({
         <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
           {t("admin.performanceData")}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
           <StatItem
             icon={BarChart}
             color="text-orange-500"
             label={t("admin.totalSwaps")}
             value={formatNumber(customerDetail.totalReservations)}
-          />
-          <StatItem
-            icon={Zap}
-            color="text-green-500"
-            label={t("admin.totalCompleted")}
-            value={`${formatNumber(customerDetail.completedReservations)} VND`}
           />
           <StatItem
             icon={X}

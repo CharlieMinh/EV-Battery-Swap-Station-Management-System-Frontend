@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Package, User, Calendar } from "lucide-react";
+import { X, Package, User, Calendar, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { fetchStaffById } from "@/services/admin/staffAdminService";
@@ -96,9 +96,17 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
         onClick={onClose}
       >
         <div
-          className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
+          className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative"
           onClick={(e) => e.stopPropagation()}
         >
+          {submitting && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                <p className="text-gray-600 text-sm">{t("admin.processing")}</p>
+              </div>
+            </div>
+          )}
           {/* Header */}
           <div className="sticky top-0 bg-white p-6 border-b border-gray-100 z-10 flex justify-between items-center">
             <h2 className="text-2xl font-bold text-orange-600">
@@ -122,7 +130,14 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                   <div className="flex items-center gap-2">
                     <User className="w-5 h-5 text-gray-500" />{" "}
                     <span>
-                      {t("admin.sender")}: {loadingStaff ? t("admin.loading") : staffName}
+                      {t("admin.sender")}: {loadingStaff ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                          {t("admin.loading")}
+                        </span>
+                      ) : (
+                        staffName
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

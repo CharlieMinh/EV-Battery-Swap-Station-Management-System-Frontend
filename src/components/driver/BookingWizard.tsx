@@ -383,7 +383,12 @@ export function BookingWizard({
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{t('driver.chooseTimeSlot')}</h3>
             {isLoadingSlots ? (
-              <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                  <p className="text-gray-600">Đang tải...</p>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">

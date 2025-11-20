@@ -442,9 +442,11 @@ export default function StaffCustomerManagement() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-6 text-sm text-gray-600">
-        <Loader2 className="w-4 h-4 mr-1 inline-block animate-spin" />
-        Đang tải khách hàng...
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Đang tải khách hàng...</p>
+        </div>
       </div>
     );
   }

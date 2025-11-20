@@ -1,6 +1,6 @@
 // NotificationBell.tsx
 import React, { useEffect, useState } from "react";
-import { Bell, Package, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { Bell, Package, CheckCircle, XCircle, Clock, Eye, Loader2 } from "lucide-react";
 import {
   fetchNotifications,
   markMultipleAsRead,
@@ -308,8 +308,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         {/* Content */}
         <div className="max-h-[500px] overflow-y-auto p-3">
           {loading ? (
-            <div className="text-center py-8 text-gray-500 text-sm">
-              {t("admin.loading")}
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                <p className="text-gray-600 text-sm">{t("admin.loading")}</p>
+              </div>
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">

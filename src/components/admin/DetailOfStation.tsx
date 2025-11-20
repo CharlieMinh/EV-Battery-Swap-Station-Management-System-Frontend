@@ -21,6 +21,7 @@ import {
   DollarSign,
   BatteryCharging,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { geocodeAddress } from "../map/geocode";
 import { toast } from "react-toastify";
@@ -202,8 +203,9 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   if (loading)
     return (
       <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-        <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700">
-          {t("admin.loadingData")}
+        <div className="bg-white p-6 rounded-xl shadow-lg text-gray-700 flex flex-col items-center">
+          <Loader2 className="w-8 h-8 animate-spin mb-4 text-orange-500" />
+          <p>{t("admin.loadingData")}</p>
         </div>
       </div>
     );

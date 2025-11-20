@@ -6,7 +6,7 @@ import {
   completeSwap,
   type Payment,
 } from "../../services/staff/staffApi";
-import { RefreshCw, Check } from "lucide-react";
+import { RefreshCw, Check, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
@@ -166,7 +166,10 @@ export default function Transactions() {
                 {loading && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      Đang tải...
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                        <span>Đang tải...</span>
+                      </div>
                     </td>
                   </tr>
                 )}

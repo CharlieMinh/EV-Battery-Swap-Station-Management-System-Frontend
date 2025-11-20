@@ -188,9 +188,9 @@ export const RequestForStation: React.FC = () => {
 
   if (loading && groupedRequests.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-orange-500" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
           <p className="text-gray-600">{t("admin.loading")}</p>
         </div>
       </div>

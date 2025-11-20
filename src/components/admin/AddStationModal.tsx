@@ -1,7 +1,7 @@
 import React from "react";
 import { geocodeAddress } from "../map/geocode";
 import { createStation } from "@/services/admin/stationService";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
 
@@ -75,6 +75,14 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative animate-fade-in">
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+              <p className="text-gray-600 text-sm">{t("admin.saving")}</p>
+            </div>
+          </div>
+        )}
         {/* Nút đóng */}
         <button
           onClick={onClose}

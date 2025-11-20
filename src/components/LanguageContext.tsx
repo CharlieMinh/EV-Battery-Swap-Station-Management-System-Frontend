@@ -52,7 +52,7 @@ const translations = {
     "stats.uptimeReliability": "Uptime Reliability",
 
     // Features
-    "features.title": "Why Choose EVSwap?",
+    "features.title": "Why Choose Us?",
     "features.subtitle":
       "Experience the future of EV energy with our innovative battery swap technology",
     "features.ultraFast.title": "Ultra-Fast Swaps",
@@ -76,10 +76,10 @@ const translations = {
     "stations.mapTitle": "Interactive Station Map",
     "stations.mapDesc": "Find the nearest station with real-time availability",
     "stations.viewFullMap": "View Full Map",
-    // "stations.downtownHub": "Downtown Hub",
-    // "stations.mallStation": "Mall Station",
-    // "stations.airportTerminal": "Airport Terminal",
-    // "stations.maintenanceMode": "Maintenance mode",
+    "stations.downtownHub": "Downtown Hub",
+    "stations.mallStation": "Mall Station",
+    "stations.airportTerminal": "Airport Terminal",
+    "stations.maintenanceMode": "Maintenance mode",
 
     // Pricing
     "pricing.title": "Simple, Transparent Pricing",
@@ -1316,6 +1316,7 @@ const translations = {
     "staff.loadingData": "Loading data...",
 
     // Admin Dashboard
+    "admin.loadingDetails": "Loading...",
     "admin.overview": "Overview",
     "admin.stations": "Stations",
     "admin.analytics": "Analytics",
@@ -1627,6 +1628,7 @@ const translations = {
     "admin.providePin": "Provide Pin",
     "admin.requestDetailTitle": "Request Details",
     "admin.viewRequest": "View Request",
+    "admin.viewHistory": "View History",
     "admin.generalInfo": "General Information",
     "admin.loadingData": "Loading data...",
     "admin.batteryStationInfo": "Battery Station Information",
@@ -1660,8 +1662,12 @@ const translations = {
     "admin.newPassword": "New Password",
     "admin.confirmNewPassword": "Confirm New Password",
     "admin.loadingCustomerData": "Loading customer data...",
+    "admin.createdAt": "Created At",
+    "admin.lastLogin": "Last Login",
     "admin.totalCompleted": "Total Completed",
     "admin.performanceData": "Performance Data",
+    "admin.cancelledReservations": "Cancelled Reservations",
+    "admin.totalVehicles": "Total Vehicles",
     "admin.cancelChanges": "Cancel Changes",
     "admin.addStationSuccess": "Station added successfully!",
     "admin.addStationError": "Failed to add station!",
@@ -1708,7 +1714,7 @@ const translations = {
     "stats.uptimeReliability": "Độ Tin Cậy Hoạt Động",
 
     // Features
-    "features.title": "Tại Sao Chọn EVSwap?",
+    "features.title": "Tại sao lại chọn chúng tôi?",
     "features.subtitle":
       "Trải nghiệm tương lai năng lượng EV với công nghệ thay pin sáng tạo của chúng tôi",
     "features.ultraFast.title": "Thay Pin Siêu Nhanh",
@@ -1734,10 +1740,10 @@ const translations = {
     "stations.mapDesc":
       "Tìm trạm gần nhất với tình trạng có sẵn theo thời gian thực",
     "stations.viewFullMap": "Xem Bản Đồ Đầy Đủ",
-    // "stations.downtownHub": "Trung Tâm Thành Phố",
-    // "stations.mallStation": "Trạm Trung Tâm Thương Mại",
-    // "stations.airportTerminal": "Nhà Ga Sân Bay",
-    // "stations.maintenanceMode": "Chế độ bảo trì",
+    "stations.downtownHub": "Trung Tâm Thành Phố",
+    "stations.mallStation": "Trạm Trung Tâm Thương Mại",
+    "stations.airportTerminal": "Nhà Ga Sân Bay",
+    "stations.maintenanceMode": "Chế độ bảo trì",
 
     // Pricing
     "pricing.title": "Giá Cả Đơn Giản, Minh Bạch",
