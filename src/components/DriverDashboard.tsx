@@ -388,7 +388,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
-        <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl">
+        <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl w-80">
           <SidebarHeader className="p-5 border-b border-slate-200">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
