@@ -76,7 +76,7 @@ interface SubscriptionPlan {
     id: string;
     name: string;
   };
-  isActive: boolean | number; // Có thể là boolean hoặc số (0/1) từ API
+  isActive: boolean | number | string; // Có thể là boolean, số (0/1), hoặc string ("0"/"1") từ API
 }
 
 interface Payment {
@@ -281,6 +281,7 @@ export function SubscriptionPlansPage() {
     batteryModelId: "",
   });
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
+  const [isUnlimitedPlan, setIsUnlimitedPlan] = useState<boolean>(true); // true = không giới hạn, false = có giới hạn
 
   const handleAddStation = () => {
     setEditingPlan(null);
@@ -294,8 +295,10 @@ export function SubscriptionPlansPage() {
       batteryModelId: "",
     });
     setFormIsActive(true); // Mặc định gói mới là active
+    setIsUnlimitedPlan(true); // Mặc định là gói không giới hạn
     setDisplayMonthlyPrice("");
     setDisplayMaxSwaps("");
+    setErrors({}); // Reset errors
     setIsAddEditModalOpen(true);
   };
 
@@ -338,11 +341,18 @@ export function SubscriptionPlansPage() {
         setDisplayMaxSwaps("");
       } else {
         const numValue = Number(numericValue);
-        setFormData({
-          ...formData,
-          maxSwapsPerMonth: numValue,
-        });
-        setDisplayMaxSwaps(numValue.toLocaleString("vi-VN"));
+        // Validate: giá trị phải >= 1 cho gói có giới hạn
+        if (numValue >= 1) {
+          setFormData({
+            ...formData,
+            maxSwapsPerMonth: numValue,
+          });
+          setDisplayMaxSwaps(numValue.toLocaleString("vi-VN"));
+        } else {
+          // Nếu < 1, giữ giá trị cũ hoặc set về 1
+          toast.warning("Số lượt đổi tối đa phải lớn hơn hoặc bằng 1");
+          setDisplayMaxSwaps(formData.maxSwapsPerMonth >= 1 ? formData.maxSwapsPerMonth.toLocaleString("vi-VN") : "1");
+        }
       }
     }
   };
@@ -351,11 +361,17 @@ export function SubscriptionPlansPage() {
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
     setEditingPlan(plan);
+    
+    // Xác định loại gói: nếu maxSwapsPerMonth là 0 hoặc null thì là gói không giới hạn
+    const planMaxSwaps = plan.maxSwapsPerMonth ?? 0;
+    const isUnlimited = planMaxSwaps === 0 || planMaxSwaps === null;
+    setIsUnlimitedPlan(isUnlimited);
+    
     setFormData({
       name: plan.name,
       description: plan.description,
       monthlyPrice: plan.monthlyPrice,
-      maxSwapsPerMonth: plan.maxSwapsPerMonth ?? 0,
+      maxSwapsPerMonth: isUnlimited ? 0 : planMaxSwaps,
       benefits: plan.benefits,
       refundPolicy: plan.benefits, // tạm dùng benefits làm refundPolicy nếu chưa có
       batteryModelId: plan.batteryModel.id,
@@ -369,13 +385,17 @@ export function SubscriptionPlansPage() {
     setFormIsActive(Boolean(isActiveValue));
     // Set display values với format
     setDisplayMonthlyPrice(plan.monthlyPrice.toLocaleString("vi-VN"));
-    setDisplayMaxSwaps((plan.maxSwapsPerMonth ?? 0).toLocaleString("vi-VN"));
+    setDisplayMaxSwaps(isUnlimited ? "0" : planMaxSwaps.toLocaleString("vi-VN"));
+    setErrors({}); // Reset errors
     setIsAddEditModalOpen(true);
   };
 
   // State để lưu giá trị hiển thị (đã format) cho input
   const [displayMonthlyPrice, setDisplayMonthlyPrice] = useState<string>("");
   const [displayMaxSwaps, setDisplayMaxSwaps] = useState<string>("");
+  
+  // State để lưu lỗi validation
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleDeletePlan = async (planId: string) => {
     const result = await Swal.fire({
@@ -676,12 +696,41 @@ export function SubscriptionPlansPage() {
                 key={plan.id}
                 className={`flex flex-col relative rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 bg-white"`}
               >
-                {/* Admin Badge */}
-                {isAdmin && (
-                  <div className="absolute top-4 right-4 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    ADMIN
-                  </div>
-                )}
+                {/* Status Badge */}
+                {(() => {
+                  // Sử dụng cùng logic như trong filter để đảm bảo nhất quán
+                  const isActiveValue = plan.isActive;
+                  
+                  // Logic giống như trong filter: true hoặc 1 → active, còn lại → inactive
+                  // Xử lý cả boolean, number (0/1), và string ("0"/"1")
+                  let isActive: boolean;
+                  
+                  if (typeof isActiveValue === 'boolean') {
+                    isActive = isActiveValue;
+                  } else if (typeof isActiveValue === 'number') {
+                    isActive = isActiveValue === 1;
+                  } else if (typeof isActiveValue === 'string') {
+                    // String "1" → true, "0" hoặc khác → false
+                    isActive = isActiveValue === "1" || isActiveValue.toLowerCase() === "true";
+                  } else {
+                    // undefined/null → mặc định false (không giống filter vì filter coi undefined là true)
+                    isActive = false;
+                  }
+                  
+                  console.log("Plan:", plan.name, "isActive raw:", isActiveValue, "type:", typeof isActiveValue, "result:", isActive);
+                  
+                  return (
+                    <div
+                      className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
+                        isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {isActive ? "Hoạt động" : "Ngừng hoạt động"}
+                    </div>
+                  );
+                })()}
 
                 <CardHeader className="text-center pt-10 pb-6">
                   <CardTitle className="text-2xl font-bold text-gray-900 h-16">
@@ -943,30 +992,50 @@ export function SubscriptionPlansPage() {
 
             <div className="space-y-4 mt-4">
               <div>
-                <Label>Tên gói *</Label>
+                <Label>
+                  Tên gói <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   placeholder="Nhập tên gói..."
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (errors.name) {
+                      setErrors({ ...errors, name: "" });
+                    }
+                  }}
+                  className={errors.name ? "border-red-500" : ""}
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
               </div>
 
               <div>
-                <Label>Mô tả *</Label>
+                <Label>
+                  Mô tả <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   placeholder="Nhập mô tả..."
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: e.target.value });
+                    if (errors.description) {
+                      setErrors({ ...errors, description: "" });
+                    }
+                  }}
+                  className={errors.description ? "border-red-500" : ""}
                 />
+                {errors.description && (
+                  <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Giá thuê hàng tháng *</Label>
+                  <Label>
+                    Giá thuê hàng tháng <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     type="text"
                     placeholder="Nhập giá VND"
@@ -980,6 +1049,9 @@ export function SubscriptionPlansPage() {
                       const value = e.target.value;
                       setDisplayMonthlyPrice(value);
                       handleMonthlyPriceChange(value);
+                      if (errors.monthlyPrice) {
+                        setErrors({ ...errors, monthlyPrice: "" });
+                      }
                     }}
                     onBlur={() => {
                       if (formData.monthlyPrice) {
@@ -993,40 +1065,121 @@ export function SubscriptionPlansPage() {
                         formData.monthlyPrice.toString()
                       );
                     }}
+                    className={errors.monthlyPrice ? "border-red-500" : ""}
                   />
+                  {errors.monthlyPrice && (
+                    <p className="text-red-500 text-sm mt-1">{errors.monthlyPrice}</p>
+                  )}
                 </div>
                 <div>
-                  <Label>Số lượt đổi tối đa / tháng</Label>
-                  <Input
-                    type="text"
-                    placeholder="0 = không giới hạn"
-                    value={
-                      displayMaxSwaps ||
-                      (formData.maxSwapsPerMonth
-                        ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
-                        : "0")
-                    }
-                    onChange={(e) => {
+                  <Label>
+                    Loại gói <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={isUnlimitedPlan ? "unlimited" : "limited"}
+                    onValueChange={(value) => {
+                      const isUnlimited = value === "unlimited";
+                      setIsUnlimitedPlan(isUnlimited);
+                      
+                      if (isUnlimited) {
+                        // Nếu chọn không giới hạn, set maxSwapsPerMonth = 0
+                        setFormData({
+                          ...formData,
+                          maxSwapsPerMonth: 0,
+                        });
+                        setDisplayMaxSwaps("0");
+                      } else {
+                        // Nếu chọn có giới hạn, set mặc định là 1 nếu hiện tại là 0
+                        if (formData.maxSwapsPerMonth === 0) {
+                          setFormData({
+                            ...formData,
+                            maxSwapsPerMonth: 1,
+                          });
+                          setDisplayMaxSwaps("1");
+                        }
+                      }
+                      if (errors.isUnlimitedPlan) {
+                        setErrors({ ...errors, isUnlimitedPlan: "" });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className={errors.isUnlimitedPlan ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Chọn loại gói" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unlimited">Gói pin không giới hạn lượt đổi</SelectItem>
+                      <SelectItem value="limited">Gói pin có giới hạn lượt đổi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.isUnlimitedPlan && (
+                    <p className="text-red-500 text-sm mt-1">{errors.isUnlimitedPlan}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>
+                  Số lượt đổi tối đa / tháng{" "}
+                  {isUnlimitedPlan ? (
+                    "(Không giới hạn)"
+                  ) : (
+                    <span className="text-red-500">*</span>
+                  )}
+                </Label>
+                <Input
+                  type="text"
+                  placeholder={isUnlimitedPlan ? "Không giới hạn" : "Nhập số lượt (tối thiểu 1)"}
+                  value={
+                    isUnlimitedPlan
+                      ? "Không giới hạn"
+                      : displayMaxSwaps ||
+                        (formData.maxSwapsPerMonth && formData.maxSwapsPerMonth > 0
+                          ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
+                          : "1")
+                  }
+                  readOnly={isUnlimitedPlan}
+                  onChange={(e) => {
+                    if (!isUnlimitedPlan) {
                       const value = e.target.value;
                       setDisplayMaxSwaps(value);
                       handleMaxSwapsChange(value);
-                    }}
-                    onBlur={() => {
-                      if (formData.maxSwapsPerMonth) {
-                        setDisplayMaxSwaps(
-                          formData.maxSwapsPerMonth.toLocaleString("vi-VN")
-                        );
-                      } else {
-                        setDisplayMaxSwaps("0");
+                      if (errors.maxSwapsPerMonth) {
+                        setErrors({ ...errors, maxSwapsPerMonth: "" });
                       }
-                    }}
-                    onFocus={() => {
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!isUnlimitedPlan && formData.maxSwapsPerMonth && formData.maxSwapsPerMonth >= 1) {
                       setDisplayMaxSwaps(
-                        (formData.maxSwapsPerMonth ?? 0).toString()
+                        formData.maxSwapsPerMonth.toLocaleString("vi-VN")
                       );
-                    }}
-                  />
-                </div>
+                    } else if (!isUnlimitedPlan) {
+                      // Nếu giá trị < 1, set về 1
+                      setFormData({
+                        ...formData,
+                        maxSwapsPerMonth: 1,
+                      });
+                      setDisplayMaxSwaps("1");
+                    }
+                  }}
+                  onFocus={() => {
+                    if (!isUnlimitedPlan) {
+                      setDisplayMaxSwaps(
+                        (formData.maxSwapsPerMonth >= 1 ? formData.maxSwapsPerMonth : 1).toString()
+                      );
+                    }
+                  }}
+                  className={
+                    isUnlimitedPlan
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : errors.maxSwapsPerMonth
+                      ? "border-red-500"
+                      : ""
+                  }
+                />
+                {errors.maxSwapsPerMonth && (
+                  <p className="text-red-500 text-sm mt-1">{errors.maxSwapsPerMonth}</p>
+                )}
               </div>
 
               <div>
@@ -1056,14 +1209,19 @@ export function SubscriptionPlansPage() {
               </div>
 
               <div>
-                <Label>Loại pin *</Label>
+                <Label>
+                  Loại pin <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formData.batteryModelId}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, batteryModelId: v })
-                  }
+                  onValueChange={(v) => {
+                    setFormData({ ...formData, batteryModelId: v });
+                    if (errors.batteryModelId) {
+                      setErrors({ ...errors, batteryModelId: "" });
+                    }
+                  }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.batteryModelId ? "border-red-500" : ""}>
                     <SelectValue placeholder="Chọn loại pin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1082,21 +1240,29 @@ export function SubscriptionPlansPage() {
                     })}
                   </SelectContent>
                 </Select>
+                {errors.batteryModelId && (
+                  <p className="text-red-500 text-sm mt-1">{errors.batteryModelId}</p>
+                )}
               </div>
 
               {/* Chỉ hiển thị select isActive khi đang chỉnh sửa (không phải tạo mới) */}
               {editingPlan && (
                 <div>
-                  <Label>Trạng thái *</Label>
+                  <Label>
+                    Trạng thái <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={formIsActive === true ? "active" : "inactive"}
                     onValueChange={(value) => {
                       const newValue = value === "active";
                       console.log("Select changed - value:", value, "formIsActive:", newValue);
                       setFormIsActive(newValue);
+                      if (errors.status) {
+                        setErrors({ ...errors, status: "" });
+                      }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errors.status ? "border-red-500" : ""}>
                       <SelectValue placeholder="Chọn trạng thái">
                         {formIsActive === true ? "Hoạt động" : "Ngừng hoạt động"}
                       </SelectValue>
@@ -1106,6 +1272,9 @@ export function SubscriptionPlansPage() {
                       <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.status && (
+                    <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -1122,25 +1291,71 @@ export function SubscriptionPlansPage() {
                 className="bg-orange-500 hover:bg-orange-600 text-white"
                 disabled={isLoading}
                 onClick={async () => {
+                  // Reset errors
+                  const newErrors: Record<string, string> = {};
+
+                  // Validate các trường bắt buộc
+                  if (!formData.name || formData.name.trim() === "") {
+                    newErrors.name = "Vui lòng nhập tên gói";
+                  }
+
+                  if (!formData.description || formData.description.trim() === "") {
+                    newErrors.description = "Vui lòng nhập mô tả";
+                  }
+
+                  if (!formData.monthlyPrice || formData.monthlyPrice <= 0) {
+                    newErrors.monthlyPrice = "Vui lòng nhập giá thuê hàng tháng (phải lớn hơn 0)";
+                  }
+
+                  if (!formData.batteryModelId || formData.batteryModelId.trim() === "") {
+                    newErrors.batteryModelId = "Vui lòng chọn loại pin";
+                  }
+
+                  // Validate số lượt đổi tối đa cho gói có giới hạn
+                  if (!isUnlimitedPlan) {
+                    if (!formData.maxSwapsPerMonth || formData.maxSwapsPerMonth < 1) {
+                      newErrors.maxSwapsPerMonth = "Số lượt đổi tối đa phải lớn hơn hoặc bằng 1";
+                    }
+                  }
+
+                  // Nếu có lỗi, hiển thị và dừng lại
+                  if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    setIsLoading(false);
+                    return;
+                  }
+
                   try {
                     setIsLoading(true);
+                    setErrors({}); // Clear errors nếu validation pass
+
+                    // Đảm bảo maxSwapsPerMonth đúng: nếu không giới hạn thì = 0, nếu có giới hạn thì >= 1
+                    const finalMaxSwaps = isUnlimitedPlan ? 0 : (formData.maxSwapsPerMonth >= 1 ? formData.maxSwapsPerMonth : 1);
+
+                    const submitData = {
+                      ...formData,
+                      maxSwapsPerMonth: finalMaxSwaps,
+                    };
 
                     if (editingPlan) {
                       // Sử dụng giá trị isActive từ form state
                       const updateData = {
-                        ...formData,
+                        ...submitData,
                         isActive: Boolean(formIsActive),
                       };
                       
                       console.log("Updating plan with data:", updateData);
                       console.log("isActive value:", updateData.isActive, typeof updateData.isActive);
+                      console.log("maxSwapsPerMonth:", updateData.maxSwapsPerMonth, "isUnlimited:", isUnlimitedPlan);
                       
                       // dùng API service update
                       await updateSubscriptionPlan(editingPlan.id, updateData);
                       toast.success("Cập nhật gói thuê pin thành công!");
                     } else {
                       // dùng API service create
-                      await createSubscriptionPlan(formData);
+                      console.log("Creating plan with data:", submitData);
+                      console.log("maxSwapsPerMonth:", submitData.maxSwapsPerMonth, "isUnlimited:", isUnlimitedPlan);
+                      await createSubscriptionPlan(submitData);
                       toast.success("Thêm gói thuê pin mới thành công!");
                     }
 
