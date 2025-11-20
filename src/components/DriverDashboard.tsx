@@ -387,34 +387,36 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gray-50 flex w-full">
-        <Sidebar>
-          <SidebarHeader>
-            <div className="flex items-center p-2 bg-orange-500 ">
-              <div className="inline-flex items-center justify-center w-8 h-8 mr-3">
+      <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
+        <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl">
+          <SidebarHeader className="p-5 border-b border-slate-200">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
-                  src="src/assets/logoEV2.png "
+                  src="src/assets/logoEV2.png"
                   alt="FPTFAST Logo"
-                  className="w-10 h-9 rounded-lg"
+                  className="w-11 h-10 rounded-xl"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-semibold text-white">
-                  F P T F A S T
+                <span className="text-lg font-semibold tracking-wide">
+                  FPTFAST
                 </span>
-                <span className="text-sm font-medium text-white">Driver</span>
+                <span className="text-xs uppercase tracking-widest text-slate-500">
+                  Driver
+                </span>
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent className="flex flex-col flex-1">
-            <SidebarGroup className="flex-1">
-              <SidebarGroupContent className="h-full">
-                <SidebarMenu className="flex flex-col h-full">
+          <SidebarContent className="px-4 py-4">
+            <SidebarGroup className="p-0">
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-2">
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => setActiveSection("map")}
                       isActive={activeSection === "map"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <MapPin className="w-4 h-4" />
                       <span>{t("driver.findStations")}</span>
@@ -424,7 +426,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("subscription")}
                       isActive={activeSection === "subscription"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <Pen className="w-4 h-4" />
                       <span>{t("driver.subscribePlans")}</span>
@@ -434,7 +436,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("my-payments")}
                       isActive={activeSection === "my-payments"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <CreditCardIcon className="w-4 h-4" />
                       <span>{t("driver.myPayments")}</span>
@@ -444,7 +446,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("mycar")}
                       isActive={activeSection === "mycar"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <Car className="w-4 h-4" />
                       <span>{t("driver.mycar")}</span>
@@ -454,7 +456,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => { setActiveSection("swap"); }}
                       isActive={activeSection === "swap"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <Battery className="w-4 h-4" />
                       <span>{t("driver.bookings")}</span>
@@ -464,7 +466,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("history")}
                       isActive={activeSection === "history"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <History className="w-4 h-4" />
                       <span>{t("driver.history")}</span>
@@ -474,7 +476,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("complaints")}
                       isActive={activeSection === "complaints"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <AlertCircle className="w-4 h-4" />
                       <span>{t("driver.myComplaints")}</span>
@@ -484,7 +486,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     <SidebarMenuButton
                       onClick={() => setActiveSection("profile")}
                       isActive={activeSection === "profile"}
-                      className="h-[60px]"
+                      className="h-12 rounded-2xl bg-white/5 text-sm font-medium text-slate-800 transition hover:bg-white/70 hover:text-slate-900 data-[active=true]:bg-white data-[active=true]:text-slate-900 data-[active=true]:shadow-xl"
                     >
                       <UserIcon className="w-4 h-4" />
                       <span>{t("driver.profile")}</span>
@@ -494,19 +496,21 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center p-2 space-x-2 min-w-0 bg-gray-100">
+          <SidebarFooter className="px-4 pb-4">
+            <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
                 <AvatarFallback>{user.name ? user.name.charAt(0).toUpperCase() : '?'}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name || 'User'}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email || 'No email'}</p>
+                <p className="text-sm font-semibold truncate text-slate-900">{user.name || 'User'}</p>
+                <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
+                  Driver
+                </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="shrink-0"
+                className="shrink-0 border-slate-200 text-slate-700 hover:bg-slate-100"
                 onClick={onLogout}
               >
                 <LogOut className="w-4 h-4" />
@@ -516,8 +520,8 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
         </Sidebar>
 
         <SidebarInset>
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="flex justify-between items-center h-16 px-4">
+          <header className="bg-white/80 backdrop-blur-xl border-b border-orange-100 sticky top-0 z-40 shadow-sm">
+            <div className="flex justify-between items-center h-16 px-6">
               <div className="flex items-center space-x-2">
                 <SidebarTrigger />
                 <h1 className="text-xl font-semibold text-orange-600">
