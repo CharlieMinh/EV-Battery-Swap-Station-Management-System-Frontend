@@ -201,9 +201,11 @@ export function MyPaymentsPage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-                <p className="ml-2">{t("driver.payments.loadingPayments")}</p>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                    <p className="text-gray-600">{t("driver.payments.loadingPayments")}</p>
+                </div>
             </div>
         );
     }

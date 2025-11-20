@@ -135,9 +135,9 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
             </p>
           </div>
           <Card className="text-center p-8 border-dashed">
-            <CardContent className="flex justify-center items-center h-40">
-              <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-              <p className="ml-2 text-gray-600">{t("driver.swapStatus.loadingCheck")}</p>
+            <CardContent className="flex flex-col items-center justify-center h-40">
+              <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-4" />
+              <p className="text-gray-600">{t("driver.swapStatus.loadingCheck")}</p>
             </CardContent>
           </Card>
         </div>

@@ -275,8 +275,9 @@ export function SwapHistory({ }: SwapHistoryProps) {
         <CardHeader>
           <CardTitle className="text-orange-500 font-bold">{t("driver.swapHistory")}</CardTitle>
         </CardHeader>
-        <CardContent className="flex justify-center items-center h-40">
-          <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+        <CardContent className="flex flex-col items-center justify-center h-40">
+          <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-4" />
+          <p className="text-gray-600">Đang tải...</p>
         </CardContent>
       </Card>
     );

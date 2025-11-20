@@ -244,8 +244,8 @@ export function DriverProfile() {
       <div className="max-w-6xl mx-auto px-8 lg:px-16 py-10">
         <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
           <CardContent className="flex flex-col items-center justify-center h-64">
-            <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
-            <p className="mt-4 text-lg text-gray-600">{t("driver.profile.loadingMessage")}</p>
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-4" />
+            <p className="text-gray-600">{t("driver.profile.loadingMessage")}</p>
           </CardContent>
         </Card>
       </div>

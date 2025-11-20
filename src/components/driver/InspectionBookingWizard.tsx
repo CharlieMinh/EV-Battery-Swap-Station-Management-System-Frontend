@@ -213,8 +213,11 @@ export function InspectionBookingWizard({
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">{t("driver.inspection.step1Title")}</h3>
                         {isLoadingStations ? (
-                            <div className="flex justify-center items-center h-40">
-                                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                            <div className="flex items-center justify-center h-40">
+                                <div className="text-center">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                                    <p className="text-gray-600">Đang tải...</p>
+                                </div>
                             </div>
                         ) : (
                             <div className="max-h-64 overflow-y-auto pr-2 space-y-3">
@@ -312,8 +315,11 @@ export function InspectionBookingWizard({
                         <h3 className="text-lg font-medium">{t("driver.inspection.step3Title")}</h3>
                         <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2">
                             {isLoadingSlots ? (
-                                <div className="col-span-4 flex justify-center py-12">
-                                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                                <div className="col-span-4 flex items-center justify-center py-12">
+                                    <div className="text-center">
+                                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                                        <p className="text-gray-600">Đang tải...</p>
+                                    </div>
                                 </div>
                             ) : slots.length > 0 ? (
                                 slots.map((slot) => {
