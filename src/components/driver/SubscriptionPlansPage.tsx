@@ -160,6 +160,8 @@ export function SubscriptionPlansPage() {
     fetchUser();
   }, []);
 
+  const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+
   const fetchPlans = async () => {
     try {
       const res = await axios.get(
@@ -167,15 +169,21 @@ export function SubscriptionPlansPage() {
         { withCredentials: true }
       );
       const sortedData = (res.data as SubscriptionPlan[])
-        .filter((p) => p.monthlyPrice > 0)
+        .filter((p) => {
+          // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
+          const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+          if (userIsAdmin) {
+            return p.monthlyPrice > 0;
+          } else {
+            return p.monthlyPrice > 0 && p.isActive === true;
+          }
+        })
         .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
       setPlans(sortedData);
     } catch (error) {
       toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
     }
   };
-
-  const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
 
   const handlePayWithVNPay = () => {
     if (payment && payment.paymentUrl) {
@@ -257,6 +265,7 @@ export function SubscriptionPlansPage() {
     refundPolicy: "",
     batteryModelId: "",
   });
+  const [formIsActive, setFormIsActive] = useState<boolean>(true);
 
   const handleAddStation = () => {
     setEditingPlan(null);
@@ -269,6 +278,7 @@ export function SubscriptionPlansPage() {
       refundPolicy: "",
       batteryModelId: "",
     });
+    setFormIsActive(true); // Mặc định gói mới là active
     setIsAddEditModalOpen(true);
   };
 
@@ -285,6 +295,10 @@ export function SubscriptionPlansPage() {
       refundPolicy: plan.benefits, // tạm dùng benefits làm refundPolicy nếu chưa có
       batteryModelId: plan.batteryModel.id,
     });
+    // Đảm bảo isActive là boolean, mặc định true nếu undefined/null
+    const isActiveValue = plan.isActive === true || plan.isActive === undefined ? true : false;
+    console.log("Editing plan - isActive:", plan.isActive, "Setting to:", isActiveValue);
+    setFormIsActive(isActiveValue);
     setIsAddEditModalOpen(true);
   };
 
@@ -322,7 +336,15 @@ export function SubscriptionPlansPage() {
           }
         );
         const sortedData = (res.data as SubscriptionPlan[])
-          .filter((p) => p.monthlyPrice > 0)
+          .filter((p) => {
+            // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
+            const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+            if (userIsAdmin) {
+              return p.monthlyPrice > 0;
+            } else {
+              return p.monthlyPrice > 0 && p.isActive === true;
+            }
+          })
           .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
         setPlans(sortedData);
       } catch (error) {
@@ -330,7 +352,7 @@ export function SubscriptionPlansPage() {
       }
     };
     getSubscriptionPlans();
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     const getAllStations = async () => {
@@ -934,6 +956,31 @@ export function SubscriptionPlansPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Chỉ hiển thị select isActive khi đang chỉnh sửa (không phải tạo mới) */}
+              {editingPlan && (
+                <div>
+                  <Label>Trạng thái *</Label>
+                  <Select
+                    value={formIsActive === true ? "active" : "inactive"}
+                    onValueChange={(value) => {
+                      const newValue = value === "active";
+                      console.log("Select changed - value:", value, "formIsActive:", newValue);
+                      setFormIsActive(newValue);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái">
+                        {formIsActive === true ? "Hoạt động" : "Ngừng hoạt động"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Hoạt động</SelectItem>
+                      <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-6">
@@ -952,11 +999,17 @@ export function SubscriptionPlansPage() {
                     setIsLoading(true);
 
                     if (editingPlan) {
-                      // dùng API service update
-                      await updateSubscriptionPlan(editingPlan.id, {
+                      // Sử dụng giá trị isActive từ form state
+                      const updateData = {
                         ...formData,
-                        isActive: editingPlan.isActive,
-                      });
+                        isActive: Boolean(formIsActive),
+                      };
+                      
+                      console.log("Updating plan with data:", updateData);
+                      console.log("isActive value:", updateData.isActive, typeof updateData.isActive);
+                      
+                      // dùng API service update
+                      await updateSubscriptionPlan(editingPlan.id, updateData);
                       toast.success("Cập nhật gói thuê pin thành công!");
                     } else {
                       // dùng API service create
