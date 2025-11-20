@@ -682,7 +682,7 @@ const translations = {
     // Subscription Plans Page (listing)
     "driver.subscription.manageTitle": "Manage battery rental plans",
     "driver.subscription.manageSubtitle": "Manage service plans and stations.",
-    "driver.subscription.addStationButton": "Add station",
+    "driver.subscription.addStationButton": "Add subscription plan",
     "driver.subscription.listTitle": "Choose a battery rental plan",
     "driver.subscription.subtitle": "Pick the plan that best fits your travel needs.",
     "driver.subscription.searchLabel": "Search by name",
@@ -2336,7 +2336,7 @@ const translations = {
     // Subscription Plans Page (listing)
     "driver.subscription.manageTitle": "Quản lý gói thuê pin",
     "driver.subscription.manageSubtitle": "Quản lý các gói dịch vụ và trạm giao dịch.",
-    "driver.subscription.addStationButton": "Thêm trạm",
+    "driver.subscription.addStationButton": "Thêm gói pin",
     "driver.subscription.listTitle": "Chọn gói thuê pin phù hợp",
     "driver.subscription.subtitle": "Chọn một gói dịch vụ phù hợp nhất với nhu cầu di chuyển của bạn.",
     "driver.subscription.searchLabel": "Tìm theo tên",
