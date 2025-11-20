@@ -128,3 +128,115 @@ export async function changePassword(payload: {
   }
 }
 
+export interface SubscriptionInfo {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  isBlocked: boolean;
+  vehicleId: string;
+  currentMonthSwapCount: number;
+  swapsLimit: number | null;
+  subscriptionPlan: {
+    name: string;
+    batteryModelId?: string;
+    maxSwapsPerMonth?: number;
+  };
+  vehicle: {
+    id: string;
+    plate: string;
+    model: string;
+  } | null;
+}
+
+/**
+ * Get vehicles by user ID (for admin)
+ * Note: Backend may not have a dedicated endpoint for this.
+ * This function tries multiple possible endpoints.
+ */
+export async function getVehiclesByUserId(userId: string) {
+  // First, check if the user detail endpoint includes vehicles
+  try {
+    const userResponse = await api.get(`/api/v1/Users/${userId}`);
+    if (userResponse.data?.vehicles && Array.isArray(userResponse.data.vehicles)) {
+      return userResponse.data.vehicles;
+    }
+  } catch (error) {
+    console.log('User endpoint does not include vehicles, trying other endpoints...');
+  }
+
+  // Try various endpoint patterns
+  const endpoints = [
+    `/api/v1/vehicles?userId=${userId}`,
+    `/api/v1/Users/${userId}/vehicles`,
+    `/api/v1/admin/users/${userId}/vehicles`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await api.get(endpoint);
+      const data = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data || response.data?.items || []);
+      if (data.length > 0 || endpoint === endpoints[endpoints.length - 1]) {
+        return data;
+      }
+    } catch (error: any) {
+      if (error.response?.status !== 404) {
+        console.error(`Error fetching vehicles from ${endpoint}:`, error);
+      }
+      continue;
+    }
+  }
+
+  // If all endpoints fail, return empty array
+  console.warn(`No vehicles endpoint found for userId: ${userId}`);
+  return [];
+}
+
+/**
+ * Get subscriptions by user ID (for admin)
+ * Note: Backend may not have a dedicated endpoint for this.
+ * This function tries multiple possible endpoints.
+ */
+export async function getSubscriptionsByUserId(userId: string): Promise<SubscriptionInfo[]> {
+  // First, check if the user detail endpoint includes subscriptions
+  try {
+    const userResponse = await api.get(`/api/v1/Users/${userId}`);
+    if (userResponse.data?.subscriptions && Array.isArray(userResponse.data.subscriptions)) {
+      return userResponse.data.subscriptions;
+    }
+  } catch (error) {
+    console.log('User endpoint does not include subscriptions, trying other endpoints...');
+  }
+
+  // Try various endpoint patterns
+  const endpoints = [
+    `/api/v1/subscriptions?userId=${userId}`,
+    `/api/v1/Users/${userId}/subscriptions`,
+    `/api/v1/subscriptions/user/${userId}/all`,
+    `/api/v1/admin/users/${userId}/subscriptions`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await api.get(endpoint);
+      const data = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data || response.data?.items || []);
+      if (data.length > 0 || endpoint === endpoints[endpoints.length - 1]) {
+        return data;
+      }
+    } catch (error: any) {
+      if (error.response?.status !== 404) {
+        console.error(`Error fetching subscriptions from ${endpoint}:`, error);
+      }
+      continue;
+    }
+  }
+
+  // If all endpoints fail, return empty array
+  console.warn(`No subscriptions endpoint found for userId: ${userId}`);
+  return [];
+}
+

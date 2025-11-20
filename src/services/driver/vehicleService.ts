@@ -104,6 +104,28 @@ class VehicleService {
     }
 
     /**
+     * Get vehicles by user ID (for admin)
+     */
+    async getVehiclesByUserId(userId: string): Promise<Vehicle[]> {
+        try {
+            // Try with query parameter first
+            const response = await api.get('/api/v1/vehicles', {
+                params: { userId }
+            });
+            return Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.items || []);
+        } catch (error) {
+            // If that fails, try alternative endpoint
+            try {
+                const response = await api.get(`/api/v1/Users/${userId}/vehicles`);
+                return Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.items || []);
+            } catch (err2) {
+                console.error('Error fetching vehicles by userId:', err2);
+                throw err2;
+            }
+        }
+    }
+
+    /**
      * Get vehicle by ID
      */
     async getVehicleById(id: string): Promise<Vehicle> {

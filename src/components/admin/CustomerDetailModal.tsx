@@ -5,6 +5,8 @@ import {
   fetchCustomerById,
   updateUser,
   UpdateUserPayload,
+  getVehiclesByUserId,
+  getSubscriptionsByUserId,
 } from "@/services/admin/customerAdminService";
 import { useLanguage } from "../LanguageContext";
 import {
@@ -20,9 +22,13 @@ import {
   User,
   X,
   Zap,
+  Car,
+  Package,
+  Battery,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Card } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
 import { toast } from "react-toastify";
 import { profile } from "console";
 
@@ -66,6 +72,38 @@ interface CustomerDetailModalProps {
 }
 
 const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
+
+interface Vehicle {
+  id: string;
+  vin: string;
+  plate: string;
+  brand: string;
+  vehicleModelFullName?: string;
+  compatibleBatteryModelName?: string;
+  compatibleBatteryModelId: string;
+  photoUrl?: string;
+}
+
+interface SubscriptionInfo {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  isBlocked: boolean;
+  vehicleId: string;
+  currentMonthSwapCount: number;
+  swapsLimit: number | null;
+  subscriptionPlan: {
+    name: string;
+    batteryModelId?: string;
+    maxSwapsPerMonth?: number;
+  };
+  vehicle: {
+    id: string;
+    plate: string;
+    model: string;
+  } | null;
+}
 
 const getRoleNumber = (role: string | number): number => {
   if (typeof role === "number") return role;
@@ -112,6 +150,10 @@ const CustomerDetailModal = ({
     status: "0",
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
   useEffect(() => {
     if (!customer || !customer.id) return;
@@ -139,6 +181,48 @@ const CustomerDetailModal = ({
     };
     getCustomerById();
   }, [customer, onClose]);
+
+  // Fetch vehicles for customer
+  useEffect(() => {
+    if (!customer || !customer.id) {
+      setVehicles([]);
+      return;
+    }
+    const fetchVehicles = async () => {
+      setLoadingVehicles(true);
+      try {
+        const vehiclesData = await getVehiclesByUserId(customer.id);
+        setVehicles(vehiclesData);
+      } catch (error) {
+        console.error("Error fetching vehicles:", error);
+        setVehicles([]);
+      } finally {
+        setLoadingVehicles(false);
+      }
+    };
+    fetchVehicles();
+  }, [customer]);
+
+  // Fetch subscriptions for customer
+  useEffect(() => {
+    if (!customer || !customer.id) {
+      setSubscriptions([]);
+      return;
+    }
+    const fetchSubscriptions = async () => {
+      setLoadingSubscriptions(true);
+      try {
+        const subscriptionsData = await getSubscriptionsByUserId(customer.id);
+        setSubscriptions(subscriptionsData);
+      } catch (error) {
+        console.error("Error fetching subscriptions:", error);
+        setSubscriptions([]);
+      } finally {
+        setLoadingSubscriptions(false);
+      }
+    };
+    fetchSubscriptions();
+  }, [customer]);
 
   const handleSave = async () => {
     if (!customerDetail) return;
@@ -436,6 +520,183 @@ const CustomerDetailModal = ({
             label={t("admin.totalVehicles")}
             value={formatNumber(customerDetail.totalVehicles)}
           />
+        </div>
+
+        {/* Vehicles and Subscriptions */}
+        <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100 mt-8">
+          {t("admin.vehiclesAndSubscriptions")}
+        </h2>
+        <div className="mt-5 space-y-4">
+          {loadingVehicles || loadingSubscriptions ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-orange-500 mr-3" />
+              <p className="text-gray-600">{t("admin.loadingVehicles")}</p>
+            </div>
+          ) : vehicles.length === 0 ? (
+            <Card className="border border-gray-200 p-6">
+              <div className="text-center text-gray-500">
+                <Car className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p>{t("admin.noVehicles")}</p>
+              </div>
+            </Card>
+          ) : (
+            vehicles.map((vehicle) => {
+              const vehicleSub = subscriptions.find(
+                (sub) =>
+                  sub.isActive &&
+                  sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
+              );
+              const limit =
+                vehicleSub?.swapsLimit ??
+                vehicleSub?.subscriptionPlan?.maxSwapsPerMonth ??
+                null;
+              const count = vehicleSub?.currentMonthSwapCount ?? 0;
+              const remaining = limit === null ? null : limit - count;
+              const isLimitReached = limit !== null && count >= limit;
+
+              return (
+                <Card
+                  key={vehicle.id}
+                  className="border border-gray-200 hover:border-orange-300 transition-all shadow-sm"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      {vehicle.photoUrl ? (
+                        <img
+                          src={vehicle.photoUrl}
+                          alt={vehicle.vehicleModelFullName || vehicle.brand}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-200">
+                          <Car className="w-10 h-10 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {vehicle.vehicleModelFullName || vehicle.brand}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <span className="font-semibold">{t("admin.plateNumber")}:</span>
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                                  {vehicle.plate}
+                                </span>
+                              </div>
+                              {vehicle.vin && (
+                                <div className="flex items-center gap-1">
+                                  <span className="font-semibold">VIN:</span>
+                                  <span className="font-mono text-xs">{vehicle.vin}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Battery className="w-4 h-4 text-orange-500" />
+                              <span className="text-sm text-gray-600">
+                                {t("admin.compatibleBattery")}:{" "}
+                                <span className="font-semibold text-gray-900">
+                                  {vehicle.compatibleBatteryModelName || "N/A"}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {vehicleSub ? (
+                          <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+                            <div className="flex items-start gap-3">
+                              <Package className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge
+                                    className={
+                                      isLimitReached
+                                        ? "bg-red-100 text-red-700 border-red-300"
+                                        : "bg-green-100 text-green-700 border-green-300"
+                                    }
+                                  >
+                                    {vehicleSub.subscriptionPlan.name}
+                                  </Badge>
+                                  {vehicleSub.isBlocked && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      {t("admin.blocked")}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="space-y-1 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-gray-600">{t("admin.subscriptionStatus")}:</span>
+                                    <Badge
+                                      className={
+                                        vehicleSub.isActive
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-gray-100 text-gray-700"
+                                      }
+                                    >
+                                      {vehicleSub.isActive
+                                        ? t("admin.active")
+                                        : t("admin.inactive")}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-gray-600">{t("admin.usageThisMonth")}:</span>
+                                    <span className="font-semibold text-gray-900">
+                                      {formatNumber(count)}
+                                      {limit !== null && ` / ${formatNumber(limit)}`}
+                                    </span>
+                                  </div>
+                                  {limit !== null && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-gray-600">{t("admin.remainingSwaps")}:</span>
+                                      <span
+                                        className={`font-semibold ${
+                                          remaining !== null && remaining > 0
+                                            ? "text-green-600"
+                                            : "text-red-600"
+                                        }`}
+                                      >
+                                        {remaining !== null
+                                          ? formatNumber(remaining)
+                                          : t("admin.unlimited")}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {vehicleSub.startDate && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <Calendar className="w-3 h-3" />
+                                      <span>
+                                        {t("admin.startDate")}: {formatDateTime(vehicleSub.startDate)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {vehicleSub.endDate && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <Calendar className="w-3 h-3" />
+                                      <span>
+                                        {t("admin.endDate")}: {formatDateTime(vehicleSub.endDate)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Package className="w-4 h-4 text-gray-400" />
+                              <span>{t("admin.noActiveSubscription")}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Footer */}
