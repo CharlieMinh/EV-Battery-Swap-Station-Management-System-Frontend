@@ -114,9 +114,11 @@ export function BatteryStationTable({
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-40">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        {t("admin.loadingData")}
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">{t("admin.loadingData")}</p>
+        </div>
       </div>
     );
 

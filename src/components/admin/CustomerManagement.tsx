@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { Eye, Edit, Filter } from "lucide-react";
+import { Eye, Edit, Filter, Loader2 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import {
   Customer,
@@ -83,7 +83,14 @@ export function CustomerManagement() {
   );
 
   if (isLoading) {
-    return <div className="text-center py-6">{t("admin.loadingCustomers")}</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">{t("admin.loadingCustomers")}</p>
+        </div>
+      </div>
+    );
   }
 
   return (

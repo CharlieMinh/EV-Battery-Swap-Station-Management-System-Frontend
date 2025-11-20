@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
 import api from "@/configs/axios";
+import { Loader2 } from "lucide-react";
 
 interface AccountPayload {
   email: string;
@@ -156,7 +157,15 @@ export function AddUser() {
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
-      <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl">
+      <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+              <p className="text-gray-600 text-sm">{t("admin.processing")}</p>
+            </div>
+          </div>
+        )}
         <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center">
           {t("admin.addUserTitle")}
         </h2>

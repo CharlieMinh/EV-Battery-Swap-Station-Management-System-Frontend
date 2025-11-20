@@ -7,7 +7,7 @@ import {
 } from "@/services/admin/customerAdminService";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { User, Mail, Phone, Calendar, Clock, Upload } from "lucide-react";
+import { User, Mail, Phone, Calendar, Clock, Upload, Loader2 } from "lucide-react";
 import ChangePassword from "./ChangePassword";
 import { useLanguage } from "../LanguageContext";
 
@@ -153,7 +153,7 @@ export default function UserProfile() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
           <p className="text-gray-600">{t("admin.loading")}</p>
         </div>
       </div>
