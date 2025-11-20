@@ -76,7 +76,7 @@ interface SubscriptionPlan {
     id: string;
     name: string;
   };
-  isActive: boolean;
+  isActive: boolean | number; // Có thể là boolean hoặc số (0/1) từ API
 }
 
 interface Payment {
@@ -168,19 +168,34 @@ export function SubscriptionPlansPage() {
         "http://localhost:5194/api/v1/subscription-plans",
         { withCredentials: true }
       );
+      console.log("Raw API response:", res.data);
+      const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+      console.log("User role:", currentUser?.role, "Is Admin:", userIsAdmin);
+      
       const sortedData = (res.data as SubscriptionPlan[])
         .filter((p) => {
+          console.log("Filtering plan:", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
+          
           // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
-          const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
           if (userIsAdmin) {
-            return p.monthlyPrice > 0;
+            const pass = p.monthlyPrice > 0;
+            console.log("Admin filter - pass:", pass);
+            return pass;
           } else {
-            return p.monthlyPrice > 0 && p.isActive === true;
+            // Xử lý cả trường hợp isActive là boolean hoặc số (0/1)
+            // Nếu isActive là undefined/null, coi như true (hoạt động)
+            const isActive = p.isActive === true || p.isActive === 1 || (p.isActive === undefined || p.isActive === null);
+            const pass = p.monthlyPrice > 0 && isActive;
+            console.log("Driver filter - isActive:", isActive, "pass:", pass);
+            return pass;
           }
         })
         .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+      
+      console.log("Filtered plans count:", sortedData.length);
       setPlans(sortedData);
     } catch (error) {
+      console.error("Error fetching plans:", error);
       toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
     }
   };
@@ -295,10 +310,13 @@ export function SubscriptionPlansPage() {
       refundPolicy: plan.benefits, // tạm dùng benefits làm refundPolicy nếu chưa có
       batteryModelId: plan.batteryModel.id,
     });
-    // Đảm bảo isActive là boolean, mặc định true nếu undefined/null
-    const isActiveValue = plan.isActive === true || plan.isActive === undefined ? true : false;
+    // Đảm bảo isActive là boolean, xử lý cả trường hợp là số (0/1)
+    const isActiveValue = 
+      plan.isActive === true || 
+      plan.isActive === 1 ||
+      (plan.isActive === undefined && true); // Mặc định true nếu undefined
     console.log("Editing plan - isActive:", plan.isActive, "Setting to:", isActiveValue);
-    setFormIsActive(isActiveValue);
+    setFormIsActive(Boolean(isActiveValue));
     setIsAddEditModalOpen(true);
   };
 
@@ -327,6 +345,9 @@ export function SubscriptionPlansPage() {
   };
 
   useEffect(() => {
+    // Chỉ fetch plans khi đã có currentUser (để biết role)
+    if (userLoading) return;
+    
     const getSubscriptionPlans = async () => {
       try {
         const res = await axios.get(
@@ -335,24 +356,39 @@ export function SubscriptionPlansPage() {
             withCredentials: true,
           }
         );
+        console.log("Raw API response (useEffect):", res.data);
+        const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
+        console.log("User role (useEffect):", currentUser?.role, "Is Admin:", userIsAdmin);
+        
         const sortedData = (res.data as SubscriptionPlan[])
           .filter((p) => {
+            console.log("Filtering plan (useEffect):", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
+            
             // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
-            const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
             if (userIsAdmin) {
-              return p.monthlyPrice > 0;
+              const pass = p.monthlyPrice > 0;
+              console.log("Admin filter (useEffect) - pass:", pass);
+              return pass;
             } else {
-              return p.monthlyPrice > 0 && p.isActive === true;
+              // Xử lý cả trường hợp isActive là boolean hoặc số (0/1)
+              // Nếu isActive là undefined/null, coi như true (hoạt động)
+              const isActive = p.isActive === true || p.isActive === 1 || (p.isActive === undefined || p.isActive === null);
+              const pass = p.monthlyPrice > 0 && isActive;
+              console.log("Driver filter (useEffect) - isActive:", isActive, "pass:", pass);
+              return pass;
             }
           })
           .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
+        
+        console.log("Filtered plans count (useEffect):", sortedData.length);
         setPlans(sortedData);
       } catch (error) {
+        console.error("Error fetching plans:", error);
         toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
       }
     };
     getSubscriptionPlans();
-  }, [currentUser]);
+  }, [currentUser, userLoading]);
 
   useEffect(() => {
     const getAllStations = async () => {

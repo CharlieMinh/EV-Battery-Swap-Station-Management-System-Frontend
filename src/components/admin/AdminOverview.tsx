@@ -189,7 +189,7 @@ export function AdminOverview() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [`${value} pin`, "Số lượng"]}
+                  formatter={(value: number) => [`${value.toLocaleString("vi-VN")} pin`, "Số lượng"]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -202,7 +202,7 @@ export function AdminOverview() {
                     style={{ backgroundColor: entry.color }}
                   ></div>
                   <span className="text-sm">
-                    {entry.name}: {entry.count} pin
+                    {entry.name}: {entry.count.toLocaleString("vi-VN")} pin
                   </span>
                 </div>
               ))}

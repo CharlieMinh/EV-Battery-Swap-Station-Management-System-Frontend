@@ -48,19 +48,33 @@ export function AddPinToStation({
   }, [t]);
 
   const handleChangeQuantity = (modelId: string, value: string) => {
+    // Loại bỏ tất cả ký tự không phải số
+    const numericValue = value.replace(/[^\d]/g, "");
     // Chỉ cho phép nhập số hoặc xóa hết
-    if (/^\d*$/.test(value)) {
-      setQuantities((prev) => ({ ...prev, [modelId]: value }));
+    if (numericValue === "" || /^\d+$/.test(numericValue)) {
+      // Format ngay với dấu chấm khi nhập
+      if (numericValue === "") {
+        setQuantities((prev) => ({ ...prev, [modelId]: "" }));
+      } else {
+        const formatted = Number(numericValue).toLocaleString("vi-VN");
+        setQuantities((prev) => ({ ...prev, [modelId]: formatted }));
+      }
     }
   };
 
   const handleAddBatteries = async () => {
     const payload = Object.entries(quantities)
-      .filter(([_, qty]) => qty !== "" && parseInt(qty) > 0)
-      .map(([modelId, qty]) => ({
-        batteryModelId: modelId,
-        quantity: parseInt(qty),
-      }));
+      .filter(([_, qty]) => qty !== "" && qty !== "0")
+      .map(([modelId, qty]) => {
+        // Parse số từ chuỗi có dấu chấm (loại bỏ dấu chấm trước khi parse)
+        const numericValue = qty.replace(/[.\s]/g, "");
+        const quantity = parseInt(numericValue);
+        return {
+          batteryModelId: modelId,
+          quantity: quantity,
+        };
+      })
+      .filter((item) => item.quantity > 0);
 
     if (payload.length === 0) {
       toast.warning(t("admin.enterAtLeastOneBattery"));

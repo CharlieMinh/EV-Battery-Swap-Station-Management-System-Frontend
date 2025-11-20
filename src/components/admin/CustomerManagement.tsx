@@ -158,7 +158,7 @@ export function CustomerManagement() {
                     <div>
                       <span className="text-gray-500">{t("admin.totalSwapsLabel")}</span>
                       <span className="font-medium">
-                        {customer.totalReservations.toLocaleString()}
+                        {customer.totalReservations.toLocaleString("vi-VN")}
                       </span>
                     </div>
 
