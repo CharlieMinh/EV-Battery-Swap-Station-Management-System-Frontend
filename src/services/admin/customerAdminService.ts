@@ -25,7 +25,7 @@
       name?: string;
       phoneNumber?: string;
       role: string;
-      profilePicture?: string,
+      profilePicture?: string | File,
       status: string;
       stationId?: string
   }
@@ -60,8 +60,16 @@
     if (payload.name) formData.append("Name", payload.name);
     if (payload.phoneNumber) formData.append("PhoneNumber", payload.phoneNumber);
 
-    // ⚠️ Gửi URL Cloudinary vào đúng field backend đang nhận (ProfilePicture)
-    if (payload.profilePicture) formData.append("ProfilePicture", payload.profilePicture);
+    // Gửi file hoặc URL vào field ProfilePicture
+    if (payload.profilePicture) {
+      if (payload.profilePicture instanceof File) {
+        // Gửi File object trực tiếp
+        formData.append("ProfilePicture", payload.profilePicture);
+      } else if (typeof payload.profilePicture === "string") {
+        // Gửi URL string (nếu cần)
+        formData.append("ProfilePicture", payload.profilePicture);
+      }
+    }
 
     if (payload.role !== undefined && payload.role !== null && payload.role !== "") {
       const roleNumber = Number(payload.role);
