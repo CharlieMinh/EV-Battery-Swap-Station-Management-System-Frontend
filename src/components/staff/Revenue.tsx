@@ -100,15 +100,30 @@ function getCustomerName(p: any): string {
     "—"
   );
 }
-function getStatusLabel(p: any): string {
-  return isPaidStatus(p?.status) ? "Đã thanh toán" : "Chưa thanh toán";
-}
+const getStatusLabel = (p: any, t: (key: string) => string): string => {
+  return isPaidStatus(p?.status) ? t("staff.revenue.paid") : t("staff.revenue.unpaid");
+};
 
 /* ===================== COMPONENT ===================== */
 export default function Revenue() {
   const { t, language } = useLanguage();
 
   const L = (vi: string, en: string) => (language === "vi" ? vi : en);
+  
+  // Format amount: VND for Vietnamese, USD for English (1 USD = 25,000 VND)
+  const formatAmount = (vndAmount: number): { amount: number; unit: string } => {
+    if (language === "en") {
+      return {
+        amount: Math.round(vndAmount / 25000 * 100) / 100, // Round to 2 decimals
+        unit: "$"
+      };
+    } else {
+      return {
+        amount: vndAmount,
+        unit: "VND"
+      };
+    }
+  };
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -191,9 +206,6 @@ export default function Revenue() {
     });
   }, [paid, search]);
 
-  const getStatusLabel = (p: any) =>
-    isPaidStatus(p?.status) ? t("staff.revenue.paid") : t("staff.revenue.unpaid");
-
   const displayMethod = (m: any) => {
     const raw = (m ?? "").toString().trim();
     if (!raw) return "—";
@@ -262,80 +274,77 @@ export default function Revenue() {
         </CardHeader>
 
         <CardContent>
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.fromDate")}</label>
-              <input
-                type="date"
-                className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
-            </div>
+          <div className="flex flex-wrap items-end gap-3 justify-between">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.fromDate")}</label>
+                <input
+                  type="date"
+                  className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.toDate")}</label>
-              <input
-                type="date"
-                className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            </div>
+              <div>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.toDate")}</label>
+                <input
+                  type="date"
+                  className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.searchLabel")}</label>
-              <input
-                type="text"
-                className="h-10 w-64 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                placeholder={t("staff.revenue.searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+              <div>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.searchLabel")}</label>
+                <input
+                  type="text"
+                  className="h-10 w-64 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                  placeholder={t("staff.revenue.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
 
-            {/* Filter trạng thái */}
-            <div>
-              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.statusLabel")}</label>
-              <select
-                className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">{t("staff.revenue.filterAll")}</option>
-                <option value="paid">{t("staff.revenue.paid")}</option>
-                <option value="unpaid">{t("staff.revenue.unpaid")}</option>
-              </select>
-            </div>
+              {/* Filter trạng thái */}
+              <div>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.statusLabel")}</label>
+                <select
+                  className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="">{t("staff.revenue.filterAll")}</option>
+                  <option value="paid">{t("staff.revenue.paid")}</option>
+                  <option value="unpaid">{t("staff.revenue.unpaid")}</option>
+                </select>
+              </div>
 
-            {/* Filter hình thức */}
-            <div>
-              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.methodLabel")}</label>
-              <select
-                className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                value={methodFilter}
-                onChange={(e) => setMethodFilter(e.target.value)}
-              >
-                <option value="">{t("staff.revenue.filterAll")}</option>
-                <option value="cash">{t("staff.revenue.methodCash")}</option>
-                <option value="vnpay">VNPay</option>
-              </select>
+              {/* Filter hình thức */}
+              <div>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.methodLabel")}</label>
+                <select
+                  className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                  value={methodFilter}
+                  onChange={(e) => setMethodFilter(e.target.value)}
+                >
+                  <option value="">{t("staff.revenue.filterAll")}</option>
+                  <option value="cash">{t("staff.revenue.methodCash")}</option>
+                  <option value="vnpay">VNPay</option>
+                </select>
+              </div>
             </div>
 
             <Button
               onClick={() => {
-                toast.info(t("staff.revenue.toastRefreshing"), {
-                  ...toastOpts,
-                  toastId: TOAST_ID.refreshInfo,
-                });
                 fetchPaid();
               }}
-              variant="outline"
-              className="h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
+              className="h-10 rounded-lg border border-orange-600 text-orange-600 bg-white hover:bg-orange-50 transition-all inline-flex items-center gap-2"
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Làm mới
+              {t("staff.revenue.buttonRefresh")}
             </Button>
           </div>
 
@@ -355,7 +364,10 @@ export default function Revenue() {
             <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalRevenue")}</div>
               <div className="text-2xl font-bold text-orange-600">
-                {filteredRevenue.toLocaleString()} đ
+                {(() => {
+                  const { amount, unit } = formatAmount(filteredRevenue);
+                  return `${amount.toLocaleString()} ${unit}`;
+                })()}
               </div>
             </div>
             <div className="rounded-2xl border border-orange-200 p-4 text-center">
@@ -383,22 +395,22 @@ export default function Revenue() {
               <thead className="bg-gray-50 text-left">
                 <tr>
                   <th className="px-4 py-3 text-gray-600 font-semibold w-16">
-                    STT
+                    {t("staff.revenue.table.index")}
                   </th>
                   <th className="px-4 py-3 text-gray-600 font-semibold">
-                    Tên khách hàng
+                    {t("staff.revenue.table.customer")}
                   </th>
                   <th className="px-4 py-3 text-gray-600 font-semibold">
-                    Trạng thái
+                    {t("staff.revenue.table.status")}
                   </th>
                   <th className="px-4 py-3 text-gray-600 font-semibold">
-                    Số tiền
+                    {t("staff.revenue.table.amount")}
                   </th>
                   <th className="px-4 py-3 text-gray-600 font-semibold">
-                    Hình thức
+                    {t("staff.revenue.table.method")}
                   </th>
                   <th className="px-4 py-3 text-gray-600 font-semibold">
-                    Thời gian thanh toán
+                    {t("staff.revenue.table.paymentTime")}
                   </th>
                 </tr>
               </thead>
@@ -433,9 +445,13 @@ export default function Revenue() {
                   >
                     <td className="px-4 py-3">{idx + 1}</td>
                     <td className="px-4 py-3">{getCustomerName(p)}</td>
-                    <td className="px-4 py-3">{getStatusLabel(p)}</td>
+                    <td className="px-4 py-3">{getStatusLabel(p, t)}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(Number((p as any).amount) || 0).toLocaleString()} đ
+                      {(() => {
+                        const vndAmount = Number((p as any).amount) || 0;
+                        const { amount, unit } = formatAmount(vndAmount);
+                        return `${amount.toLocaleString()} ${unit}`;
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       {displayMethod((p as any).method)}

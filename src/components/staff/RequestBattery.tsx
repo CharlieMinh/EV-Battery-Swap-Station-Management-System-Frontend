@@ -262,7 +262,7 @@ const RequestBattery = () => {
                     {group.status === 0 ? (
                       <Button
                         onClick={() => handleCheckRequest(group)}
-                        className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700"
+                        className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         {t("staff.requestBattery.button.check")}

@@ -44,8 +44,8 @@ const toastOpts = {
 const groupKey = (g: GroupedRequest) =>
   `${g.createdAt}|${g.adminName}|${g.stationName}`;
 
-function getAxiosErrorMessage(err: any) {
-  return err?.response?.data?.message || err?.message || "An error occurred.";
+function getAxiosErrorMessage(err: any, t?: (key: string) => string) {
+  return err?.response?.data?.message || err?.message || (t ? t("staff.checkRequest.errorGeneric") : "An error occurred.");
 }
 
 const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
@@ -85,7 +85,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
     } catch (error: any) {
       console.error("Error confirming requests:", error);
       toast.error(
-        getAxiosErrorMessage(error) || t("staff.checkRequest.toastConfirmError"),
+        getAxiosErrorMessage(error, t) || t("staff.checkRequest.toastConfirmError"),
         {
           ...toastOpts,
           toastId: `req-confirm-error-${groupKey(group)}`,
@@ -124,7 +124,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       onClose();
     } catch (error: any) {
       console.error("Error rejecting requests:", error);
-      toast.error(getAxiosErrorMessage(error) || t("staff.checkRequest.toastRejectError"), {
+      toast.error(getAxiosErrorMessage(error, t) || t("staff.checkRequest.toastRejectError"), {
         ...toastOpts,
         toastId: `req-reject-error-${groupKey(group)}`,
       });
@@ -348,7 +348,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 <Button
                   onClick={handleConfirmAll}
                   disabled={loading || !notes.trim()}
-                  className="bg-green-600 hover:bg-green-700 px-6"
+                  className="bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all px-6"
                 >
                   {loading && actionType === "confirm" ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

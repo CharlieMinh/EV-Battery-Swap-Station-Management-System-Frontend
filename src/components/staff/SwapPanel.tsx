@@ -181,7 +181,7 @@ export default function SwapPanel({
           <button
             disabled={loading}
             onClick={handleSwap}
-            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 transition disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700 shadow-md hover:shadow-lg transition-all disabled:opacity-60"
           >
             {loading ? (
               <>

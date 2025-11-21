@@ -300,10 +300,6 @@ export function StaffCashPaymentManagement() {
         <p>{error}</p>
         <Button
           onClick={() => {
-            toast.info(t("staff.cashPayment.toastRefreshing"), {
-              ...toastOpts,
-              toastId: "cash-refresh",
-            });
             fetchPendingCashPayments();
           }}
           variant="outline"
@@ -335,10 +331,6 @@ export function StaffCashPaymentManagement() {
           <div className="flex items-center justify-end">
             <Button
               onClick={() => {
-                toast.info(t("staff.cashPayment.toastRefreshing"), {
-                  ...toastOpts,
-                  toastId: "cash-refresh",
-                });
                 fetchPendingCashPayments();
               }}
               variant="outline"
@@ -619,7 +611,7 @@ export function StaffCashPaymentManagement() {
 
                   <div className="p-4 pt-0 mt-auto">
                     <Button
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
                       size="lg"
                       onClick={() => handleConfirmCash(payment.paymentId)}
                       disabled={

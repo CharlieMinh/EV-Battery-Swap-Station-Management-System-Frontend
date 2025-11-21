@@ -188,14 +188,14 @@ export default function StaffDashboard({
   const saveOverride = () => {
     const v = overrideInput.trim();
     if (!v) {
-      toast.warning("Vui lòng nhập StationId hợp lệ.", {
+      toast.warning(t("staff.dashboard.toastStationIdRequired"), {
         ...toastOpts,
         toastId: TOAST_ID.saveOverride,
       });
       return;
     }
     localStorage.setItem(STATION_OVERRIDE_KEY, v);
-    toast.success("Đã lưu StationId, các tab sẽ dùng giá trị này.", {
+    toast.success(t("staff.dashboard.toastStationIdSaved"), {
       ...toastOpts,
       toastId: TOAST_ID.saveOverride,
     });
@@ -204,7 +204,7 @@ export default function StaffDashboard({
   const clearOverride = () => {
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     setOverrideInput("");
-    toast.info("Đã xoá StationId nhập tay.", {
+    toast.info(t("staff.dashboard.toastStationIdCleared"), {
       ...toastOpts,
       toastId: TOAST_ID.clearOverride,
     });
@@ -226,7 +226,7 @@ export default function StaffDashboard({
         const msg =
           error?.response?.data?.message ||
           error?.message ||
-          "Không thể tải thông báo.";
+          t("staff.dashboard.toastLoadNotificationsError");
         toast.error(msg, { ...toastOpts, toastId: TOAST_ID.notifFetch });
       }
     };
@@ -299,16 +299,16 @@ export default function StaffDashboard({
       setNotifOpen(false);
       setActive("requests");
 
-      toast.success("Đã đánh dấu đã đọc. Chuyển đến Yêu cầu nhận pin.", {
+      toast.success(t("staff.dashboard.toastMarkReadSuccess"), {
         ...toastOpts,
         toastId: TOAST_ID.notifMark,
       });
     } catch (error: any) {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể đánh dấu đã đọc.";
-      toast.error(msg, { ...toastOpts, toastId: TOAST_ID.notifMark });
+        const msg =
+          error?.response?.data?.message ||
+          error?.message ||
+          t("staff.dashboard.toastMarkReadError");
+        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.notifMark });
     }
   };
 
@@ -413,7 +413,7 @@ export default function StaffDashboard({
 
                   <PopoverContent className="w-80 p-2">
                     <h3 className="text-sm font-semibold text-orange-600 mb-2">
-                      Thông báo
+                      {t("staff.dashboard.notificationsTitle")}
                     </h3>
                     {notifications.length === 0 ? (
                       <p className="text-gray-500 text-sm">
@@ -523,7 +523,7 @@ export default function StaffDashboard({
           <main className="flex-1 p-6">
             {loading && (
               <div className="rounded-2xl bg-white shadow-lg p-5 text-sm text-gray-500">
-                Đang tải…
+                {t("staff.dashboard.loading")}
               </div>
             )}
 

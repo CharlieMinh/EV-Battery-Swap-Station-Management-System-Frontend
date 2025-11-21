@@ -8,6 +8,8 @@ import {
   type UserMe,
 } from "../../services/staff/staffApi";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime } from "../../utils/dateTimeUtils";
+import { fetchStationById } from "@/services/admin/stationService";
 import {
   User,
   Mail,
@@ -48,6 +50,7 @@ export default function ProfileManagement() {
   const [showPwdSection, setShowPwdSection] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [stationName, setStationName] = useState<string>("");
 
   const { t } = useLanguage();
 
@@ -81,6 +84,25 @@ export default function ProfileManagement() {
         (data as any).avatar ||
         "",
     });
+    
+    // Fetch station name if not provided by getMe()
+    const stationId = data?.stationId || (data as any)?.station?.id;
+    if (stationId && !((data as any)?.station?.name || (data as any)?.stationName)) {
+      try {
+        const station = await fetchStationById(String(stationId));
+        setStationName(station.name || "");
+      } catch (err) {
+        console.error("Failed to fetch station name:", err);
+        setStationName("");
+      }
+    } else {
+      // If station name is already in data, use it
+      setStationName(
+        (data as any)?.station?.name ||
+        (data as any)?.stationName ||
+        ""
+      );
+    }
   };
 
   useEffect(() => {
@@ -238,6 +260,7 @@ export default function ProfileManagement() {
 
   // ⭐ ƯU TIÊN TÊN TRẠM, chỉ rớt về ID nếu thật sự không có tên
   const stationLabel =
+    stationName ||
     (me as any)?.station?.name ||
     (me as any)?.station?.stationName ||
     (me as any)?.stationName ||
@@ -372,7 +395,7 @@ export default function ProfileManagement() {
               </label>
               <p className="text-gray-900 font-medium">
                 {lastLoginLabel
-                  ? new Date(lastLoginLabel).toLocaleString("vi-VN")
+                  ? formatDateTime(lastLoginLabel)
                   : t("staff.profile.notUpdated")}
               </p>
             </div>
@@ -384,11 +407,7 @@ export default function ProfileManagement() {
               </label>
               <p className="text-gray-900 font-medium">
                 {createdAtLabel
-                  ? new Date(createdAtLabel).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
+                  ? formatDateTime(createdAtLabel)
                   : t("staff.profile.notUpdated")}
               </p>
             </div>

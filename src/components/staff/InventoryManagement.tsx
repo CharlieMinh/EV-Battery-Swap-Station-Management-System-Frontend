@@ -493,7 +493,7 @@ export default function InventoryManagement({ stationId }: Props) {
           {/* Nút tạo yêu cầu bên phải, cùng hàng */}
           <button
             onClick={() => setCreateOpen(true)}
-            className="shrink-0 rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
+            className="shrink-0 rounded-lg bg-orange-600 text-white px-4 py-2 text-sm hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
           >
             <Plus className="w-4 h-4 inline mr-1" />
             {t("staff.inventory.buttonCreateRequest")}
@@ -623,7 +623,7 @@ export default function InventoryManagement({ stationId }: Props) {
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-xl rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">{t("staff.inventory.modalTitle")}</h3>
+                <h3 className="text-lg font-semibold text-orange-600">{t("staff.inventory.modalTitle")}</h3>
               <button
                 onClick={() => setCreateOpen(false)}
                 className="p-2 hover:bg-gray-50 rounded-lg"
@@ -708,7 +708,7 @@ export default function InventoryManagement({ stationId }: Props) {
               <div className="text-right">
                 <button
                   onClick={submitRequest}
-                  className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                  className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
                 >
                   {t ? t("staff.inventory.buttonSubmitRequest") : "Submit request"}
                 </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { getMe } from "../../services/staff/staffApi";
+import { useLanguage } from "../LanguageContext";
 
 export default function RequireRole({
   roles,
@@ -22,7 +23,8 @@ export default function RequireRole({
     })();
   }, [roles]);
 
-  if (ok === null) return <div className="p-6 text-sm text-gray-500">Đang kiểm tra quyền…</div>;
+  const { t } = useLanguage();
+  if (ok === null) return <div className="p-6 text-sm text-gray-500">{t("staff.requireRole.checking")}</div>;
   if (!ok) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

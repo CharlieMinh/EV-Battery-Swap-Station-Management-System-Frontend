@@ -146,19 +146,19 @@ const SendRequestList = () => {
       case "PendingAdminReview":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-            Chờ xác nhận
+            {t("staff.sendRequest.status.pending")}
           </span>
         );
       case "Approved":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            Đã xác nhận
+            {t("staff.sendRequest.status.approved")}
           </span>
         );
       case "Rejected":
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-            Đã từ chối
+            {t("staff.sendRequest.status.rejected")}
           </span>
         );
       default:
@@ -273,10 +273,10 @@ const SendRequestList = () => {
 
                     <Button
                       onClick={() => handleCheckRequest(group)}
-                      className={`h-10 rounded-lg ${
+                      className={`h-10 rounded-lg text-white shadow-md hover:shadow-lg transition-all ${
                         group.status === "PendingAdminReview"
                           ? "bg-orange-600 hover:bg-orange-700"
-                          : "border border-orange-600 text-orange-600 hover:bg-orange-50"
+                          : "border border-orange-600 text-orange-600 hover:bg-orange-50 bg-white"
                       }`}
                     >
                       {group.status === "PendingAdminReview" ? (
