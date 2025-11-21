@@ -14,11 +14,66 @@
       completedReservations: number;
   }
 
+  export interface Vehicle {
+    id: string;
+    vin: string;
+    plate: string;
+    vehicleModelId: string;
+    vehicleModelName: string;
+    vehicleModelFullName: string;
+    brand: string;
+    compatibleBatteryModelId: string;
+    compatibleBatteryModelName: string;
+    photoUrl?: string;
+    registrationPhotoUrl?: string;
+    createdAt: string;
+    updatedAt?: string | null;
+  }
+
+  export interface SubscriptionPlan {
+    id: string;
+    name: string;
+    description: string;
+    monthlyPrice: number;
+    maxSwapsPerMonth: number;
+    benefits: string;
+    refundPolicy: string;
+    batteryModelId: string;
+    batteryModelName: string;
+    isActive: boolean;
+  }
+
+  export interface Subscription {
+    id: string;
+    userId: string;
+    subscriptionPlanId: string;
+    vehicleIds: string[];
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    vehicleId: string;
+    vehicle: any | null;
+    currentBillingPeriodStart: string;
+    currentBillingPeriodEnd: string;
+    isExpired: boolean;
+    daysRemaining: number;
+    currentMonthSwapCount: number;
+    swapsUsed: number;
+    swapsLimit: number;
+    swapsRemaining: number;
+    lastPaymentDate: string;
+    createdAt: string;
+    subscriptionPlan: SubscriptionPlan;
+    vehicles: any[];
+  }
+
   export interface CustomerDetail extends Customer {
       role: string;
       cancelledReservations: number;
       totalVehicles: number;
-      profilePicture: string,
+      profilePicture: string;
+      vehicles?: Vehicle[];
+      subscriptions?: Subscription[];
   }
 
   export interface UpdateUserPayload {
@@ -44,7 +99,14 @@
 
   export async function fetchCustomerById(id: string) {
       try {
-          const response = await api.get(`/api/v1/Users/${id}`);
+          // Thêm query params để include vehicles và subscriptions
+          // Nếu backend dùng tên khác, vui lòng cập nhật theo Swagger
+          const response = await api.get(`/api/v1/Users/${id}`, {
+              params: {
+                  includeVehicles: true,
+                  includeSubscriptions: true
+              }
+          });
           const customer = response.data;
           return customer as CustomerDetail;
       } catch (error) {
