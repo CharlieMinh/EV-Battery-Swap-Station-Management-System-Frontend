@@ -136,7 +136,10 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   const [isVisible, setIsVisible] = useState<Record<string, boolean>>({});
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0); // 0-1 for smooth transition
+  
+  // Calculated values based on scroll progress
+  const isScrolled = scrollProgress > 0.5; // For boolean-based classes
 
   const features = [
     {
@@ -237,12 +240,15 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   // Scroll handler for navbar animation with throttling
   useEffect(() => {
     let ticking = false;
+    const scrollThreshold = 150; // Distance in pixels to complete the navbar transition
 
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const scrollPosition = window.scrollY;
-          setIsScrolled(scrollPosition > 50);
+          // Calculate smooth progress from 0 to 1
+          const progress = Math.min(scrollPosition / scrollThreshold, 1);
+          setScrollProgress(progress);
           ticking = false;
         });
         ticking = true;
@@ -331,10 +337,10 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           left: "50%",
           transform: "translateX(-50%)",
           width: "100%",
-          maxWidth: isScrolled ? "1280px" : "100%",
-          paddingTop: isScrolled ? "0.5rem" : "1rem",
-          paddingBottom: isScrolled ? "0.5rem" : "1rem",
-          transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+          maxWidth: scrollProgress > 0.5 ? "1280px" : "100%",
+          paddingTop: `${1 - scrollProgress * 0.5}rem`, // 1rem -> 0.5rem
+          paddingBottom: `${1 - scrollProgress * 0.5}rem`,
+          transition: "all 0.3s ease-out",
           willChange: "max-width, padding, background-color, border-radius",
         }}
       >
@@ -346,8 +352,8 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           <div
             className="flex items-center justify-between w-full"
             style={{
-              height: isScrolled ? "3.5rem" : "4rem",
-              transition: "height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              height: `${4 - scrollProgress * 0.5}rem`, // 4rem -> 3.5rem
+              transition: "height 0.3s ease-out",
             }}
           >
             <div className="flex items-center group cursor-pointer flex-shrink-0">
@@ -357,25 +363,25 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                 alt="FPTFAST Logo"
                 className="rounded-full border border-orange-100/50 shadow-xl mr-3 transition-all duration-500 group-hover:scale-105 group-hover:rotate-3"
                 style={{
-                  width: isScrolled ? "3rem" : "4.25rem",
-                  height: isScrolled ? "3rem" : "4.25rem",
+                  width: `${4.25 - scrollProgress * 1.25}rem`, // 4.25rem -> 3rem
+                  height: `${4.25 - scrollProgress * 1.25}rem`,
                   objectFit: "contain",
                   imageRendering: "auto",
                   transition:
-                    "width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "width 0.3s ease-out, height 0.3s ease-out",
                 }}
               />
               <span
                 className="font-bold tracking-wide ease-out group-hover:text-orange-700 whitespace-nowrap text-orange-600"
                 style={{
-                  fontSize: isScrolled ? "1.25rem" : "1.875rem",
-                  lineHeight: isScrolled ? "1.75rem" : "2.25rem",
+                  fontSize: `${1.875 - scrollProgress * 0.625}rem`, // 1.875rem -> 1.25rem
+                  lineHeight: `${2.25 - scrollProgress * 0.5}rem`, // 2.25rem -> 1.75rem
                   transition:
-                    "font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1), line-height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "font-size 0.3s ease-out, line-height 0.3s ease-out",
                   willChange: "font-size, line-height",
                 }}
               >
-                {isScrolled ? "FPTFAST" : "F P T F A S T"}
+                {scrollProgress > 0.7 ? "FPTFAST" : "F P T F A S T"}
               </span>
             </div>
 
