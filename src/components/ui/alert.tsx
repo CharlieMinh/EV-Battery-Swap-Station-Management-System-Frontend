@@ -28,11 +28,11 @@ export async function showError(msg: string, errorTitle: string) {
 }
 
 
-export async function showConfirm(title: string, text: string, confirmTitle: string, cancelTitle: string) {
+export async function showConfirm(title: string, text: string, confirmTitle: string, cancelTitle: string, icon: 'warning' | 'success' | 'error' | 'question' = 'warning') {
   const result = await Swal.fire({
     title,
     text,
-    icon: "warning",
+    icon,
     showCancelButton: true,
     confirmButtonColor: "#f97316",
     cancelButtonColor: "#6b7280",

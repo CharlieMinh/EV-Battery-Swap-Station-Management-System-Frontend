@@ -278,7 +278,7 @@ export function DriverProfile() {
           </h2>
         </div>
 
-        <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+        <Card className="border-none shadow-2xl bg-gradient-to-br white rounded-3xl p-6 sm:p-10">
           <CardContent>
             <div className="flex flex-col items-center">
               <div className="relative group mb-2">
@@ -450,7 +450,7 @@ export function DriverProfile() {
 
             {showChangePassword && (
               <div className="mt-8 w-full max-w-3xl mx-auto">
-                <Card className="border-none shadow-2xl bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 sm:p-10">
+                <Card className="border-none shadow-2xl bg-gradient-to-br white rounded-3xl p-6 sm:p-10">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-2xl font-bold text-orange-600 flex items-center">
                       <Lock className="w-6 h-6 mr-2" />

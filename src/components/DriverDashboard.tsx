@@ -46,6 +46,7 @@ import { MyVehicle } from "../components/driver/MyVehicle";
 import { toast } from "react-toastify";
 import { MyPaymentsPage } from "./driver/MyPaymentsPage";
 import { ComplaintsList } from "./driver/ComplaintsList";
+import { DriverNotificationBell } from "./driver/DriverNotificationBell";
 
 interface DriverDashboardProps {
   user: User;
@@ -390,7 +391,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
       <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
         <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl w-80">
           <SidebarHeader className="p-5 border-b border-slate-200">
-            <div 
+            <div
               className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate("/")}
             >
@@ -541,6 +542,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
               </div>
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher />
+                <DriverNotificationBell onNavigate={setActiveSection} />
                 <Button variant="ghost" size="icon" onClick={handleNavigateToHome}>
                   <Home className="w-4 h-4" />
                 </Button>
