@@ -110,11 +110,6 @@ export default function InspectionPanel({
       return;
     }
 
-    toast.success(t("staff.inspection.toastSaved"), {
-      ...toastOpts,
-      toastId: "insp-finish",
-    });
-
     onDone(health, notes);
   };
 

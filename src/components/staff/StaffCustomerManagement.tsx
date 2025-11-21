@@ -46,6 +46,13 @@ const toastOpts = {
   closeOnClick: true,
 };
 
+const TOAST_ID = {
+  updateSuccess: "staff-customer-update-success",
+  updateError: "staff-customer-update-error",
+  loadDetailError: "staff-customer-load-detail-error",
+  loadListError: "staff-customer-load-list-error",
+};
+
 const PAGE_SIZE = 10;
 
 const StatItem: React.FC<{
@@ -109,7 +116,10 @@ function CustomerDetailModal({
           error?.response?.data?.message ||
           error?.message ||
           t("staff.customers.errorLoadDetail");
-        toast.error(msg, toastOpts);
+        toast.error(msg, {
+          ...toastOpts,
+          toastId: TOAST_ID.updateError,
+        });
       } finally {
         setLoadingDetail(false);
       }
@@ -139,7 +149,10 @@ function CustomerDetailModal({
         name: form.name.trim(),
         phoneNumber: form.phoneNumber.trim(),
       });
-      toast.success(t("staff.customers.toastUpdateSuccess"), toastOpts);
+      toast.success(t("staff.customers.toastUpdateSuccess"), {
+        ...toastOpts,
+        toastId: TOAST_ID.updateSuccess,
+      });
       setDetail((prev: CustomerDetail | null) =>
         prev
           ? {
@@ -643,7 +656,10 @@ export default function StaffCustomerManagement() {
         err?.message ||
         t("staff.customers.errorLoadList");
       setError(msg);
-      toast.error(msg, toastOpts);
+      toast.error(msg, {
+        ...toastOpts,
+        toastId: TOAST_ID.loadListError,
+      });
     } finally {
       setIsLoading(false);
     }
