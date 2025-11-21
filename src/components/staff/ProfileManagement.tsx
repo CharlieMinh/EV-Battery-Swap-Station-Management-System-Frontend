@@ -1,13 +1,28 @@
+// src/components/staff/ProfileManagement.tsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   getMe,
   updateUser,
   resetPassword,
-  uploadFile,            // vẫn giữ: thử upload rời nếu BE có endpoint
+  uploadFile, // vẫn giữ: thử upload rời nếu BE có endpoint
   type UserMe,
 } from "../../services/staff/staffApi";
-import { User, Mail, Phone, Lock, Pencil, Upload, Loader2 } from "lucide-react";
+import { useLanguage } from "../LanguageContext";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Upload,
+  Loader2,
+  Building,
+  BadgeCheck,
+  Calendar,
+  Clock,
+} from "lucide-react";
 import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { toast } from "react-toastify";
 
 const toastOpts = { position: "top-right" as const, autoClose: 2200, closeOnClick: true };
@@ -30,7 +45,11 @@ export default function ProfileManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPwd, setChangingPwd] = useState(false);
+  const [showPwdSection, setShowPwdSection] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  const { t } = useLanguage();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -69,10 +88,10 @@ export default function ProfileManagement() {
       try {
         await refreshMe();
       } catch (e) {
-        toast.error("Không thể tải hồ sơ. Vui lòng thử lại!", {
-          ...toastOpts,
-          toastId: TOAST_ID.loadError,
-        });
+          toast.error(t("staff.profile.toastLoadError"), {
+            ...toastOpts,
+            toastId: TOAST_ID.loadError,
+          });
         console.error(e);
       } finally {
         setLoading(false);
@@ -80,12 +99,16 @@ export default function ProfileManagement() {
     })();
   }, []);
 
+  useEffect(() => {
+    setAvatarError(false);
+  }, [form.avatarUrl]);
+
   const onSaveProfile = async () => {
     const id = (me?.userId || (me as any)?.id) as string;
     if (!id) return;
 
     if (!form.fullName.trim()) {
-      toast.warn("Vui lòng nhập họ tên.", {
+      toast.warn(t("staff.profile.toastSaveWarnName"), {
         ...toastOpts,
         toastId: TOAST_ID.saveWarnName,
       });
@@ -105,10 +128,10 @@ export default function ProfileManagement() {
       // Đồng bộ lại từ BE để chắc lấy đúng profilePictureUrl
       await refreshMe();
 
-      toast.success("Đã lưu hồ sơ ✅", { ...toastOpts, toastId: TOAST_ID.saveSuccess });
+      toast.success(t("staff.profile.toastSaveSuccess"), { ...toastOpts, toastId: TOAST_ID.saveSuccess });
       setAvatarFile(null); // clear file tạm
     } catch (e) {
-      toast.error("Lưu hồ sơ thất bại. Vui lòng thử lại!", {
+      toast.error(t("staff.profile.toastSaveError"), {
         ...toastOpts,
         toastId: TOAST_ID.saveError,
       });
@@ -120,14 +143,14 @@ export default function ProfileManagement() {
 
   const onChangePassword = async () => {
     if (!pwd.newPassword) {
-      toast.warn("Vui lòng nhập mật khẩu mới.", {
+      toast.warn(t("staff.profile.toastPwdWarnNew"), {
         ...toastOpts,
         toastId: TOAST_ID.pwdWarnNew,
       });
       return;
     }
     if (pwd.newPassword !== pwd.confirm) {
-      toast.error("Xác nhận mật khẩu không khớp.", {
+      toast.error(t("staff.profile.toastPwdMismatch"), {
         ...toastOpts,
         toastId: TOAST_ID.pwdMismatch,
       });
@@ -139,13 +162,13 @@ export default function ProfileManagement() {
         oldPassword: pwd.oldPassword,
         newPassword: pwd.newPassword,
       });
-      toast.success("Đổi mật khẩu thành công ✅", {
+      toast.success(t("staff.profile.toastPwdSuccess"), {
         ...toastOpts,
         toastId: TOAST_ID.pwdSuccess,
       });
       setPwd({ oldPassword: "", newPassword: "", confirm: "" });
     } catch (e) {
-      toast.error("Đổi mật khẩu thất bại. Vui lòng kiểm tra lại!", {
+      toast.error(t("staff.profile.toastPwdError"), {
         ...toastOpts,
         toastId: TOAST_ID.pwdError,
       });
@@ -165,13 +188,13 @@ export default function ProfileManagement() {
     // ——— KHỚP CHÍNH XÁC VALIDATION CỦA BE: JPEG/PNG, tối đa 10MB ———
     const isAllowedType = /^image\/(jpe?g|png)$/i.test(file.type);
     if (!isAllowedType) {
-      toast.error("Chỉ hỗ trợ ảnh JPEG hoặc PNG.", toastOpts);
+      toast.error(t("staff.profile.toastAvatarInvalidType"), toastOpts);
       ev.target.value = "";
       return;
     }
     const maxBytes = 10 * 1024 * 1024; // 10MB
     if (file.size > maxBytes) {
-      toast.error("Ảnh quá lớn (> 10MB). Vui lòng chọn ảnh khác.", toastOpts);
+      toast.error(t("staff.profile.toastAvatarTooLarge"), toastOpts);
       ev.target.value = "";
       return;
     }
@@ -183,18 +206,12 @@ export default function ProfileManagement() {
 
     // cố gắng upload rời để có URL ngay (server bạn không có thì 404 → bỏ qua)
     setUploadingAvatar(true);
-    toast.dismiss(TOAST_ID.avatarUploading);
-    toast.info("Đang tải ảnh lên...", { ...toastOpts, toastId: TOAST_ID.avatarUploading });
 
     try {
       const url = await uploadFile(file).catch(() => null as string | null);
       if (url) {
         setForm((s) => ({ ...s, avatarUrl: url || localPreview }));
-        toast.dismiss(TOAST_ID.avatarUploading);
-        toast.success("Tải ảnh thành công ✅", { ...toastOpts, toastId: TOAST_ID.avatarSuccess });
-      } else {
-        toast.dismiss(TOAST_ID.avatarUploading);
-        toast.info("Sẽ cập nhật ảnh khi bạn bấm 'Sửa hồ sơ'.", toastOpts);
+        toast.success(t("staff.profile.toastAvatarSuccess"), { ...toastOpts, toastId: TOAST_ID.avatarSuccess });
       }
     } finally {
       setUploadingAvatar(false);
@@ -207,7 +224,7 @@ export default function ProfileManagement() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -217,147 +234,226 @@ export default function ProfileManagement() {
     .toString()
     .charAt(0)
     .toUpperCase();
+  const roleLabel = (me as any)?.role || "Staff";
+
+  // ⭐ ƯU TIÊN TÊN TRẠM, chỉ rớt về ID nếu thật sự không có tên
+  const stationLabel =
+    (me as any)?.station?.name ||
+    (me as any)?.station?.stationName ||
+    (me as any)?.stationName ||
+    (me as any)?.stationWorkingAt?.name ||
+    (me as any)?.workingStation?.name ||
+    (me as any)?.workingStationName ||
+    (me?.station && (me.station.name || me.station.id)) ||
+    me?.stationId ||
+    t("staff.profile.notUpdated");
+
+  const avatarSrc =
+    (!avatarError && form.avatarUrl) ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      form.fullName || (me as any)?.name || "Staff"
+    )}&background=FF7A00&color=fff`;
+
+  const lastLoginLabel =
+    (me as any)?.lastLogin ||
+    (me as any)?.lastLoginAt ||
+    (me as any)?.lastLoginTime ||
+    "";
+  const createdAtLabel =
+    (me as any)?.createdAt ||
+    (me as any)?.createdDate ||
+    (me as any)?.createdOn ||
+    "";
 
   return (
-    <div className="flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-[#FFF3E5] rounded-2xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold text-center text-[#FF7A00] mb-8">
-          Hồ sơ cá nhân
-        </h1>
-
-        {/* Avatar + Tên */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative">
-            {form.avatarUrl ? (
-              <img
-                src={form.avatarUrl}
-                alt="avatar"
-                className="w-24 h-24 rounded-full border-4 border-[#FF7A00] object-cover bg-white"
+    <div className="p-6">
+      <Card className="shadow-xl border-none">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 border-b">
+          <CardTitle className="flex items-center gap-2 text-orange-600">
+            <User className="w-5 h-5" />
+            {t("staff.profile.title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center mb-8">
+            <div className="relative">
+              <Avatar className="w-28 h-28 ring-4 ring-orange-100">
+                <AvatarImage
+                  src={avatarSrc}
+                  onError={() => setAvatarError(true)}
+                />
+                <AvatarFallback className="bg-orange-500 text-white text-3xl">
+                  {avatarLetter}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                type="button"
+                onClick={triggerPickFile}
+                className="absolute -bottom-1 -right-1 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg transition"
+                title={t("staff.profile.tooltipUploadAvatar")}
+              >
+                {uploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png"
+                className="hidden"
+                onChange={onPickFile}
               />
-            ) : (
-              <div className="w-24 h-24 rounded-full border-4 border-[#FF7A00] flex items-center justify-center text-3xl font-bold text-[#FF7A00] bg-white">
-                {avatarLetter}
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mt-4">
+              {form.fullName || (me as any)?.name || t("staff.profile.notUpdated")}
+            </h2>
+            <div className="mt-2 px-4 py-1 rounded-full text-sm font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+              {roleLabel}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <User className="w-4 h-4" />
+                {t("staff.profile.labelFullName")}
+              </label>
+              <input
+                value={form.fullName}
+                onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Mail className="w-4 h-4" />
+                {t("staff.profile.labelEmail")}
+              </label>
+              <p className="text-gray-900 font-medium">{me?.email || t("staff.profile.notUpdated")}</p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Phone className="w-4 h-4" />
+                {t("staff.profile.labelPhone")}
+              </label>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <BadgeCheck className="w-4 h-4" />
+                {t("staff.profile.userId")}
+              </label>
+              <p className="text-gray-900 font-mono text-sm">
+                {me?.userId || me?.id || t("staff.profile.notUpdated")}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Building className="w-4 h-4" />
+                {t("staff.station")}
+              </label>
+              <p className="text-gray-900 font-medium">{stationLabel}</p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Clock className="w-4 h-4" />
+                {t("staff.profile.lastLogin")}
+              </label>
+              <p className="text-gray-900 font-medium">
+                {lastLoginLabel
+                  ? new Date(lastLoginLabel).toLocaleString("vi-VN")
+                  : t("staff.profile.notUpdated")}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Calendar className="w-4 h-4" />
+                {t("staff.profile.createdAt")}
+              </label>
+              <p className="text-gray-900 font-medium">
+                {createdAtLabel
+                  ? new Date(createdAtLabel).toLocaleDateString("vi-VN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : t("staff.profile.notUpdated")}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-6">
+            {showPwdSection && (
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5 space-y-4">
+                <p className="font-semibold text-gray-700 flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  {t("staff.profile.sectionChangePassword")}
+                </p>
+                <input
+                  type="password"
+                  placeholder={t("staff.profile.placeholderCurrentPassword")}
+                  value={pwd.oldPassword}
+                  onChange={(e) => setPwd((s) => ({ ...s, oldPassword: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                />
+                <input
+                  type="password"
+                  placeholder={t("staff.profile.placeholderNewPassword")}
+                  value={pwd.newPassword}
+                  onChange={(e) => setPwd((s) => ({ ...s, newPassword: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                />
+                <input
+                  type="password"
+                  placeholder={t("staff.profile.placeholderConfirmNewPassword")}
+                  value={pwd.confirm}
+                  onChange={(e) => setPwd((s) => ({ ...s, confirm: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={onChangePassword}
+                    disabled={changingPwd}
+                    className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg text-sm font-semibold"
+                  >
+                    {changingPwd ? t("staff.profile.buttonChangingPassword") : t("staff.profile.buttonChangePassword")}
+                  </Button>
+                </div>
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={triggerPickFile}
-              className="absolute -bottom-2 -right-2 bg-[#FF7A00] hover:bg-[#e56a00] text-white rounded-full p-2 shadow"
-              title="Tải ảnh đại diện"
-            >
-              {uploadingAvatar ? <Loader2 className="animate-spin w-4 h-4" /> : <Upload className="w-4 h-4" />}
-            </button>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png"
-              className="hidden"
-              onChange={onPickFile}
-            />
           </div>
 
-          <h2 className="text-xl font-semibold text-gray-800 mt-4">
-            {form.fullName || (me as any)?.name || "—"}
-          </h2>
-          <div className="bg-[#FF7A00] text-white px-4 py-1 rounded-md mt-2 text-sm font-semibold">
-            {(me as any)?.role || "Staff"}
-          </div>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              <User className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
-              Tên Đầy Đủ
-            </label>
-            <input
-              value={form.fullName}
-              onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
-              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              <Mail className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
-              Email
-            </label>
-            <input
-              value={me?.email || ""}
-              disabled
-              className="w-full border-2 border-[#FF7A00]/40 bg-gray-50 rounded-lg px-3 py-2 text-gray-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              <Phone className="inline w-4 h-4 mr-1 text-[#FF7A00]" />
-              Số Điện Thoại
-            </label>
-            <input
-              value={form.phone}
-              onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
-              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Save */}
-        <div className="mt-8 flex justify-center">
-          <Button
-            onClick={onSaveProfile}
-            disabled={saving}
-            className="bg-[#FF7A00] hover:bg-[#e56a00] text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
-          >
-            <Pencil className="w-4 h-4" />
-            {saving ? "Đang lưu..." : "Sửa hồ sơ"}
-          </Button>
-        </div>
-
-        {/* Change password */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold text-[#FF7A00] mb-4 flex items-center gap-2">
-            <Lock className="w-5 h-5" /> Đổi mật khẩu
-          </h2>
-
-          <div className="space-y-4">
-            <input
-              type="password"
-              placeholder="Mật khẩu hiện tại"
-              value={pwd.oldPassword}
-              onChange={(e) => setPwd((s) => ({ ...s, oldPassword: e.target.value }))}
-              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
-            />
-            <input
-              type="password"
-              placeholder="Mật khẩu mới"
-              value={pwd.newPassword}
-              onChange={(e) => setPwd((s) => ({ ...s, newPassword: e.target.value }))}
-              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
-            />
-            <input
-              type="password"
-              placeholder="Xác nhận mật khẩu mới"
-              value={pwd.confirm}
-              onChange={(e) => setPwd((s) => ({ ...s, confirm: e.target.value }))}
-              className="w-full border-2 border-[#FF7A00] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#FF7A00]/40 focus:outline-none"
-            />
-          </div>
-
-          <div className="mt-6 flex justify-center">
+          <div className="flex flex-col md:flex-row justify-end gap-3 mt-8">
             <Button
-              onClick={onChangePassword}
-              disabled={changingPwd}
-              className="bg-[#FF7A00] hover:bg-[#e56a00] text-white px-6 py-2 rounded-lg text-sm font-semibold"
+              onClick={onSaveProfile}
+              disabled={saving}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold min-w-[160px]"
             >
-              {changingPwd ? "Đang đổi..." : "Đổi mật khẩu"}
+              {saving ? t("staff.profile.buttonSaving") : t("staff.profile.buttonSave")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-transparent bg-yellow-400/90 hover:bg-yellow-400 text-gray-900 font-semibold px-6 py-2 text-sm min-w-[160px]"
+              onClick={() => setShowPwdSection((prev) => !prev)}
+            >
+              {showPwdSection ? t("staff.profile.cancelChangePassword") : t("staff.profile.buttonChangePassword")}
             </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   BatteryRequest,
 } from "@/services/admin/batteryService";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 
 interface GroupedRequest {
   createdAt: string;
@@ -29,11 +30,10 @@ const toastOpts = {
 const TOAST_ID = {
   fetchOk: "rb-fetch-ok",
   fetchErr: "rb-fetch-err",
-  openInfo: "rb-open-modal",
-  closeInfo: "rb-close-modal",
 };
 
 const RequestBattery = () => {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState<BatteryRequest[]>([]);
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ const RequestBattery = () => {
       const msg =
         error?.response?.data?.message ||
         error?.message ||
-        "Không thể tải yêu cầu.";
+        t("staff.requestBattery.toastLoadError");
       toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
@@ -145,19 +145,19 @@ const RequestBattery = () => {
       case 0:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-            Chờ xác nhận
+            {t("staff.requestBattery.status.pending")}
           </span>
         );
       case 1:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            Đã xác nhận
+            {t("staff.requestBattery.status.approved")}
           </span>
         );
       case 2:
         return (
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-            Đã từ chối
+            {t("staff.requestBattery.status.rejected")}
           </span>
         );
       default:
@@ -168,22 +168,11 @@ const RequestBattery = () => {
   const handleCheckRequest = (group: GroupedRequest) => {
     setSelectedGroup(group);
     setShowCheckModal(true);
-    toast.info(
-      group.status === 0 ? "Mở kiểm tra lô hàng." : "Mở chi tiết lô hàng.",
-      {
-        ...toastOpts,
-        toastId: TOAST_ID.openInfo,
-      }
-    );
   };
 
   const handleCloseModal = () => {
     setShowCheckModal(false);
     setSelectedGroup(null);
-    toast.info("Đã đóng cửa sổ.", {
-      ...toastOpts,
-      toastId: TOAST_ID.closeInfo,
-    });
     fetchRequests(); // Refresh danh sách sau khi xong (giữ nguyên ý định)
   };
 
@@ -193,7 +182,7 @@ const RequestBattery = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("staff.requestBattery.loading")}</p>
         </div>
       </div>
     );
@@ -204,12 +193,10 @@ const RequestBattery = () => {
       {/* Header card đồng bộ */}
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-2xl font-bold text-orange-600">
-            Yêu cầu nhập pin
+            <CardTitle className="text-2xl font-bold text-orange-600">
+            {t("staff.requestBattery.title")}
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Quản lý các yêu cầu nhập pin từ Admin
-          </p>
+          <p className="text-sm text-gray-600">{t("staff.requestBattery.subtitle")}</p>
         </CardHeader>
       </Card>
 
@@ -219,7 +206,7 @@ const RequestBattery = () => {
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p>Không có yêu cầu nào</p>
+              <p>{t("staff.requestBattery.noRequests")}</p>
             </div>
           </CardContent>
         </Card>
@@ -234,7 +221,7 @@ const RequestBattery = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Lô hàng #{groupedRequests.length - index}
+                      {`${t("staff.requestBattery.batchLabel")} #${groupedRequests.length - index}`}
                     </CardTitle>
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -277,11 +264,9 @@ const RequestBattery = () => {
                   {/* Tổng + Action */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t">
                     <div className="text-sm text-gray-600">
-                      <span className="font-semibold">Tổng số lượng:</span>{" "}
-                      <span className="text-orange-600 font-bold">
-                        {group.totalItems}
-                      </span>{" "}
-                      pin
+                      <span className="font-semibold">{t("staff.requestBattery.totalLabel")}</span>{" "}
+                      <span className="text-orange-600 font-bold">{group.totalItems}</span>{" "}
+                      {t("staff.requestBattery.unit")}
                     </div>
 
                     {group.status === 0 ? (
@@ -290,7 +275,7 @@ const RequestBattery = () => {
                         className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Kiểm tra hàng
+                        {t("staff.requestBattery.button.check")}
                       </Button>
                     ) : (
                       <Button
@@ -299,7 +284,7 @@ const RequestBattery = () => {
                         className="h-10 rounded-lg border-orange-600 text-orange-600 hover:bg-orange-50"
                       >
                         <Edit className="w-4 h-4 mr-2" />
-                        Xem chi tiết
+                        {t("staff.requestBattery.button.viewDetails")}
                       </Button>
                     )}
                   </div>
@@ -308,12 +293,12 @@ const RequestBattery = () => {
                   {group.requests[0].staffNotes && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Ghi chú:</span>{" "}
+                        <span className="font-semibold">{t("staff.requestBattery.noteLabel")}</span>{" "}
                         {group.requests[0].staffNotes}
                       </p>
                       {group.requests[0].handledByStaffName && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Xử lý bởi: {group.requests[0].handledByStaffName}
+                          {t("staff.requestBattery.handledByLabel")} {group.requests[0].handledByStaffName}
                         </p>
                       )}
                     </div>

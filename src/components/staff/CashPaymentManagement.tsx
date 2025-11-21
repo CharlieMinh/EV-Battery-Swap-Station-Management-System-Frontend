@@ -1,4 +1,4 @@
-// src/components/staff/CashPaymentManagement.tsx  (giữ nguyên tên export của bạn)
+// src/components/staff/CashPaymentManagement.tsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "../ui/button";
@@ -33,6 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+
+// 🔁 đa ngôn ngữ
+import { useLanguage } from "../LanguageContext";
 
 /* =========================
  * Interfaces
@@ -111,11 +114,14 @@ const toastOpts = {
   autoClose: 2500,
   closeOnClick: true,
 };
-function getAxiosErrorMessage(err: any) {
-  return err?.response?.data?.message || err?.message || "Đã xảy ra lỗi.";
+
+function getAxiosErrorMessage(err: any, fallback: string) {
+  return err?.response?.data?.message || err?.message || fallback;
 }
 
 export function StaffCashPaymentManagement() {
+  const { t, formatCurrency } = useLanguage();
+
   const [payments, setPayments] = useState<PendingCashPaymentItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -147,9 +153,11 @@ export function StaffCashPaymentManagement() {
       setPayments(list);
     } catch (err: any) {
       console.error("Error fetching payments:", err);
-      const msg =
-        getAxiosErrorMessage(err) || "Không thể tải danh sách thanh toán.";
-      setError("Không thể tải danh sách thanh toán.");
+      const msg = getAxiosErrorMessage(
+        err,
+        t("staff.cashPayment.errorLoadList")
+      );
+      setError(t("staff.cashPayment.errorLoadList"));
       setPayments([]);
       toast.error(msg, { ...toastOpts, toastId: "cash-fetch-error" });
     } finally {
@@ -163,7 +171,7 @@ export function StaffCashPaymentManagement() {
   }, []);
 
   /* =========================
-   * Filter & Search Logic
+   * Filter & Search Logic (GIỮ NGUYÊN)
    * ========================= */
   const filteredPayments = payments.filter((payment) => {
     const detail = payment.paymentDetail;
@@ -238,20 +246,30 @@ export function StaffCashPaymentManagement() {
       );
 
       if (response.data.success) {
-        toast.success(response.data.message || "Xác nhận thành công!", {
-          ...toastOpts,
-          toastId: `cash-confirm-${paymentId}`,
-        });
+        toast.success(
+          response.data.message || t("staff.cashPayment.successConfirm"),
+          {
+            ...toastOpts,
+            toastId: `cash-confirm-${paymentId}`,
+          }
+        );
         setPayments((prev) => prev.filter((p) => p.paymentId !== paymentId));
       } else {
-        toast.error(response.data.message || "Xác nhận thất bại.", {
-          ...toastOpts,
-          toastId: `cash-confirm-error-${paymentId}`,
-        });
+        toast.error(
+          response.data.message || t("staff.cashPayment.errorConfirmFailed"),
+          {
+            ...toastOpts,
+            toastId: `cash-confirm-error-${paymentId}`,
+          }
+        );
       }
     } catch (err: any) {
       console.error("Error confirming payment:", err);
-      toast.error(getAxiosErrorMessage(err) || "Lỗi khi xác nhận.", {
+      const msg = getAxiosErrorMessage(
+        err,
+        t("staff.cashPayment.errorConfirm")
+      );
+      toast.error(msg, {
         ...toastOpts,
         toastId: `cash-confirm-error-${paymentId}`,
       });
@@ -268,7 +286,7 @@ export function StaffCashPaymentManagement() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("staff.loadingData")}</p>
         </div>
       </div>
     );
@@ -281,7 +299,7 @@ export function StaffCashPaymentManagement() {
         <p>{error}</p>
         <Button
           onClick={() => {
-            toast.info("Đang làm mới danh sách...", {
+            toast.info(t("staff.cashPayment.toastRefreshing"), {
               ...toastOpts,
               toastId: "cash-refresh",
             });
@@ -290,14 +308,15 @@ export function StaffCashPaymentManagement() {
           variant="outline"
           className="mt-4"
         >
-          <RefreshCw className="mr-2 h-4 w-4" /> Thử lại
+          <RefreshCw className="mr-2 h-4 w-4" />{" "}
+          {t("staff.cashPayment.buttonRetry")}
         </Button>
       </div>
     );
   }
 
   /* =========================
-   * UI ĐỒNG BỘ VỚI CÁC MÀN KHÁC (CHỈ SỬA CLASSNAME/JSX)
+   * UI ĐỒNG BỘ VỚI CÁC MÀN KHÁC (CHỈ SỬA TEXT → t())
    * ========================= */
   return (
     <div className="container mx-auto space-y-6">
@@ -305,17 +324,17 @@ export function StaffCashPaymentManagement() {
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-bold text-orange-600">
-            Xác nhận thanh toán tiền mặt
+            {t("staff.cashPayment.title")}
           </CardTitle>
           <p className="text-sm text-gray-600">
-            Quản lý và xác nhận các giao dịch thanh toán bằng tiền mặt
+            {t("staff.cashPayment.description")}
           </p>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-end">
             <Button
               onClick={() => {
-                toast.info("Đang làm mới danh sách...", {
+                toast.info(t("staff.cashPayment.toastRefreshing"), {
                   ...toastOpts,
                   toastId: "cash-refresh",
                 });
@@ -326,8 +345,12 @@ export function StaffCashPaymentManagement() {
               disabled={loading || !!confirmingId}
               className="h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Làm mới
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
+              {loading
+                ? t("staff.cashPayment.buttonRefreshing")
+                : t("staff.cashPayment.buttonRefresh")}
             </Button>
           </div>
         </CardContent>
@@ -341,7 +364,7 @@ export function StaffCashPaymentManagement() {
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Tìm theo tên, số điện thoại hoặc email..."
+                placeholder={t("staff.cashPayment.searchPlaceholder")}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="pl-10 pr-10 h-10 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -360,26 +383,47 @@ export function StaffCashPaymentManagement() {
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 bg-white px-3 text-sm focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Loại thanh toán" />
+                <SelectValue
+                  placeholder={t("staff.cashPayment.filterType")}
+                />
               </SelectTrigger>
               <SelectContent className="border-2 border-gray-300 rounded-lg">
-                <SelectItem value="all">Tất cả loại</SelectItem>
-                <SelectItem value="Subscription">Mua gói</SelectItem>
-                <SelectItem value="PayPerSwap">Đặt lịch đổi pin</SelectItem>
+                <SelectItem value="all">
+                  {t("staff.cashPayment.filterTypeAll")}
+                </SelectItem>
+                <SelectItem value="Subscription">
+                  {t("staff.cashPayment.filterTypeSubscription")}
+                </SelectItem>
+                <SelectItem value="PayPerSwap">
+                  {t("staff.cashPayment.filterTypePayPerSwap")}
+                </SelectItem>
               </SelectContent>
             </Select>
 
             {/* Filter giá */}
-            <Select value={filterPriceRange} onValueChange={setFilterPriceRange}>
+            <Select
+              value={filterPriceRange}
+              onValueChange={setFilterPriceRange}
+            >
               <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 bg-white px-3 text-sm focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400">
                 <Tag className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Khoảng giá" />
+                <SelectValue
+                  placeholder={t("staff.cashPayment.filterPrice")}
+                />
               </SelectTrigger>
               <SelectContent className="border-2 border-gray-300 rounded-lg">
-                <SelectItem value="all">Tất cả giá</SelectItem>
-                <SelectItem value="0-100k">Dưới 100k</SelectItem>
-                <SelectItem value="100k-500k">100k - 500k</SelectItem>
-                <SelectItem value="500k+">Trên 500k</SelectItem>
+                <SelectItem value="all">
+                  {t("staff.cashPayment.filterPriceAll")}
+                </SelectItem>
+                <SelectItem value="0-100k">
+                  {t("staff.cashPayment.filterPriceUnder100k")}
+                </SelectItem>
+                <SelectItem value="100k-500k">
+                  {t("staff.cashPayment.filterPrice100kTo500k")}
+                </SelectItem>
+                <SelectItem value="500k+">
+                  {t("staff.cashPayment.filterPriceOver500k")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -387,19 +431,22 @@ export function StaffCashPaymentManagement() {
           {/* Summary */}
           <div className="mt-4 flex items-center justify-between text-sm">
             <p className="text-gray-600">
-              Hiển thị{" "}
+              {t("staff.cashPayment.showing")}{" "}
               <span className="font-semibold text-orange-600">
                 {currentPayments.length}
               </span>{" "}
-              / {filteredPayments.length} giao dịch
+              / {filteredPayments.length} {t("staff.cashPayment.payments")}
               {filteredPayments.length !== payments.length && (
                 <span className="text-gray-400">
                   {" "}
-                  (đã lọc từ {payments.length})
+                  ({t("staff.cashPayment.of")} {payments.length}{" "}
+                  {t("staff.cashPayment.payments")})
                 </span>
               )}
             </p>
-            {(searchText || filterType !== "all" || filterPriceRange !== "all") && (
+            {(searchText ||
+              filterType !== "all" ||
+              filterPriceRange !== "all") && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -411,7 +458,7 @@ export function StaffCashPaymentManagement() {
                 className="text-orange-600 hover:text-orange-700"
               >
                 <X className="h-4 w-4 mr-1" />
-                Xóa bộ lọc
+                {t("driver.payments.clearFilters")}
               </Button>
             )}
           </div>
@@ -424,14 +471,18 @@ export function StaffCashPaymentManagement() {
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-lg font-medium">Không tìm thấy giao dịch nào</p>
-              <p className="text-sm mt-1">Thử thay đổi bộ lọc hoặc tìm kiếm</p>
+              <p className="text-lg font-medium">
+                {t("staff.cashPayment.noPayments")}
+              </p>
+              <p className="text-sm mt-1">
+                {t("staff.cashPayment.tryChangeFilter")}
+              </p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* Cards danh sách – viền cam & bo tròn lớn đồng bộ */}
+          {/* Cards danh sách */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentPayments.map((payment) => {
               const detail = payment.paymentDetail;
@@ -443,21 +494,23 @@ export function StaffCashPaymentManagement() {
                   <CardHeader className="pb-3">
                     {detail.type === "Subscription" ? (
                       <Badge className="mb-3 w-fit bg-blue-500 hover:bg-blue-600 text-white">
-                        Thanh toán Mua Gói
+                        {t("staff.cashPayment.typeSubscription")}
                       </Badge>
                     ) : (
                       <Badge className="mb-3 w-fit bg-purple-500 hover:bg-purple-600 text-white">
-                        Thanh toán Đặt lịch Đổi Pin
+                        {t("staff.cashPayment.typePayPerSwap")}
                       </Badge>
                     )}
 
                     <div className="flex items-start gap-3 mb-3">
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg">
-                        {(detail.user.name || "K")[0].toUpperCase()}
+                        {(detail.user.name || t("staff.customers.noName"))[0]
+                          .toString()
+                          .toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg text-gray-900 truncate">
-                          {detail.user.name || "Khách lẻ"}
+                          {detail.user.name || t("staff.customers.noName")}
                         </h3>
                         {detail.user.phoneNumber && (
                           <p className="text-sm text-gray-600 truncate">
@@ -474,10 +527,10 @@ export function StaffCashPaymentManagement() {
 
                     <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
                       <p className="text-xs text-orange-700 font-medium mb-1">
-                        Số tiền thanh toán
+                        {t("staff.cashPayment.labelAmount")}
                       </p>
                       <p className="text-2xl font-bold text-orange-600">
-                        {detail.amount.toLocaleString("vi-VN")} đ
+                        {formatCurrency(detail.amount)}
                       </p>
                     </div>
                   </CardHeader>
@@ -486,9 +539,14 @@ export function StaffCashPaymentManagement() {
                     <div className="flex items-center text-gray-600 bg-gray-50 rounded-md p-2">
                       <CalendarDays className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
                       <span className="text-xs">
-                        {format(new Date(detail.createdAt), "HH:mm - dd/MM/yyyy", {
-                          locale: vi,
-                        })}
+                        {t("staff.cashPayment.labelCreatedAt")}{" "}
+                        {format(
+                          new Date(detail.createdAt),
+                          "HH:mm - dd/MM/yyyy",
+                          {
+                            locale: vi,
+                          }
+                        )}
                       </span>
                     </div>
 
@@ -506,40 +564,63 @@ export function StaffCashPaymentManagement() {
                       <div className="bg-purple-50 rounded-md p-3 border border-purple-200 space-y-2">
                         <div className="flex items-center gap-2">
                           <div className="flex-shrink-0 w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            <svg
+                              className="w-5 h-5 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 10V3L4 14h7v7l9-11h-7z"
+                              />
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-purple-700 mb-1">Thông tin xe</p>
+                            <p className="text-xs font-medium text-purple-700 mb-1">
+                              {t("driver.vehicleInformation")}
+                            </p>
                           </div>
                         </div>
                         <div className="pl-1 space-y-1">
                           <p className="text-xs text-purple-700">
-                            <span className="font-medium">Biển số xe:</span> {detail.vehicle.plate}
+                            <span className="font-medium">
+                              {t("staff.cashPayment.labelPlate")}:
+                            </span>{" "}
+                            {detail.vehicle.plate}
                           </p>
                           {detail.vehicle.vin && (
                             <p className="text-xs text-purple-700">
-                              <span className="font-medium">VIN:</span> {detail.vehicle.vin}
+                              <span className="font-medium">
+                                {t("driver.vin")}:
+                              </span>{" "}
+                              {detail.vehicle.vin}
                             </p>
                           )}
                           {detail.vehicle.vehicleModelName && (
                             <p className="text-xs text-purple-700">
-                              <span className="font-medium">Dòng xe:</span> {detail.vehicle.vehicleModelName}
+                              <span className="font-medium">
+                                {t("staff.cashPayment.labelModel")}:
+                              </span>{" "}
+                              {detail.vehicle.vehicleModelName}
                             </p>
                           )}
                         </div>
                       </div>
                     )}
 
-                    {!detail.subscriptionPlan && detail.description && !detail.vehicle && (
-                      <div className="flex items-start bg-gray-50 rounded-md p-2">
-                        <Tag className="w-4 h-4 mr-2 mt-0.5 text-gray-600 flex-shrink-0" />
-                        <span className="text-gray-700 text-sm">
-                          {detail.description}
-                        </span>
-                      </div>
-                    )}
+                    {!detail.subscriptionPlan &&
+                      detail.description &&
+                      !detail.vehicle && (
+                        <div className="flex items-start bg-gray-50 rounded-md p-2">
+                          <Tag className="w-4 h-4 mr-2 mt-0.5 text-gray-600 flex-shrink-0" />
+                          <span className="text-gray-700 text-sm">
+                            {detail.description}
+                          </span>
+                        </div>
+                      )}
                   </CardContent>
 
                   <div className="p-4 pt-0 mt-auto">
@@ -547,23 +628,25 @@ export function StaffCashPaymentManagement() {
                       className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
                       size="lg"
                       onClick={() => handleConfirmCash(payment.paymentId)}
-                      disabled={confirmingId === payment.paymentId || !!confirmingId}
+                      disabled={
+                        confirmingId === payment.paymentId || !!confirmingId
+                      }
                     >
                       {confirmingId === payment.paymentId ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Đang xử lý...
+                          {t("staff.cashPayment.buttonConfirming")}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="mr-2 h-4 w-4" />
-                          Xác nhận đã thu tiền
+                          {t("staff.cashPayment.buttonConfirm")}
                         </>
                       )}
                     </Button>
                   </div>
                 </Card>
-              )
+              );
             })}
           </div>
 
@@ -573,7 +656,7 @@ export function StaffCashPaymentManagement() {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Trang {currentPage} / {totalPages}
+                    {t("staff.cashPayment.page")} {currentPage} / {totalPages}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -585,36 +668,39 @@ export function StaffCashPaymentManagement() {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
-                      Trước
+                      {t("staff.cashPayment.previous")}
                     </Button>
 
                     <div className="flex gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) pageNum = i + 1;
-                        else if (currentPage <= 3) pageNum = i + 1;
-                        else if (currentPage >= totalPages - 2)
-                          pageNum = totalPages - 4 + i;
-                        else pageNum = currentPage - 2 + i;
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) pageNum = i + 1;
+                          else if (currentPage <= 3) pageNum = i + 1;
+                          else if (currentPage >= totalPages - 2)
+                            pageNum = totalPages - 4 + i;
+                          else pageNum = currentPage - 2 + i;
 
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={
-                              currentPage === pageNum ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={
-                              currentPage === pageNum
-                                ? "bg-orange-600 hover:bg-orange-700"
-                                : ""
-                            }
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                currentPage === pageNum ? "default" : "outline"
+                              }
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={
+                                currentPage === pageNum
+                                  ? "bg-orange-600 hover:bg-orange-700"
+                                  : ""
+                              }
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
                     </div>
 
                     <Button
@@ -627,7 +713,7 @@ export function StaffCashPaymentManagement() {
                       }
                       disabled={currentPage === totalPages}
                     >
-                      Sau
+                      {t("staff.cashPayment.next")}
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>

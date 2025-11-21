@@ -49,19 +49,19 @@ export default function StaffAddDriver() {
     const phoneRegex = /^(0|\+84)\d{9,10}$/;
 
     if (!formData.email.trim() || !emailRegex.test(formData.email)) {
-      return "Email không hợp lệ.";
+        return t("staff.addDriver.emailInvalid");
     }
 
     if (!passwordRegex.test(formData.password)) {
-      return "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+      return t("staff.addDriver.passwordRequirement");
     }
 
     if (!formData.name.trim()) {
-      return "Họ và tên không được để trống.";
+      return t("staff.addDriver.nameRequired");
     }
 
     if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      return "Số điện thoại không hợp lệ.";
+      return t("staff.addDriver.phoneInvalid");
     }
 
     return null;
@@ -94,14 +94,14 @@ export default function StaffAddDriver() {
 
     try {
       await createDriverByStaff(payload);
-      toast.success("Thêm khách hàng thành công!");
+      toast.success(t("staff.addDriver.successAdded"));
       setFormData(initialForm);
     } catch (error: any) {
       const msg =
         error?.response?.data?.error ||
         error?.response?.data?.message ||
         error?.message ||
-        "Đã xảy ra lỗi khi tạo khách hàng.";
+        t("staff.addDriver.errorCreate");
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -112,14 +112,14 @@ export default function StaffAddDriver() {
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
       <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl">
         <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center">
-          Thêm khách hàng
+          {t("staff.addDriver.title")}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EMAIL */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email <span className="text-red-500">*</span>
+              {t("staff.addDriver.emailLabel")} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -128,7 +128,7 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập email..."
+              placeholder={t("staff.addDriver.placeholderEmail")}
             />
           </div>
 
@@ -138,7 +138,7 @@ export default function StaffAddDriver() {
               htmlFor="password"
               className="block text-sm font-medium mb-1"
             >
-              Mật khẩu <span className="text-red-500">*</span>
+              {t("staff.addDriver.passwordLabel")} <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -147,14 +147,14 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập mật khẩu..."
+              placeholder={t("staff.addDriver.placeholderPassword")}
             />
           </div>
 
           {/* NAME */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
-              Họ và tên <span className="text-red-500">*</span>
+              {t("staff.addDriver.nameLabel")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -163,7 +163,7 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập họ và tên..."
+              placeholder={t("staff.addDriver.placeholderName")}
             />
           </div>
 
@@ -173,7 +173,7 @@ export default function StaffAddDriver() {
               htmlFor="phoneNumber"
               className="block text-sm font-medium mb-1"
             >
-              Số điện thoại
+              {t("staff.addDriver.phoneLabel")}
             </label>
             <input
               type="text"
@@ -181,18 +181,18 @@ export default function StaffAddDriver() {
               value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder="Nhập số điện thoại..."
+              placeholder={t("staff.addDriver.placeholderPhone")}
             />
           </div>
 
           {/* ROLE – hiển thị readonly cho rõ là Khách hàng */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Vai trò
+              {t("staff.addDriver.roleLabel")}
             </label>
             <input
               type="text"
-              value="Khách hàng"
+              value={t("staff.addDriver.roleValue")}
               readOnly
               className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
@@ -201,11 +201,11 @@ export default function StaffAddDriver() {
           {/* STATUS – luôn Active */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Trạng thái
+              {t("staff.addDriver.statusLabel")}
             </label>
             <input
               type="text"
-              value="Hoạt động"
+              value={t("staff.addDriver.statusValue")}
               readOnly
               className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
@@ -221,7 +221,7 @@ export default function StaffAddDriver() {
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
           >
-            {isLoading ? "Đang xử lý..." : "Thêm khách hàng"}
+            {isLoading ? t("staff.addDriver.processing") : t("staff.addDriver.submit")}
           </button>
         </form>
       </div>

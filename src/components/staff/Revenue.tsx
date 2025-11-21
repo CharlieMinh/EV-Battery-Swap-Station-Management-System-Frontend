@@ -5,6 +5,7 @@ import { RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 
 /* ====== GIỮ NGUYÊN CÁC HÀM LOGIC CŨ ====== */
 function normalizePayments(payload: any): Payment[] {
@@ -104,6 +105,9 @@ function getStatusLabel(p: any): string {
 
 /* ===================== COMPONENT ===================== */
 export default function Revenue() {
+  const { t, language } = useLanguage();
+
+  const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -133,10 +137,9 @@ export default function Revenue() {
       setPaid(paidOnly);
     } catch (e: any) {
       console.error("Load revenue error:", e);
-      setErr("Không tải được dữ liệu doanh thu.");
+      setErr(t("staff.revenue.errorLoad"));
       setPaid([]);
-      const msg =
-        e?.response?.data?.message || e?.message || "Không tải được dữ liệu doanh thu.";
+      const msg = e?.response?.data?.message || e?.message || t("staff.revenue.errorLoad");
       toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
@@ -172,7 +175,7 @@ export default function Revenue() {
       const customerName = getCustomerName(p).toLowerCase();
       const amount = (Number((p as any).amount) || 0).toString();
       const methodRaw = ((p as any).method || "").toLowerCase();
-      const methodLabel = getMethodLabelVi((p as any).method).toLowerCase();
+      const methodLabel = String(((p as any).method || "")).toLowerCase();
       const paymentId = ((p as any).paymentId || "").toLowerCase();
       const swapId = ((p as any).swapId || "").toLowerCase();
 
@@ -186,6 +189,20 @@ export default function Revenue() {
       );
     });
   }, [paid, search]);
+
+  const getStatusLabel = (p: any) =>
+    isPaidStatus(p?.status) ? t("staff.revenue.paid") : t("staff.revenue.unpaid");
+
+  const displayMethod = (m: any) => {
+    const raw = (m ?? "").toString().trim();
+    if (!raw) return "—";
+    if (isCashMethod(m)) return t("staff.revenue.methodCash");
+    const v = raw.toLowerCase();
+    if (v === "vnpay" || v === "vn-pay" || v === "vnpay_qr" || v === "qr" || v === "online" || v === "gateway" || v === "card") {
+      return "VNPay";
+    }
+    return raw;
+  };
 
   // Doanh thu + số liệu KPI dựa trên filteredPaid (search) – GIỮ LOGIC CŨ
   const filteredRevenue = useMemo(
@@ -237,20 +254,16 @@ export default function Revenue() {
       {/* Card bộ lọc + tiêu đề */}
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-2xl font-bold text-orange-600">
-            Doanh thu
+            <CardTitle className="text-2xl font-bold text-orange-600">
+            {t("staff.revenue.title")}
           </CardTitle>
-          <p className="text-sm text-gray-600">
-            Lọc và xem giao dịch đã thanh toán
-          </p>
+          <p className="text-sm text-gray-600">{t("staff.revenue.subtitle")}</p>
         </CardHeader>
 
         <CardContent>
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="text-xs block text-gray-500 mb-1">
-                Từ ngày
-              </label>
+              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.fromDate")}</label>
               <input
                 type="date"
                 className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -260,9 +273,7 @@ export default function Revenue() {
             </div>
 
             <div>
-              <label className="text-xs block text-gray-500 mb-1">
-                Đến ngày
-              </label>
+              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.toDate")}</label>
               <input
                 type="date"
                 className="h-10 w-48 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -272,13 +283,11 @@ export default function Revenue() {
             </div>
 
             <div>
-              <label className="text-xs block text-gray-500 mb-1">
-                Tìm kiếm
-              </label>
+              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.searchLabel")}</label>
               <input
                 type="text"
                 className="h-10 w-64 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                placeholder="Tên khách, số tiền, hình thức..."
+                placeholder={t("staff.revenue.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -286,39 +295,35 @@ export default function Revenue() {
 
             {/* Filter trạng thái */}
             <div>
-              <label className="text-xs block text-gray-500 mb-1">
-                Trạng thái
-              </label>
+              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.statusLabel")}</label>
               <select
                 className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="">Tất cả</option>
-                <option value="paid">Đã thanh toán</option>
-                <option value="unpaid">Chưa thanh toán</option>
+                <option value="">{t("staff.revenue.filterAll")}</option>
+                <option value="paid">{t("staff.revenue.paid")}</option>
+                <option value="unpaid">{t("staff.revenue.unpaid")}</option>
               </select>
             </div>
 
             {/* Filter hình thức */}
             <div>
-              <label className="text-xs block text-gray-500 mb-1">
-                Hình thức
-              </label>
+              <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.methodLabel")}</label>
               <select
                 className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
                 value={methodFilter}
                 onChange={(e) => setMethodFilter(e.target.value)}
               >
-                <option value="">Tất cả</option>
-                <option value="cash">Tiền mặt</option>
+                <option value="">{t("staff.revenue.filterAll")}</option>
+                <option value="cash">{t("staff.revenue.methodCash")}</option>
                 <option value="vnpay">VNPay</option>
               </select>
             </div>
 
             <Button
               onClick={() => {
-                toast.info("Đang làm mới dữ liệu...", {
+                toast.info(t("staff.revenue.toastRefreshing"), {
                   ...toastOpts,
                   toastId: TOAST_ID.refreshInfo,
                 });
@@ -347,17 +352,17 @@ export default function Revenue() {
           {/* KPIs – CHỈ PHỤ THUỘC SEARCH (filteredPaid) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">Tổng doanh thu</div>
+              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalRevenue")}</div>
               <div className="text-2xl font-bold text-orange-600">
                 {filteredRevenue.toLocaleString()} đ
               </div>
             </div>
             <div className="rounded-2xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">Số giao dịch</div>
+              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalTransactions")}</div>
               <div className="text-2xl font-bold">{filteredPaid.length}</div>
             </div>
             <div className="rounded-2xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">Tỷ lệ tiền mặt</div>
+              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.cashRate")}</div>
               <div className="text-2xl font-bold">
                 {filteredPaid.length
                   ? Math.round((filteredCashCount * 100) / filteredPaid.length)
@@ -366,7 +371,7 @@ export default function Revenue() {
               </div>
             </div>
             <div className="rounded-2xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">Tỷ lệ VNPay</div>
+              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.vnpayRate")}</div>
               <div className="text-2xl font-bold">{vnpayRate}%</div>
             </div>
           </div>
@@ -405,7 +410,7 @@ export default function Revenue() {
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                        <span>Đang tải...</span>
+                          <span>{t("common.loading")}</span>
                       </div>
                     </td>
                   </tr>
@@ -416,9 +421,7 @@ export default function Revenue() {
                       colSpan={6}
                       className="px-4 py-8 text-center text-gray-500"
                     >
-                      {search.trim()
-                        ? "Không tìm thấy kết quả"
-                        : "Không có dữ liệu"}
+                      {search.trim() ? t("staff.revenue.noResults") : t("staff.revenue.noData")}
                     </td>
                   </tr>
                 )}
@@ -434,7 +437,7 @@ export default function Revenue() {
                       {(Number((p as any).amount) || 0).toLocaleString()} đ
                     </td>
                     <td className="px-4 py-3">
-                      {getMethodLabelVi((p as any).method)}
+                      {displayMethod((p as any).method)}
                     </td>
                     <td className="px-4 py-3">
                       {(p as any).paidAt
