@@ -19,6 +19,7 @@ import { RequestDetailModal } from "./RequestDetailModal";
 import { fetchStations } from "@/services/admin/stationService";
 import { Input } from "../ui/input";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTimeShort as formatDateTime } from "../../utils/dateTimeUtils";
 
 interface GroupedRequest {
   createdAt: string;
@@ -126,17 +127,6 @@ export const RequestForStation: React.FC = () => {
     );
 
     setGroupedRequests(groupedArray);
-  };
-
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const { t } = useLanguage();

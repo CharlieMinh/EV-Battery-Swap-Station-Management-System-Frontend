@@ -16,14 +16,11 @@ import { fetchCustomerById } from "@/services/admin/customerAdminService";
 import { fetchSwapById } from "@/services/swaps";
 import { Button } from "../ui/button";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 
-/** 🕒 Format ngày theo giờ Việt Nam */
+/** 🕒 Format ngày theo giờ Việt Nam (dùng util chung với timezone chuẩn) */
 function formatVNDate(dateString: string | null): string {
-  if (!dateString) return "—";
-  return new Date(dateString).toLocaleString("vi-VN", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    hour12: false,
-  });
+  return formatDateTime(dateString || undefined);
 }
 
 /** 📘 Map trạng thái khiếu nại */

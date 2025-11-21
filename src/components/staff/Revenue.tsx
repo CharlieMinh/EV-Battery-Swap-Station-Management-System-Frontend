@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 
 /* ====== GIỮ NGUYÊN CÁC HÀM LOGIC CŨ ====== */
 function normalizePayments(payload: any): Payment[] {
@@ -441,7 +442,7 @@ export default function Revenue() {
                     </td>
                     <td className="px-4 py-3">
                       {(p as any).paidAt
-                        ? new Date((p as any).paidAt as any).toLocaleString()
+                        ? formatDateTime((p as any).paidAt as any)
                         : "—"}
                     </td>
                   </tr>

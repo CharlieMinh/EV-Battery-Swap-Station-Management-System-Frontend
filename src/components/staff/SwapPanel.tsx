@@ -5,6 +5,7 @@ import {
   type Reservation,
   type SwapFinalizeResponse,
 } from "../../services/staff/staffApi";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 import {
   CheckCircle,
   Battery,
@@ -256,7 +257,10 @@ export default function SwapPanel({
                 <b>{t("staff.swap.swapCode")}:</b> {result.swapTransactionId || result.swapId || "—"}
               </div>
               <div>
-                <b>{t("staff.swap.time")}:</b> {result.timestamp ? new Date(result.timestamp).toLocaleString() : "—"}
+                <b>{t("staff.swap.time")}:</b>{" "}
+                {result.timestamp
+                  ? formatDateTime(result.timestamp as any)
+                  : "—"}
               </div>
               <div>
                 <b>{t("staff.swap.customer")}:</b> {result.driverName || reservation.userName || "—"}

@@ -90,6 +90,23 @@ export function BatteryStationTable({
     return batteries.filter((b) => b.batteryModelName === selectedModel);
   }, [batteries, selectedModel]);
 
+  // Helper function để normalize status (hỗ trợ cả số và string)
+  const normalizeStatus = (status: string | number): string => {
+    if (typeof status === "number") {
+      const statusMap: Record<number, string> = {
+        0: "Full",
+        1: "Reserved",
+        2: "InUse",
+        3: "Charging",
+        4: "Depleted",
+        5: "Maintenance",
+        6: "Faulty",
+      };
+      return statusMap[status] || String(status);
+    }
+    return String(status);
+  };
+
   const stationStats = useMemo(() => {
     return filteredStationsByName.map((s) => {
       const pins = filteredBatteries.filter((b) => b.stationId === s.id);
@@ -97,11 +114,13 @@ export function BatteryStationTable({
         stationId: s.id,
         stationName: s.name,
         total: pins.length,
-        inUse: pins.filter((b) => b.status === "InUse").length,
-        charging: pins.filter((b) => b.status === "Charging").length,
-        full: pins.filter((b) => b.status === "Full").length,
-        maintenance: pins.filter((b) => b.status === "Maintenance").length,
-        reserved: pins.filter((b) => b.status === "Reserved").length,
+        full: pins.filter((b) => normalizeStatus(b.status) === "Full").length,
+        reserved: pins.filter((b) => normalizeStatus(b.status) === "Reserved").length,
+        inUse: pins.filter((b) => normalizeStatus(b.status) === "InUse").length,
+        charging: pins.filter((b) => normalizeStatus(b.status) === "Charging").length,
+        depleted: pins.filter((b) => normalizeStatus(b.status) === "Depleted").length,
+        maintenance: pins.filter((b) => normalizeStatus(b.status) === "Maintenance").length,
+        faulty: pins.filter((b) => normalizeStatus(b.status) === "Faulty").length,
       };
     });
   }, [filteredStationsByName, filteredBatteries]);
@@ -168,11 +187,13 @@ export function BatteryStationTable({
                     <tr>
                       <th className="p-3 text-left">{t("admin.stationLabel")}</th>
                       <th className="p-3 text-center">{t("admin.totalBatteries")}</th>
+                      <th className="p-3 text-center">{t("admin.ready")}</th>
+                      <th className="p-3 text-center">{t("admin.reserved")}</th>
                       <th className="p-3 text-center">{t("admin.inUse")}</th>
                       <th className="p-3 text-center">{t("admin.charging")}</th>
-                      <th className="p-3 text-center">{t("admin.ready")}</th>
+                      <th className="p-3 text-center">{t("admin.depleted")}</th>
                       <th className="p-3 text-center">{t("admin.maintenance")}</th>
-                      <th className="p-3 text-center">{t("admin.reserved")}</th>
+                      <th className="p-3 text-center">{t("admin.faulty")}</th>
                       <th className="p-3 text-center">{t("admin.actions")}</th>
                     </tr>
                   </thead>
@@ -183,20 +204,26 @@ export function BatteryStationTable({
                         <td className="p-3 text-center font-medium">
                           {s.total.toLocaleString("vi-VN")}
                         </td>
-                        <td className="p-3 text-center text-blue-600">
-                          {s.inUse.toLocaleString("vi-VN")}
-                        </td>
-                        <td className="p-3 text-center text-teal-600">
-                          {s.charging.toLocaleString("vi-VN")}
-                        </td>
-                        <td className="p-3 text-center text-green-600">
+                        <td className="p-3 text-center text-green-600 font-semibold">
                           {s.full.toLocaleString("vi-VN")}
                         </td>
-                        <td className="p-3 text-center text-red-600">
+                        <td className="p-3 text-center text-yellow-600 font-semibold">
+                          {s.reserved.toLocaleString("vi-VN")}
+                        </td>
+                        <td className="p-3 text-center text-blue-600 font-semibold">
+                          {s.inUse.toLocaleString("vi-VN")}
+                        </td>
+                        <td className="p-3 text-center text-teal-600 font-semibold">
+                          {s.charging.toLocaleString("vi-VN")}
+                        </td>
+                        <td className="p-3 text-center text-orange-600 font-semibold">
+                          {s.depleted.toLocaleString("vi-VN")}
+                        </td>
+                        <td className="p-3 text-center text-red-600 font-semibold">
                           {s.maintenance.toLocaleString("vi-VN")}
                         </td>
-                        <td className="p-3 text-center text-yellow-600">
-                          {s.reserved.toLocaleString("vi-VN")}
+                        <td className="p-3 text-center text-purple-600 font-semibold">
+                          {s.faulty.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-3 text-center">
                           <Button

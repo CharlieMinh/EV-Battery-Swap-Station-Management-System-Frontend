@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 
 export default function Transactions() {
   const [from, setFrom] = useState<string>("");
@@ -237,7 +238,7 @@ export default function Transactions() {
                     </td>
                     <td className="px-4 py-3">{p.method}</td>
                     <td className="px-4 py-3">
-                      {p.paidAt ? new Date(p.paidAt).toLocaleString() : "—"}
+                      {p.paidAt ? formatDateTime(p.paidAt) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <Button

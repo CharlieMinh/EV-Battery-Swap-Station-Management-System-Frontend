@@ -24,6 +24,7 @@ import {
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import {
@@ -539,14 +540,7 @@ export function StaffCashPaymentManagement() {
                     <div className="flex items-center text-gray-600 bg-gray-50 rounded-md p-2">
                       <CalendarDays className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
                       <span className="text-xs">
-                        {t("staff.cashPayment.labelCreatedAt")}{" "}
-                        {format(
-                          new Date(detail.createdAt),
-                          "HH:mm - dd/MM/yyyy",
-                          {
-                            locale: vi,
-                          }
-                        )}
+                        {formatDateTimeShort(detail.createdAt)}
                       </span>
                     </div>
 

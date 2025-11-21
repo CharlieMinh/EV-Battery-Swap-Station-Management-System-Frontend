@@ -10,6 +10,7 @@ import {
 } from "@/services/admin/batteryService";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
 interface GroupedRequest {
   createdAt: string;
@@ -129,17 +130,6 @@ const RequestBattery = () => {
     setGroupedRequests(groupedArray);
   };
 
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const getStatusBadge = (status: number) => {
     switch (status) {
       case 0:
@@ -230,7 +220,7 @@ const RequestBattery = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDateTime(group.createdAt)}</span>
+                        <span>{formatDateTimeShort(group.createdAt)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Package className="w-4 h-4" />

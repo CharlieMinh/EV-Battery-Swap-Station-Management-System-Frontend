@@ -30,6 +30,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../configs/axios";
 import GoogleLoginButton from "./GoogleLoginButton";
+import myImage from "../assets/FTP.jpg";
 
 interface LoginPageProps {
   onLogin: (user: UserType) => void;
@@ -157,9 +158,20 @@ console.error("Login error details:", error);
   };
 
   return (
-    <div className="min-h-screen bg-orange-50 flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        backgroundImage: `url(${myImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Overlay mờ nhạt */}
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm"></div>
+      
       <div
-        className="flex items-center justify-center p-4"
+        className="flex items-center justify-center p-4 relative z-10"
         style={{ minHeight: "calc(100vh - 80px)" }}
       >
         <div className="w-full max-w-md mb-0">
@@ -182,7 +194,7 @@ console.error("Login error details:", error);
             <LanguageSwitcher />
           </div>
 
-          <Card>
+          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-md">
             <CardHeader className="pt-[14px]">
               <CardTitle className="text-2xl text-center">
                 {" "}

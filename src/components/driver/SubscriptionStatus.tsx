@@ -14,6 +14,7 @@ import { useLanguage } from "../LanguageContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import { formatDate } from "../../utils/dateTimeUtils";
 
 interface SubscriptionInfo {
   id: string;
@@ -68,9 +69,9 @@ function SubscriptionCard({
     return { text: t("driver.subscription.status.inactive"), color: "bg-gray-500", icon: <Package className="w-4 h-4 mr-2" /> };
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
+  const formatDateLocal = (dateString: string | null | undefined) => {
     if (!dateString || dateString.startsWith("0001-")) return t("driver.subscription.undefinedDate");
-    return new Date(dateString).toLocaleDateString("vi-VN");
+    return formatDate(dateString);
   };
 
   const status = getStatus();
@@ -113,14 +114,14 @@ function SubscriptionCard({
           <span className="font-semibold text-gray-600 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-blue-500" /> {t("driver.subscription.startDate")}
           </span>
-          <span className="font-medium text-gray-800">{formatDate(subscriptionInfo.startDate)}</span>
+          <span className="font-medium text-gray-800">{formatDateLocal(subscriptionInfo.startDate)}</span>
         </div>
 
         <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
           <span className="font-semibold text-gray-600 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-red-500" /> {t("driver.subscription.endDate")}
           </span>
-          <span className="font-medium text-gray-800">{formatDate(subscriptionInfo.endDate)}</span>
+          <span className="font-medium text-gray-800">{formatDateLocal(subscriptionInfo.endDate)}</span>
         </div>
 
         <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">

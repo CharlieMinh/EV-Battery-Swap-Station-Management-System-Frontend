@@ -64,24 +64,6 @@ const StatItem: React.FC<{
   </div>
 );
 
-const formatDateTime = (isoString: any) => {
-  if (!isoString) return "N/A";
-  try {
-    const date = new Date(isoString);
-    const datePart = date.toLocaleDateString("vi-VN");
-    const timePart = date.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-    return `${datePart} ${timePart}`;
-  } catch {
-    return "Invalid Date";
-  }
-};
-
-const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
 
 /* =========================
  *  Modal xem + cập nhật hồ sơ

@@ -7,6 +7,7 @@ import { Calendar } from '../ui/calendar';
 import { CheckCircle, ArrowRight, ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { toast } from 'react-toastify';
+import { formatDateFromDate } from '../../utils/dateTimeUtils';
 
 interface Station {
     id: string;
@@ -381,7 +382,7 @@ export function InspectionBookingWizard({
                                 <div className="flex justify-between">
                                     <span className="text-gray-500">{t("driver.inspection.confirmTime")}</span>
                                     <span className="font-semibold text-right">
-                                        {bookingDate?.toLocaleDateString('vi-VN')}, {selectedSlot?.slotStartTime.substring(0, 5)}
+                                        {formatDateFromDate(bookingDate || undefined)}, {selectedSlot?.slotStartTime.substring(0, 5)}
                                     </span>
                                 </div>
                             </CardContent>
