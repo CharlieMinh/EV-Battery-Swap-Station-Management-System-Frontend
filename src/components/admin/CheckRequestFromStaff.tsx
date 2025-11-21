@@ -197,7 +197,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                             {request.batteryModelName || request.batteryModelId}
                           </p>
                           <p className="text-sm text-gray-500">
-                            Model ID: {request.batteryModelId.slice(0, 8)}...
+                            {t("admin.modelId")}: {request.batteryModelId.slice(0, 8)}...
                           </p>
                         </div>
                       </div>
