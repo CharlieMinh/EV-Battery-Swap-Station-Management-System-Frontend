@@ -1435,6 +1435,7 @@ const translations = {
     "admin.batteryStatusCharging": "Charging",
     "admin.batteryStatusDepleted": "Depleted",
     "admin.batteryStatusMaintenance": "Maintenance",
+    "admin.batteryStatusFaulty": "Faulty",
 
     // CustomerManagement Component
     "admin.loadingCustomers": "Loading customers...",
@@ -1641,6 +1642,8 @@ const translations = {
     "admin.inUse": "In Use",
     "admin.ready": "Ready",
     "admin.reserved": "Reserved",
+    "admin.depleted": "Depleted",
+    "admin.faulty": "Faulty",
     "admin.providePinSuccess": "Pin provided successfully!",
     "admin.providePinError": "Failed to provide pin!",
     "admin.addBatteryToStation": "Add Battery to Station",
@@ -2772,7 +2775,7 @@ const translations = {
     "staff.inventory.statusCharging": "Đang sạc",
     "staff.inventory.statusMaintenance": "Bảo trì",
     "staff.inventory.statusReserved": "Đã đặt trước",
-    "staff.inventory.statusFaulty": "Lỗi",
+    "staff.inventory.statusFaulty": "Đang kiểm tra",
     "staff.inventory.statusDepleted": "Hết pin",
     "staff.inventory.lowStockWarning": "Tồn kho thấp! Hãy yêu cầu nhập thêm pin.",
     "staff.inventory.buttonCreateRequest": "Tạo yêu cầu",
@@ -3102,6 +3105,7 @@ const translations = {
     "admin.batteryStatusCharging": "Đang sạc",
     "admin.batteryStatusDepleted": "Cạn pin",
     "admin.batteryStatusMaintenance": "Bảo trì",
+    "admin.batteryStatusFaulty": "Đang kiểm tra",
 
     // CustomerManagement Component
     "admin.loadingCustomers": "Đang tải khách hàng...",
@@ -3323,6 +3327,8 @@ const translations = {
     "admin.inUse": "Đang sử dụng",
     "admin.ready": "Sẵn sàng",
     "admin.reserved": "Đặt trước",
+    "admin.depleted": "Cạn pin",
+    "admin.faulty": "Đang kiểm tra",
     "admin.providePinSuccess": "Cung cấp pin thành công!",
     "admin.providePinError": "Cung cấp pin thất bại!",
     "admin.addBatteryToStation": "Thêm Pin Vào Trạm",
