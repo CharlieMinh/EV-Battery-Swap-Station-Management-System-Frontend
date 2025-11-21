@@ -51,6 +51,7 @@ const TOAST_ID = {
   updateError: "staff-customer-update-error",
   loadDetailError: "staff-customer-load-detail-error",
   loadListError: "staff-customer-load-list-error",
+  phoneInvalid: "staff-customer-phone-invalid",
 };
 
 const PAGE_SIZE = 10;
@@ -141,6 +142,18 @@ function CustomerDetailModal({
     if (!form.name.trim()) {
       toast.warning(t("staff.profile.toastSaveWarnName"), toastOpts);
       return;
+    }
+    
+    // Phone validation (optional but if provided, must be valid)
+    if (form.phoneNumber.trim()) {
+      const phoneRegex = /^(0|\+84)\d{9,10}$/;
+      if (!phoneRegex.test(form.phoneNumber.trim())) {
+        toast.warning(t("staff.customers.toastPhoneInvalid"), {
+          ...toastOpts,
+          toastId: TOAST_ID.phoneInvalid,
+        });
+        return;
+      }
     }
 
     setSaving(true);

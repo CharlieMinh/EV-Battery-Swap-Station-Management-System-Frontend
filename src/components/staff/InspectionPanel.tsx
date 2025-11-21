@@ -83,7 +83,7 @@ export default function InspectionPanel({
     [reservation.reservationId]
   );
 
-  // Xử lý input % pin
+  // Xử lý input % pin - chỉ cho phép 1-99, tối đa 2 chữ số
   const handleBatteryHealthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value;
 
@@ -91,18 +91,42 @@ export default function InspectionPanel({
       setBatteryHealthInput("");
       return;
     }
-    if (v.length > 3) return;
+    
+    // Chỉ cho phép số, tối đa 2 chữ số
     if (!/^\d+$/.test(v)) return;
+    if (v.length > 2) return;
+    
+    // Loại bỏ số 0 ở đầu
     if (v.length > 1) v = v.replace(/^0+(\d)/, "$1");
+    
+    // Kiểm tra giá trị không được vượt quá 99
+    const num = Number(v);
+    if (num > 99) {
+      toast.warning(t("staff.inspection.toastMaxValue"), {
+        ...toastOpts,
+        toastId: "insp-max-value",
+      });
+      setBatteryHealthInput("99");
+      return;
+    }
 
     setBatteryHealthInput(v);
   };
 
   const finish = () => {
-    const health =
-      batteryHealthInput === "" ? NaN : Number(batteryHealthInput);
+    // Kiểm tra không được để trống
+    if (batteryHealthInput === "" || batteryHealthInput.trim() === "") {
+      toast.warning(t("staff.inspection.toastRequired"), {
+        ...toastOpts,
+        toastId: "insp-required-health",
+      });
+      return;
+    }
 
-    if (!Number.isFinite(health) || health < 0 || health > 99) {
+    const health = Number(batteryHealthInput);
+
+    // Kiểm tra phải là số hợp lệ và trong khoảng 1-99
+    if (!Number.isFinite(health) || health < 1 || health > 99) {
       toast.warning(t("staff.inspection.invalid"), {
         ...toastOpts,
         toastId: "insp-invalid-health",
@@ -134,10 +158,12 @@ export default function InspectionPanel({
             {t("staff.inspection.labelHealth")}
           </label>
           <input
-            type="number"
-            min="0"
+            type="text"
+            min="1"
             max="99"
+            maxLength={2}
             inputMode="numeric"
+            pattern="[1-9][0-9]?"
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
             value={batteryHealthInput}
             onChange={handleBatteryHealthChange}
