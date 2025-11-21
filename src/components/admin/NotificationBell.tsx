@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useLanguage } from "../LanguageContext";
+import { formatRelativeTime } from "../../utils/dateTimeUtils";
 
 // Type definitions
 export type NotificationWithDetails = NotificationData & {
@@ -57,14 +58,8 @@ const getStatusInfo = (status: number, t: (key: string) => string) => {
 };
 
 const formatTimeAgo = (dateString: string, t: (key: string) => string): string => {
-  const seconds = Math.floor(
-    (Date.now() - new Date(dateString).getTime()) / 1000
-  );
-
-  if (seconds < 60) return t("admin.justNow");
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} ${t("admin.minutesAgo")}`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} ${t("admin.hoursAgo")}`;
-  return `${Math.floor(seconds / 86400)} ${t("admin.daysAgo")}`;
+  // Sử dụng util chung để đảm bảo timezone và relative time nhất quán
+  return formatRelativeTime(dateString);
 };
 
 // Component: Notification Item

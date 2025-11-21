@@ -10,6 +10,7 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
 interface GroupedSendRequest {
   createdAt: string;
@@ -52,15 +53,6 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
       .catch(() => setStaffName(group.staffName || t("admin.unknown")))
       .finally(() => setLoadingStaff(false));
   }, [group.requests, group.staffName, t]);
-
-  const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
 
   const handleProvidePin = async () => {
     if (!isEditable) return;
@@ -142,7 +134,7 @@ const CheckRequestFromStaff: React.FC<CheckSendRequestProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-gray-500" />{" "}
-                    <span>{formatDateTime(group.createdAt)}</span>
+                    <span>{formatDateTimeShort(group.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5 text-gray-500" />{" "}

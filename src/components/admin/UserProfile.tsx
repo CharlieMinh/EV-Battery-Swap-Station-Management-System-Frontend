@@ -7,9 +7,18 @@ import {
 } from "@/services/admin/customerAdminService";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { User, Mail, Phone, Calendar, Clock, Upload, Loader2 } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Clock,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import ChangePassword from "./ChangePassword";
 import { useLanguage } from "../LanguageContext";
+import { formatDate, formatDateTime } from "../../utils/dateTimeUtils";
 
 
 interface UserProfileData {
@@ -292,11 +301,7 @@ export default function UserProfile() {
                 <span className="font-medium">{t("admin.createdDate")}</span>
               </div>
               <p className="text-gray-900 font-medium pl-6">
-                {new Date(user.createdAt).toLocaleDateString("vi-VN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {formatDate(user.createdAt)}
               </p>
             </div>
 
@@ -306,13 +311,7 @@ export default function UserProfile() {
                 <span className="font-medium">{t("admin.lastLoginDate")}</span>
               </div>
               <p className="text-gray-900 font-medium pl-6">
-                {new Date(user.lastLogin).toLocaleString("vi-VN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatDateTime(user.lastLogin)}
               </p>
             </div>
           </div>

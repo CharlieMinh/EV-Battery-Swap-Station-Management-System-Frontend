@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { X, Package, User, Calendar, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { fetchStaffById } from "@/services/admin/staffAdminService"; // import API của bạn
+import { fetchStaffById } from "@/services/admin/staffAdminService";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
 interface GroupedSendRequest {
   createdAt: string;
@@ -43,15 +44,6 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
       })
       .finally(() => setLoadingStaff(false));
   }, [group.requests, group.staffName]);
-
-  const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
 
   const isEditable = group.status === "PendingAdminReview";
 
@@ -99,7 +91,7 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-gray-500" />
-                  <span>{formatDateTime(group.createdAt)}</span>
+                  <span>{formatDateTimeShort(group.createdAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />

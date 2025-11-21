@@ -17,6 +17,7 @@ import {
   rejectMultipleBatteryRequests,
   BatteryRequest,
 } from "@/services/admin/batteryService";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
 interface GroupedRequest {
   createdAt: string;
@@ -53,16 +54,6 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
     null
   );
 
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   // Xác nhận tất cả (giữ nguyên luồng)
   const handleConfirmAll = async () => {
@@ -208,7 +199,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   <div>
                     <p className="text-sm text-gray-500">Thời gian gửi</p>
                     <p className="font-semibold">
-                      {formatDateTime(group.createdAt)}
+                      {formatDateTimeShort(group.createdAt)}
                     </p>
                   </div>
                 </div>

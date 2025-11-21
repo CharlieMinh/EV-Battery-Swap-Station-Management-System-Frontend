@@ -6,16 +6,10 @@ import { SwapTransaction } from "@/types/SwapTransaction";
 import { fetchCustomers, Customer, fetchCustomerById, Subscription } from "@/services/admin/customerAdminService";
 import api from "@/configs/axios";
 import { useLanguage } from "../LanguageContext";
+import { formatDate as formatDateUtil, formatTime as formatTimeUtil } from "../../utils/dateTimeUtils";
 
-const formatDate = (date: string) => new Date(date).toLocaleDateString("vi-VN");
-
-const formatTime = (date: string) =>
-  new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Asia/Ho_Chi_Minh", // Bắt buộc múi giờ Việt Nam
-  }).format(new Date(date));
+const formatDate = (date: string) => formatDateUtil(date);
+const formatTime = (date: string) => formatTimeUtil(date);
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", {
