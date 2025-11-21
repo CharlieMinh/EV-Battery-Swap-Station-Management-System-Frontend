@@ -6,6 +6,7 @@ import { QrCode, MapPin, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'react-toastify';
+import { formatDateFromDate } from "../../utils/dateTimeUtils";
 
 interface Reservation {
   id: string;
@@ -199,7 +200,7 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
                 <div>
                   <h3 className="text-lg font-medium text-orange-600">{activeReservation.stationName}</h3>
                   <p className="text-gray-500">
-                    {localDate.toLocaleDateString('vi-VN')} {t('driver.booking.atTime')} {activeReservation.slotStartTime.substring(0, 5)}
+                    {formatDateFromDate(localDate)} {t('driver.booking.atTime')} {activeReservation.slotStartTime.substring(0, 5)}
                   </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg inline-block border">

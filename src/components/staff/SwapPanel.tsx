@@ -5,6 +5,7 @@ import {
   type Reservation,
   type SwapFinalizeResponse,
 } from "../../services/staff/staffApi";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 import {
   CheckCircle,
   Battery,
@@ -278,7 +279,7 @@ export default function SwapPanel({
               <div>
                 <b>Thời gian:</b>{" "}
                 {result.timestamp
-                  ? new Date(result.timestamp).toLocaleString()
+                  ? formatDateTime(result.timestamp as any)
                   : "—"}
               </div>
               <div>

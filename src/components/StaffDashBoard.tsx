@@ -1,5 +1,6 @@
 // src/pages/StaffDashboard.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserCircle,
   ClipboardList,
@@ -13,6 +14,8 @@ import {
   Package,
   MessageCircle, // icon cho tab Khiếu nại
   UserPlus, // 🔹 icon cho tab Tạo khách hàng (Driver)
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -56,10 +59,15 @@ import {
   markMultipleAsRead,
   Notification,
 } from "@/services/admin/notifications";
+import {
+  fetchBatteryRequests,
+  BatteryRequest,
+} from "@/services/admin/batteryService";
 import { useLanguage } from "./LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 import { toast } from "react-toastify";
+import { formatRelativeTime } from "../utils/dateTimeUtils";
 
 type TabKey =
   | "profile"
@@ -87,7 +95,16 @@ export default function StaffDashboard({
   user,
   onLogout,
 }: StaffDashboardPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [active, setActive] = useState<TabKey>("queue");
+  
+  // Set active tab từ navigation state
+  useEffect(() => {
+    if (location.state?.initialSection) {
+      setActive(location.state.initialSection as TabKey);
+    }
+  }, [location.state]);
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -201,6 +218,7 @@ export default function StaffDashboard({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [batteryRequests, setBatteryRequests] = useState<BatteryRequest[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -220,21 +238,73 @@ export default function StaffDashboard({
     fetchData();
   }, []); // giữ nguyên logic
 
+  // Load danh sách yêu cầu nhận pin (bulk-create-requests) cho staff để hiển thị chi tiết (model + số lượng)
+  useEffect(() => {
+    const loadBatteryRequests = async () => {
+      try {
+        const data = await fetchBatteryRequests();
+        setBatteryRequests(data);
+      } catch (error) {
+        console.error("Error loading battery requests for staff bell:", error);
+      }
+    };
+    loadBatteryRequests();
+  }, []);
+
+  const getNotificationInfo = (n: Notification) => {
+    // Đồng bộ kiểu hiển thị giống bên admin (dùng các key admin.* luôn cho tiện)
+    if (n.type === 4) {
+      // StockRequestCreated (staff gửi yêu cầu nhập pin)
+      return {
+        icon: Package,
+        title: t("admin.stockRequestCreated"),
+        color: "text-blue-600",
+      };
+    }
+    if (n.type === 5) {
+      // StockRequestApproved
+      return {
+        icon: CheckCircle,
+        title: t("admin.bulkRequestConfirmed"),
+        color: "text-green-600",
+      };
+    }
+    if (n.type === 6) {
+      // StockRequestRejected
+      return {
+        icon: XCircle,
+        title: t("admin.bulkRequestRejected"),
+        color: "text-red-600",
+      };
+    }
+    return {
+      icon: Bell,
+      title: t("admin.notifications"),
+      color: "text-slate-600",
+    };
+  };
+
   const handleMarkAsRead = async (notification: Notification) => {
     try {
       const idsToMark = notification.mergedIds?.length
         ? notification.mergedIds
         : [notification.id];
+
       await markMultipleAsRead(idsToMark);
+
       setNotifications((prev) =>
         prev.map((n) =>
-          n.message === notification.message ? { ...n, isRead: true } : n
+          idsToMark.includes(n.id) ? { ...n, isRead: true } : n
         )
       );
+
       setUnreadCount((prev) => Math.max(prev - idsToMark.length, 0));
+
+      // Đóng popover và chuyển sang tab "Yêu cầu nhận pin"
       setNotifOpen(false);
-      setActiveSection("battery-request");
-      toast.success("Đã đánh dấu đã đọc.", {
+      setActive("requests");
+
+      toast.success("Đã đánh dấu đã đọc. Chuyển đến Yêu cầu nhận pin.", {
         ...toastOpts,
         toastId: TOAST_ID.notifMark,
       });
@@ -252,7 +322,10 @@ export default function StaffDashboard({
       <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
         <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl w-80">
           <SidebarHeader className="p-5 border-b border-slate-200">
-            <div className="flex items-center gap-4">
+            <div 
+              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/")}
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
                   src={logo}
@@ -349,28 +422,100 @@ export default function StaffDashboard({
                     </h3>
                     {notifications.length === 0 ? (
                       <p className="text-gray-500 text-sm">
-                        Không có thông báo nào
+                        {t("admin.noNotifications")}
                       </p>
                     ) : (
                       <div className="max-h-64 overflow-y-auto">
-                        {notifications.map((n) => (
-                          <div
-                            key={n.id}
-                            onClick={() => handleMarkAsRead(n)}
-                            className={`p-2 rounded-lg cursor-pointer mb-1 ${
-                              n.isRead
-                                ? "bg-gray-100 hover:bg-gray-200"
-                                : "bg-orange-100 hover:bg-orange-200"
-                            }`}
-                          >
-                            <p className="text-sm font-medium text-gray-800">
-                              {n.message}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(n.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        ))}
+                        {notifications.map((n) => {
+                          const info = getNotificationInfo(n);
+                          const Icon = info.icon;
+
+                          // Lấy tất cả relatedEntityIds giống bên admin (gộp nhiều request cùng lúc)
+                          const relatedIds =
+                            n.relatedEntityIds && n.relatedEntityIds.length > 0
+                              ? n.relatedEntityIds
+                              : n.relatedEntityId
+                              ? [n.relatedEntityId]
+                              : [];
+
+                          // Tìm các battery request tương ứng với notification
+                          const relatedRequests = batteryRequests.filter((br) =>
+                            relatedIds.includes(br.id)
+                          );
+
+                          const totalQuantity = relatedRequests.reduce(
+                            (sum, req) => sum + req.quantity,
+                            0
+                          );
+                          const totalTypes = relatedRequests.length;
+
+                          return (
+                            <div
+                              key={n.id}
+                              onClick={() => handleMarkAsRead(n)}
+                              className={`p-2 rounded-lg cursor-pointer mb-1 ${
+                                n.isRead
+                                  ? "bg-gray-100 hover:bg-gray-200"
+                                  : "bg-orange-100 hover:bg-orange-200"
+                              }`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <Icon
+                                  className={`w-4 h-4 mt-0.5 ${info.color}`}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {info.title}
+                                  </p>
+
+                                  {/* Tổng số lượng + số loại giống admin bell */}
+                                  {relatedRequests.length > 0 && (
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      {totalQuantity} {t("admin.batteryUnit")} (
+                                      {totalTypes} {t("admin.types")})
+                                    </p>
+                                  )}
+
+                                  {/* Chi tiết theo trạm + từng loại pin */}
+                                  {relatedRequests.length > 0 && (
+                                    <>
+                                      <p className="text-xs text-gray-700 mb-1">
+                                        📍 {relatedRequests[0].stationName}
+                                      </p>
+                                      <div className="flex flex-wrap gap-1.5 mb-1">
+                                        {relatedRequests.map((req) => (
+                                          <div
+                                            key={req.id}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-orange-50 text-orange-700 border-orange-200"
+                                          >
+                                            <span className="truncate max-w-[90px]">
+                                              {req.batteryModelName
+                                                .replace("Battery Pack", "")
+                                                .trim()}
+                                            </span>
+                                            <span className="font-semibold">
+                                              ×{req.quantity}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {/* Fallback: nếu không map được stock request thì hiển thị message gốc */}
+                                  {relatedRequests.length === 0 && (
+                                    <p className="text-xs text-gray-600 line-clamp-2">
+                                      {n.message}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {formatRelativeTime(n.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </PopoverContent>

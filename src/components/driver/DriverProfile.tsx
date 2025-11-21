@@ -17,6 +17,7 @@ import { Edit, Mail, PhoneCallIcon, User, Loader2, AlertCircle, RefreshCcw, Came
 import { useLanguage } from "../LanguageContext";
 import { toast } from "react-toastify";
 import { showError, showSuccess } from "../ui/alert";
+import { formatDate } from "../../utils/dateTimeUtils";
 
 interface UserData {
   id: string;
@@ -404,11 +405,7 @@ export function DriverProfile() {
                   <span className="font-medium">{t("driver.profile.createdAt")}</span>
                 </div>
                 <p className="text-gray-900 font-medium pl-6">
-                  {new Date(userData.createdAt).toLocaleDateString("vi-VN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatDate(userData.createdAt)}
                 </p>
               </div>
 

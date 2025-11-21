@@ -27,6 +27,7 @@ import {
 import { getCurrentUser } from "@/services/authApi";
 import { createStockRequest } from "@/services/staff/stockRequest";
 import { fetchStationById } from "@/services/admin/stationService";
+import { formatDateTime } from "../../utils/dateTimeUtils";
 
 type ReqItem = { batteryModelId: string; quantityRequested: number };
 type Props = { stationId: string };
@@ -558,7 +559,7 @@ export default function InventoryManagement({ stationId }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       {b.updatedAt
-                        ? new Date(b.updatedAt).toLocaleString()
+                        ? formatDateTime(b.updatedAt as any)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">

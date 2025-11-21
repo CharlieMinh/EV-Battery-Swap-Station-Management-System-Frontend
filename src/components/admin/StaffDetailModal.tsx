@@ -47,24 +47,6 @@ const StatItem: React.FC<{
   </div>
 );
 
-const formatDateTime = (isoString: any) => {
-  if (!isoString) return "N/A";
-  try {
-    const date = new Date(isoString);
-    // Format: DD/MM/YYYY HH:MM:SS
-    const datePart = date.toLocaleDateString("vi-VN");
-    const timePart = date.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-    return `${datePart} ${timePart}`;
-  } catch {
-    return "Invalid Date";
-  }
-};
-
 const getRoleNumber = (role: string | number): number => {
   if (typeof role === "number") return role;
   switch (role) {

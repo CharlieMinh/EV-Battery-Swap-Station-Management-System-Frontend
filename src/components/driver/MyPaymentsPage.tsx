@@ -4,9 +4,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Loader2, RefreshCw, AlertCircle, CreditCard, Landmark, CalendarDays, Tag, ChevronLeft, ChevronRight, X, Filter, DollarSign, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { Badge } from '../ui/badge';
+import { formatDateTimeShort } from '../../utils/dateTimeUtils';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import {
@@ -111,8 +110,18 @@ export function MyPaymentsPage() {
                 if (!isNaN(max)) matchesPrice = matchesPrice && payment.amount <= max;
             }
 
-            const matchesDate = !filterDate ||
-                format(new Date(payment.createdAt), 'yyyy-MM-dd') === filterDate;
+            const matchesDate = !filterDate || (() => {
+                try {
+                    const normalizedString = payment.createdAt.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(payment.createdAt) 
+                        ? payment.createdAt 
+                        : payment.createdAt + 'Z';
+                    const paymentDate = new Date(normalizedString);
+                    const filterDateObj = new Date(filterDate + 'T00:00:00Z');
+                    return paymentDate.toISOString().split('T')[0] === filterDateObj.toISOString().split('T')[0];
+                } catch {
+                    return false;
+                }
+            })();
 
             return matchesType && matchesStatus && matchesPrice && matchesDate;
         })
@@ -381,7 +390,7 @@ export function MyPaymentsPage() {
                                                 </CardTitle>
                                                 <CardDescription className="flex items-center pt-1">
                                                     <CalendarDays className="w-4 h-4 mr-1.5 text-gray-500" />
-                                                    {format(new Date(payment.createdAt), 'HH:mm dd/MM/yyyy', { locale: vi })}
+                                                    {formatDateTimeShort(payment.createdAt)}
                                                 </CardDescription>
                                             </CardHeader>
                                             <CardContent className="flex-grow space-y-2 text-sm">

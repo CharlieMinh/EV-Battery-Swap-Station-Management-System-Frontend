@@ -19,6 +19,7 @@ import {
   startComplaintInvestigation,
 } from "@/services/swaps";
 import { Button } from "../ui/button";
+import { formatTimeFromDate } from "../../utils/dateTimeUtils";
 
 const toastOpts = {
   position: "top-right" as const,
@@ -511,13 +512,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     setStage("idle");
   };
 
-  const formatTime = (d: Date | null) =>
-    d
-      ? d.toLocaleTimeString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "—";
 
   // ⭐ Helper: lấy tên khách cho modal pendingCheckIn
   const getPendingCustomerName = (): string => {
@@ -707,8 +701,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                             </span>
                           </td>
                           <td className="px-4 py-3 align-middle">
-                            {start ? formatTime(start) : "—"} -{" "}
-                            {end ? formatTime(end) : "—"}
+                            {formatTimeFromDate(start)} - {formatTimeFromDate(end)}
                           </td>
                           <td className="px-4 py-3 align-middle text-right">
                             <div className="flex gap-2 justify-end">
@@ -1002,9 +995,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               <div className="font-medium">
                 {(() => {
                   const { start, end } = resolveSlotRange(pendingCheckIn.detail);
-                  return `${start ? formatTime(start) : "—"} - ${
-                    end ? formatTime(end) : "—"
-                  }`;
+                  return `${formatTimeFromDate(start)} - ${formatTimeFromDate(end)}`;
                 })()}
               </div>
 

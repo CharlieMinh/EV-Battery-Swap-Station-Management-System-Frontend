@@ -29,6 +29,7 @@ import { User as UserType } from "../App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import myImage from "../assets/FTP.jpg";
 
 interface RegisterPageProps {
   onRegister: (user: UserType) => void;
@@ -179,8 +180,19 @@ export function RegisterPage({
   };
 
   return (
-    <div className="min-h-screen bg-orange-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        backgroundImage: `url(${myImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Overlay mờ nhạt */}
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm"></div>
+      
+      <div className="w-full max-w-lg relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex mb-[4px] items-center justify-center w-16 h-16 mb-4">
@@ -201,7 +213,7 @@ export function RegisterPage({
           <LanguageSwitcher />
         </div>
 
-        <Card className="shadow-xl border-0">
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-md">
           <CardHeader className="text-center">
             <div className="mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600">

@@ -1338,6 +1338,9 @@ const translations = {
     "admin.notifications": "Notifications",
     "admin.noNotifications": "No notifications",
     "admin.mergedNotifications": "Merged {count} notifications",
+    "admin.stockRequestCreated": "New stock request from staff",
+    "admin.bulkRequestConfirmed": "Battery request confirmed",
+    "admin.bulkRequestRejected": "Battery request rejected",
     "admin.dashboardTitle": "Admin Dashboard",
     "admin.greetingHello": "Hello {name} 👋",
     "admin.dashboardDesc": "Monitor system status, station performance and team in real-time. Key metrics updated every 24 hours.",
@@ -1435,6 +1438,7 @@ const translations = {
     "admin.batteryStatusCharging": "Charging",
     "admin.batteryStatusDepleted": "Depleted",
     "admin.batteryStatusMaintenance": "Maintenance",
+    "admin.batteryStatusFaulty": "Faulty",
 
     // CustomerManagement Component
     "admin.loadingCustomers": "Loading customers...",
@@ -1566,6 +1570,7 @@ const translations = {
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Monthly Unlimited",
     "admin.payPerSwap": "Pay Per Swap",
+    "admin.payPerSwapLabel": "Pay Per Swap",
     "admin.enterprise": "Enterprise",
     "admin.stationManager": "Station Manager",
     "admin.technician": "Technician",
@@ -1641,6 +1646,8 @@ const translations = {
     "admin.inUse": "In Use",
     "admin.ready": "Ready",
     "admin.reserved": "Reserved",
+    "admin.depleted": "Depleted",
+    "admin.faulty": "Faulty",
     "admin.providePinSuccess": "Pin provided successfully!",
     "admin.providePinError": "Failed to provide pin!",
     "admin.addBatteryToStation": "Add Battery to Station",
@@ -2772,7 +2779,7 @@ const translations = {
     "staff.inventory.statusCharging": "Đang sạc",
     "staff.inventory.statusMaintenance": "Bảo trì",
     "staff.inventory.statusReserved": "Đã đặt trước",
-    "staff.inventory.statusFaulty": "Lỗi",
+    "staff.inventory.statusFaulty": "Đang kiểm tra",
     "staff.inventory.statusDepleted": "Hết pin",
     "staff.inventory.lowStockWarning": "Tồn kho thấp! Hãy yêu cầu nhập thêm pin.",
     "staff.inventory.buttonCreateRequest": "Tạo yêu cầu",
@@ -3013,6 +3020,9 @@ const translations = {
     "admin.notifications": "Thông báo",
     "admin.noNotifications": "Không có thông báo nào",
     "admin.mergedNotifications": "Gộp {count} thông báo",
+    "admin.stockRequestCreated": "Yêu cầu nhập pin từ nhân viên",
+    "admin.bulkRequestConfirmed": "Yêu cầu pin đã được xác nhận",
+    "admin.bulkRequestRejected": "Yêu cầu pin đã bị từ chối",
     "admin.dashboardTitle": "Bảng điều khiển admin",
     "admin.greetingHello": "Chào {name} 👋",
     "admin.dashboardDesc": "Theo dõi trạng thái hệ thống, hiệu suất trạm và đội ngũ trong thời gian thực. Các số liệu chính được cập nhật mỗi 24 giờ.",
@@ -3102,6 +3112,7 @@ const translations = {
     "admin.batteryStatusCharging": "Đang sạc",
     "admin.batteryStatusDepleted": "Cạn pin",
     "admin.batteryStatusMaintenance": "Bảo trì",
+    "admin.batteryStatusFaulty": "Đang kiểm tra",
 
     // CustomerManagement Component
     "admin.loadingCustomers": "Đang tải khách hàng...",
@@ -3249,6 +3260,7 @@ const translations = {
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Không Giới Hạn Hàng Tháng",
     "admin.payPerSwap": "Trả Theo Lần Thay",
+    "admin.payPerSwapLabel": "Thanh toán theo lượt đổi",
     "admin.enterprise": "Doanh Nghiệp",
     "admin.stationManager": "Quản Lý Trạm",
     "admin.technician": "Kỹ Thuật Viên",
@@ -3323,6 +3335,8 @@ const translations = {
     "admin.inUse": "Đang sử dụng",
     "admin.ready": "Sẵn sàng",
     "admin.reserved": "Đặt trước",
+    "admin.depleted": "Cạn pin",
+    "admin.faulty": "Đang kiểm tra",
     "admin.providePinSuccess": "Cung cấp pin thành công!",
     "admin.providePinError": "Cung cấp pin thất bại!",
     "admin.addBatteryToStation": "Thêm Pin Vào Trạm",

@@ -13,18 +13,20 @@ const STATUS_COLORS: Record<string, string> = {
   Reserved: "#FFC107",
   InUse: "#2196F3",
   Charging: "#00BCD4",
-  Depleted: "#9E9E9E",
+  Depleted: "#FF9800",
   Maintenance: "#F44336",
+  Faulty: "#9C27B0",
 };
 
-// Danh sách trạng thái chuẩn
+// Danh sách trạng thái chuẩn (theo enum từ backend: 0-6)
 const ALL_STATUSES = [
-  "Full",
-  "Reserved",
-  "InUse",
-  "Charging",
-  "Depleted",
-  "Maintenance",
+  "Full",        // 0
+  "Reserved",    // 1
+  "InUse",       // 2
+  "Charging",    // 3
+  "Depleted",    // 4
+  "Maintenance", // 5
+  "Faulty",      // 6
 ];
 
 export function BatteryFleetManagement() {
@@ -50,6 +52,23 @@ export function BatteryFleetManagement() {
 
   const handleReload = () => setReloadTrigger((prev) => prev + 1);
 
+  // Helper function để normalize status (hỗ trợ cả số và string)
+  const normalizeStatus = (status: string | number): string => {
+    if (typeof status === "number") {
+      const statusMap: Record<number, string> = {
+        0: "Full",
+        1: "Reserved",
+        2: "InUse",
+        3: "Charging",
+        4: "Depleted",
+        5: "Maintenance",
+        6: "Faulty",
+      };
+      return statusMap[status] || String(status);
+    }
+    return String(status);
+  };
+
   const BATTERY_STATUS_VN: Record<string, string> = {
     Full: t("admin.batteryStatusReady"),
     Reserved: t("admin.batteryStatusReserved"),
@@ -57,12 +76,14 @@ export function BatteryFleetManagement() {
     Charging: t("admin.batteryStatusCharging"),
     Depleted: t("admin.batteryStatusDepleted"),
     Maintenance: t("admin.batteryStatusMaintenance"),
+    Faulty: t("admin.batteryStatusFaulty"),
   };
 
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {};
     batteries.forEach((b) => {
-      counts[b.status] = (counts[b.status] || 0) + 1;
+      const normalizedStatus = normalizeStatus(b.status);
+      counts[normalizedStatus] = (counts[normalizedStatus] || 0) + 1;
     });
 
     return ALL_STATUSES.map((status) => ({

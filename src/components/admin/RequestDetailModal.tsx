@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BatteryRequest } from "@/services/admin/batteryService";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
 interface GroupedRequest {
   createdAt: string;
@@ -24,16 +25,6 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onClose,
 }) => {
   const { t } = useLanguage();
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   return (
     <div
@@ -89,7 +80,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <div>
                     <p className="text-sm text-gray-500">{t("admin.sendTime")}</p>
                     <p className="font-semibold">
-                      {formatDateTime(group.createdAt)}
+                      {formatDateTimeShort(group.createdAt)}
                     </p>
                   </div>
                 </div>
@@ -206,7 +197,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                             {t("admin.updateTime")}
                           </p>
                           <p className="font-medium text-gray-900 text-xs">
-                            {formatDateTime(request.updatedAt)}
+                            {formatDateTimeShort(request.updatedAt)}
                           </p>
                         </div>
                       </div>

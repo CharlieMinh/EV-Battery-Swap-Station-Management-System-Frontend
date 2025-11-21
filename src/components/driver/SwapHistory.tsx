@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
 import { Textarea } from "../ui/textarea";
+import { formatDateTimeShort, formatDateTime, formatCurrency } from "../../utils/dateTimeUtils";
 
 interface Swap {
   id: string;
@@ -389,13 +390,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
                 transactionsToShow.map((swap) => {
                   const isSubscription = Boolean((swap as any).userSubscriptionId) ||
                     (typeof (swap as any).paymentType === 'string' && (swap as any).paymentType.toLowerCase().includes('subscription'));
-                  const completedTime = new Date(swap.completedAt).toLocaleString("vi-VN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  });
+                  const completedTime = formatDateTimeShort(swap.completedAt);
 
                   return (
                     <Card
@@ -491,7 +486,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
                                 <>
                                   <p className="text-xs text-gray-500">{t("driver.totalAmount")}</p>
                                   <p className="font-bold text-green-600">
-                                    {Number(swap.totalAmount).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+                                    {formatCurrency(Number(swap.totalAmount))}
                                   </p>
                                 </>
                               )}
@@ -515,7 +510,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
                                 <p className="text-sm text-gray-600 italic">"{swap.feedback}"</p>
                               )}
                               <p className="text-xs text-gray-400">
-                                {t('driver.history.ratedAt')} {new Date(swap.ratedAt).toLocaleString("vi-VN")}
+                                {t('driver.history.ratedAt')} {formatDateTime(swap.ratedAt)}
                               </p>
                             </div>
                           ) : null}

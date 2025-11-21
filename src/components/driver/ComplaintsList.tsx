@@ -13,6 +13,7 @@ import { useLanguage } from "../LanguageContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { InspectionBookingWizard } from "./InspectionBookingWizard";
+import { formatDateTimeShort, formatDateTime } from "../../utils/dateTimeUtils";
 
 enum ComplaintStatus {
     PendingScheduling = 0,
@@ -222,13 +223,6 @@ export function ComplaintsList() {
                         {paginatedComplaints.map((complaint) => {
                             const statusInfo = getStatusInfo(complaint.status);
                             const StatusIcon = statusInfo.icon;
-                            const reportTime = new Date(complaint.reportDate).toLocaleString("vi-VN", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                            });
 
                             return (
                                 <Card
@@ -244,7 +238,7 @@ export function ComplaintsList() {
                                         </div>
 
                                         <CardDescription className="text-sm text-gray-600">
-                                            {t('driver.complaints.reportTime')} {reportTime}
+                                            {t('driver.complaints.reportTime')} {formatDateTimeShort(complaint.reportDate)}
                                         </CardDescription>
                                     </CardHeader>
 
@@ -282,7 +276,7 @@ export function ComplaintsList() {
                                             <div className="pt-2">
                                                 <p className="text-sm font-semibold text-gray-700">{t('driver.complaints.scheduledTime')}</p>
                                                 <p className="text-sm text-blue-600">
-                                                    {new Date(complaint.scheduledDate).toLocaleString("vi-VN")}
+                                                    {formatDateTime(complaint.scheduledDate)}
                                                 </p>
                                             </div>
                                         )}
