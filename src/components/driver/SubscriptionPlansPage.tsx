@@ -1076,7 +1076,11 @@ export function SubscriptionPlansPage() {
                   </Label>
                   <Select
                     value={isUnlimitedPlan ? "unlimited" : "limited"}
+                    disabled={Boolean(editingPlan)}
                     onValueChange={(value) => {
+                      // Khi đang chỉnh sửa, không cho đổi loại gói
+                      if (editingPlan) return;
+
                       const isUnlimited = value === "unlimited";
                       setIsUnlimitedPlan(isUnlimited);
 
@@ -1102,7 +1106,11 @@ export function SubscriptionPlansPage() {
                       }
                     }}
                   >
-                    <SelectTrigger className={errors.isUnlimitedPlan ? "border-red-500" : ""}>
+                    <SelectTrigger
+                      className={`${errors.isUnlimitedPlan ? "border-red-500" : ""} ${
+                        editingPlan ? "bg-gray-100 cursor-not-allowed opacity-80" : ""
+                      }`}
+                    >
                       <SelectValue placeholder="Chọn loại gói" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1112,6 +1120,11 @@ export function SubscriptionPlansPage() {
                   </Select>
                   {errors.isUnlimitedPlan && (
                     <p className="text-red-500 text-sm mt-1">{errors.isUnlimitedPlan}</p>
+                  )}
+                  {editingPlan && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Không thể thay đổi loại gói đối với gói đã tồn tại.
+                    </p>
                   )}
                 </div>
               </div>
@@ -1190,19 +1203,6 @@ export function SubscriptionPlansPage() {
                   value={formData.benefits}
                   onChange={(e) =>
                     setFormData({ ...formData, benefits: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>Chính sách hoàn tiền</Label>
-                <textarea
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  rows={2}
-                  placeholder="Nhập chính sách hoàn tiền (nếu có)..."
-                  value={formData.refundPolicy}
-                  onChange={(e) =>
-                    setFormData({ ...formData, refundPolicy: e.target.value })
                   }
                 />
               </div>

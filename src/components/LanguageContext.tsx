@@ -1282,6 +1282,7 @@ const translations = {
     "staff.inventory.labelModelQuantityList": "Model list & quantities",
     "staff.inventory.placeholderModelId": "BatteryModelId",
     "staff.inventory.placeholderQuantity": "Quantity",
+    "staff.inventory.errorQuantityRange": "Quantity must be between 1 and 100 for each model",
     "staff.inventory.buttonRemove": "Remove",
     
     "staff.inventory.noteMultipleModels": "You can add multiple models.",
@@ -1555,6 +1556,7 @@ const translations = {
     "staff.currentQuarter": "Current Quarter",
     "staff.currentYear": "Current Year",
     "staff.loadingData": "Loading data...",
+    "staff.loading": "Loading...",
 
     // Admin Dashboard
     "admin.loadingDetails": "Loading...",
@@ -1572,6 +1574,7 @@ const translations = {
     "admin.subscriptionPlans": "Subscription Plans",
     "admin.addUser": "Add User",
     "admin.requestHistory": "Request History",
+    "admin.request": "Request",
     "admin.sendBatteryRequestHistory": "Battery Delivery History",
     "admin.complaints": "Feedback & Complaints",
     "admin.personalInfo": "Personal Information",
@@ -1874,6 +1877,8 @@ const translations = {
     "admin.modelId": "Model ID",
     "admin.batteryDetails": "Battery Details",
     "admin.staffNotes": "Staff Notes",
+    "admin.adminNotes": "Admin Notes",
+    "admin.adminNotesPlaceholder": "Enter admin notes...",
     "admin.providePin": "Provide Pin",
     "admin.requestDetailTitle": "Request Details",
     "admin.viewRequest": "View Request",
@@ -3193,6 +3198,7 @@ const translations = {
     "staff.inventory.labelModelQuantityList": "Danh sách model & số lượng",
     "staff.inventory.placeholderModelId": "BatteryModelId",
     "staff.inventory.placeholderQuantity": "Số lượng",
+    "staff.inventory.errorQuantityRange": "Số lượng phải nằm trong khoảng 1 đến 100 cho mỗi mẫu pin",
     "staff.inventory.buttonRemove": "Xóa",
     "staff.inventory.submitRequestButton": "Gửi yêu cầu",
     "staff.inventory.noteMultipleModels": "Bạn có thể thêm nhiều model khác nhau.",
@@ -3476,6 +3482,7 @@ const translations = {
     "staff.currentQuarter": "Quý Hiện Tại",
     "staff.currentYear": "Năm Hiện Tại",
     "staff.loadingData": "Đang tải dữ liệu...",
+    "staff.loading": "Đang tải...",
 
     // Admin Dashboard
     "admin.loadingDetails": "Đang tải...",
@@ -3493,6 +3500,7 @@ const translations = {
     "admin.subscriptionPlans": "Gói pin",
     "admin.addUser": "Thêm người dùng",
     "admin.requestHistory": "Lịch sử gửi pin",
+    "admin.request": "Yêu cầu",
     "admin.sendBatteryRequestHistory": "Lịch sử gửi pin",
     "admin.complaints": "Phản hồi & khiếu nại",
     "admin.personalInfo": "Thông tin cá nhân",
@@ -3803,6 +3811,8 @@ const translations = {
     "admin.modelId": "Mã model",
     "admin.batteryDetails": "Chi Tiết Pin",
     "admin.staffNotes": "Ghi chú từ nhân viên",
+    "admin.adminNotes": "Ghi chú của admin",
+    "admin.adminNotesPlaceholder": "Nhập ghi chú của admin...",
     "admin.providePin": "Cung cấp pin",
     "admin.requestDetailTitle": "Chi Tiết Yêu Cầu",
     "admin.viewRequest": "Xem Yêu Cầu",

@@ -299,6 +299,18 @@ export default function InventoryManagement({ stationId }: Props) {
       return;
     }
 
+    // Validate client-side: mỗi model 1–100
+    const invalidItem = items.find(
+      (x) => x.quantity < 1 || x.quantity > 100
+    );
+    if (invalidItem) {
+      toast.warning(t("staff.inventory.errorQuantityRange"), {
+        ...toastOpts,
+        toastId: "inv-req-qty-range",
+      });
+      return;
+    }
+
     try {
       await Promise.all(
         items.map((item) =>
@@ -321,8 +333,17 @@ export default function InventoryManagement({ stationId }: Props) {
       setNote("");
       fetchInventory();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message || err?.message || t("staff.inventory.toastRequestError");
+      // Nếu BE trả về lỗi validation số lượng, map ra thông báo dễ hiểu
+      const apiErrors = err?.response?.data?.errors;
+      let msg: string;
+      if (apiErrors?.Quantity?.length) {
+        msg = apiErrors.Quantity[0];
+      } else {
+        msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          t("staff.inventory.toastRequestError");
+      }
       toast.error(msg, { ...toastOpts, toastId: "inv-req-error" });
     }
   };
@@ -638,17 +659,23 @@ export default function InventoryManagement({ stationId }: Props) {
                   const qty =
                     reqItems.find((x) => x.batteryModelId === m.id)
                       ?.quantityRequested || 0;
+                  const displayQty =
+                    qty > 0 ? qty.toLocaleString("vi-VN") : "";
                   return (
                     <div key={m.id} className="flex items-center gap-3 w-full">
                       <span className="flex-[4] min-w-0 font-medium">
                         {m.name}
                       </span>
                       <input
-                        type="number"
-                        min={0}
-                        value={qty}
+                        type="text"
+                        inputMode="numeric"
+                        value={displayQty}
                         onChange={(e) => {
-                          const val = Number(e.target.value);
+                          const raw = e.target.value || "";
+                          // Chỉ giữ lại chữ số, bỏ dấu chấm phẩy, khoảng trắng...
+                          const digits = raw.replace(/\D/g, "");
+                          const val = digits ? Number(digits) : 0;
+
                           setReqItems((prev) => {
                             const exists = prev.find(
                               (x) => x.batteryModelId === m.id
