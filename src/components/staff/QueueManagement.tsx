@@ -112,6 +112,8 @@ const statusToVi = (s?: string, t?: (k: string) => string) => {
       return t ? t("staff.queue.status.pendingPayment") : "Pending payment";
     case "paid":
       return t ? t("staff.queue.status.paid") : "Paid";
+    case "cancelled":
+      return t ? t("staff.queue.status.cancelled") : "Cancelled";
     default:
       return s || "—";
   }
@@ -144,6 +146,8 @@ const badgeClass = (s?: string) => {
       return "bg-amber-100 text-amber-700";
     case "paid":
       return "bg-emerald-100 text-emerald-800";
+    case "cancelled":
+      return "bg-gray-100 text-gray-600";
     default:
       return "bg-gray-100 text-gray-700";
   }
@@ -155,7 +159,8 @@ const isReadyToSwap = (r: Reservation) => ((r as any).status || "").toLowerCase(
 const isRejectedOrResolved = (r: Reservation) =>
   ["rejected", "resolved"].includes(((r as any).status || "").toLowerCase());
 const isCompleted = (r: Reservation) => ((r as any).status || "").toLowerCase() === "completed";
-const isFinalState = (r: Reservation) => isRejectedOrResolved(r) || isCompleted(r);
+const isCancelled = (r: Reservation) => ((r as any).status || "").toLowerCase() === "cancelled";
+const isFinalState = (r: Reservation) => isRejectedOrResolved(r) || isCompleted(r) || isCancelled(r);
 
 /* ========= helpers ========= */
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
@@ -389,6 +394,15 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const detail = await fetchReservationDetail(rid);
       if (!detail) return toast.error(t("staff.queue.errors.notFound") || "Reservation not found.");
 
+      // Kiểm tra payment status
+      const paymentStatus = (detail as any).paymentStatus || (detail as any).payment?.status || (detail as any).isPaid;
+      const status = ((detail as any).status || "").toLowerCase();
+      
+      // Nếu chưa thanh toán (status là PendingPayment hoặc paymentStatus là false/null)
+      if (status === "pendingpayment" || status === "awaitingpayment" || paymentStatus === false || paymentStatus === "Pending" || paymentStatus === 0) {
+        return toast.error(t("staff.queue.errors.paymentRequired") || "Payment is required before check-in.");
+      }
+
       // Lưu tạm để staff xem và xác nhận
       setPendingCheckIn({ rid, qrRaw, detail });
       setScannerOpen(false);
@@ -406,6 +420,14 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const confirmPendingCheckIn = async () => {
     if (!pendingCheckIn) return;
     const { rid, qrRaw, detail } = pendingCheckIn;
+
+    // Kiểm tra lại payment status trước khi check-in
+    const paymentStatus = (detail as any).paymentStatus || (detail as any).payment?.status || (detail as any).isPaid;
+    const status = ((detail as any).status || "").toLowerCase();
+    
+    if (status === "pendingpayment" || status === "awaitingpayment" || paymentStatus === false || paymentStatus === "Pending" || paymentStatus === 0) {
+      return toast.error(t("staff.queue.errors.paymentRequired") || "Payment is required before check-in.");
+    }
 
     try {
       await checkInReservation(rid, qrRaw);
@@ -443,6 +465,11 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   };
 
   const doManualCheckIn = async (reservation: Reservation) => {
+    // Kiểm tra payment status trước khi check-in
+    const status = ((reservation as any).status || "").toLowerCase();
+    if (status === "pendingpayment" || status === "awaitingpayment") {
+      return toast.error(t("staff.queue.errors.paymentRequired") || "Payment is required before check-in.");
+    }
     try {
       const qr = reservation.qrCode || "";
       if (!qr)

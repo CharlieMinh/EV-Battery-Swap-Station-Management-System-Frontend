@@ -284,6 +284,7 @@ export default function InventoryManagement({ stationId }: Props) {
 
   /* ===== REQUEST PIN (GIỮ LOGIC) ====== */
   const submitRequest = async () => {
+    // Lọc các item có quantity > 0
     const items = reqItems
       .map((x) => ({
         batteryModelId: x.batteryModelId,
@@ -291,6 +292,7 @@ export default function InventoryManagement({ stationId }: Props) {
       }))
       .filter((x) => x.batteryModelId && x.quantity > 0);
 
+    // Kiểm tra có ít nhất 1 item không
     if (items.length === 0) {
       toast.warning(t("staff.inventory.toastValidateItems"), {
         ...toastOpts,
@@ -299,16 +301,22 @@ export default function InventoryManagement({ stationId }: Props) {
       return;
     }
 
-    // Validate client-side: mỗi model 1–100
-    const invalidItem = items.find(
-      (x) => x.quantity < 1 || x.quantity > 100
-    );
-    if (invalidItem) {
-      toast.warning(t("staff.inventory.errorQuantityRange"), {
-        ...toastOpts,
-        toastId: "inv-req-qty-range",
-      });
-      return;
+    // Validate từng item: phải từ 1-100
+    for (const item of items) {
+      if (item.quantity < 1) {
+        toast.warning(t("staff.inventory.toastQuantityMin"), {
+          ...toastOpts,
+          toastId: "inv-req-qty-min",
+        });
+        return;
+      }
+      if (item.quantity > 100) {
+        toast.warning(t("staff.inventory.toastQuantityMax"), {
+          ...toastOpts,
+          toastId: "inv-req-qty-max",
+        });
+        return;
+      }
     }
 
     try {
@@ -674,7 +682,33 @@ export default function InventoryManagement({ stationId }: Props) {
                           const raw = e.target.value || "";
                           // Chỉ giữ lại chữ số, bỏ dấu chấm phẩy, khoảng trắng...
                           const digits = raw.replace(/\D/g, "");
-                          const val = digits ? Number(digits) : 0;
+                          if (!digits) {
+                            // Nếu rỗng, set về 0
+                            setReqItems((prev) => {
+                              const exists = prev.find(
+                                (x) => x.batteryModelId === m.id
+                              );
+                              if (exists) {
+                                return prev.map((x) =>
+                                  x.batteryModelId === m.id
+                                    ? { ...x, quantityRequested: 0 }
+                                    : x
+                                );
+                              }
+                              return prev;
+                            });
+                            return;
+                          }
+                          
+                          const num = Number(digits);
+                          // Giới hạn tối đa 100
+                          if (num > 100) {
+                            toast.warning(t("staff.inventory.toastQuantityMax"), {
+                              ...toastOpts,
+                              toastId: `inv-qty-max-${m.id}`,
+                            });
+                          }
+                          const val = num > 100 ? 100 : num;
 
                           setReqItems((prev) => {
                             const exists = prev.find(
@@ -699,6 +733,8 @@ export default function InventoryManagement({ stationId }: Props) {
                         }}
                         className="flex-1 border rounded-lg px-3 py-2"
                         placeholder={t("staff.inventory.placeholderQuantity")}
+                        min="1"
+                        max="100"
                       />
                     </div>
                   );

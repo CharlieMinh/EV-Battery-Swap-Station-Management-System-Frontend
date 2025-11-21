@@ -26,8 +26,9 @@ export default function CheckInManagement({
 
   const toastOpts = {
     position: "top-right" as const,
-    autoClose: 2200,
+    autoClose: 3000,
     closeOnClick: true,
+    style: { zIndex: 9999 },
   };
 
   /* =====================================================
@@ -126,10 +127,6 @@ export default function CheckInManagement({
 
         {/* ✅ Thông báo lỗi */}
         {err && <p className="text-xs text-red-600 mt-2">{err}</p>}
-
-        <p className="mt-3 text-xs text-gray-500 text-center">
-          {t("staff.checkIn.noteHttps")}
-        </p>
       </div>
     </div>
   );

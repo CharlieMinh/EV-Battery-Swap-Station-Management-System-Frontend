@@ -36,8 +36,9 @@ interface CheckRequestProps {
 
 const toastOpts = {
   position: "top-right" as const,
-  autoClose: 2500,
+  autoClose: 3000,
   closeOnClick: true,
+  style: { zIndex: 10000 },
 };
 
 // key ổn định theo group để chống trùng toast
@@ -74,14 +75,18 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       const requestIds = group.requests.map((req) => req.id);
       await confirmMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(
-        t("staff.checkRequest.toastConfirmSuccess").replace("{count}", String(group.requests.length)),
-        {
-          ...toastOpts,
-          toastId: `req-confirm-success-${groupKey(group)}`,
-        }
-      );
-      onClose();
+      const successMessage = t("staff.checkRequest.toastConfirmSuccess").replace("{count}", String(group.requests.length));
+      
+      // Hiển thị toast trước
+      toast.success(successMessage, {
+        ...toastOpts,
+        toastId: `req-confirm-success-${groupKey(group)}`,
+      });
+      
+      // Delay đóng modal để toast có thời gian hiển thị
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (error: any) {
       console.error("Error confirming requests:", error);
       toast.error(
@@ -114,14 +119,20 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       const requestIds = group.requests.map((req) => req.id);
       await rejectMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(
-        t("staff.checkRequest.toastRejectSuccess").replace("{count}", String(group.requests.length)),
-        {
-          ...toastOpts,
-          toastId: `req-reject-success-${groupKey(group)}`,
-        }
-      );
-      onClose();
+      const rejectMessage = t("staff.checkRequest.toastRejectSuccess").replace("{count}", String(group.requests.length));
+      console.log("Showing reject toast:", rejectMessage);
+      
+      // Hiển thị toast trước
+      toast.success(rejectMessage, {
+        ...toastOpts,
+        toastId: `req-reject-success-${groupKey(group)}`,
+      });
+      
+      // Delay đóng modal để toast có thời gian hiển thị (tăng lên 1000ms)
+      setTimeout(() => {
+        console.log("Closing modal after reject toast");
+        onClose();
+      }, 1000);
     } catch (error: any) {
       console.error("Error rejecting requests:", error);
       toast.error(getAxiosErrorMessage(error, t) || t("staff.checkRequest.toastRejectError"), {

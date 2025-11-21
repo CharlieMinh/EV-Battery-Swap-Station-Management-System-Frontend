@@ -33,7 +33,10 @@ const TOAST_ID = {
   saveWarnName: "prof-save-warn-name",
   saveSuccess: "prof-save-success",
   saveError: "prof-save-error",
+  phoneInvalid: "prof-phone-invalid",
+  pwdWarnOld: "prof-pwd-warn-old",
   pwdWarnNew: "prof-pwd-warn-new",
+  pwdWeak: "prof-pwd-weak",
   pwdMismatch: "prof-pwd-mismatch",
   pwdSuccess: "prof-pwd-success",
   pwdError: "prof-pwd-error",
@@ -136,6 +139,18 @@ export default function ProfileManagement() {
       });
       return;
     }
+    
+    // Phone validation (optional but if provided, must be valid)
+    if (form.phone.trim()) {
+      const phoneRegex = /^(0|\+84)\d{9,10}$/;
+      if (!phoneRegex.test(form.phone.trim())) {
+        toast.warn(t("staff.profile.toastPhoneInvalid"), {
+          ...toastOpts,
+          toastId: TOAST_ID.phoneInvalid,
+        });
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -164,6 +179,13 @@ export default function ProfileManagement() {
   };
 
   const onChangePassword = async () => {
+    if (!pwd.oldPassword.trim()) {
+      toast.warn(t("staff.profile.toastPwdWarnOld"), {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdWarnOld,
+      });
+      return;
+    }
     if (!pwd.newPassword) {
       toast.warn(t("staff.profile.toastPwdWarnNew"), {
         ...toastOpts,
@@ -171,6 +193,17 @@ export default function ProfileManagement() {
       });
       return;
     }
+    
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!passwordRegex.test(pwd.newPassword)) {
+      toast.error(t("staff.profile.toastPwdWeak"), {
+        ...toastOpts,
+        toastId: TOAST_ID.pwdWeak,
+      });
+      return;
+    }
+    
     if (pwd.newPassword !== pwd.confirm) {
       toast.error(t("staff.profile.toastPwdMismatch"), {
         ...toastOpts,
