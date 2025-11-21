@@ -11,11 +11,16 @@ import {
   fetchBatteryRequests,
   BatteryRequest,
 } from "@/services/admin/batteryService";
+import {
+  getStockRequestById,
+  StockRequest,
+} from "@/services/admin/requestPin";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useLanguage } from "../LanguageContext";
 import { formatRelativeTime } from "../../utils/dateTimeUtils";
+import { useNavigate } from "react-router-dom";
 
 // Type definitions
 export type NotificationWithDetails = NotificationData & {
@@ -23,10 +28,17 @@ export type NotificationWithDetails = NotificationData & {
 };
 
 // Utility functions
-const getRequestsByIds = (
+const getBatteryRequestsByIds = (
   requests: BatteryRequest[],
   ids: string[]
 ): BatteryRequest[] => {
+  return requests.filter((req) => ids.includes(req.id));
+};
+
+const getStockRequestsByIds = (
+  requests: StockRequest[],
+  ids: string[]
+): StockRequest[] => {
   return requests.filter((req) => ids.includes(req.id));
 };
 
@@ -65,64 +77,123 @@ const formatTimeAgo = (dateString: string, t: (key: string) => string): string =
 // Component: Notification Item
 interface NotificationItemProps {
   notification: NotificationData;
-  requests: BatteryRequest[];
+  batteryRequests: BatteryRequest[];
+  stockRequests: StockRequest[];
   onMarkAsRead: (notification: NotificationData) => void;
   onViewDetail: (notification: NotificationData) => void;
 }
 
 const NotificationItem: React.FC<NotificationItemProps & { t: (key: string) => string }> = ({
   notification,
-  requests,
+  batteryRequests,
+  stockRequests,
   onMarkAsRead,
   onViewDetail,
   t,
 }) => {
-  // Lấy relatedRequestIds từ mergedIds hoặc relatedEntityId
-  const relatedRequestIds =
-    (notification.mergedIds
-      ?.map((id) => requests.find((r) => r.id === id)?.id)
-      .filter(Boolean) as string[]) ||
+  // Lấy relatedEntityIds từ notification đã gộp
+  // Notification type 4 = StockRequestCreated (Staff gửi yêu cầu nhập pin)
+  // Notification type 2 = BulkRequestConfirmed, type 3 = BulkRequestRejected (Admin xác nhận/từ chối)
+  const relatedEntityIds = notification.relatedEntityIds || 
     (notification.relatedEntityId ? [notification.relatedEntityId] : []);
 
-  const relatedRequests = getRequestsByIds(requests, relatedRequestIds);
+  // Xác định loại request dựa vào notification type
+  const isStockRequest = notification.type === 4; // StockRequestCreated
+  const isBatteryRequest = notification.type === 2 || notification.type === 3; // BulkRequestConfirmed/Rejected
+
+  // Lấy requests tương ứng
+  const relatedBatteryRequests = isBatteryRequest 
+    ? getBatteryRequestsByIds(batteryRequests, relatedEntityIds)
+    : [];
+  const relatedStockRequests = isStockRequest
+    ? getStockRequestsByIds(stockRequests, relatedEntityIds)
+    : [];
+
+  // Gộp tất cả requests để hiển thị
+  const allRequests = [...relatedBatteryRequests, ...relatedStockRequests];
 
   // Group by station
-  const stationGroups = relatedRequests.reduce((acc, req) => {
-    if (!acc[req.stationId]) {
-      acc[req.stationId] = {
-        stationName: req.stationName,
+  const stationGroups = allRequests.reduce((acc, req) => {
+    const stationId = req.stationId;
+    const stationName = req.stationName;
+    
+    if (!acc[stationId]) {
+      acc[stationId] = {
+        stationName,
         requests: [],
       };
     }
-    acc[req.stationId].requests.push(req);
+    acc[stationId].requests.push(req);
     return acc;
-  }, {} as Record<string, { stationName: string; requests: BatteryRequest[] }>);
+  }, {} as Record<string, { stationName: string; requests: (BatteryRequest | StockRequest)[] }>);
 
-  const totalQuantity = relatedRequests.reduce(
+  const totalQuantity = allRequests.reduce(
     (sum, req) => sum + req.quantity,
     0
   );
-  const totalBatteryTypes = relatedRequests.length;
+  const totalBatteryTypes = allRequests.length;
+
+  // Xác định icon và title dựa vào notification type
+  const getNotificationInfo = () => {
+    if (isStockRequest) {
+      return {
+        icon: Package,
+        title: t("admin.stockRequestCreated"),
+        color: "text-blue-600",
+      };
+    } else if (notification.type === 2) {
+      return {
+        icon: CheckCircle,
+        title: t("admin.bulkRequestConfirmed"),
+        color: "text-green-600",
+      };
+    } else if (notification.type === 3) {
+      return {
+        icon: XCircle,
+        title: t("admin.bulkRequestRejected"),
+        color: "text-red-600",
+      };
+    }
+    return {
+      icon: Package,
+      title: t("admin.requestSend"),
+      color: "text-orange-600",
+    };
+  };
+
+  const notificationInfo = getNotificationInfo();
+  const NotificationIcon = notificationInfo.icon;
 
   return (
     <div
-      className={`p-3 rounded-lg mb-2 border transition-colors ${
+      className={`p-3 rounded-lg mb-2 border transition-colors cursor-pointer ${
         notification.isRead
           ? "bg-gray-50 hover:bg-gray-100 border-gray-200"
           : "bg-orange-50 hover:bg-orange-100 border-orange-200"
       }`}
+      onClick={(e) => {
+        // Nếu click vào notification (không phải button), navigate
+        if (!(e.target as HTMLElement).closest('button')) {
+          onViewDetail(notification);
+        }
+      }}
     >
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">
-          <Package className="w-5 h-5 text-orange-600" />
+          <NotificationIcon className={`w-5 h-5 ${notificationInfo.color}`} />
         </div>
 
         <div className="flex-1 min-w-0">
           {/* Title */}
           <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="text-sm font-medium text-gray-900">
-              {t("admin.requestSend")} {totalQuantity} {t("admin.batteryUnit")} ({totalBatteryTypes} {t("admin.types")})
-            </p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900 mb-0.5">
+                {notificationInfo.title}
+              </p>
+              <p className="text-xs text-gray-600">
+                {totalQuantity} {t("admin.batteryUnit")} ({totalBatteryTypes} {t("admin.types")})
+              </p>
+            </div>
             <span className="text-xs text-gray-500 whitespace-nowrap">
               {formatTimeAgo(notification.createdAt, t)}
             </span>
@@ -137,7 +208,42 @@ const NotificationItem: React.FC<NotificationItemProps & { t: (key: string) => s
 
               <div className="flex flex-wrap gap-1.5">
                 {group.requests.map((req) => {
-                  const statusInfo = getStatusInfo(req.status, t);
+                  // Xử lý status cho cả BatteryRequest và StockRequest
+                  let statusInfo;
+                  if ('status' in req && typeof req.status === 'number') {
+                    // BatteryRequest với status number (0, 1, 2)
+                    statusInfo = getStatusInfo(req.status, t);
+                  } else if ('status' in req && typeof req.status === 'string') {
+                    // StockRequest với status string ("PendingAdminReview", "Approved", "Rejected")
+                    const statusMap: Record<string, { label: string; color: string; icon: any }> = {
+                      "PendingAdminReview": {
+                        label: t("admin.pending"),
+                        color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+                        icon: Clock,
+                      },
+                      "Approved": {
+                        label: t("admin.confirmed"),
+                        color: "bg-green-100 text-green-800 border-green-300",
+                        icon: CheckCircle,
+                      },
+                      "Rejected": {
+                        label: t("admin.rejected"),
+                        color: "bg-red-100 text-red-800 border-red-300",
+                        icon: XCircle,
+                      },
+                    };
+                    statusInfo = statusMap[req.status] || {
+                      label: t("admin.unknown"),
+                      color: "bg-gray-100 text-gray-800 border-gray-300",
+                      icon: Clock,
+                    };
+                  } else {
+                    statusInfo = {
+                      label: t("admin.pending"),
+                      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+                      icon: Clock,
+                    };
+                  }
                   const StatusIcon = statusInfo.icon;
 
                   return (
@@ -199,9 +305,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   onViewDetail,
 }) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
-  const [requests, setRequests] = useState<BatteryRequest[]>([]);
+  const [batteryRequests, setBatteryRequests] = useState<BatteryRequest[]>([]);
+  const [stockRequests, setStockRequests] = useState<StockRequest[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -209,14 +317,34 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const loadNotificationData = async () => {
     try {
       setLoading(true);
-      const [notifData, requestData, unread] = await Promise.all([
+      const [notifData, batteryRequestData, unread] = await Promise.all([
         fetchNotifications(1, 100), // fetchNotifications đã gộp thông báo trong service
         fetchBatteryRequests(),
         getUnreadCount(1, 100), // sử dụng hàm getUnreadCount có sẵn
       ]);
 
+      // Lấy tất cả relatedEntityIds từ notifications có type 4 (StockRequestCreated)
+      const stockRequestIds = new Set<string>();
+      notifData.items.forEach((notif) => {
+        if (notif.type === 4 && notif.relatedEntityIds) {
+          notif.relatedEntityIds.forEach((id) => stockRequestIds.add(id));
+        } else if (notif.type === 4 && notif.relatedEntityId) {
+          stockRequestIds.add(notif.relatedEntityId);
+        }
+      });
+
+      // Fetch stock requests theo ID (nếu có)
+      const stockRequestPromises = Array.from(stockRequestIds).map((id) =>
+        getStockRequestById(id).catch(() => null)
+      );
+      const stockRequestResults = await Promise.all(stockRequestPromises);
+      const stockRequestData = stockRequestResults.filter(
+        (req): req is StockRequest => req !== null
+      );
+
       setNotifications(notifData.items);
-      setRequests(requestData);
+      setBatteryRequests(batteryRequestData);
+      setStockRequests(stockRequestData);
       setUnreadCount(unread);
     } catch (error) {
       console.error("Error loading notification data:", error);
@@ -256,21 +384,26 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const handleViewDetail = (notification: NotificationData) => {
     setNotifOpen(false);
 
-    // Tạo NotificationWithDetails từ notification
-    const notificationWithDetails: NotificationWithDetails = {
-      ...notification,
-      relatedRequestIds:
-        (notification.mergedIds
-          ?.map((id) => requests.find((r) => r.id === id)?.id)
-          .filter(Boolean) as string[]) ||
-        (notification.relatedEntityId ? [notification.relatedEntityId] : []),
-    };
-
-    onViewDetail(notificationWithDetails);
-
     // Mark as read
     if (!notification.isRead) {
       handleMarkAsRead(notification);
+    }
+
+    // Navigate dựa vào notification type
+    if (notification.type === 4) {
+      // StockRequestCreated (Staff gửi yêu cầu nhập pin) → Navigate to "Pin" (Battery management)
+      navigate("/admin", { state: { initialSection: "batteries" } });
+    } else if (notification.type === 2 || notification.type === 3) {
+      // BulkRequestConfirmed/Rejected (Admin xác nhận/từ chối) → Navigate to "Lịch sử gửi pin"
+      navigate("/admin", { state: { initialSection: "request-history" } });
+    } else {
+      // Fallback: use old callback
+      const notificationWithDetails: NotificationWithDetails = {
+        ...notification,
+        relatedRequestIds: notification.relatedEntityIds || 
+          (notification.relatedEntityId ? [notification.relatedEntityId] : []),
+      };
+      onViewDetail(notificationWithDetails);
     }
   };
 
@@ -319,7 +452,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
               <NotificationItem
                 key={notification.id}
                 notification={notification}
-                requests={requests}
+                batteryRequests={batteryRequests}
+                stockRequests={stockRequests}
                 onMarkAsRead={handleMarkAsRead}
                 onViewDetail={handleViewDetail}
                 t={t}
