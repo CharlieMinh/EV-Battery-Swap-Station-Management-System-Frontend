@@ -5,8 +5,8 @@ import {
   fetchCustomerById,
   updateUser,
   UpdateUserPayload,
-  getVehiclesByUserId,
-  getSubscriptionsByUserId,
+  Vehicle,
+  Subscription,
 } from "@/services/admin/customerAdminService";
 import { useLanguage } from "../LanguageContext";
 import {
@@ -73,37 +73,6 @@ interface CustomerDetailModalProps {
 
 const formatNumber = (num: any) => (num ? num.toLocaleString("vi-VN") : "0");
 
-interface Vehicle {
-  id: string;
-  vin: string;
-  plate: string;
-  brand: string;
-  vehicleModelFullName?: string;
-  compatibleBatteryModelName?: string;
-  compatibleBatteryModelId: string;
-  photoUrl?: string;
-}
-
-interface SubscriptionInfo {
-  id: string;
-  startDate: string;
-  endDate: string | null;
-  isActive: boolean;
-  isBlocked: boolean;
-  vehicleId: string;
-  currentMonthSwapCount: number;
-  swapsLimit: number | null;
-  subscriptionPlan: {
-    name: string;
-    batteryModelId?: string;
-    maxSwapsPerMonth?: number;
-  };
-  vehicle: {
-    id: string;
-    plate: string;
-    model: string;
-  } | null;
-}
 
 const getRoleNumber = (role: string | number): number => {
   if (typeof role === "number") return role;
@@ -150,10 +119,6 @@ const CustomerDetailModal = ({
     status: "0",
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
-  const [loadingVehicles, setLoadingVehicles] = useState(false);
-  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
   useEffect(() => {
     if (!customer || !customer.id) return;
@@ -182,47 +147,6 @@ const CustomerDetailModal = ({
     getCustomerById();
   }, [customer, onClose]);
 
-  // Fetch vehicles for customer
-  useEffect(() => {
-    if (!customer || !customer.id) {
-      setVehicles([]);
-      return;
-    }
-    const fetchVehicles = async () => {
-      setLoadingVehicles(true);
-      try {
-        const vehiclesData = await getVehiclesByUserId(customer.id);
-        setVehicles(vehiclesData);
-      } catch (error) {
-        console.error("Error fetching vehicles:", error);
-        setVehicles([]);
-      } finally {
-        setLoadingVehicles(false);
-      }
-    };
-    fetchVehicles();
-  }, [customer]);
-
-  // Fetch subscriptions for customer
-  useEffect(() => {
-    if (!customer || !customer.id) {
-      setSubscriptions([]);
-      return;
-    }
-    const fetchSubscriptions = async () => {
-      setLoadingSubscriptions(true);
-      try {
-        const subscriptionsData = await getSubscriptionsByUserId(customer.id);
-        setSubscriptions(subscriptionsData);
-      } catch (error) {
-        console.error("Error fetching subscriptions:", error);
-        setSubscriptions([]);
-      } finally {
-        setLoadingSubscriptions(false);
-      }
-    };
-    fetchSubscriptions();
-  }, [customer]);
 
   const handleSave = async () => {
     if (!customerDetail) return;
@@ -527,12 +451,7 @@ const CustomerDetailModal = ({
           {t("admin.vehiclesAndSubscriptions")}
         </h2>
         <div className="mt-5 space-y-4">
-          {loadingVehicles || loadingSubscriptions ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-orange-500 mr-3" />
-              <p className="text-gray-600">{t("admin.loadingVehicles")}</p>
-            </div>
-          ) : vehicles.length === 0 ? (
+          {!customerDetail.vehicles || customerDetail.vehicles.length === 0 ? (
             <Card className="border border-gray-200 p-6">
               <div className="text-center text-gray-500">
                 <Car className="w-12 h-12 mx-auto mb-3 text-gray-400" />
@@ -540,8 +459,8 @@ const CustomerDetailModal = ({
               </div>
             </Card>
           ) : (
-            vehicles.map((vehicle) => {
-              const vehicleSub = subscriptions.find(
+            customerDetail.vehicles.map((vehicle) => {
+              const vehicleSub = customerDetail.subscriptions?.find(
                 (sub) =>
                   sub.isActive &&
                   sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
@@ -618,11 +537,6 @@ const CustomerDetailModal = ({
                                   >
                                     {vehicleSub.subscriptionPlan.name}
                                   </Badge>
-                                  {vehicleSub.isBlocked && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      {t("admin.blocked")}
-                                    </Badge>
-                                  )}
                                 </div>
                                 <div className="space-y-1 text-sm">
                                   <div className="flex items-center gap-2">
