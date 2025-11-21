@@ -1,5 +1,6 @@
 // src/pages/StaffDashboard.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   UserCircle,
   ClipboardList,
@@ -87,7 +88,16 @@ export default function StaffDashboard({
   user,
   onLogout,
 }: StaffDashboardPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [active, setActive] = useState<TabKey>("queue");
+  
+  // Set active tab từ navigation state
+  useEffect(() => {
+    if (location.state?.initialSection) {
+      setActive(location.state.initialSection as TabKey);
+    }
+  }, [location.state]);
   const [me, setMe] = useState<UserMe | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -252,7 +262,10 @@ export default function StaffDashboard({
       <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
         <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl w-80">
           <SidebarHeader className="p-5 border-b border-slate-200">
-            <div className="flex items-center gap-4">
+            <div 
+              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/")}
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
                   src={logo}

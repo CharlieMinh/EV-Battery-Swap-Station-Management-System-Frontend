@@ -40,6 +40,16 @@ import {
   CreditCardIcon,
   AlertCircle,
   Sparkles,
+  ClipboardList,
+  UserPlus,
+  Warehouse,
+  BarChart2,
+  BadgeCheck,
+  MessageCircle,
+  BarChart3,
+  UserCheck,
+  UserCircle,
+  Package,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useGeoLocation from "./map/useGeoLocation";
@@ -66,7 +76,58 @@ export function Homepage({ user, onLogout }: HomepageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const handleNavigateToDashboard = (section: string) => {
-    navigate("/driver", { state: { initialSection: section } });
+    if (user?.role === "Driver") {
+      navigate("/driver", { state: { initialSection: section } });
+    } else if (user?.role === "Staff") {
+      navigate("/staff", { state: { initialSection: section } });
+    } else if (user?.role === "Admin") {
+      navigate("/admin", { state: { initialSection: section } });
+    }
+  };
+
+  // Menu items theo role
+  const getMenuItemsByRole = () => {
+    if (!user) return [];
+
+    if (user.role === "Driver") {
+      return [
+        { icon: Map, label: "Tìm trạm", section: "map" },
+        { icon: Car, label: "Xe của tôi", section: "mycar" },
+        { icon: Pen, label: "Đăng ký gói", section: "subscription" },
+        { icon: CreditCardIcon, label: "Hóa đơn chờ", section: "my-payments" },
+        { icon: QrCode, label: "Đơn đã đặt", section: "swap" },
+        { icon: History, label: "Lịch sử đổi pin", section: "history" },
+        { icon: AlertCircle, label: "Khiếu nại của tôi", section: "complaints" },
+        { icon: UserIcon, label: "Hồ sơ", section: "profile" },
+      ];
+    } else if (user.role === "Staff") {
+      return [
+        { icon: UserIcon, label: "Thông tin cá nhân", section: "profile" },
+        { icon: ClipboardList, label: "Quản lý hàng chờ", section: "queue" },
+        { icon: UserPlus, label: "Thêm khách hàng", section: "staff-add-driver" },
+        { icon: ClipboardList, label: "Danh sách khách hàng", section: "staff-customers" },
+        { icon: Warehouse, label: "Kho pin", section: "inventory" },
+        { icon: Package, label: "Yêu cầu nhận pin", section: "requests" },
+        { icon: Package, label: "Yêu cầu nhập pin", section: "send-requests" },
+        { icon: BarChart2, label: "Doanh thu", section: "revenue" },
+        { icon: BadgeCheck, label: "Xác nhận thanh toán", section: "approvals" },
+        { icon: MessageCircle, label: "Khiếu nại và phản hồi", section: "complaint" },
+      ];
+    } else if (user.role === "Admin") {
+      return [
+        { icon: BarChart3, label: "Tổng quan", section: "overview" },
+        { icon: MapPin, label: "Trạm", section: "stations" },
+        { icon: Battery, label: "Pin", section: "batteries" },
+        { icon: DollarSign, label: "Gói đăng ký", section: "subcription-plans" },
+        { icon: Users, label: "Khách hàng", section: "customers" },
+        { icon: UserCheck, label: "Nhân viên", section: "staff" },
+        { icon: Zap, label: "Thêm tài khoản", section: "add-account" },
+        { icon: Package, label: "Lịch sử yêu cầu", section: "request-history" },
+        { icon: MessageCircle, label: "Khiếu nại", section: "complaint" },
+        { icon: UserCircle, label: "Thông tin cá nhân", section: "profile" },
+      ];
+    }
+    return [];
   };
 
   const location = useGeoLocation();
@@ -290,24 +351,20 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             }}
           >
             <div className="flex items-center group cursor-pointer flex-shrink-0">
-              {/* Logo bo tròn, giữ độ nét */}
-              <div
-                className="rounded-full border border-orange-100 shadow-lg group-hover:shadow-xl group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 overflow-hidden"
+              {/* Logo bo tròn trực tiếp vào img - giống footer */}
+              <img
+                src="src/assets/logoEV2.png "
+                alt="FPTFAST Logo"
+                className="rounded-full border border-orange-100/50 shadow-xl mr-3 transition-all duration-500 group-hover:scale-105 group-hover:rotate-3"
                 style={{
-                  width: isScrolled ? "3rem" : "4rem",
-                  height: isScrolled ? "3rem" : "4rem",
-                  marginRight: "0.75rem",
+                  width: isScrolled ? "3rem" : "4.25rem",
+                  height: isScrolled ? "3rem" : "4.25rem",
+                  objectFit: "contain",
+                  imageRendering: "auto",
                   transition:
                     "width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
-              >
-                <img
-                  src="src/assets/logoEV2.png "
-                  alt="FPTFAST Logo"
-                  className="w-full h-full"
-                  style={{ objectFit: "contain", imageRendering: "auto" }}
-                />
-              </div>
+              />
               <span
                 className="font-bold tracking-wide ease-out group-hover:text-orange-700 whitespace-nowrap text-orange-600"
                 style={{
@@ -469,56 +526,25 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       <p className="text-sm font-medium leading-none">
                         {user.name}
                       </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {user.role === "Driver" && "Tài xế"}
+                        {user.role === "Staff" && "Nhân viên"}
+                        {user.role === "Admin" && "Quản trị viên"}
+                      </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("map")}
-                    >
-                      <Map className="mr-2 h-4 w-4" />
-                      <span>Tìm trạm</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("mycar")}
-                    >
-                      <Car className="mr-2 h-4 w-4" />
-                      <span>Xe của tôi</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("subscription")}
-                    >
-                      <Pen className="mr-2 h-4 w-4" />
-                      <span>Đăng ký gói</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("my-payments")}
-                    >
-                      <CreditCardIcon className="mr-2 h-4 w-4" />
-                      <span>Hóa đơn chờ</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("swap")}
-                    >
-                      <QrCode className="mr-2 h-4 w-4" />
-                      <span>Đơn đã đặt</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("history")}
-                    >
-                      <History className="mr-2 h-4 w-4" />
-                      <span>Lịch sử đổi pin</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("complaints")}
-                    >
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      <span>Khiếu nại của tôi</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigateToDashboard("profile")}
-                    >
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Hồ sơ</span>
-                    </DropdownMenuItem>
+                    {getMenuItemsByRole().map((item, index) => {
+                      const Icon = item.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={index}
+                          onClick={() => handleNavigateToDashboard(item.section)}
+                        >
+                          <Icon className="mr-2 h-4 w-4" />
+                          <span>{item.label}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -862,66 +888,6 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           </div>
         )}
       </section>
-
-      {/* Testimonials Section */}
-      {/* <section 
-        className="py-20 bg-gradient-to-b from-white via-orange-50/30 to-white relative overflow-hidden min-h-[600px]"
-        ref={(el: HTMLDivElement | null) => {
-          if (el) {
-            el.id = "testimonials";
-            sectionRefs.current["testimonials"] = el;
-          }
-        }}
-      >
-        {isVisible["testimonials"] && (
-          <>
-            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-              <div className="text-center mb-16 animate-fade-up">
-                <h2 className="text-4xl md:text-5xl font-extrabold leading-[1.35] md:leading-[1.25] py-2 text-orange-600 mb-4">
-                  {t("testimonials.title")}
-                </h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                  {t("testimonials.subtitle")}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {testimonials.map((testimonial, index) => (
-                  <Card 
-                    key={index}
-                    className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border-2 border-transparent hover:border-orange-200 bg-white/90 backdrop-blur-sm animate-fade-up"
-                    style={{ animationDelay: `${index * 180}ms` }}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center space-x-1 mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-5 h-5 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform duration-300"
-                            style={{ transitionDelay: `${i * 50}ms` }}
-                          />
-                        ))}
-                      </div>
-                      <CardTitle className="text-xl font-bold group-hover:text-orange-600 transition-colors">
-                        {testimonial.name}
-                      </CardTitle>
-                      <CardDescription className="text-base font-medium">
-                        {testimonial.role}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 leading-relaxed italic text-lg group-hover:text-gray-800 transition-colors">
-                        "{testimonial.comment}"
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </section> */}
 
       {/* Footer */}
       <footer

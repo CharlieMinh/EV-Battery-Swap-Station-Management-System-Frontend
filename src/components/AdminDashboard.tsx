@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -85,8 +86,17 @@ export function AdminDashboardPage({
   user,
   onLogout,
 }: AdminDashboardPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("overview");
+  
+  // Set active section từ navigation state
+  useEffect(() => {
+    if (location.state?.initialSection) {
+      setActiveSection(location.state.initialSection);
+    }
+  }, [location.state]);
 
   const navigationItems = [
     { id: "overview", label: t("admin.overview"), icon: BarChart3 },
@@ -363,7 +373,10 @@ export function AdminDashboardPage({
       <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-slate-50 flex w-full">
         <Sidebar className="bg-white text-slate-900 border-r border-slate-200 shadow-2xl w-80">
           <SidebarHeader className="p-5 border-b border-slate-200">
-            <div className="flex items-center gap-4">
+            <div 
+              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/")}
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-100">
                 <img
                   src="src/assets/logoEV2.png"
