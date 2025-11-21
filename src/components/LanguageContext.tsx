@@ -342,7 +342,7 @@ const translations = {
     "driver.mycar": "My Car",
     "driver.swap": "Swap",
     "driver.history": "History",
-    "driver.profile": "Profile",
+    "driver.profile": "Personal Information",
     "driver.support": "Support",
     "driver.subscribePlans": "Subscribe Plans",
     "driver.myPayments": "Pending Payments",
@@ -518,6 +518,13 @@ const translations = {
     "driver.profile.createdAt": "Account Created",
     "driver.profile.lastLogin": "Last Login",
 
+    // Driver Notifications
+    "driver.notifications.title": "Notifications",
+    "driver.notifications.unread": "unread",
+    "driver.notifications.loading": "Loading notifications...",
+    "driver.notifications.noNotifications": "No notifications",
+    "driver.notifications.markAsRead": "Mark as read",
+
     // Driver Password Change
     "driver.password.title": "Change Password",
     "driver.password.description": "Change your password to secure your account",
@@ -583,7 +590,8 @@ const translations = {
     "driver.complaint.contentLabel": "Issue Description",
     "driver.complaint.contentPlaceholder": "Example: Battery drains too fast, only lasts 2 hours...",
     "driver.complaint.errorEmptyContent": "Please enter issue description",
-    "driver.complaint.successSubmitted": "Issue report has been recorded successfully! Please go to 'My Complaints' menu to book an inspection appointment.",
+    "driver.complaint.successSubmitted": "Issue report submitted successfully!",
+    "driver.complaint.askScheduleInspection": "Would you like to schedule a battery inspection now?",
     "driver.complaint.errorSubmitFailed": "Cannot submit report. Please try again.",
     "driver.complaint.submitting": "Submitting...",
     "driver.complaint.submitButton": "Submit Report",
@@ -849,7 +857,7 @@ const translations = {
     "driver.inspection.errorLoadStations": "Cannot load station list",
     "driver.inspection.errorLoadSlots": "Cannot load slot list. Please try again.",
     "driver.inspection.errorIncompleteInfo": "Please select all information",
-    "driver.inspection.successBooked": "Inspection appointment scheduled successfully",
+    "driver.inspection.successBooked": "Inspection appointment scheduled successfully! Please come to the station for battery inspection.",
     "driver.inspection.errorBookFailed": "Cannot schedule inspection. Please try again.",
     "driver.inspection.confirmButton": "Confirm Appointment",
     "driver.inspection.dialogTitle": "Schedule Battery Inspection",
@@ -1419,7 +1427,7 @@ const translations = {
     "admin.totalStationBatteriesDesc":
       "Chart showing total number of batteries at all stations",
     "admin.charging": "Charging",
-    
+
 
     // StationManagement Component
     "admin.enterStationName": "Enter station name...",
@@ -1705,6 +1713,8 @@ const translations = {
     "common.settings": "Settings",
     "common.error": "Error",
     "common.found": "Found",
+    "common.yes": "Yes",
+    "common.no": "No",
   },
   vi: {
     // Navigation
@@ -2045,7 +2055,7 @@ const translations = {
     "driver.bookings": "Lịch đã đặt",
     "driver.myComplaints": "Khiếu nại của tôi",
     "driver.history": "Lịch Sử",
-    "driver.profile": "Hồ Sơ",
+    "driver.profile": "Thông tin cá nhân",
     "driver.support": "Hỗ Trợ",
     "driver.nearbyStations": "Trạm Gần Bạn",
     "driver.nearbyStationsDesc": "Tìm và đặt chỗ trạm thay pin",
@@ -2199,6 +2209,13 @@ const translations = {
     "driver.profile.createdAt": "Ngày tạo tài khoản",
     "driver.profile.lastLogin": "Đăng nhập gần nhất",
 
+    // Driver Notifications
+    "driver.notifications.title": "Thông báo",
+    "driver.notifications.unread": "chưa đọc",
+    "driver.notifications.loading": "Đang tải thông báo...",
+    "driver.notifications.noNotifications": "Không có thông báo",
+    "driver.notifications.markAsRead": "Đánh dấu đã đọc",
+
     // Driver Password Change
     "driver.password.title": "Đổi mật khẩu",
     "driver.password.description": "Thay đổi mật khẩu để bảo mật tài khoản của bạn",
@@ -2264,7 +2281,8 @@ const translations = {
     "driver.complaint.contentLabel": "Mô tả vấn đề",
     "driver.complaint.contentPlaceholder": "Ví dụ: Pin tụt quá nhanh, chỉ dùng được 2 tiếng...",
     "driver.complaint.errorEmptyContent": "Vui lòng nhập nội dung khiếu nại",
-    "driver.complaint.successSubmitted": "Báo cáo lỗi đã được ghi nhận thành công! Vui lòng vào menu 'Khiếu nại của tôi' để đặt lịch kiểm tra.",
+    "driver.complaint.successSubmitted": "Báo cáo lỗi pin thành công!",
+    "driver.complaint.askScheduleInspection": "Bạn có muốn đặt lịch kiểm tra pin ngay bây giờ không?",
     "driver.complaint.errorSubmitFailed": "Không thể gửi báo cáo. Vui lòng thử lại.",
     "driver.complaint.submitting": "Đang gửi...",
     "driver.complaint.submitButton": "Gửi báo cáo",
@@ -2530,7 +2548,7 @@ const translations = {
     "driver.inspection.errorLoadStations": "Không thể tải danh sách trạm",
     "driver.inspection.errorLoadSlots": "Không thể tải danh sách khung giờ. Vui lòng thử lại.",
     "driver.inspection.errorIncompleteInfo": "Vui lòng chọn đầy đủ thông tin",
-    "driver.inspection.successBooked": "Lịch hẹn kiểm tra đã được đặt thành công",
+    "driver.inspection.successBooked": "Đã đặt lịch thành công! Vui lòng đến trạm để kiểm tra pin.",
     "driver.inspection.errorBookFailed": "Không thể đặt lịch kiểm tra. Vui lòng thử lại.",
     "driver.inspection.confirmButton": "Xác nhận lịch hẹn",
     "driver.inspection.dialogTitle": "Đặt lịch kiểm tra pin",
@@ -3390,6 +3408,8 @@ const translations = {
     "common.settings": "Cài Đặt",
     "common.error": "Lỗi",
     "common.found": "Tìm thấy",
+    "common.yes": "Có",
+    "common.no": "Không",
   },
 };
 

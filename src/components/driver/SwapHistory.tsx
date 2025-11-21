@@ -24,6 +24,8 @@ import {
 import { toast } from "react-toastify";
 import { Textarea } from "../ui/textarea";
 import { formatDateTimeShort, formatDateTime, formatCurrency } from "../../utils/dateTimeUtils";
+import { useNavigate } from "react-router-dom";
+import { showConfirm } from "../ui/alert";
 
 interface Swap {
   id: string;
@@ -58,6 +60,7 @@ interface SwapHistoryProps {
 
 export function SwapHistory({ }: SwapHistoryProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const [swapHistory, setSwapHistory] = useState<SwapHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,12 +126,21 @@ export function SwapHistory({ }: SwapHistoryProps) {
         { withCredentials: true }
       );
 
-      toast.success(t('driver.complaint.successSubmitted'), {
-        autoClose: 5000, // Hiển thị lâu hơn để user đọc
-      });
       setIsReportModalOpen(false);
       setComplaintDetails("");
       setSelectedSwapId(null);
+
+      const shouldSchedule = await showConfirm(
+        t('driver.complaint.successSubmitted'),
+        t('driver.complaint.askScheduleInspection'),
+        t('common.yes'),
+        t('common.no'),
+        'success'
+      );
+
+      if (shouldSchedule) {
+        navigate('/driver', { state: { initialSection: 'complaints' } });
+      }
 
     } catch (error: any) {
       let errorMsg = t('driver.complaint.errorSubmitFailed');
