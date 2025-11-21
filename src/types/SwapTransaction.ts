@@ -2,6 +2,7 @@ export interface SwapTransaction {
   id: string;
   transactionNumber: string;
   status: string;
+  userId?: string;
   userEmail: string;
   stationName: string;
   stationAddress: string;

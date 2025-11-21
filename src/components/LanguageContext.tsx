@@ -1567,6 +1567,7 @@ const translations = {
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Monthly Unlimited",
     "admin.payPerSwap": "Pay Per Swap",
+    "admin.payPerSwapLabel": "Pay Per Swap",
     "admin.enterprise": "Enterprise",
     "admin.stationManager": "Station Manager",
     "admin.technician": "Technician",
@@ -3253,6 +3254,7 @@ const translations = {
     // Admin Customer & Staff Plans/Roles
     "admin.monthlyUnlimited": "Không Giới Hạn Hàng Tháng",
     "admin.payPerSwap": "Trả Theo Lần Thay",
+    "admin.payPerSwapLabel": "Thanh toán theo lượt đổi",
     "admin.enterprise": "Doanh Nghiệp",
     "admin.stationManager": "Quản Lý Trạm",
     "admin.technician": "Kỹ Thuật Viên",

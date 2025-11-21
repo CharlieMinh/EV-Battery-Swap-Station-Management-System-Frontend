@@ -3,7 +3,7 @@ import { Zap, Clock, DollarSign, User, Loader2, Building2, Package, UserCheck, C
 import { getAllPayments, Payment } from "@/services/admin/payment";
 import { fetchHistoryStationById } from "@/services/admin/stationService";
 import { SwapTransaction } from "@/types/SwapTransaction";
-import { fetchCustomers, Customer } from "@/services/admin/customerAdminService";
+import { fetchCustomers, Customer, fetchCustomerById, Subscription } from "@/services/admin/customerAdminService";
 import api from "@/configs/axios";
 import { useLanguage } from "../LanguageContext";
 
@@ -36,6 +36,8 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
   const [swapTransactions, setSwapTransactions] = useState<SwapTransaction[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [subscriptionNames, setSubscriptionNames] = useState<Record<string, string>>({});
+  const [subscriptionInfo, setSubscriptionInfo] = useState<Record<string, { name: string; swapsRemaining: number | null }>>({});
+  const [userCurrentSubscriptions, setUserCurrentSubscriptions] = useState<Record<string, { name: string; swapsRemaining: number | null }>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"payments" | "swaps">("payments");
 
@@ -48,7 +50,20 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
   // Helper function to get subscription name
   const getSubscriptionName = (subscriptionId: string | null | undefined): string | null => {
     if (!subscriptionId) return null;
-    return subscriptionNames[subscriptionId] || null;
+    return subscriptionNames[subscriptionId] || subscriptionInfo[subscriptionId]?.name || null;
+  };
+
+  // Helper function to get subscription info (name and swaps remaining)
+  const getSubscriptionInfo = (subscriptionId: string | null | undefined): { name: string; swapsRemaining: number | null } | null => {
+    if (!subscriptionId) return null;
+    if (subscriptionInfo[subscriptionId]) {
+      return subscriptionInfo[subscriptionId];
+    }
+    // Fallback to old subscriptionNames if available
+    if (subscriptionNames[subscriptionId]) {
+      return { name: subscriptionNames[subscriptionId], swapsRemaining: null };
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -82,22 +97,58 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
         });
         setSwapTransactions(swapData);
 
-        // Load subscription names for swap transactions
-        const uniqueSubscriptionIds = [...new Set(swapData.map(tx => tx.userSubscriptionId).filter(Boolean))];
-        const subscriptionMap: Record<string, string> = {};
+        // Get unique userIds from transactions
+        const uniqueUserIds = [...new Set(swapData.map(tx => tx.userId).filter((id): id is string => Boolean(id)))];
         
-        for (const subId of uniqueSubscriptionIds) {
+        // Fetch user data to get subscriptions
+        const subscriptionInfoMap: Record<string, { name: string; swapsRemaining: number | null }> = {};
+        const subscriptionNameMap: Record<string, string> = {};
+        const userCurrentSubsMap: Record<string, { name: string; swapsRemaining: number | null }> = {};
+        
+        // Fetch user data for each unique userId
+        for (const userId of uniqueUserIds) {
           try {
-            // Try to get subscription info
-            const response = await api.get(`/api/v1/subscriptions/${subId}`);
-            if (response.data?.subscriptionPlan?.name) {
-              subscriptionMap[subId] = response.data.subscriptionPlan.name;
+            const userData = await fetchCustomerById(userId);
+            if (userData.subscriptions && Array.isArray(userData.subscriptions)) {
+              // Tìm subscription active hiện tại của user
+              const activeSubscription = userData.subscriptions.find((sub: Subscription) => sub.isActive);
+              
+              if (activeSubscription) {
+                const swapsRemaining = activeSubscription.swapsRemaining !== null && activeSubscription.swapsRemaining !== undefined 
+                  ? activeSubscription.swapsRemaining 
+                  : (activeSubscription.swapsLimit !== null && activeSubscription.swapsLimit !== undefined 
+                      ? activeSubscription.swapsLimit - activeSubscription.swapsUsed 
+                      : null);
+                
+                userCurrentSubsMap[userId] = {
+                  name: activeSubscription.subscriptionPlan?.name || "Unknown Plan",
+                  swapsRemaining: swapsRemaining
+                };
+              }
+              
+              // Map subscriptions by ID (cho transaction cũ)
+              userData.subscriptions.forEach((sub: Subscription) => {
+                const swapsRemaining = sub.swapsRemaining !== null && sub.swapsRemaining !== undefined 
+                  ? sub.swapsRemaining 
+                  : (sub.swapsLimit !== null && sub.swapsLimit !== undefined 
+                      ? sub.swapsLimit - sub.swapsUsed 
+                      : null);
+                
+                subscriptionInfoMap[sub.id] = {
+                  name: sub.subscriptionPlan?.name || "Unknown Plan",
+                  swapsRemaining: swapsRemaining
+                };
+                subscriptionNameMap[sub.id] = sub.subscriptionPlan?.name || "Unknown Plan";
+              });
             }
           } catch (err) {
-            console.log(`Could not fetch subscription ${subId}`);
+            console.error(`Could not fetch user ${userId}:`, err);
           }
         }
-        setSubscriptionNames(subscriptionMap);
+        
+        setSubscriptionInfo(subscriptionInfoMap);
+        setSubscriptionNames(subscriptionNameMap);
+        setUserCurrentSubscriptions(userCurrentSubsMap);
       } catch (err) {
         console.error("❌ Lỗi khi lấy lịch sử:", err);
         setPayments([]);
@@ -296,8 +347,17 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                 {txs.map((tx) => {
                   const completedDate = tx.completedAt || tx.startedAt || tx.checkedInAt || "";
                   const staffName = (tx as any).completedByStaffName || (tx as any).checkedInByStaffName || null;
-                  const subscriptionName = getSubscriptionName(tx.userSubscriptionId);
                   const customerName = getCustomerName(tx.userEmail);
+                  
+                  // Lấy thông tin subscription hiện tại của user (không phải từ transaction cũ)
+                  const userCurrentSub = tx.userId ? userCurrentSubscriptions[tx.userId] : null;
+                  
+                  // Xác định payment type và subscription name
+                  const isPayPerSwap = tx.paymentType === "PayPerSwap" || !tx.userSubscriptionId;
+                  const subscriptionName = isPayPerSwap 
+                    ? t("admin.payPerSwapLabel") 
+                    : (userCurrentSub?.name || getSubscriptionName(tx.userSubscriptionId) || t("admin.payPerSwapLabel"));
+                  const swapsRemaining = userCurrentSub?.swapsRemaining;
                   
                   return (
                     <div
@@ -368,17 +428,20 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                           </div>
                         )}
                         
-                        {subscriptionName && (
-                          <div className="flex items-start gap-2">
-                            <Package className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs text-gray-500">{t("admin.plan")}</p>
-                              <p className="text-sm font-medium text-orange-600">
-                                {subscriptionName}
+                        <div className="flex items-start gap-2">
+                          <Package className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-gray-500">{t("admin.plan")}</p>
+                            <p className="text-sm font-medium text-orange-600">
+                              {subscriptionName}
+                            </p>
+                            {!isPayPerSwap && swapsRemaining !== null && swapsRemaining !== undefined && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {t("admin.remainingSwaps")}: <span className="font-semibold text-orange-600">{swapsRemaining}</span>
                               </p>
-                            </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                       
                       {tx.notes && (
