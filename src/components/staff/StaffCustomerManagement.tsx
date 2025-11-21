@@ -3,8 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
   Loader2,
-  Phone,
-  Mail,
   User,
   X,
   Eye,
@@ -17,6 +15,10 @@ import {
   Edit,
   Save,
   Smartphone,
+  Car,
+  Package,
+  Battery,
+  Mail,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -24,11 +26,18 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime, formatNumber } from "../../utils/dateTimeUtils";
 
-import type { Customer } from "@/services/admin/customerAdminService";
+import type {
+  Customer,
+  CustomerDetail,
+  Vehicle,
+  Subscription,
+} from "@/services/admin/customerAdminService";
 import {
   fetchCustomersByStaff,
   updateDriverByStaff,
+  fetchCustomerDetailByStaff,
 } from "@/services/staff/staffDriverService";
 import { formatDateTime, formatNumber } from "../../utils/dateTimeUtils";
 
@@ -72,33 +81,75 @@ function CustomerDetailModal({
   onClose,
   onUpdated,
 }: DetailModalProps) {
-  const { t } = useLanguage();
-  const [name, setName] = useState(customer?.name ?? "");
-  const [phone, setPhone] = useState(customer?.phoneNumber ?? "");
+  const { t, language } = useLanguage();
+  const L = (vi: string, en: string) => (language === "vi" ? vi : en);
+  const [detail, setDetail] = useState<CustomerDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    phoneNumber: "",
+  });
 
   useEffect(() => {
-    setName(customer?.name ?? "");
-    setPhone(customer?.phoneNumber ?? "");
+    if (!customer) return;
     setIsEditing(false);
+    setDetail(null);
+    setLoadingDetail(true);
+    (async () => {
+      try {
+        const data = await fetchCustomerDetailByStaff(customer.id);
+        setDetail(data);
+        setForm({
+          name: data.name || "",
+          phoneNumber: data.phoneNumber || "",
+        });
+      } catch (error: any) {
+        const msg =
+          error?.response?.data?.message ||
+          error?.message ||
+          t("staff.customers.errorLoadDetail");
+        toast.error(msg, toastOpts);
+      } finally {
+        setLoadingDetail(false);
+      }
+    })();
   }, [customer]);
 
   if (!customer) return null;
 
+  const resetForm = () => {
+    if (!detail) return;
+    setForm({
+      name: detail.name || "",
+      phoneNumber: detail.phoneNumber || "",
+    });
+  };
+
   const handleSave = async () => {
-    if (!name.trim()) {
-      toast.warning("Tên không được để trống.", toastOpts);
+    if (!detail) return;
+    if (!form.name.trim()) {
+      toast.warning(t("staff.profile.toastSaveWarnName"), toastOpts);
       return;
     }
 
     setSaving(true);
     try {
-      const updated = await updateDriverByStaff(customer.id, {
-        name,
-        phoneNumber: phone,
+      const updated = await updateDriverByStaff(detail.id || customer.id, {
+        name: form.name.trim(),
+        phoneNumber: form.phoneNumber.trim(),
       });
-      toast.success("Cập nhật hồ sơ khách hàng thành công.", toastOpts);
+      toast.success(t("staff.customers.toastUpdateSuccess"), toastOpts);
+      setDetail((prev: CustomerDetail | null) =>
+        prev
+          ? {
+              ...prev,
+              name: updated.name,
+              phoneNumber: updated.phoneNumber,
+            }
+          : prev
+      );
       onUpdated(updated);
       setIsEditing(false);
     } catch (error: any) {
@@ -106,76 +157,99 @@ function CustomerDetailModal({
         error?.response?.data?.error ||
         error?.response?.data?.message ||
         error?.message ||
-        "Không thể cập nhật hồ sơ.";
+        t("staff.customers.toastUpdateError");
       toast.error(msg, toastOpts);
     } finally {
       setSaving(false);
     }
   };
 
-  const statusLabel =
-    customer.status === "Locked" ? t("admin.inactiveStatus") : t("admin.activeStatus");
-
-  const cancelledCount = (customer.totalReservations ?? 0) - (customer.completedReservations ?? 0);
-  const totalVehicles = 1; // TODO: Update when BE provides this data
-
-  const data = [
-    {
-      key: "name",
-      icon: User,
-      label: t("admin.name"),
-      value: isEditing ? name : (customer.name || ""),
-      editable: true,
-    },
-    {
-      key: "email",
-      icon: Mail,
-      label: t("admin.email"),
-      value: customer.email || "",
-    },
-    {
-      key: "phoneNumber",
-      icon: Smartphone,
-      label: t("admin.phone"),
-      value: isEditing ? phone : (customer.phoneNumber || ""),
-      editable: true,
-    },
-    {
-      key: "role",
-      icon: Zap,
-      label: t("admin.role"),
-      value: t("role.driver"),
-    },
-    {
-      key: "status",
-      icon: Zap,
-      label: t("admin.status"),
-      value: statusLabel,
-    },
-    {
-      icon: Calendar,
-      label: t("admin.createdAt"),
-      value: customer.createdAt ? formatDateTime(customer.createdAt) : "N/A",
-    },
-    {
-      icon: Clock,
-      label: t("admin.lastLogin"),
-      value: customer.lastLogin ? formatDateTime(customer.lastLogin) : "N/A",
-    },
-  ];
-
   const handleClose = () => {
-    if (isEditing) {
-      setName(customer?.name ?? "");
-      setPhone(customer?.phoneNumber ?? "");
-      setIsEditing(false);
-      setTimeout(() => {
-        onClose();
-      }, 0);
-    } else {
-      onClose();
-    }
+    setIsEditing(false);
+    resetForm();
+    onClose();
   };
+
+  const cancelledCount =
+    detail?.cancelledReservations ??
+    Math.max(
+      (detail?.totalReservations ?? 0) -
+        (detail?.completedReservations ?? 0),
+      0
+    );
+  const totalVehicles =
+    detail?.totalVehicles ?? detail?.vehicles?.length ?? 0;
+
+  const infoRows =
+    detail === null
+      ? []
+      : [
+          {
+            key: "name",
+            label: t("staff.profile.labelFullName"),
+            icon: User,
+            editable: true,
+            value: form.name,
+            placeholder: L("Nhập tên khách hàng", "Enter customer name"),
+          },
+          {
+            key: "email",
+            label: t("staff.profile.labelEmail"),
+            icon: Mail,
+            value: detail.email || t("staff.customers.noEmail"),
+          },
+          {
+            key: "phoneNumber",
+            label: t("staff.profile.labelPhone"),
+            icon: Smartphone,
+            editable: true,
+            value: form.phoneNumber,
+            placeholder: L("Nhập số điện thoại", "Enter phone number"),
+          },
+          {
+            key: "status",
+            label: t("admin.status"),
+            icon: Battery,
+            value:
+              detail.status === "Locked"
+                ? t("admin.inactiveStatus")
+                : t("admin.activeStatus"),
+            badgeClass:
+              detail.status === "Locked"
+                ? "bg-red-100 text-red-700 border-red-200"
+                : "bg-green-100 text-green-700 border-green-200",
+          },
+          {
+            key: "role",
+            label: t("admin.role"),
+            icon: Zap,
+            value: t("role.driver"),
+          },
+          {
+            key: "joined",
+            label: L("Ngày tham gia", "Join date"),
+            icon: Calendar,
+            value: detail.createdAt
+              ? formatDateTime(
+                  detail.createdAt instanceof Date
+                    ? detail.createdAt.toISOString()
+                    : detail.createdAt
+                )
+              : L("Chưa cập nhật", "Not updated"),
+          },
+          {
+            key: "lastLogin",
+            label: t("admin.lastLogin"),
+            icon: Clock,
+            value: detail.lastLogin
+              ? formatDateTime(
+                  detail.lastLogin instanceof Date
+                    ? detail.lastLogin.toISOString()
+                    : detail.lastLogin
+                )
+              : L("Chưa cập nhật", "Not updated"),
+          },
+        ];
 
   return (
     <div
@@ -194,138 +268,339 @@ function CustomerDetailModal({
           <X className="w-6 h-6" />
         </button>
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-orange-200">
-          <div className="flex items-center space-x-4">
-            <User className="w-11 h-11 text-orange-600 shrink-0" />
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">
-                {customer.name || "Khách hàng"}
-              </h1>
-              <p className="text-gray-500 text-sm mt-1">
-                {customer.email || "Không có email"}
-              </p>
-            </div>
+        {loadingDetail || !detail ? (
+          <div className="flex flex-col items-center py-16 text-gray-600">
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-4" />
+            <p>{t("admin.loadingCustomerData")}</p>
           </div>
-
-          <div className="flex space-x-3 mt-4 sm:mt-0">
-            {!isEditing ? (
-              <Button
-                size="sm"
-                className="bg-blue-500 hover:bg-blue-600"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit className="w-4 h-4 mr-2" /> {t("admin.updateProfile")}
-              </Button>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-1" /> {t("admin.saveChanges")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setName(customer?.name ?? "");
-                    setPhone(customer?.phoneNumber ?? "");
-                  }}
-                  className="border-gray-300 hover:bg-gray-100"
-                >
-                  {t("admin.cancelChanges")}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Thông tin cơ bản */}
-        <Card className="mt-8 bg-white border border-orange-100 shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-5 text-orange-700 border-b pb-3 border-orange-100">
-            {t("admin.personalInfo")}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5 text-sm">
-            {data.map((item, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <item.icon className="w-5 h-5 text-gray-500" />
-                {isEditing && item.editable ? (
-                  <input
-                    type="text"
-                    value={item.key === "name" ? name : phone}
-                    onChange={(e) => {
-                      if (item.key === "name") {
-                        setName(e.target.value);
-                      } else if (item.key === "phoneNumber") {
-                        setPhone(e.target.value);
-                      }
-                    }}
-                    className="border rounded-md p-1 text-gray-700 w-full"
-                  />
-                ) : (
-                  <p>
-                    <span className="font-semibold text-sm mr-2">
-                      {item.label}:
-                    </span>
-                    <span className="font-medium">{item.value}</span>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-orange-200">
+              <div className="flex items-center space-x-4">
+                <User className="w-11 h-11 text-orange-600 shrink-0" />
+                <div>
+                  <h1 className="text-3xl font-extrabold text-gray-900">
+                    {detail.name || t("staff.customer")}
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {detail.email || t("staff.customers.noEmail")}
                   </p>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-4 sm:mt-0">
+                {!isEditing ? (
+                  <Button
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" /> {t("admin.updateProfile")}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-1" /> {t("common.save")}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditing(false);
+                        resetForm();
+                      }}
+                      className="border-gray-300 hover:bg-gray-100"
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </>
                 )}
               </div>
-            ))}
-          </div>
-        </Card>
+            </div>
 
-        {/* Hiệu suất */}
-        <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
-          {t("admin.performanceData")}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
-          <StatItem
-            icon={BarChart}
-            color="text-orange-500"
-            label={t("admin.totalSwaps")}
-            value={formatNumber(customer.totalReservations)}
-          />
-          <StatItem
-            icon={Zap}
-            color="text-green-500"
-            label={t("admin.totalCompleted")}
-            value={`${formatNumber(customer.completedReservations)} VND`}
-          />
-          <StatItem
-            icon={X}
-            color="text-red-500"
-            label={t("admin.cancelledReservations")}
-            value={formatNumber(cancelledCount)}
-          />
-          <StatItem
-            icon={Truck}
-            color="text-blue-500"
-            label={t("admin.totalVehicles")}
-            value={formatNumber(totalVehicles)}
-          />
-        </div>
+            {/* Thông tin cơ bản */}
+            <Card className="mt-8 bg-white border border-orange-100 shadow-md p-5">
+              <h2 className="text-xl font-semibold mb-4 text-orange-600">
+                {t("admin.personalInfo")}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
+                {infoRows.map((row) => (
+                  <div key={row.key} className="flex items-start gap-2">
+                    <row.icon className="w-4 h-4 text-orange-500 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-xs uppercase tracking-wide text-gray-500">
+                        {row.label}
+                      </span>
+                      {isEditing && row.editable ? (
+                        <input
+                          type="text"
+                          value={
+                            row.key === "name" ? form.name : form.phoneNumber
+                          }
+                          placeholder={row.placeholder}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              [row.key === "name"
+                                ? "name"
+                                : "phoneNumber"]: e.target.value,
+                            }))
+                          }
+                          className="mt-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-orange-200 focus:outline-none bg-white"
+                        />
+                      ) : row.badgeClass ? (
+                        <Badge
+                          className={`mt-1 w-fit px-3 py-0.5 text-xs font-semibold ${row.badgeClass}`}
+                        >
+                          {row.value}
+                        </Badge>
+                      ) : (
+                        <span className="mt-1 font-semibold text-gray-900">
+                          {row.value}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
 
-        {/* Footer */}
-        <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="border-gray-300 hover:bg-gray-100"
-          >
-            {t("common.close")}
-          </Button>
-        </div>
+            {/* Hiệu suất */}
+            <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100">
+              {t("admin.performanceData")}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+              <StatItem
+                icon={BarChart}
+                color="text-orange-500"
+                label={t("admin.totalSwaps")}
+                value={formatNumber(detail.totalReservations)}
+              />
+              <StatItem
+                icon={X}
+                color="text-red-500"
+                label={t("admin.cancelledReservations")}
+                value={formatNumber(cancelledCount)}
+              />
+              <StatItem
+                icon={Truck}
+                color="text-blue-500"
+                label={t("admin.totalVehicles")}
+                value={formatNumber(totalVehicles)}
+              />
+            </div>
+
+            {/* Xe & Gói pin */}
+            <h2 className="text-2xl font-bold pt-8 text-gray-700 border-b pb-3 border-gray-100 mt-8">
+              {t("admin.vehiclesAndSubscriptions")}
+            </h2>
+            <div className="mt-5 space-y-4">
+              {!detail.vehicles || detail.vehicles.length === 0 ? (
+                <Card className="border border-gray-200 p-6">
+                  <div className="text-center text-gray-500">
+                    <Car className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                    <p>{t("admin.noVehicles")}</p>
+                  </div>
+                </Card>
+              ) : (
+                detail.vehicles.map((vehicle: Vehicle) => {
+                  const vehicleSub = detail.subscriptions?.find(
+                    (sub: Subscription) =>
+                      sub.isActive &&
+                      sub.subscriptionPlan?.batteryModelId ===
+                        vehicle.compatibleBatteryModelId
+                  );
+                  const limit =
+                    vehicleSub?.swapsLimit ??
+                    vehicleSub?.subscriptionPlan?.maxSwapsPerMonth ??
+                    null;
+                  const count = vehicleSub?.currentMonthSwapCount ?? 0;
+                  const remaining =
+                    limit === null ? null : Math.max(limit - count, 0);
+                  const isLimitReached =
+                    limit !== null && count >= limit;
+
+                  return (
+                    <Card
+                      key={vehicle.id}
+                      className="border border-gray-200 hover:border-orange-300 transition-all shadow-sm"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          {vehicle.photoUrl ? (
+                            <img
+                              src={vehicle.photoUrl}
+                              alt={
+                                vehicle.vehicleModelFullName || vehicle.brand
+                              }
+                              className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-200">
+                              <Car className="w-10 h-10 text-gray-400" />
+                            </div>
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                  {vehicle.vehicleModelFullName || vehicle.brand}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-semibold">
+                                      {t("admin.plateNumber")}:
+                                    </span>
+                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                                      {vehicle.plate || "—"}
+                                    </span>
+                                  </div>
+                                  {vehicle.vin && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-semibold">VIN:</span>
+                                      <span className="font-mono text-xs">
+                                        {vehicle.vin}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                  <Battery className="w-4 h-4 text-orange-500" />
+                                  <span>
+                                    {t("admin.compatibleBattery")}:{" "}
+                                    <span className="font-semibold text-gray-900">
+                                      {vehicle.compatibleBatteryModelName || "—"}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {vehicleSub ? (
+                              <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+                                <div className="flex items-start gap-3">
+                                  <Package className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Badge
+                                        className={
+                                          isLimitReached
+                                            ? "bg-red-100 text-red-700 border-red-300"
+                                            : "bg-green-100 text-green-700 border-green-300"
+                                        }
+                                      >
+                                        {vehicleSub.subscriptionPlan?.name ||
+                                          L("Gói pin", "Battery plan")}
+                                      </Badge>
+                                    </div>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">
+                                          {t("admin.subscriptionStatus")}:
+                                        </span>
+                                        <Badge
+                                          className={
+                                            vehicleSub.isActive
+                                              ? "bg-green-100 text-green-700"
+                                              : "bg-gray-100 text-gray-700"
+                                          }
+                                        >
+                                          {vehicleSub.isActive
+                                            ? t("admin.activeStatus")
+                                            : t("admin.inactiveStatus")}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">
+                                          {t("admin.usageThisMonth")}:
+                                        </span>
+                                        <span className="font-semibold text-gray-900">
+                                          {formatNumber(count)}
+                                          {limit !== null &&
+                                            ` / ${formatNumber(limit)}`}
+                                        </span>
+                                      </div>
+                                      {limit !== null && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-gray-600">
+                                            {t("admin.remainingSwaps")}:
+                                          </span>
+                                          <span
+                                            className={`font-semibold ${
+                                              remaining !== null &&
+                                              remaining > 0
+                                                ? "text-green-600"
+                                                : "text-red-600"
+                                            }`}
+                                          >
+                                            {formatNumber(remaining ?? 0)}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {vehicleSub.startDate && (
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                          <Calendar className="w-3 h-3" />
+                                          <span>
+                                            {t("admin.startDate")}:{" "}
+                                            {formatDateTime(
+                                              vehicleSub.startDate
+                                            )}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {vehicleSub.endDate && (
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                          <Calendar className="w-3 h-3" />
+                                          <span>
+                                            {t("admin.endDate")}:{" "}
+                                            {formatDateTime(vehicleSub.endDate)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-600 flex items-center gap-2">
+                                <Package className="w-4 h-4 text-gray-400" />
+                                <span>{t("admin.noActiveSubscription")}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end pt-8 border-t mt-10 border-gray-100">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="border-gray-300 hover:bg-gray-100"
+              >
+                {t("common.close")}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -335,6 +610,8 @@ function CustomerDetailModal({
  *  Danh sách khách cho Staff
  * ========================= */
 export default function StaffCustomerManagement() {
+  const { t, language } = useLanguage();
+  const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -365,7 +642,7 @@ export default function StaffCustomerManagement() {
         err?.response?.data?.error ||
         err?.response?.data?.message ||
         err?.message ||
-        "Không thể tải danh sách khách hàng.";
+        t("staff.customers.errorLoadList");
       setError(msg);
       toast.error(msg, toastOpts);
     } finally {
@@ -428,7 +705,7 @@ export default function StaffCustomerManagement() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải khách hàng...</p>
+          <p className="text-gray-600">{t("staff.customers.loadingList")}</p>
         </div>
       </div>
     );
@@ -445,7 +722,7 @@ export default function StaffCustomerManagement() {
       {/* Header + Filter giống Admin nhưng text cho Staff */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-orange-600">
-          Khách hàng của trạm
+          {t("staff.customers.title")}
         </h2>
         <div className="flex space-x-2 items-center">
           <Button
@@ -453,12 +730,12 @@ export default function StaffCustomerManagement() {
             size="sm"
             onClick={() => setShowFilter(!showFilter)}
           >
-            <Filter className="w-4 h-4 mr-1" /> Lọc
+            <Filter className="w-4 h-4 mr-1" /> {t("staff.filter")}
           </Button>
           {showFilter && (
             <Input
               type="text"
-              placeholder="Tìm theo tên / email / SĐT..."
+              placeholder={t("staff.customers.searchPlaceholder")}
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               className="w-72"
@@ -471,13 +748,13 @@ export default function StaffCustomerManagement() {
       <Card className="border border-orange-200 rounded-lg">
         <CardHeader>
           <CardTitle className="text-orange-600">
-            Danh sách khách hàng
+            {t("admin.customerList")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {paginatedCustomers.length === 0 ? (
             <div className="text-center text-gray-500 py-6">
-              Không có khách hàng nào.
+              {t("admin.noCustomers")}
             </div>
           ) : (
             <div className="space-y-4">
@@ -495,9 +772,11 @@ export default function StaffCustomerManagement() {
                     </div>
                     <div>
                       <p className="font-medium">
-                        {c.name || "(Chưa có tên)"}
+                        {c.name || t("staff.customers.noName")}
                       </p>
-                      <p className="text-sm text-gray-500">{c.email}</p>
+                      <p className="text-sm text-gray-500">
+                        {c.email || t("staff.customers.noEmail")}
+                      </p>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge
                           className={
@@ -507,11 +786,11 @@ export default function StaffCustomerManagement() {
                           }
                         >
                           {c.status === "Locked"
-                            ? "Bị khóa"
-                            : "Đang hoạt động"}
+                            ? t("admin.inactiveStatus")
+                            : t("admin.activeStatus")}
                         </Badge>
                         <span className="text-xs text-gray-500">
-                          {c.phoneNumber || "Không có SĐT"}
+                          {c.phoneNumber || t("staff.customers.noPhone")}
                         </span>
                       </div>
                     </div>
@@ -520,18 +799,18 @@ export default function StaffCustomerManagement() {
                   <div className="text-right">
                     <div>
                       <span className="text-gray-500 text-sm">
-                        Tổng lần thay pin:{" "}
+                        {t("admin.totalSwapsLabel")}
                       </span>
                       <span className="font-medium">
-                        {(c.totalReservations ?? 0).toLocaleString()}
+                        {(c.totalReservations ?? 0).toLocaleString("vi-VN")}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-500 text-sm">
-                        Thành công:{" "}
+                        {t("admin.totalCompleted")}:{" "}
                       </span>
                       <span className="font-semibold text-emerald-600">
-                        {(c.completedReservations ?? 0).toLocaleString()}
+                        {(c.completedReservations ?? 0).toLocaleString("vi-VN")}
                       </span>
                     </div>
 
@@ -561,11 +840,11 @@ export default function StaffCustomerManagement() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Trước
+              {t("admin.prev")}
             </Button>
 
             <div className="flex items-center space-x-1">
-              <span className="text-gray-700 text-sm">Trang</span>
+              <span className="text-gray-700 text-sm">{t("admin.page")}</span>
               <Input
                 type="number"
                 min={1}
@@ -589,7 +868,7 @@ export default function StaffCustomerManagement() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Sau
+              {t("admin.next")}
             </Button>
           </div>
         </CardContent>

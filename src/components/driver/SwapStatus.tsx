@@ -16,6 +16,7 @@ interface Reservation {
   slotEndTime?: string;
   qrCode: string;
   reservationCode: string;
+  relatedComplaintId?: string | null;
 }
 
 interface SwapStatusProps {
@@ -213,10 +214,11 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
                     <div className="space-y-2 text-left">
                       {(() => {
                         const { isLate, timeUntilSlot, warningMessage } = checkCancellationTiming();
+                        const isComplaintReservation = Boolean(activeReservation.relatedComplaintId);
 
                         return (
                           <>
-                            {isLate && (
+                            {!isComplaintReservation && isLate && (
                               <div className="p-3 rounded-lg border bg-red-50 border-red-300">
                                 <p className="text-sm font-semibold text-red-700">
                                   {warningMessage}
@@ -232,7 +234,7 @@ export function SwapStatus({ onQRDialog, onNavigateToBooking }: SwapStatusProps)
                                 </div>
                               </div>
                             )}
-                            {!isLate && timeUntilSlot > 1 && (
+                            {!isComplaintReservation && !isLate && timeUntilSlot > 1 && (
                               <div className="p-3 rounded-lg border bg-green-50 border-green-300">
                                 <p className="text-sm font-semibold text-green-700">
                                   {warningMessage}

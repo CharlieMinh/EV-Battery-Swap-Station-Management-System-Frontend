@@ -52,7 +52,7 @@ import {
 } from "@/services/admin/subscriptionPlans";
 import { is } from "date-fns/locale";
 
-// --- Logic (Giữ nguyên) ---
+
 
 interface Vehicle {
   id: string;
@@ -171,11 +171,11 @@ export function SubscriptionPlansPage() {
       console.log("Raw API response:", res.data);
       const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
       console.log("User role:", currentUser?.role, "Is Admin:", userIsAdmin);
-      
+
       const sortedData = (res.data as SubscriptionPlan[])
         .filter((p) => {
           console.log("Filtering plan:", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
-          
+
           // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
           if (userIsAdmin) {
             const pass = p.monthlyPrice > 0;
@@ -191,7 +191,7 @@ export function SubscriptionPlansPage() {
           }
         })
         .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-      
+
       console.log("Filtered plans count:", sortedData.length);
       setPlans(sortedData);
     } catch (error) {
@@ -361,12 +361,12 @@ export function SubscriptionPlansPage() {
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
     setEditingPlan(plan);
-    
+
     // Xác định loại gói: nếu maxSwapsPerMonth là 0 hoặc null thì là gói không giới hạn
     const planMaxSwaps = plan.maxSwapsPerMonth ?? 0;
     const isUnlimited = planMaxSwaps === 0 || planMaxSwaps === null;
     setIsUnlimitedPlan(isUnlimited);
-    
+
     setFormData({
       name: plan.name,
       description: plan.description,
@@ -377,8 +377,8 @@ export function SubscriptionPlansPage() {
       batteryModelId: plan.batteryModel.id,
     });
     // Đảm bảo isActive là boolean, xử lý cả trường hợp là số (0/1)
-    const isActiveValue = 
-      plan.isActive === true || 
+    const isActiveValue =
+      plan.isActive === true ||
       plan.isActive === 1 ||
       (plan.isActive === undefined && true); // Mặc định true nếu undefined
     console.log("Editing plan - isActive:", plan.isActive, "Setting to:", isActiveValue);
@@ -393,7 +393,7 @@ export function SubscriptionPlansPage() {
   // State để lưu giá trị hiển thị (đã format) cho input
   const [displayMonthlyPrice, setDisplayMonthlyPrice] = useState<string>("");
   const [displayMaxSwaps, setDisplayMaxSwaps] = useState<string>("");
-  
+
   // State để lưu lỗi validation
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -424,7 +424,7 @@ export function SubscriptionPlansPage() {
   useEffect(() => {
     // Chỉ fetch plans khi đã có currentUser (để biết role)
     if (userLoading) return;
-    
+
     const getSubscriptionPlans = async () => {
       try {
         const res = await axios.get(
@@ -436,11 +436,11 @@ export function SubscriptionPlansPage() {
         console.log("Raw API response (useEffect):", res.data);
         const userIsAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
         console.log("User role (useEffect):", currentUser?.role, "Is Admin:", userIsAdmin);
-        
+
         const sortedData = (res.data as SubscriptionPlan[])
           .filter((p) => {
             console.log("Filtering plan (useEffect):", p.name, "isActive:", p.isActive, "type:", typeof p.isActive, "monthlyPrice:", p.monthlyPrice);
-            
+
             // Admin có thể xem tất cả, Driver chỉ xem gói đang hoạt động
             if (userIsAdmin) {
               const pass = p.monthlyPrice > 0;
@@ -456,7 +456,7 @@ export function SubscriptionPlansPage() {
             }
           })
           .sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-        
+
         console.log("Filtered plans count (useEffect):", sortedData.length);
         setPlans(sortedData);
       } catch (error) {
@@ -700,11 +700,11 @@ export function SubscriptionPlansPage() {
                 {isAdmin && (() => {
                   // Sử dụng cùng logic như trong filter để đảm bảo nhất quán
                   const isActiveValue = plan.isActive;
-                  
+
                   // Logic giống như trong filter: true hoặc 1 → active, còn lại → inactive
                   // Xử lý cả boolean, number (0/1), và string ("0"/"1")
                   let isActive: boolean;
-                  
+
                   if (typeof isActiveValue === 'boolean') {
                     isActive = isActiveValue;
                   } else if (typeof isActiveValue === 'number') {
@@ -716,16 +716,15 @@ export function SubscriptionPlansPage() {
                     // undefined/null → mặc định false (không giống filter vì filter coi undefined là true)
                     isActive = false;
                   }
-                  
+
                   console.log("Plan:", plan.name, "isActive raw:", isActiveValue, "type:", typeof isActiveValue, "result:", isActive);
-                  
+
                   return (
                     <div
-                      className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
-                        isActive
+                      className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${isActive
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {isActive ? "Hoạt động" : "Ngừng hoạt động"}
                     </div>
@@ -1080,7 +1079,7 @@ export function SubscriptionPlansPage() {
                     onValueChange={(value) => {
                       const isUnlimited = value === "unlimited";
                       setIsUnlimitedPlan(isUnlimited);
-                      
+
                       if (isUnlimited) {
                         // Nếu chọn không giới hạn, set maxSwapsPerMonth = 0
                         setFormData({
@@ -1133,9 +1132,9 @@ export function SubscriptionPlansPage() {
                     isUnlimitedPlan
                       ? "Không giới hạn"
                       : displayMaxSwaps ||
-                        (formData.maxSwapsPerMonth && formData.maxSwapsPerMonth > 0
-                          ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
-                          : "1")
+                      (formData.maxSwapsPerMonth && formData.maxSwapsPerMonth > 0
+                        ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
+                        : "1")
                   }
                   readOnly={isUnlimitedPlan}
                   onChange={(e) => {
@@ -1173,8 +1172,8 @@ export function SubscriptionPlansPage() {
                     isUnlimitedPlan
                       ? "bg-gray-100 cursor-not-allowed"
                       : errors.maxSwapsPerMonth
-                      ? "border-red-500"
-                      : ""
+                        ? "border-red-500"
+                        : ""
                   }
                 />
                 {errors.maxSwapsPerMonth && (
@@ -1343,11 +1342,11 @@ export function SubscriptionPlansPage() {
                         ...submitData,
                         isActive: Boolean(formIsActive),
                       };
-                      
+
                       console.log("Updating plan with data:", updateData);
                       console.log("isActive value:", updateData.isActive, typeof updateData.isActive);
                       console.log("maxSwapsPerMonth:", updateData.maxSwapsPerMonth, "isUnlimited:", isUnlimitedPlan);
-                      
+
                       // dùng API service update
                       await updateSubscriptionPlan(editingPlan.id, updateData);
                       toast.success("Cập nhật gói thuê pin thành công!");

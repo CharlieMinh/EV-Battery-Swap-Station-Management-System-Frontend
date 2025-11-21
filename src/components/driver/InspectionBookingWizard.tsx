@@ -8,6 +8,7 @@ import { CheckCircle, ArrowRight, ArrowLeft, Loader2, MapPin } from 'lucide-reac
 import { useLanguage } from '../LanguageContext';
 import { toast } from 'react-toastify';
 import { formatDateFromDate } from '../../utils/dateTimeUtils';
+import Swal from 'sweetalert2';
 
 interface Station {
     id: string;
@@ -168,9 +169,14 @@ export function InspectionBookingWizard({
                 { withCredentials: true }
             );
 
-            toast.success(response.data.message || t("driver.inspection.successBooked"));
             onSuccess();
             onClose();
+
+            await Swal.fire({
+                icon: 'success',
+                title: t("driver.inspection.successBooked"),
+                confirmButtonColor: '#f97316',
+            });
         } catch (error: any) {
             const msg = error.response?.data?.message || t("driver.inspection.errorBookFailed");
             toast.error(msg);
@@ -312,45 +318,172 @@ export function InspectionBookingWizard({
                 )}
 
                 {bookingStep === 3 && (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <h3 className="text-lg font-medium">{t("driver.inspection.step3Title")}</h3>
-                        <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2">
-                            {isLoadingSlots ? (
-                                <div className="col-span-4 flex items-center justify-center py-12">
-                                    <div className="text-center">
-                                        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-                                        <p className="text-gray-600">Đang tải...</p>
+                        {isLoadingSlots ? (
+                            <div className="flex items-center justify-center h-40">
+                                <div className="text-center">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+                                    <p className="text-gray-600">Đang tải...</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                    <p className="text-sm text-gray-600 font-medium">{t('driver.booking.selectTimeSlot')}</p>
+                                    <div className="grid grid-cols-2 gap-2 max-h-[60vh] sm:max-h-[420px] overflow-y-auto pr-2">
+                                        {slots.length > 0 ? slots.map((slot) => {
+                                            const now = new Date();
+                                            const isToday = bookingDate ? bookingDate.toDateString() === now.toDateString() : false;
+                                            let isSlotDisabled = !slot.isAvailable;
+                                            if (isToday) {
+                                                const [hours, minutes] = slot.slotStartTime.split(':');
+                                                const slotTime = new Date();
+                                                slotTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                                                if (slotTime < now) isSlotDisabled = true;
+                                            }
+                                            const isSelected = selectedSlot?.slotStartTime === slot.slotStartTime;
+                                            const availableSlots = (slot.totalCapacity ?? 0) - (slot.currentReservations ?? 0);
+
+                                            return (
+                                                <button
+                                                    key={slot.slotStartTime}
+                                                    onClick={() => { setSelectedSlot(slot); setSlotStartTime(slot.slotStartTime); setSlotEndTime(slot.slotEndTime); }}
+                                                    disabled={isSlotDisabled}
+                                                    className={`
+                                                        relative p-3 rounded-lg border-2 text-left transition-all
+                                                        ${isSelected
+                                                            ? 'border-orange-500 bg-orange-50 shadow-md'
+                                                            : isSlotDisabled
+                                                                ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+                                                                : 'border-gray-300 bg-white hover:border-orange-400 hover:shadow-sm'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`text-sm font-bold ${isSelected ? 'text-orange-600' : 'text-gray-900'}`}>
+                                                                {slot.slotStartTime.substring(0, 5)}
+                                                            </span>
+                                                            {isSelected && (
+                                                                <CheckCircle className="w-4 h-4 text-orange-500" />
+                                                            )}
+                                                        </div>
+                                                        <div className={`text-xs ${isSlotDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                            {availableSlots > 0 ? (
+                                                                <span className="font-medium text-green-600">
+                                                                    {t('driver.booking.availableSpots')} {availableSlots} {t('driver.booking.spots')}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="font-medium text-red-600">{t('driver.booking.full')}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        }) : <p className="col-span-2 text-center text-gray-500 py-16">{t("driver.inspection.noSlots")}</p>}
                                     </div>
                                 </div>
-                            ) : slots.length > 0 ? (
-                                slots.map((slot) => {
-                                    const now = new Date();
-                                    const isToday = bookingDate ? bookingDate.toDateString() === now.toDateString() : false;
-                                    let isSlotDisabled = !slot.isAvailable;
-                                    if (isToday) {
-                                        const [hours, minutes] = slot.slotStartTime.split(':');
-                                        const slotTime = new Date();
-                                        slotTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                                        if (slotTime < now) isSlotDisabled = true;
-                                    }
-                                    return (
-                                        <Button
-                                            key={`${slot.slotStartTime}-${slot.slotEndTime}`}
-                                            variant={selectedSlot?.slotStartTime === slot.slotStartTime ? "default" : "outline"}
-                                            className={`h-12 ${selectedSlot?.slotStartTime === slot.slotStartTime ? 'bg-orange-500' : ''}`}
-                                            onClick={() => { setSelectedSlot(slot); setSlotStartTime(slot.slotStartTime); setSlotEndTime(slot.slotEndTime); }}
-                                            disabled={isSlotDisabled}
-                                            title={typeof slot.availableSlots === 'number' ? `Còn ${slot.availableSlots}/${slot.totalCapacity}` : undefined}
-                                        >
-                                            {slot.slotStartTime.substring(0, 5)} - {slot.slotEndTime.substring(0, 5)}<br />
-                                            ({(slot.currentReservations ?? 0)}/{(slot.totalCapacity ?? '-')})
-                                        </Button>
-                                    );
-                                })
-                            ) : (
-                                <p className="col-span-4 text-center text-gray-500 py-16">{t("driver.inspection.noSlots")}</p>
-                            )}
-                        </div>
+
+                                <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50 min-h-[22rem]">
+                                    {selectedSlot ? (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between border-b border-gray-300 pb-3">
+                                                <h4 className="text-md font-bold text-gray-900">{t('driver.booking.slotInfo')}</h4>
+                                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div className="flex items-start justify-between">
+                                                    <span className="text-sm text-gray-600 flex items-center">
+                                                        <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        {t('driver.booking.startTime')}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-orange-600">
+                                                        {selectedSlot.slotStartTime.substring(0, 5)}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-start justify-between">
+                                                    <span className="text-sm text-gray-600 flex items-center">
+                                                        <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        {t('driver.booking.endTime')}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-orange-600">
+                                                        {selectedSlot.slotEndTime.substring(0, 5)}
+                                                    </span>
+                                                </div>
+
+                                                <div className="border-t border-gray-300 pt-3 mt-3">
+                                                    <div className="flex items-start justify-between mb-2">
+                                                        <span className="text-sm text-gray-600 flex items-center">
+                                                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                            {t('driver.booking.reserved')}
+                                                        </span>
+                                                        <span className="text-sm font-bold text-gray-900">
+                                                            {selectedSlot.currentReservations ?? 0}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <span className="text-sm text-gray-600 flex items-center">
+                                                            <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                            {t('driver.booking.capacity')}
+                                                        </span>
+                                                        <span className="text-sm font-bold text-gray-900">
+                                                            {selectedSlot.totalCapacity ?? '-'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="mt-3 p-2 bg-white rounded-md border border-gray-200">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-gray-600">{t('driver.booking.available')}</span>
+                                                            <span className={`text-lg font-bold ${(selectedSlot.totalCapacity ?? 0) - (selectedSlot.currentReservations ?? 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {(selectedSlot.totalCapacity ?? 0) - (selectedSlot.currentReservations ?? 0)} {t('driver.booking.spots')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className={`mt-4 p-3 rounded-lg border ${selectedSlot.isAvailable ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                                <div className="flex items-center space-x-2">
+                                                    {selectedSlot.isAvailable ? (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                                            <span className="text-sm font-medium text-green-700">{t('driver.booking.slotAvailable')}</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span className="text-sm font-medium text-red-700">{t('driver.booking.slotFull')}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                            <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p className="text-sm text-gray-500 font-medium mb-1">{t('driver.booking.noSlotSelected')}</p>
+                                            <p className="text-xs text-gray-400">{t('driver.booking.selectSlotToView')}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         <div className="flex justify-between w-full pt-4">
                             <Button variant="outline" onClick={() => setBookingStep(2)}>
                                 <ArrowLeft className="w-4 h-4 mr-2" /> {t("driver.inspection.buttonPrevious")}

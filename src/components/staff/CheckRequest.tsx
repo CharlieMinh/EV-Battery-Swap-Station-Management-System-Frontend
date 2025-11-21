@@ -12,6 +12,7 @@ import {
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 import {
   confirmMultipleBatteryRequests,
   rejectMultipleBatteryRequests,
@@ -44,7 +45,7 @@ const groupKey = (g: GroupedRequest) =>
   `${g.createdAt}|${g.adminName}|${g.stationName}`;
 
 function getAxiosErrorMessage(err: any) {
-  return err?.response?.data?.message || err?.message || "Đã xảy ra lỗi.";
+  return err?.response?.data?.message || err?.message || "An error occurred.";
 }
 
 const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
@@ -53,12 +54,13 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
   const [actionType, setActionType] = useState<"confirm" | "reject" | null>(
     null
   );
+  const { t } = useLanguage();
 
 
   // Xác nhận tất cả (giữ nguyên luồng)
   const handleConfirmAll = async () => {
     if (!notes.trim()) {
-      toast.warning("Vui lòng nhập ghi chú xác nhận!", {
+      toast.warning(t("staff.checkRequest.toastNoteRequired"), {
         ...toastOpts,
         toastId: `req-note-missing-${groupKey(group)}`,
       });
@@ -73,7 +75,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       await confirmMultipleBatteryRequests(requestIds, notes.trim());
 
       toast.success(
-        `Đã xác nhận thành công ${group.requests.length} yêu cầu!`,
+        t("staff.checkRequest.toastConfirmSuccess").replace("{count}", String(group.requests.length)),
         {
           ...toastOpts,
           toastId: `req-confirm-success-${groupKey(group)}`,
@@ -83,7 +85,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
     } catch (error: any) {
       console.error("Error confirming requests:", error);
       toast.error(
-        getAxiosErrorMessage(error) || "Có lỗi xảy ra khi xác nhận!",
+        getAxiosErrorMessage(error) || t("staff.checkRequest.toastConfirmError"),
         {
           ...toastOpts,
           toastId: `req-confirm-error-${groupKey(group)}`,
@@ -98,7 +100,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
   // Từ chối tất cả (giữ nguyên luồng)
   const handleRejectAll = async () => {
     if (!notes.trim()) {
-      toast.warning("Vui lòng nhập lý do từ chối!", {
+      toast.warning(t("staff.checkRequest.toastNoteRequired"), {
         ...toastOpts,
         toastId: `req-reject-note-missing-${groupKey(group)}`,
       });
@@ -112,14 +114,17 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       const requestIds = group.requests.map((req) => req.id);
       await rejectMultipleBatteryRequests(requestIds, notes.trim());
 
-      toast.success(`Đã từ chối ${group.requests.length} yêu cầu!`, {
-        ...toastOpts,
-        toastId: `req-reject-success-${groupKey(group)}`,
-      });
+      toast.success(
+        t("staff.checkRequest.toastRejectSuccess").replace("{count}", String(group.requests.length)),
+        {
+          ...toastOpts,
+          toastId: `req-reject-success-${groupKey(group)}`,
+        }
+      );
       onClose();
     } catch (error: any) {
       console.error("Error rejecting requests:", error);
-      toast.error(getAxiosErrorMessage(error) || "Có lỗi xảy ra khi từ chối!", {
+      toast.error(getAxiosErrorMessage(error) || t("staff.checkRequest.toastRejectError"), {
         ...toastOpts,
         toastId: `req-reject-error-${groupKey(group)}`,
       });
@@ -136,10 +141,6 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
       className="fixed inset-0 z-50 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={() => {
         onClose();
-        toast.info("Đã đóng cửa sổ kiểm tra.", {
-          ...toastOpts,
-          toastId: `req-close-${groupKey(group)}`,
-        });
       }}
     >
       <div
@@ -151,12 +152,10 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold text-orange-600">
-                {isEditing ? "Chi Tiết Yêu Cầu" : "Kiểm Tra Hàng"}
+                {isEditing ? t("staff.checkRequest.titleDetail") : t("staff.checkRequest.titleCheck")}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {isEditing
-                  ? "Xem thông tin yêu cầu đã xử lý"
-                  : "Xác nhận hoặc từ chối lô hàng này"}
+                {isEditing ? t("staff.checkRequest.descriptionDetail") : t("staff.checkRequest.descriptionCheck")}
               </p>
             </div>
             <Button
@@ -164,10 +163,6 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
               size="sm"
               onClick={() => {
                 onClose();
-                toast.info("Đã đóng cửa sổ kiểm tra.", {
-                  ...toastOpts,
-                  toastId: `req-close-${groupKey(group)}`,
-                });
               }}
               className="hover:bg-red-500 hover:text-white"
             >
@@ -181,23 +176,21 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           {/* Thông tin chung */}
           <Card className="border border-orange-200">
             <CardHeader>
-              <CardTitle className="text-orange-600">
-                Thông Tin Lô Hàng
-              </CardTitle>
+              <CardTitle className="text-orange-600">{t("staff.checkRequest.cardTitleInfo")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Người gửi</p>
+                    <p className="text-sm text-gray-500">{t("staff.checkRequest.labelSender")}</p>
                     <p className="font-semibold">{group.adminName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Thời gian gửi</p>
+                    <p className="text-sm text-gray-500">{t("staff.checkRequest.labelSentTime")}</p>
                     <p className="font-semibold">
                       {formatDateTimeShort(group.createdAt)}
                     </p>
@@ -206,14 +199,14 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Trạm nhận hàng</p>
+                    <p className="text-sm text-gray-500">{t("staff.checkRequest.labelReceivingStation")}</p>
                     <p className="font-semibold">{group.stationName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Tổng số lượng</p>
+                    <p className="text-sm text-gray-500">{t("staff.checkRequest.labelTotalQuantity")}</p>
                     <p className="font-semibold text-orange-600">
                       {group.totalItems} pin
                     </p>
@@ -226,7 +219,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           {/* Chi tiết pin */}
           <Card className="border border-blue-200">
             <CardHeader>
-              <CardTitle className="text-blue-600">Chi Tiết Pin</CardTitle>
+              <CardTitle className="text-blue-600">{t("staff.checkRequest.cardTitleBatteryDetails")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -254,7 +247,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                       <p className="text-2xl font-bold text-orange-600">
                         x{request.quantity}
                       </p>
-                      <p className="text-xs text-gray-500">Số lượng</p>
+                      <p className="text-xs text-gray-500">{t("staff.checkRequest.labelQuantity")}</p>
                     </div>
                   </div>
                 ))}
@@ -266,24 +259,18 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
           <Card className="border border-green-200">
             <CardHeader>
               <CardTitle className="text-green-600">
-                {isEditing ? "Ghi Chú Đã Lưu" : "Ghi Chú Xác Nhận"}
+                {isEditing ? t("staff.checkRequest.cardTitleNotesSaved") : t("staff.checkRequest.cardTitleNotesConfirm")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {!isEditing && (
-                  <label className="text-sm font-medium text-gray-700">
-                    Nhập ghi chú về tình trạng hàng nhận được *
-                  </label>
+                  <label className="text-sm font-medium text-gray-700">{t("staff.checkRequest.labelNotesInput")}</label>
                 )}
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={
-                    isEditing
-                      ? ""
-                      : "Ví dụ: Đã kiểm tra đầy đủ, hàng nguyên vẹn, không có vấn đề..."
-                  }
+                  placeholder={isEditing ? "" : t("staff.checkRequest.notesPlaceholder")}
                   className={`w-full p-3 border border-gray-300 rounded-lg ${
                     isEditing
                       ? "bg-gray-50 cursor-not-allowed"
@@ -296,7 +283,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 {!isEditing && !notes.trim() && (
                   <p className="text-xs text-red-500 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Vui lòng nhập ghi chú trước khi xác nhận hoặc từ chối
+                    {t("staff.checkRequest.notesRequired")}
                   </p>
                 )}
               </div>
@@ -309,20 +296,20 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Đã xử lý bởi</p>
+                    <p className="text-sm text-gray-600">{t("staff.checkRequest.labelHandledBy")}</p>
                     <p className="font-semibold">
                       {group.requests[0].handledByStaffName}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Trạng thái</p>
+                    <p className="text-sm text-gray-600">{t("staff.checkRequest.labelStatus")}</p>
                     {group.status === 1 ? (
                       <span className="inline-flex items-center gap-1 text-green-600 font-semibold">
-                        <CheckCircle className="w-4 h-4" /> Đã xác nhận
+                        <CheckCircle className="w-4 h-4" /> {t("staff.checkRequest.statusConfirmed")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-red-600 font-semibold">
-                        <XCircle className="w-4 h-4" /> Đã từ chối
+                        <XCircle className="w-4 h-4" /> {t("staff.checkRequest.statusRejected")}
                       </span>
                     )}
                   </div>
@@ -337,15 +324,11 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
               variant="outline"
               onClick={() => {
                 onClose();
-                toast.info("Đã đóng cửa sổ kiểm tra.", {
-                  ...toastOpts,
-                  toastId: `req-close-${groupKey(group)}`,
-                });
               }}
               disabled={loading}
               className="px-6"
             >
-              {isEditing ? "Đóng" : "Hủy"}
+              {isEditing ? t("staff.checkRequest.buttonClose") : t("staff.checkRequest.buttonCancel")}
             </Button>
 
             {!isEditing && (
@@ -360,7 +343,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   ) : (
                     <XCircle className="w-4 h-4 mr-2" />
                   )}
-                  Từ chối
+                  {t("staff.checkRequest.buttonReject")}
                 </Button>
                 <Button
                   onClick={handleConfirmAll}
@@ -372,7 +355,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   ) : (
                     <CheckCircle className="w-4 h-4 mr-2" />
                   )}
-                  Xác nhận
+                  {t("staff.checkRequest.buttonConfirm")}
                 </Button>
               </>
             )}

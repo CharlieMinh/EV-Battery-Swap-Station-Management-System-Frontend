@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import CheckRequest from "./CheckRequest";
 import { getMyStockRequests } from "@/services/staff/stockRequest";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 import CheckSendRequest from "./CheckSendRequest";
 import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
@@ -43,11 +44,10 @@ const toastOpts = {
 const TOAST_ID = {
   fetchOk: "sr-fetch-ok",
   fetchErr: "sr-fetch-err",
-  openInfo: "sr-open-modal",
-  closeInfo: "sr-close-modal",
 };
 
 const SendRequestList = () => {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ const SendRequestList = () => {
       groupRequestsByCreatedAt(data);
     } catch (error: any) {
       console.error("Error fetching requests:", error);
-      const msg = error?.message || "Không thể tải yêu cầu.";
+      const msg = error?.message || t("staff.sendRequest.toastLoadError");
       toast.error(msg, { ...toastOpts, toastId: TOAST_ID.fetchErr });
     } finally {
       setLoading(false);
@@ -169,21 +169,11 @@ const SendRequestList = () => {
   const handleCheckRequest = (group: GroupedRequest) => {
     setSelectedGroup(group);
     setShowCheckModal(true);
-    toast.info(
-      group.status === "PendingAdminReview"
-        ? "Mở kiểm tra yêu cầu."
-        : "Mở chi tiết yêu cầu.",
-      { ...toastOpts, toastId: TOAST_ID.openInfo }
-    );
   };
 
   const handleCloseModal = () => {
     setShowCheckModal(false);
     setSelectedGroup(null);
-    toast.info("Đã đóng cửa sổ.", {
-      ...toastOpts,
-      toastId: TOAST_ID.closeInfo,
-    });
     fetchRequests();
   };
 
@@ -192,7 +182,7 @@ const SendRequestList = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
-          <p className="text-gray-600">Đang tải...</p>
+          <p className="text-gray-600">{t("staff.sendRequest.loading")}</p>
         </div>
       </div>
     );
@@ -204,9 +194,9 @@ const SendRequestList = () => {
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-bold text-orange-600">
-            Yêu cầu gửi pin
+            {t("staff.sendRequest.title")}
           </CardTitle>
-          <p className="text-sm text-gray-600">Danh sách các yêu cầu gửi pin</p>
+          <p className="text-sm text-gray-600">{t("staff.sendRequest.subtitle")}</p>
         </CardHeader>
       </Card>
 
@@ -216,7 +206,7 @@ const SendRequestList = () => {
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
               <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p>Không có yêu cầu nào</p>
+              <p>{t("staff.sendRequest.noRequests")}</p>
             </div>
           </CardContent>
         </Card>
@@ -231,7 +221,7 @@ const SendRequestList = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg font-semibold text-gray-800">
-                      Yêu cầu #{groupedRequests.length - index}
+                      {`${t("staff.sendRequest.batchLabel")} #${groupedRequests.length - index}`}
                     </CardTitle>
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -276,11 +266,9 @@ const SendRequestList = () => {
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t">
                     <div className="text-sm text-gray-600">
-                      <span className="font-semibold">Tổng số lượng:</span>{" "}
-                      <span className="text-orange-600 font-bold">
-                        {group.totalItems}
-                      </span>{" "}
-                      pin
+                      <span className="font-semibold">{t("staff.sendRequest.totalLabel")}</span>{" "}
+                      <span className="text-orange-600 font-bold">{group.totalItems}</span>{" "}
+                      {t("staff.sendRequest.unit")}
                     </div>
 
                     <Button
@@ -297,15 +285,15 @@ const SendRequestList = () => {
                         <Edit className="w-4 h-4 mr-2" />
                       )}
                       {group.status === "PendingAdminReview"
-                        ? "Kiểm tra"
-                        : "Xem chi tiết"}
+                        ? t("staff.sendRequest.button.check")
+                        : t("staff.sendRequest.button.viewDetails")}
                     </Button>
                   </div>
 
                   {group.requests[0].staffNote && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Ghi chú:</span>{" "}
+                        <span className="font-semibold">{t("staff.sendRequest.noteLabel")}</span>{" "}
                         {group.requests[0].staffNote}
                       </p>
                     </div>

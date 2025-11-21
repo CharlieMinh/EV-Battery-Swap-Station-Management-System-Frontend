@@ -2,6 +2,7 @@
 import React, { useRef, useState } from "react";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 
 export default function CheckInManagement({
   open,
@@ -13,6 +14,7 @@ export default function CheckInManagement({
   onDetected: (rawQrOrText: string) => void;
 }) {
   const [err, setErr] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   // ✅ chống spam gọi detect
   const lockRef = useRef<number>(0);
@@ -44,7 +46,7 @@ export default function CheckInManagement({
       text.length > 48 ? text.slice(0, 45).trim() + "..." : text.trim();
 
     // 🔔 CHỈ ĐỔI NỘI DUNG THÔNG BÁO, KHÔNG HIỆN DÃY KÝ TỰ QR
-    toast.success("Đã quét mã thành công.", {
+    toast.success(t("staff.checkIn.toastSuccessSimple"), {
       ...toastOpts,
       toastId: `qr-success-${preview}`,
     });
@@ -73,18 +75,14 @@ export default function CheckInManagement({
       <div className="w-full max-w-xl rounded-xl bg-white p-4 shadow-lg">
         {/* HEADER */}
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">📷 Quét mã Check-in</h3>
+          <h3 className="text-lg font-semibold">{t("staff.checkIn.title")}</h3>
           <button
             onClick={() => {
               onClose();
-              toast.info("Đã đóng cửa sổ quét.", {
-                ...toastOpts,
-                toastId: "qr-close",
-              });
             }}
             className="border px-3 py-1 rounded-lg"
           >
-            Đóng
+            {t("staff.checkIn.buttonClose")}
           </button>
         </div>
 
@@ -108,23 +106,19 @@ export default function CheckInManagement({
                   if (errObj.name === "NotFoundException") return;
 
                   if (errObj.name === "NotAllowedError") {
-                    setErrorWithToast(
-                      "Trình duyệt bị chặn quyền camera. Hãy cấp quyền và thử lại."
-                    );
+                    setErrorWithToast(t("staff.checkIn.errorCameraBlocked"));
                   } else if (errObj.name === "NotReadableError") {
                     setErrorWithToast(
-                      "Không truy cập được camera. Kiểm tra ứng dụng khác đang dùng camera."
+                      t("staff.checkIn.errorCameraNotAccessible")
                     );
                   } else if (errObj.name === "OverconstrainedError") {
-                    setErrorWithToast(
-                      "Không tìm thấy thiết bị camera phù hợp. Thử chuyển sang camera khác."
-                    );
+                    setErrorWithToast(t("staff.checkIn.errorNoCamera"));
                   } else {
-                    setErrorWithToast("Không thể đọc mã.");
+                    setErrorWithToast(t("staff.checkIn.errorCannotRead"));
                   }
                 }
               } catch {
-                setErrorWithToast("Không thể đọc mã.");
+                setErrorWithToast(t("staff.checkIn.errorCannotRead"));
               }
             }}
           />
@@ -134,7 +128,7 @@ export default function CheckInManagement({
         {err && <p className="text-xs text-red-600 mt-2">{err}</p>}
 
         <p className="mt-3 text-xs text-gray-500 text-center">
-          Lưu ý: Trình duyệt cần chạy trên HTTPS hoặc localhost để mở camera.
+          {t("staff.checkIn.noteHttps")}
         </p>
       </div>
     </div>
