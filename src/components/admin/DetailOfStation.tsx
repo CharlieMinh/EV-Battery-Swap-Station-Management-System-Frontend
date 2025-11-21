@@ -332,7 +332,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                   className="border-gray-300 hover:bg-gray-100"
                   onClick={() => setMode("history")}
                 >
-                  <List className="w-4 h-4 mr-2" /> {t("admin.viewHistory")} ({logCount.toLocaleString("vi-VN")})
+                  <List className="w-4 h-4 mr-2" /> {t("admin.viewHistory")}{logCount > 0 ? ` (${logCount.toLocaleString("vi-VN")})` : ""}
                 </Button>
                 {!isEditing ? (
                   <Button
