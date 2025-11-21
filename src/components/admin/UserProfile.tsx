@@ -249,70 +249,66 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Thông tin người dùng giữ nguyên như trước */}
+          {/* Thông tin người dùng */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span className="font-medium">{t("admin.emailLabel")}</span>
-              </div>
-              <p className="text-gray-900 font-medium break-all pl-6">
-                {user.email}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span className="font-medium">{t("admin.phoneLabel")}</span>
-              </div>
-              {editMode ? (
-                <input
-                  type="text"
-                  value={formData.phoneNumber}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      phoneNumber: e.target.value,
-                    }))
-                  }
-                  className="pl-6 border-b border-gray-400 focus:outline-none w-full"
-                />
-              ) : (
-                <p className="text-gray-900 font-medium pl-6">
-                  {user.phoneNumber || t("admin.notUpdated")}
+            {/* Cột trái: Email, SĐT */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Mail className="w-4 h-4" />
+                  <span className="font-medium">{t("admin.emailLabel")}</span>
+                </div>
+                <p className="text-gray-900 font-medium break-all pl-6">
+                  {user.email}
                 </p>
-              )}
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Phone className="w-4 h-4" />
+                  <span className="font-medium">{t("admin.phoneLabel")}</span>
+                </div>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        phoneNumber: e.target.value,
+                      }))
+                    }
+                    className="pl-6 border-b border-gray-400 focus:outline-none w-full"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium pl-6">
+                    {user.phoneNumber || t("admin.notUpdated")}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{t("admin.userId")}</span>
+            {/* Cột phải: Ngày tạo, lần đăng nhập cuối */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">{t("admin.createdDate")}</span>
+                </div>
+                <p className="text-gray-900 font-medium pl-6">
+                  {formatDate(user.createdAt)}
+                </p>
               </div>
-              <p className="text-gray-900 font-mono text-sm break-all pl-6">
-                {user.id}
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span className="font-medium">{t("admin.createdDate")}</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">{t("admin.lastLoginDate")}</span>
+                </div>
+                <p className="text-gray-900 font-medium pl-6">
+                  {formatDateTime(user.lastLogin)}
+                </p>
               </div>
-              <p className="text-gray-900 font-medium pl-6">
-                {formatDate(user.createdAt)}
-              </p>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span className="font-medium">{t("admin.lastLoginDate")}</span>
-              </div>
-              <p className="text-gray-900 font-medium pl-6">
-                {formatDateTime(user.lastLogin)}
-              </p>
             </div>
           </div>
         </CardContent>

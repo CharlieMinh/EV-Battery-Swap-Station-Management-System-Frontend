@@ -57,7 +57,11 @@ function App() {
           name: response.data.name || response.data.fullName || '',
           email: response.data.email || '',
           role: response.data.role || null,
-          avatar: response.data.avatarUrl,
+          avatar:
+            response.data.avatarUrl ||
+            response.data.profilePictureUrl ||
+            response.data.profilePicture ||
+            undefined,
           stationId: response.data.stationId,
         };
         setCurrentUser(userData);

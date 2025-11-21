@@ -1669,6 +1669,7 @@ const translations = {
     "admin.batteries": "Batteries",
     "admin.viewDetails": "View Details",
     "admin.notes": "Notes:",
+    "admin.noNotes": "No notes",
     "admin.handledBy": "Handled by:",
 
     // ComplaintsOfCustomer Component
@@ -3628,6 +3629,7 @@ const translations = {
     "admin.batteries": "Pin",
     "admin.viewDetails": "Xem chi tiết",
     "admin.notes": "Ghi chú:",
+    "admin.noNotes": "Không có ghi chú",
     "admin.handledBy": "Xử lý bởi:",
 
     // ComplaintsOfCustomer Component

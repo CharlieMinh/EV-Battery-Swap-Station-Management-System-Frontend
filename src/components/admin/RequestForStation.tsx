@@ -131,6 +131,25 @@ export const RequestForStation: React.FC = () => {
 
   const { t } = useLanguage();
 
+  // Extract only admin note from combined auto-generated notes, if present
+  const extractAdminNote = (notes: string | null | undefined): string | null => {
+    if (!notes) return null;
+
+    const normalized = notes.trim();
+    // Trường hợp BE trả về chỉ "." hoặc chuỗi trống coi như không có ghi chú
+    if (!normalized || normalized === ".") return null;
+
+    const marker = "Ghi chú Admin:";
+    const idx = normalized.indexOf(marker);
+    if (idx === -1) {
+      // Không đúng định dạng tự động, trả nguyên ghi chú (nếu có nội dung)
+      return normalized || null;
+    }
+
+    const raw = normalized.substring(idx + marker.length).trim();
+    return raw || null;
+  };
+
   const getStatusBadge = (status: number) => {
     switch (status) {
       case 0:
@@ -343,19 +362,17 @@ export const RequestForStation: React.FC = () => {
                     </Button>
                   </div>
 
-                  {group.requests[0].staffNotes && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">{t("admin.notes")}</span>{" "}
-                        {group.requests[0].staffNotes}
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold">{t("admin.notes")}</span>{" "}
+                      {extractAdminNote(group.requests[0].staffNotes) || t("admin.noNotes")}
+                    </p>
+                    {group.requests[0].handledByStaffName && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t("admin.handledBy")} {group.requests[0].handledByStaffName}
                       </p>
-                      {group.requests[0].handledByStaffName && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {t("admin.handledBy")} {group.requests[0].handledByStaffName}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
