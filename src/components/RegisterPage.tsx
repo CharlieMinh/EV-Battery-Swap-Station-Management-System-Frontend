@@ -82,10 +82,11 @@ export function RegisterPage({
 
   const validatePassword = (password: string): boolean => {
     return (
-      password.length >= 6 &&
+      password.length >= 8 &&
       /[A-Z]/.test(password) &&
       /[a-z]/.test(password) &&
-      /[0-9]/.test(password)
+      /[0-9]/.test(password) &&
+      /[!@#$%^&*(),.?":{}|<>_\-\\[\]\\\/~`+=;]/.test(password)
     );
   };
 
@@ -102,14 +103,32 @@ export function RegisterPage({
       newErrors.email = t("register.emailInvalid");
     }
 
-    if (formData.password.length < 6) {
-      newErrors.password = "Password phải có ít nhất 6 ký tự";
+    // Validate phone: required & 1-11 digits
+    const trimmedPhone = formData.phone.trim();
+    if (!trimmedPhone) {
+      newErrors.phone = t("register.phoneRequired");
+    } else {
+      const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
+      if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+        newErrors.phone = t("admin.phoneInvalid");
+      }
+    }
+
+    // Validate password strength
+    if (!formData.password) {
+      newErrors.password = t("register.passwordRequired");
+    } else if (formData.password.length < 8) {
+      newErrors.password = t("register.passwordTooShort");
     } else if (!/[A-Z]/.test(formData.password)) {
-      newErrors.password = "Password phải có ít nhất 1 chữ hoa";
+      newErrors.password = t("register.passwordNoUppercase");
     } else if (!/[a-z]/.test(formData.password)) {
-      newErrors.password = "Password phải có ít nhất 1 chữ thường";
+      newErrors.password = t("register.passwordNoLowercase");
     } else if (!/[0-9]/.test(formData.password)) {
-      newErrors.password = "Password phải có ít nhất 1 số";
+      newErrors.password = t("register.passwordNoDigit");
+    } else if (
+      !/[!@#$%^&*(),.?":{}|<>_\-\\[\]\\\/~`+=;]/.test(formData.password)
+    ) {
+      newErrors.password = t("register.passwordNoSpecial");
     }
 
     if (!formData.confirmPassword) {

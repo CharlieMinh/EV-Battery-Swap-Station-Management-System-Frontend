@@ -113,10 +113,33 @@ export default function UserProfile() {
   const handleSave = async () => {
     if (!user) return;
 
+    const rawName = formData.name ?? user.name ?? "";
+    const trimmedName = rawName.trim();
+    const rawPhone = formData.phoneNumber ?? user.phoneNumber ?? "";
+    const trimmedPhone = rawPhone.trim();
+
+    // Validate tên: bắt buộc
+    if (!trimmedName) {
+      toast.error(t("admin.nameRequired"));
+      return;
+    }
+
+    // Validate SĐT: bắt buộc, chỉ 1–11 số
+    if (!trimmedPhone) {
+      toast.error(t("register.phoneRequired"));
+      return;
+    }
+
+    const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
+    if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+      toast.error(t("admin.phoneInvalid"));
+      return;
+    }
+
     try {
       const payload: UpdateUserPayload = {
-        name: formData.name ?? user.name,
-        phoneNumber: formData.phoneNumber ?? user.phoneNumber,
+        name: trimmedName,
+        phoneNumber: phoneDigitsOnly,
         profilePicture: formData.avatar ?? user.avatar, // đổi key
         role: user.role,
         status: user.status,
@@ -232,6 +255,7 @@ export default function UserProfile() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
+                maxLength={100}
                 className="text-xl font-bold text-gray-900 mt-4 border-b border-orange-400 focus:outline-none"
               />
             ) : (
@@ -278,6 +302,7 @@ export default function UserProfile() {
                         phoneNumber: e.target.value,
                       }))
                     }
+                    maxLength={11}
                     className="pl-6 border-b border-gray-400 focus:outline-none w-full"
                   />
                 ) : (

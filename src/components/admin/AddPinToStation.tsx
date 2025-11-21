@@ -93,9 +93,21 @@ export function AddPinToStation({
       toast.success(t("admin.addBatterySuccess"));
       onClose();
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error(t("admin.addBatteryFailed"));
+
+      const quantityError =
+        error?.response?.data?.errors?.Quantity?.[0] ?? null;
+      const titleError = error?.response?.data?.title ?? null;
+
+      if (quantityError) {
+        // Luôn hiển thị theo ngôn ngữ hiện tại thay vì message tiếng Anh từ backend
+        toast.error(t("admin.quantityRangeError"));
+      } else if (titleError) {
+        toast.error(titleError);
+      } else {
+        toast.error(t("admin.addBatteryFailed"));
+      }
     } finally {
       setLoading(false);
     }

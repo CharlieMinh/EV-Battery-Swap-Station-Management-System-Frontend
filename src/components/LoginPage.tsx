@@ -72,9 +72,34 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
     if (e) e.preventDefault();
     console.log("handleLogin called with:", { email, password });
 
-    setLoading(true);
+    // Client-side validation
     setErrorEmail("");
     setErrorPassword("");
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
+      setErrorEmail(t("login.emailRequired"));
+      return;
+    }
+    // Simple email format check
+    const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorEmail(t("login.emailInvalid"));
+      return;
+    }
+
+    if (!trimmedPassword) {
+      setErrorPassword(t("login.passwordRequired"));
+      return;
+    }
+    if (trimmedPassword.length < 8) {
+      setErrorPassword(t("login.passwordTooShort"));
+      return;
+    }
+
+    setLoading(true);
     
     try {
       console.log("Making API call to:", "/api/v1/Auth/login");

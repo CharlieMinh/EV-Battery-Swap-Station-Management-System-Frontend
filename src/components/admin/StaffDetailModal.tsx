@@ -132,11 +132,32 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
   const handleSave = async () => {
     if (!staffDetail) return;
 
+    const trimmedName = formData.name.trim();
+    const trimmedPhone = formData.phoneNumber.trim();
+
+    // Validate tên bắt buộc
+    if (!trimmedName) {
+      toast.error(t("admin.nameRequired"));
+      return;
+    }
+
+    // Validate SĐT: chỉ 1–11 số
+    if (!trimmedPhone) {
+      toast.error(t("register.phoneRequired"));
+      return;
+    }
+
+    const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
+    if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+      toast.error(t("admin.phoneInvalid"));
+      return;
+    }
+
     try {
       setLoading(true);
       const payload: UpdateUserPayload = {
-        name: formData.name,
-        phoneNumber: formData.phoneNumber,
+        name: trimmedName,
+        phoneNumber: phoneDigitsOnly,
         role: formData.role,
         profilePicture: formData.profilePicture,
         status: formData.status,
@@ -146,19 +167,19 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       toast.success(t("admin.updateSuccess"));
       setStaffDetail({
         ...staffDetail,
-        name: formData.name,
-        phoneNumber: formData.phoneNumber,
+        name: trimmedName,
+        phoneNumber: phoneDigitsOnly,
         profilePicture: formData.profilePicture,
         role: getRoleText(formData.role, t),
         status: formData.status === "0" ? "Active" : "Inactive",
       });
+      setIsEditing(false);
     } catch (error) {
       console.error("Error updating staff:", error);
       toast.error(t("admin.updateFailed"));
     } finally {
       setLoading(false);
     }
-    setIsEditing(false);
   };
 
   const [stations, setStations] = useState<any[]>([]);
@@ -432,6 +453,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                           [item.key]: e.target.value,
                         })
                       }
+                      maxLength={item.key === "phoneNumber" ? 11 : 100}
                       className="border rounded-md p-1 text-gray-700 w-full"
                     />
                   )
