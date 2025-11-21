@@ -1,10 +1,18 @@
 import {
   fetchStationById,
+  fetchBatteryCountByStation,
   type StationDetail,
 } from "@/services/admin/stationService";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/configs/axios";
+import { useLanguage } from "../LanguageContext";
+import { Button } from "../ui/button";
+import {
+  BatteryCharging,
+  ArrowLeft,
+  MapPin,
+} from "lucide-react";
 
 interface StationDetailProps {
   stationId: string;
@@ -12,7 +20,9 @@ interface StationDetailProps {
 }
 
 export function StationDetail({ stationId, onClose }: StationDetailProps) {
+  const { t } = useLanguage();
   const [station, setStation] = useState<StationDetail | null>(null);
+  const [batteryCount, setBatteryCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -25,12 +35,27 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
         setStation(data);
       } catch (err) {
         console.error(err);
-        setError("Không thể tải thông tin trạm");
+        setError(t("admin.stationNotFound"));
       } finally {
         setLoading(false);
       }
     };
     getStationById();
+  }, [stationId]);
+
+  useEffect(() => {
+    async function loadBatteryCount() {
+      try {
+        const count = await fetchBatteryCountByStation(stationId);
+        setBatteryCount(count ?? 0);
+      } catch (error) {
+        console.error("Error fetching battery count:", error);
+        setBatteryCount(0);
+      }
+    }
+    if (stationId) {
+      loadBatteryCount();
+    }
   }, [stationId]);
 
   const handleBookingClick = async () => {
@@ -60,7 +85,7 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
     return (
       <div className="p-4 bg-white shadow-lg rounded-lg max-w-sm relative">
         <p className="text-gray-500 animate-pulse">
-          Đang tải thông tin trạm...
+          {t("admin.loadingData")}
         </p>
       </div>
     );
@@ -75,50 +100,48 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
   if (!station) return null;
 
   return (
-    <div className="p-4 bg-white shadow-lg rounded-lg w-full max-w-md relative">
-      {/* Nút đóng */}
-      <button
-        onClick={onClose}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-xl"
-      >
-        ×
-      </button>
+    <div className="w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+      {/* Header với gradient */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-white hover:text-gray-200 transition-colors"
+          aria-label={t("common.close")}
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="pr-10">
+          <h3 className="text-xl font-bold mb-2">{station.name}</h3>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} />
+            <span className="text-sm opacity-90">{station.address}</span>
+          </div>
+        </div>
+      </div>
 
-      {/* Ảnh */}
-      {station.primaryImageUrl && (
-        <img
-          src={station.primaryImageUrl}
-          alt={station.name}
-          className="w-full h-60 object-cover rounded-md mb-4"
-        />
-      )}
+      {/* Content với số pin hiện có */}
+      <div className="p-4 space-y-4">
+        {/* Current Batteries */}
+        <div className="bg-orange-50 p-4 rounded-lg text-center border-2 border-orange-200">
+          <BatteryCharging className="text-orange-600 mx-auto mb-2" size={32} />
+          <p className="text-sm font-medium text-orange-900 mb-1">{t("admin.currentBatteries")}</p>
+          <p className="text-3xl font-bold text-orange-700">{batteryCount}</p>
+          <p className="text-xs text-orange-600 mt-1">pin sẵn sàng</p>
+        </div>
 
-      {/* Tên trạm */}
-      <h2 className="text-2xl font-bold mb-2">{station.name}</h2>
-
-      {/* Địa chỉ */}
-      <p className="text-gray-700 mb-2">{station.address}</p>
-
-      {/* Giờ mở cửa */}
-      <p className="text-gray-500 mb-2">
-        Giờ hoạt động: {station.openTime} - {station.closeTime}
-      </p>
-
-      {/* Trạng thái mở cửa */}
-      <p
-        className={`font-semibold mb-4 ${station.isOpenNow ? "text-green-600" : "text-red-600"
+        {/* Book Button */}
+        <Button
+          onClick={handleBookingClick}
+          className={`w-full font-semibold py-3 rounded-lg shadow-md ${
+            batteryCount === 0
+              ? "bg-gray-400 cursor-not-allowed text-white"
+              : "bg-orange-500 hover:bg-orange-600 text-white"
           }`}
-      >
-        {station.isOpenNow ? "Đang mở cửa" : "Đã đóng cửa"}
-      </p>
-
-      {/* Nút Đặt lịch */}
-      <button
-        onClick={handleBookingClick}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition-colors"
-      >
-        Đặt lịch
-      </button>
+          disabled={batteryCount === 0}
+        >
+          {batteryCount === 0 ? "Hết pin" : t("driver.booking.bookNow")}
+        </Button>
+      </div>
     </div>
   );
 }
