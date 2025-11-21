@@ -801,7 +801,7 @@ export default function StaffCustomerManagement() {
                         {t("admin.totalSwapsLabel")}
                       </span>
                       <span className="font-medium">
-                        {(c.totalReservations ?? 0).toLocaleString("vi-VN")}
+                        {formatNumber(c.totalReservations ?? 0)}
                       </span>
                     </div>
                     <div>
@@ -809,7 +809,7 @@ export default function StaffCustomerManagement() {
                         {t("admin.totalCompleted")}:{" "}
                       </span>
                       <span className="font-semibold text-emerald-600">
-                        {(c.completedReservations ?? 0).toLocaleString("vi-VN")}
+                        {formatNumber(c.completedReservations ?? 0)}
                       </span>
                     </div>
 

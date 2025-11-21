@@ -139,11 +139,10 @@ export default function Transactions() {
               </div>
                 <Button
                 onClick={() => fetchAll()} // ❌ bỏ toast.info; fetchAll tự hiển thị 1 toast
-                variant="outline"
-                className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                className="h-10 rounded-lg bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
                 disabled={loading}
               >
-                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                 {t("staff.transactions.refresh")}
               </Button>
             </div>
@@ -190,12 +189,17 @@ export default function Transactions() {
                     <td className="px-4 py-3">{p.paymentId}</td>
                     <td className="px-4 py-3">{p.swapId || "—"}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(p.amount || 0).toLocaleString()} đ
+                      {(p.amount || 0).toLocaleString()} {t("staff.transactions.currencyUnit")}
                     </td>
                     <td className="px-4 py-3">{p.method}</td>
                     <td className="px-4 py-3">
                       {p.method === "Cash" ? (
-                        <Button onClick={() => confirmCash(p)} size="sm">
+                        <Button 
+                          onClick={() => confirmCash(p)} 
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
                           {t("staff.cashPayment.buttonConfirm")}
                         </Button>
                       ) : (
@@ -234,7 +238,7 @@ export default function Transactions() {
                     <td className="px-4 py-3">{p.paymentId}</td>
                     <td className="px-4 py-3">{p.swapId || "—"}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(p.amount || 0).toLocaleString()} đ
+                      {(p.amount || 0).toLocaleString()} {t("staff.transactions.currencyUnit")}
                     </td>
                     <td className="px-4 py-3">{p.method}</td>
                     <td className="px-4 py-3">
@@ -244,7 +248,7 @@ export default function Transactions() {
                       <Button
                         onClick={() => finishSwap(p)}
                         size="sm"
-                        className="bg-black text-white"
+                        className="bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
                       >
                         <Check className="h-4 w-4 mr-1" /> {t("staff.transactions.finish")}
                       </Button>

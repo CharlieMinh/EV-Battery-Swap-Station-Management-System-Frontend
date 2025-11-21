@@ -457,7 +457,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       );
       if (found?.relatedComplaintId) {
         setStage("complaintCheck");
-        toast.info(t("staff.queue.info.complaintCheck") || "This is a complaint, opening special inspection panel.");
+        // Removed info toast - using success toast instead
         setIsLoadingComplaint(true);
         try {
           await startComplaintInvestigation(found.relatedComplaintId);
@@ -509,7 +509,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       )
     );
     setStage("readyToSwap");
-    toast.info(t("staff.queue.info.inspectionDone") || "Inspection complete, ready to swap.");
+    toast.success(t("staff.queue.info.inspectionDone") || "Inspection complete, ready to swap.");
   };
 
   const closePanel = (force?: boolean) => {
@@ -610,7 +610,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
             <Button
               onClick={() => setScannerOpen(true)}
-              className="h-10 bg-black hover:bg-gray-800"
+              className="h-10 bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
             >
               <ClipboardCheck className="h-4 w-4 mr-2" />
               {t("staff.queue.button.checkinCamera")}
@@ -710,7 +710,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                 !isFinalState(r) && (
                                   <button
                                     onClick={() => doManualCheckIn(r)}
-                                    className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700 transition"
+                                    className="inline-flex items-center gap-1 rounded bg-orange-600 px-3 py-1.5 text-sm text-white hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
                                     title={t("staff.queue.tooltips.manualCheckin")}
                                   >
                                     <ClipboardCheck className="h-4 w-4" />
@@ -727,9 +727,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                     }
                                     className={`${
                                       isSel && stage === "checking"
-                                        ? "bg-black text-white"
-                                        : "border"
-                                    } rounded px-3 py-1.5 text-sm hover:bg-gray-50 transition`}
+                                        ? "bg-emerald-600 text-white shadow-md"
+                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    } rounded px-3 py-1.5 text-sm shadow-md hover:shadow-lg transition-all`}
                                   >
                                     {isSel && stage === "checking"
                                       ? t("staff.queue.status.checking")
@@ -744,7 +744,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                     onClick={() =>
                                       startSwap(r.reservationId)
                                     }
-                                    className="rounded px-3 py-1.5 text-sm text-white bg-emerald-700 hover:bg-emerald-800 transition"
+                                    className="rounded px-3 py-1.5 text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all"
                                     title={t("staff.queue.tooltips.startSwap")}
                                   >
                                     {t("staff.queue.button.swap")}
@@ -850,9 +850,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                       }}
                                       className={`${
                                         isProcessingComplaint
-                                          ? "bg-emerald-400 cursor-not-allowed"
-                                          : "bg-emerald-600 hover:bg-emerald-700"
-                                      } rounded px-4 py-2 text-sm text-white`}
+                                          ? "bg-orange-400 cursor-not-allowed"
+                                          : "bg-orange-600 hover:bg-orange-700"
+                                      } rounded px-4 py-2 text-sm text-white shadow-md hover:shadow-lg transition-all`}
                                     >
                                       {t("staff.queue.button.confirmFault")}
                                     </button>
@@ -932,7 +932,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                           )
                                         );
                                       }
-                                      toast.success(t("staff.queue.success.swapComplete") || "Swap completed.");
+                                      // Removed duplicate success toast - SwapPanel already shows success with health %
                                       closePanel(true);
                                     }}
                                     onCancel={closePanel}
@@ -1017,7 +1017,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 {t("common.cancel")}
               </button>
               <button
-                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700"
+                className="rounded-lg bg-orange-600 px-3 py-1.5 text-sm text-white hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
                 onClick={confirmPendingCheckIn}
               >
                 {t("staff.queue.button.confirmCheckin")}
