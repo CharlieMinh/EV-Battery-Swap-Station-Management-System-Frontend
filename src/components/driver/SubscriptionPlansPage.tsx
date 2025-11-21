@@ -696,8 +696,8 @@ export function SubscriptionPlansPage() {
                 key={plan.id}
                 className={`flex flex-col relative rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 bg-white"`}
               >
-                {/* Status Badge */}
-                {(() => {
+                {/* Status Badge - Chỉ hiển thị cho admin */}
+                {isAdmin && (() => {
                   // Sử dụng cùng logic như trong filter để đảm bảo nhất quán
                   const isActiveValue = plan.isActive;
                   

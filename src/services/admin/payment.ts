@@ -12,7 +12,7 @@ export interface Payment {
   method: string;
   type: string;
   amount: number;
-  status: number; // ❗ string, không phải number
+  status: number | string; // Can be number (0, 1, 2) or string ("Pending", "Completed", etc.)
   description?: string | null;
   vnpTxnRef?: string | null;
   paymentReference?: string | null;
