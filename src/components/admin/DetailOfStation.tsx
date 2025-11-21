@@ -143,9 +143,45 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
   }, [stationId]);
 
   const handleSave = async () => {
+    if (!stationDetail) return;
+
+    const name = formData.name.trim();
+    const address = formData.address.trim();
+    const city = formData.city.trim();
+
+    // Validate tên trạm: bắt buộc và 1–100 ký tự
+    if (!name || name.length < 1 || name.length > 100) {
+      toast.error(t("admin.stationNameLengthHint"));
+      return;
+    }
+
+    // Validate thành phố: bắt buộc
+    if (!city) {
+      toast.error(t("admin.cityRequired"));
+      return;
+    }
+
+    // Validate địa chỉ & thành phố: giới hạn 1–256 ký tự
+    if (
+      !address ||
+      address.length < 1 ||
+      address.length > 256 ||
+      city.length < 1 ||
+      city.length > 256
+    ) {
+      toast.error(t("admin.addressLengthHint"));
+      return;
+    }
+
     setSaving(true);
     try {
-      const updatedData = { ...stationDetail, ...formData };
+      const updatedData = {
+        ...stationDetail,
+        ...formData,
+        name,
+        address,
+        city,
+      };
       await updateStation(stationId, updatedData);
       setStationDetail(updatedData as StationDetail);
       setIsEditing(false);
@@ -292,6 +328,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleChange("name", e.target.value)}
+                      maxLength={100}
                       className="text-3xl font-extrabold text-gray-900 border-b-2 border-orange-400 focus:outline-none bg-transparent"
                     />
                   ) : (
@@ -418,6 +455,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                       type="text"
                       value={formData.city}
                       onChange={(e) => handleChange("city", e.target.value)}
+                      maxLength={256}
                       className="border-b border-gray-400 flex-1 focus:outline-none"
                     />
                   ) : (
@@ -433,6 +471,7 @@ export function DetailOfStation({ stationId, onClose }: DetailOfStationProps) {
                     <input
                       value={formData.address}
                       onChange={(e) => handleChange("address", e.target.value)}
+                      maxLength={256}
                       className="border-b border-gray-400 flex-1 focus:outline-none"
                     />
                   ) : (

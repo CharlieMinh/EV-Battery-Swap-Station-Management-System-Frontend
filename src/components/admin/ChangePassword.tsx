@@ -18,6 +18,28 @@ export default function ChangePassword() {
       return;
     }
 
+    // Validate mật khẩu mới: độ dài & độ mạnh
+    if (newPassword.length < 8) {
+      toast.error(t("admin.passwordTooShort"));
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error(t("admin.passwordNoUppercase"));
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      toast.error(t("admin.passwordNoLowercase"));
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error(t("admin.passwordNoDigit"));
+      return;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]\\\/~`+=;]/.test(newPassword)) {
+      toast.error(t("admin.passwordNoSpecial"));
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast.error(t("admin.passwordMismatch"));
       return;
@@ -36,7 +58,15 @@ export default function ChangePassword() {
       setConfirmPassword("");
     } catch (error: any) {
       console.error("Error changing password:", error);
-      toast.error(error.response?.data?.message || t("admin.changePasswordFailed"));
+      const data = error.response?.data;
+      const rawMessage: string | undefined =
+        data?.message || data?.error || data?.Message;
+
+      if (rawMessage && rawMessage.toLowerCase().includes("current password")) {
+        toast.error(t("admin.currentPasswordIncorrect"));
+      } else {
+        toast.error(rawMessage || t("admin.changePasswordFailed"));
+      }
     } finally {
       setLoading(false);
     }

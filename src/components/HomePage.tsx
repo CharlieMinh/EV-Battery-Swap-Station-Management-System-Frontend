@@ -498,7 +498,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                         height: isScrolled ? "2rem" : "2.5rem",
                         padding: isScrolled ? "0.5rem" : "0.75rem",
                       }}
-                    >
+                      >
                       <Avatar
                         className="mr-2 transition-all duration-500 ease-out will-change-transform"
                         style={{
@@ -507,7 +507,13 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                         }}
                       >
                         <AvatarImage
-                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`}
+                          src={
+                            user.avatar
+                              ? `${user.avatar}?v=${Date.now()}`
+                              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  user.name || "User"
+                                )}`
+                          }
                           alt={user.name}
                         />
                         <AvatarFallback

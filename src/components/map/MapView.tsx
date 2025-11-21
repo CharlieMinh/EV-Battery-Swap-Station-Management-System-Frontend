@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import useGeoLocation from "./useGeoLocation";
 import { Map } from "leaflet";
 import { FaCrosshairs } from "react-icons/fa";
+import { ArrowLeft } from "lucide-react";
 import { Coordinates, Station } from "@/services/admin/stationService";
 import { StationDetail } from "./StationDetail";
 interface MapState {
@@ -158,8 +159,17 @@ export default function MapView() {
 
   return (
     <div className="w-full h-screen relative">
+      {/* Nút Back */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-5 left-5 z-[9999] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+        title="Quay lại"
+      >
+        <ArrowLeft size={20} />
+      </button>
+
       {selectedStationId && (
-        <div className="absolute top-5 left-5 z-[9999]">
+        <div className="absolute top-5 left-20 z-[9999]">
           <StationDetail
             stationId={selectedStationId}
             onClose={() => setSelectedStationId(null)}
@@ -169,6 +179,7 @@ export default function MapView() {
       <MapContainer
         center={[userLocation.lat, userLocation.lng]}
         zoom={ZOOM_LEVEL}
+        zoomControl={false}
         ref={mapRef}
       >
         <TileLayer
@@ -203,6 +214,39 @@ export default function MapView() {
           );
         })}
 
+        {/* Zoom Controls - Bottom Left Corner */}
+        <div className="absolute bottom-20 left-5 z-[9999] flex flex-col gap-2">
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom();
+                mapRef.current.setZoom(currentZoom + 1);
+              }
+            }}
+            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+            title="Zoom In"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom();
+                mapRef.current.setZoom(currentZoom - 1);
+              }
+            }}
+            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+            title="Zoom Out"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 12h14"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Current Location Button - Bottom Right */}
         <button
           onClick={showCurrentLocation}
           className="absolute bottom-5 right-5 z-[9999] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"

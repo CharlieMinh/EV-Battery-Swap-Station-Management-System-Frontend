@@ -35,16 +35,27 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const name = formData.name.trim();
+    const address = formData.address.trim();
+    const city = formData.city.trim();
+
+    // Validate rỗng
+    if (!name || !address || !city) {
+      toast.error(t("admin.fillAllFields"));
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const fullAddress = `${formData.address}, ${formData.city}`;
+      const fullAddress = `${address}, ${city}`;
       console.log("🔍 Đang geocode địa chỉ:", fullAddress);
 
-      const coords = await geocodeAddress(fullAddress, formData.city);
+      const coords = await geocodeAddress(fullAddress, city);
 
       if (!coords) {
-        toast.error(t("admin.geocodeError"));
+        toast.error(t("admin.addressLengthHint"));
         setLoading(false);
         return;
       }
@@ -52,9 +63,9 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
       console.log("📍 Tọa độ tìm được:", coords);
 
       const newStation = {
-        name: formData.name.trim(),
-        address: formData.address.trim(),
-        city: formData.city.trim(),
+        name,
+        address,
+        city,
         lat: coords.lat,
         lng: coords.lng,
         isActive: formData.isActive,
@@ -105,6 +116,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
               name="name"
               value={formData.name}
               onChange={handleChange}
+              maxLength={256}
               className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
@@ -120,6 +132,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
               value={formData.address}
               onChange={handleChange}
               placeholder={t("admin.addressPlaceholder")}
+              maxLength={256}
               className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
@@ -135,6 +148,7 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
               value={formData.city}
               onChange={handleChange}
               placeholder={t("admin.cityPlaceholder")}
+              maxLength={256}
               className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />

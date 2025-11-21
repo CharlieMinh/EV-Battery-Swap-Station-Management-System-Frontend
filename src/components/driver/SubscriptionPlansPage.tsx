@@ -341,17 +341,22 @@ export function SubscriptionPlansPage() {
         setDisplayMaxSwaps("");
       } else {
         const numValue = Number(numericValue);
-        // Validate: giá trị phải >= 1 cho gói có giới hạn
-        if (numValue >= 1) {
+
+        // Validate: giá trị phải nằm trong khoảng 1 - 100 cho gói có giới hạn
+        if (numValue < 1 || numValue > 100) {
+          toast.warning("Số lượt đổi tối đa phải nằm trong khoảng từ 1 đến 100");
+          const clamped = Math.min(100, Math.max(1, numValue));
+          setFormData({
+            ...formData,
+            maxSwapsPerMonth: clamped,
+          });
+          setDisplayMaxSwaps(clamped.toLocaleString("vi-VN"));
+        } else {
           setFormData({
             ...formData,
             maxSwapsPerMonth: numValue,
           });
           setDisplayMaxSwaps(numValue.toLocaleString("vi-VN"));
-        } else {
-          // Nếu < 1, giữ giá trị cũ hoặc set về 1
-          toast.warning("Số lượt đổi tối đa phải lớn hơn hoặc bằng 1");
-          setDisplayMaxSwaps(formData.maxSwapsPerMonth >= 1 ? formData.maxSwapsPerMonth.toLocaleString("vi-VN") : "1");
         }
       }
     }
@@ -997,6 +1002,7 @@ export function SubscriptionPlansPage() {
                 <Input
                   placeholder="Nhập tên gói..."
                   value={formData.name}
+                  maxLength={100}
                   onChange={(e) => {
                     setFormData({ ...formData, name: e.target.value });
                     if (errors.name) {
@@ -1294,8 +1300,12 @@ export function SubscriptionPlansPage() {
                   const newErrors: Record<string, string> = {};
 
                   // Validate các trường bắt buộc
-                  if (!formData.name || formData.name.trim() === "") {
+                  const trimmedName = formData.name?.trim() || "";
+
+                  if (!trimmedName) {
                     newErrors.name = "Vui lòng nhập tên gói";
+                  } else if (trimmedName.length < 1 || trimmedName.length > 100) {
+                    newErrors.name = "Tên gói phải từ 1 đến 100 ký tự";
                   }
 
                   if (!formData.description || formData.description.trim() === "") {
@@ -1312,8 +1322,13 @@ export function SubscriptionPlansPage() {
 
                   // Validate số lượt đổi tối đa cho gói có giới hạn
                   if (!isUnlimitedPlan) {
-                    if (!formData.maxSwapsPerMonth || formData.maxSwapsPerMonth < 1) {
-                      newErrors.maxSwapsPerMonth = "Số lượt đổi tối đa phải lớn hơn hoặc bằng 1";
+                    if (
+                      !formData.maxSwapsPerMonth ||
+                      formData.maxSwapsPerMonth < 1 ||
+                      formData.maxSwapsPerMonth > 100
+                    ) {
+                      newErrors.maxSwapsPerMonth =
+                        "Số lượt đổi tối đa phải nằm trong khoảng từ 1 đến 100";
                     }
                   }
 
