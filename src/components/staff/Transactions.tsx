@@ -10,6 +10,7 @@ import { RefreshCw, Check, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 import { formatDateTime } from "../../utils/dateTimeUtils";
 
 export default function Transactions() {
@@ -19,6 +20,8 @@ export default function Transactions() {
   const [paid, setPaid] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>("");
+
+  const { t } = useLanguage();
 
   const toastOpts = {
     position: "top-right" as const,
@@ -65,12 +68,14 @@ export default function Transactions() {
       setPaid(paidList);
 
       if (!silent) {
-        tFetch.success(`Đã tải ${pend.length} pending, ${paidList.length} đã thanh toán.`);
+        const msg = t("staff.transactions.fetchSuccess")
+          .replace("{pending}", String(pend.length))
+          .replace("{paid}", String(paidList.length));
+        tFetch.success(msg);
       }
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message || e?.message || "Không tải được danh sách giao dịch.";
-      setErr("Không tải được danh sách giao dịch.");
+      const msg = e?.response?.data?.message || e?.message || t("staff.transactions.errorLoadList");
+      setErr(t("staff.transactions.errorLoadList"));
       setPending([]);
       setPaid([]);
       if (!silent) tFetch.error(msg);
@@ -87,10 +92,10 @@ export default function Transactions() {
   const confirmCash = async (p: Payment) => {
     try {
       await completeCashPayment(p.paymentId);
-      tConfirm.success("Đã xác nhận thanh toán tiền mặt.");
+      tConfirm.success(t("staff.cashPayment.successConfirm"));
       await fetchAll({ silent: true }); // tránh thêm toast thứ 2 khi làm mới
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || "Xác nhận tiền mặt thất bại.";
+      const msg = e?.response?.data?.message || e?.message || t("staff.cashPayment.errorConfirmFailed");
       tConfirm.error(msg);
     }
   };
@@ -99,10 +104,10 @@ export default function Transactions() {
     try {
       if (!p.swapId) return;
       await completeSwap(p.swapId);
-      tFinish.success("Đã hoàn tất giao dịch.");
+      tFinish.success(t("staff.transactions.finishSuccess"));
       await fetchAll({ silent: true }); // tránh toast trùng
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || "Hoàn tất giao dịch thất bại.";
+      const msg = e?.response?.data?.message || e?.message || t("staff.transactions.finishError");
       tFinish.error(msg);
     }
   };
@@ -110,12 +115,12 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       <Card className="border border-orange-200 rounded-lg">
-        <CardHeader>
+          <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-orange-600">Giao dịch</CardTitle>
+            <CardTitle className="text-orange-600">{t("staff.transactions.title")}</CardTitle>
             <div className="flex items-end gap-2">
               <div>
-                <label className="text-xs block text-gray-500 mb-1">Từ ngày</label>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.transactions.fromDate")}</label>
                 <input
                   type="date"
                   className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-40 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -124,7 +129,7 @@ export default function Transactions() {
                 />
               </div>
               <div>
-                <label className="text-xs block text-gray-500 mb-1">Đến ngày</label>
+                <label className="text-xs block text-gray-500 mb-1">{t("staff.transactions.toDate")}</label>
                 <input
                   type="date"
                   className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-40 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -132,14 +137,14 @@ export default function Transactions() {
                   onChange={(e) => setTo(e.target.value)}
                 />
               </div>
-              <Button
+                <Button
                 onClick={() => fetchAll()} // ❌ bỏ toast.info; fetchAll tự hiển thị 1 toast
                 variant="outline"
                 className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                Làm mới
+                {t("staff.transactions.refresh")}
               </Button>
             </div>
           </div>
@@ -150,17 +155,16 @@ export default function Transactions() {
               {err}
             </div>
           )}
-
-          <h3 className="text-lg font-semibold mb-3 text-gray-700">Đang chờ thanh toán</h3>
+          <h3 className="text-lg font-semibold mb-3 text-gray-700">{t("staff.transactions.pendingTitle")}</h3>
           <div className="overflow-x-auto rounded-xl border mb-6">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Payment</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Swap</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Số tiền</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Method</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Thao tác</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.payment")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.swap")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.amount")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.method")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +173,7 @@ export default function Transactions() {
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                        <span>Đang tải...</span>
+                        <span>{t("common.loading")}</span>
                       </div>
                     </td>
                   </tr>
@@ -177,7 +181,7 @@ export default function Transactions() {
                 {!loading && pending.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      Không có payment pending
+                      {t("staff.transactions.noPending")}
                     </td>
                   </tr>
                 )}
@@ -192,10 +196,10 @@ export default function Transactions() {
                     <td className="px-4 py-3">
                       {p.method === "Cash" ? (
                         <Button onClick={() => confirmCash(p)} size="sm">
-                          Xác nhận tiền mặt
+                          {t("staff.cashPayment.buttonConfirm")}
                         </Button>
                       ) : (
-                        <span className="text-xs text-gray-500">Chờ cổng thanh toán</span>
+                        <span className="text-xs text-gray-500">{t("staff.cashPayment.statusPending")}</span>
                       )}
                     </td>
                   </tr>
@@ -204,24 +208,24 @@ export default function Transactions() {
             </table>
           </div>
 
-          <h3 className="text-lg font-semibold mb-3 text-gray-700">Đã thanh toán</h3>
+          <h3 className="text-lg font-semibold mb-3 text-gray-700">{t("staff.transactions.paidTitle")}</h3>
           <div className="overflow-x-auto rounded-xl border">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Payment</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Swap</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Số tiền</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Method</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Thời gian</th>
-                  <th className="px-4 py-3 text-gray-600 font-semibold">Hoàn tất</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.payment")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.swap")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.amount")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.method")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.table.time")}</th>
+                  <th className="px-4 py-3 text-gray-600 font-semibold">{t("staff.transactions.finish")}</th>
                 </tr>
               </thead>
               <tbody>
                 {!loading && paid.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                      Không có dữ liệu
+                      {t("staff.transactions.noData")}
                     </td>
                   </tr>
                 )}
@@ -242,7 +246,7 @@ export default function Transactions() {
                         size="sm"
                         className="bg-black text-white"
                       >
-                        <Check className="h-4 w-4 mr-1" /> Hoàn tất
+                        <Check className="h-4 w-4 mr-1" /> {t("staff.transactions.finish")}
                       </Button>
                     </td>
                   </tr>

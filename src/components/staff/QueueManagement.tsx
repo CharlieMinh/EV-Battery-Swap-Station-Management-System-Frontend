@@ -6,6 +6,7 @@ import {
   type Reservation,
   getUserNamesBatch,
 } from "../../services/staff/staffApi";
+import { useLanguage } from "../LanguageContext";
 import CheckInManagement from "./CheckInManagement";
 import InspectionPanel from "./InspectionPanel";
 import SwapPanel from "./SwapPanel";
@@ -49,17 +50,17 @@ type PendingCheckIn = {
 
 /* ====== options/normalize/badge/label giữ nguyên ====== */
 const STATUS_OPTIONS = [
-  { label: "Tất cả", value: "" },
-  { label: "Chờ đặt lịch", value: "PendingScheduling" },
-  { label: "Đã đặt lịch", value: "Scheduled" },
-  { label: "Đã check-in", value: "CheckedIn" },
-  { label: "Đang kiểm tra", value: "Investigating" },
-  { label: "Xác nhận lỗi", value: "Confirmed" },
-  { label: "Từ chối", value: "Rejected" },
-  { label: "Hoàn tất", value: "Resolved" },
-  { label: "Đã hoàn tất", value: "Completed" },
-  { label: "Chờ thanh toán", value: "PendingPayment" },
-  { label: "Đã thanh toán", value: "Paid" },
+  { label: "all", value: "" },
+  { label: "pendingScheduling", value: "PendingScheduling" },
+  { label: "scheduled", value: "Scheduled" },
+  { label: "checkedIn", value: "CheckedIn" },
+  { label: "investigating", value: "Investigating" },
+  { label: "confirmed", value: "Confirmed" },
+  { label: "rejected", value: "Rejected" },
+  { label: "resolved", value: "Resolved" },
+  { label: "completed", value: "Completed" },
+  { label: "pendingPayment", value: "PendingPayment" },
+  { label: "paid", value: "Paid" },
 ];
 
 function normalizeStatusKey(raw?: string): string {
@@ -82,34 +83,35 @@ function normalizeStatusKey(raw?: string): string {
   return raw || "";
 }
 
-const statusToVi = (s?: string) => {
-  switch ((s || "").toLowerCase()) {
+const statusToVi = (s?: string, t?: (k: string) => string) => {
+  const key = ((s || "").toLowerCase() || "").replace(/\s|_/g, "");
+  switch (key) {
     case "pendingscheduling":
-      return "Chờ đặt lịch";
+      return t ? t("staff.queue.status.pendingScheduling") : "Pending scheduling";
     case "pending":
-      return "Đang chờ";
+      return t ? t("staff.queue.status.pending") : "Pending";
     case "scheduled":
-      return "Đã đặt lịch";
+      return t ? t("staff.queue.status.scheduled") : "Scheduled";
     case "checkedin":
-      return "Đã check-in";
+      return t ? t("staff.queue.status.checkedIn") : "Checked in";
     case "investigating":
-      return "Đang kiểm tra";
+      return t ? t("staff.queue.status.investigating") : "Investigating";
     case "confirmed":
     case "ready":
     case "readytoswap":
     case "ready_to_swap":
-      return "Sẵn sàng đổi pin";
+      return t ? t("staff.queue.status.readyToSwap") : "Ready to swap";
     case "rejected":
-      return "Từ chối";
+      return t ? t("staff.queue.status.rejected") : "Rejected";
     case "resolved":
-      return "Hoàn tất";
+      return t ? t("staff.queue.status.resolved") : "Resolved";
     case "completed":
-      return "Đã hoàn tất";
+      return t ? t("staff.queue.status.completed") : "Completed";
     case "pendingpayment":
     case "awaitingpayment":
-      return "Chờ thanh toán";
+      return t ? t("staff.queue.status.pendingPayment") : "Pending payment";
     case "paid":
-      return "Đã thanh toán";
+      return t ? t("staff.queue.status.paid") : "Paid";
     default:
       return s || "—";
   }
@@ -210,6 +212,7 @@ function displayPlate(r: any): string {
 }
 
 export default function QueueManagement({ stationId }: { stationId: string | number }) {
+  const { t } = useLanguage();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [status, setStatus] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -243,7 +246,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       // });
     } catch (e) {
       setList([]);
-      toast.error("Không thể tải danh sách lượt đặt lịch.");
+      toast.error(t("staff.queue.errors.fetchList") || "Cannot load reservation list.");
     } finally {
       setLoading(false);
     }
@@ -279,11 +282,11 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         const map = await getUserNamesBatch(ids);
         setNameMap((prev) => ({ ...prev, ...map }));
       } catch (err: any) {
-        const msg =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Không thể lấy tên khách hàng.";
-        toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
+          const msg =
+            err?.response?.data?.message ||
+            err?.message ||
+            t("staff.queue.errors.fetchNames");
+          toast.error(msg, { ...toastOpts, toastId: TOAST_ID.namesErr });
       }
     })();
   }, [list]);
@@ -300,7 +303,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         const displayName =
           (r.userId && nameMap[r.userId]) ||
           r.userName ||
-          (r.userId ? `Khách #${r.userId.slice(-4)}` : "");
+          (r.userId ? t("staff.inspection.guestShort").replace("{id}", String(r.userId).slice(-4)) : "");
         return (
           displayName.toLowerCase().includes(q) ||
           (r.batteryModelName || "").toLowerCase().includes(q) ||
@@ -381,10 +384,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
    * ==================================================== */
   const doCheckInByQr = async (qrRaw: string) => {
     const rid = tryExtractReservationIdFromQR(qrRaw);
-    if (!rid) return toast.error("❌ Mã QR không hợp lệ.");
+    if (!rid) return toast.error(t("staff.queue.errors.invalidQr") || "Invalid QR code.");
     try {
       const detail = await fetchReservationDetail(rid);
-      if (!detail) return toast.error("Không tìm thấy thông tin đặt chỗ.");
+      if (!detail) return toast.error(t("staff.queue.errors.notFound") || "Reservation not found.");
 
       // Lưu tạm để staff xem và xác nhận
       setPendingCheckIn({ rid, qrRaw, detail });
@@ -393,7 +396,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       toast.error(
         err?.response?.data?.message ||
           err?.message ||
-          "Không thể đọc thông tin từ QR."
+          t("staff.queue.errors.readQr") ||
+          "Cannot read QR info."
       );
     }
   };
@@ -405,7 +409,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
     try {
       await checkInReservation(rid, qrRaw);
-      toast.success("✅ Check-in thành công!");
+      toast.success(t("staff.queue.success.checkin") || "Check-in successful!");
 
       if ((detail as any).relatedComplaintId) {
         setStage("complaintCheck");
@@ -430,7 +434,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       toast.error(
         err?.response?.data?.message ||
           err?.message ||
-          "Không thể check-in bằng QR."
+          t("staff.queue.errors.checkinQr") ||
+          "Cannot check-in with QR."
       );
     } finally {
       setPendingCheckIn(null);
@@ -441,9 +446,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     try {
       const qr = reservation.qrCode || "";
       if (!qr)
-        return toast.error("❌ Không tìm thấy QR code hợp lệ cho reservation này.");
+        return toast.error(t("staff.queue.errors.missingQr") || "No valid QR code for this reservation.");
       await checkInReservation(reservation.reservationId, qr);
-      toast.success("✅ Check-in thành công!");
+      toast.success(t("staff.queue.success.checkin") || "Check-in successful!");
       await refreshReservationRow(reservation.reservationId);
       setSelectedId(reservation.reservationId);
 
@@ -452,7 +457,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       );
       if (found?.relatedComplaintId) {
         setStage("complaintCheck");
-        toast.info("⚠️ Đây là lượt khiếu nại, mở panel kiểm tra đặc biệt");
+        toast.info(t("staff.queue.info.complaintCheck") || "This is a complaint, opening special inspection panel.");
         setIsLoadingComplaint(true);
         try {
           await startComplaintInvestigation(found.relatedComplaintId);
@@ -469,7 +474,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         err?.response?.data?.error?.message ||
         err?.response?.data?.message ||
         err?.message ||
-        "Check-in thất bại.";
+        t("staff.queue.errors.checkinFailed") ||
+        "Check-in failed.";
       toast.error("❌ " + msg);
     }
   };
@@ -503,7 +509,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       )
     );
     setStage("readyToSwap");
-    toast.info("🔍 Kiểm tra pin hoàn tất, sẵn sàng đổi pin.");
+    toast.info(t("staff.queue.info.inspectionDone") || "Inspection complete, ready to swap.");
   };
 
   const closePanel = (force?: boolean) => {
@@ -511,7 +517,6 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     setSelectedId(null);
     setStage("idle");
   };
-
 
   // ⭐ Helper: lấy tên khách cho modal pendingCheckIn
   const getPendingCustomerName = (): string => {
@@ -523,7 +528,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const n =
         (fromList.userId && nameMap[fromList.userId]) ||
         fromList.userName ||
-        (fromList.userId ? `Khách #${fromList.userId.slice(-4)}` : "");
+        (fromList.userId ? t("staff.inspection.guestShort").replace("{id}", String(fromList.userId).slice(-4)) : "");
       if (n) return n;
     }
 
@@ -538,7 +543,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
     if (detailName) return detailName;
 
     // 3) fallback cuối cùng
-    if (d.userId) return `Khách #${String(d.userId).slice(-4)}`;
+    if (d.userId) return t("staff.inspection.guestShort").replace("{id}", String(d.userId).slice(-4));
     return "—";
   };
 
@@ -549,16 +554,14 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-orange-600">
-              Quản Lý Hàng Chờ
+              {t("staff.queue.title")}
             </h1>
-            <p className="text-gray-600 mt-1 text-sm">
-              Theo dõi & xử lý lượt đổi pin trong ngày
-            </p>
+            <p className="text-gray-600 mt-1 text-sm">{t("staff.queue.subtitle")}</p>
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="text-xs block text-gray-600 mb-1">Ngày</label>
+              <label className="text-xs block text-gray-600 mb-1">{t("staff.queue.label.date")}</label>
               <input
                 type="date"
                 className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-44 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
@@ -568,9 +571,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
             </div>
 
             <div>
-              <label className="text-xs block text-gray-600 mb-1">
-                Trạng thái
-              </label>
+              <label className="text-xs block text-gray-600 mb-1">{t("staff.queue.label.status")}</label>
               <select
                 className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-56 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors hover:border-gray-400"
                 value={status}
@@ -578,20 +579,18 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value || "ALL"} value={opt.value}>
-                    {opt.label}
+                    {t(`staff.queue.status.${opt.label}`)}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="text-xs block text-gray-600 mb-1">
-                Tìm kiếm
-              </label>
+              <label className="text-xs block text-gray-600 mb-1">{t("staff.queue.label.search")}</label>
               <input
                 type="text"
                 className="h-10 border-2 border-gray-300 rounded-lg px-3 py-2 w-60 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                placeholder="Tên, model pin, biển số..."
+                placeholder={t("staff.queue.placeholder.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -606,7 +605,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               className="h-10 border-orange-600 text-orange-600 hover:bg-orange-50"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Làm mới
+              {t("staff.queue.button.refresh")}
             </Button>
 
             <Button
@@ -614,7 +613,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
               className="h-10 bg-black hover:bg-gray-800"
             >
               <ClipboardCheck className="h-4 w-4 mr-2" />
-              Check-in bằng camera
+              {t("staff.queue.button.checkinCamera")}
             </Button>
           </div>
         </div>
@@ -622,21 +621,21 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
       {/* Danh sách bảng */}
       <section className="rounded-2xl bg-white shadow-lg p-5 border border-orange-200">
-        <h3 className="text-lg font-semibold mb-3">Danh sách hàng chờ</h3>
+        <h3 className="text-lg font-semibold mb-3">{t("staff.queue.list.title")}</h3>
 
         <div className="rounded-xl border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full table-fixed text-sm">
               <thead className="bg-gray-50">
                 <tr className="text-gray-600">
-                  <th className="px-4 py-3 text-left w-56">Tên khách hàng</th>
-                  <th className="px-4 py-3 text-left w-48">Model pin</th>
-                  <th className="px-4 py-3 text-left w-48">Xe</th>
-                  <th className="px-4 py-3 text-left w-40">Biển số</th>
+                  <th className="px-4 py-3 text-left w-56">{t("staff.queue.table.customer")}</th>
+                  <th className="px-4 py-3 text-left w-48">{t("staff.queue.table.model")}</th>
+                  <th className="px-4 py-3 text-left w-48">{t("staff.queue.table.vehicle")}</th>
+                  <th className="px-4 py-3 text-left w-40">{t("staff.queue.table.plate")}</th>
                   {/* ⭐ rộng hơn để badge không bị xuống dòng */}
-                  <th className="px-4 py-3 text-left w-52">Trạng thái</th>
-                  <th className="px-4 py-3 text-left w-48">Slot Start - End</th>
-                  <th className="px-4 py-3 text-right w-56">Thao tác</th>
+                  <th className="px-4 py-3 text-left w-52">{t("staff.queue.table.status")}</th>
+                  <th className="px-4 py-3 text-left w-48">{t("staff.queue.table.slot")}</th>
+                  <th className="px-4 py-3 text-right w-56">{t("staff.queue.table.actions")}</th>
                 </tr>
               </thead>
 
@@ -647,9 +646,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       colSpan={7}
                       className="px-4 py-8 text-center text-gray-500"
                     >
-                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                        <span>Đang tải…</span>
+                        <span>{t("common.loading")}</span>
                       </div>
                     </td>
                   </tr>
@@ -661,7 +660,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       colSpan={7}
                       className="px-4 py-8 text-center text-gray-500"
                     >
-                      Không có lượt nào
+                      {t("staff.queue.noReservations")}
                     </td>
                   </tr>
                 )}
@@ -673,7 +672,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                     const displayName =
                       (r.userId && nameMap[r.userId]) ||
                       r.userName ||
-                      (r.userId ? `Khách #${r.userId.slice(-4)}` : "—");
+                      (r.userId ? t("staff.inspection.guestShort").replace("{id}", String(r.userId).slice(-4)) : "—");
 
                     return (
                       <React.Fragment key={r.reservationId}>
@@ -697,7 +696,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                 r.status
                               )}`}
                             >
-                              {statusToVi(r.status)}
+                              {statusToVi(r.status, t)}
                             </span>
                           </td>
                           <td className="px-4 py-3 align-middle">
@@ -712,10 +711,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                   <button
                                     onClick={() => doManualCheckIn(r)}
                                     className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700 transition"
-                                    title="Check-in thủ công (không cần quét QR)"
+                                    title={t("staff.queue.tooltips.manualCheckin")}
                                   >
                                     <ClipboardCheck className="h-4 w-4" />
-                                    Check-in
+                                    {t("staff.queue.button.checkin")}
                                   </button>
                                 )}
 
@@ -733,8 +732,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                     } rounded px-3 py-1.5 text-sm hover:bg-gray-50 transition`}
                                   >
                                     {isSel && stage === "checking"
-                                      ? "Đang kiểm tra"
-                                      : "Kiểm tra pin"}
+                                      ? t("staff.queue.status.checking")
+                                      : t("staff.queue.button.inspect")}
                                   </button>
                                 )}
 
@@ -746,9 +745,9 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                       startSwap(r.reservationId)
                                     }
                                     className="rounded px-3 py-1.5 text-sm text-white bg-emerald-700 hover:bg-emerald-800 transition"
-                                    title="Tiến hành thay pin"
+                                    title={t("staff.queue.tooltips.startSwap")}
                                   >
-                                    Thay pin
+                                    {t("staff.queue.button.swap")}
                                   </button>
                                 )}
 
@@ -779,21 +778,20 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                 <div className="space-y-3">
                                   {isLoadingComplaint ? (
                                     <div className="text-sm text-gray-500 italic">
-                                      Đang tải thông tin khiếu nại...
+                                      {t("staff.queue.info.loadingComplaint")}
                                     </div>
                                   ) : complaintDetail ? (
                                     <div className="border rounded-lg p-3 bg-amber-50 border-amber-200">
                                       <h4 className="font-semibold text-amber-700">
-                                        📋 Thông tin khiếu nại
+                                        📋 {t("staff.queue.labels.complaintInfo")}
                                       </h4>
                                       <p className="text-sm text-gray-700 mt-1">
-                                        {complaintDetail.description ||
-                                          "Không có mô tả."}
+                                        {complaintDetail.description || t("staff.queue.labels.noDescription")}
                                       </p>
                                     </div>
                                   ) : (
                                     <div className="text-sm text-gray-500 italic">
-                                      Không tìm thấy dữ liệu khiếu nại.
+                                      {t("staff.queue.errors.complaintNotFound")}
                                     </div>
                                   )}
 
@@ -815,16 +813,16 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                         try {
                                           if (!complaintDetail?.id)
                                             return toast.error(
-                                              "❌ Không tìm thấy complaintId!"
+                                              t("staff.queue.errors.noComplaintId") || "Complaint ID not found!"
                                             );
                                           setIsProcessingComplaint(true);
                                           await resolveComplaint(
                                             complaintDetail.id,
                                             "Confirmed",
-                                            "Xác nhận pin lỗi, chuẩn bị Re-swap."
+                                            t("staff.queue.messages.confirmFault")
                                           );
                                           toast.success(
-                                            "✅ Đã xác nhận lỗi, tiến hành Re-swap..."
+                                            t("staff.queue.success.confirmFault") || "Fault confirmed, proceeding to Re-swap..."
                                           );
                                           await finalizeComplaintReswap(
                                             complaintDetail.id,
@@ -832,7 +830,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                             batteryHealthFromInspection
                                           );
                                           toast.success(
-                                            "⚡ Hoàn tất đổi pin miễn phí (Re-swap)!"
+                                            t("staff.queue.success.reswapComplete") || "Free Re-swap complete!"
                                           );
                                           if (selectedId)
                                             await refreshReservationRow(
@@ -843,7 +841,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                         } catch (err: any) {
                                           toast.error(
                                             err?.response?.data?.message ||
-                                              "Hoàn tất Re-swap thất bại!"
+                                              t("staff.queue.errors.reswapFailed") ||
+                                              "Re-swap completion failed!"
                                           );
                                         } finally {
                                           setIsProcessingComplaint(false);
@@ -855,7 +854,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                           : "bg-emerald-600 hover:bg-emerald-700"
                                       } rounded px-4 py-2 text-sm text-white`}
                                     >
-                                      ✅ Xác nhận lỗi (Re-swap)
+                                      {t("staff.queue.button.confirmFault")}
                                     </button>
 
                                     <button
@@ -864,17 +863,17 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                         try {
                                           if (!complaintDetail?.id)
                                             return toast.error(
-                                              "❌ Không tìm thấy complaintId!"
+                                              t("staff.queue.errors.noComplaintId") || "Complaint ID not found!"
                                             );
                                           const notes = prompt(
-                                            "Nhập ghi chú từ chối (ít nhất 10 ký tự):"
+                                            t("staff.queue.prompts.rejectNote")
                                           );
                                           if (
                                             !notes ||
                                             notes.trim().length < 10
                                           )
                                             return toast.error(
-                                              "Ghi chú phải ít nhất 10 ký tự!"
+                                              t("staff.queue.errors.rejectNoteShort") || "Notes must be at least 10 characters!"
                                             );
                                           setIsProcessingComplaint(true);
                                           await resolveComplaint(
@@ -883,7 +882,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                             notes.trim()
                                           );
                                           toast.success(
-                                            "🚫 Đã từ chối khiếu nại."
+                                            t("staff.queue.success.rejectComplaint") || "Complaint rejected."
                                           );
                                           if (selectedId)
                                             await refreshReservationRow(
@@ -894,7 +893,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                         } catch (err: any) {
                                           toast.error(
                                             err?.response?.data?.message ||
-                                              "Từ chối khiếu nại thất bại!"
+                                              t("staff.queue.errors.rejectFailed") ||
+                                              "Rejecting complaint failed!"
                                           );
                                         } finally {
                                           setIsProcessingComplaint(false);
@@ -906,7 +906,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                           : "bg-rose-600 hover:bg-rose-700"
                                       } rounded px-4 py-2 text-sm text-white`}
                                     >
-                                      ❌ Từ chối khiếu nại
+                                      {t("staff.queue.button.rejectComplaint")}
                                     </button>
                                   </div>
                                 </div>
@@ -932,7 +932,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                           )
                                         );
                                       }
-                                      toast.success("✅ Hoàn tất đổi pin.");
+                                      toast.success(t("staff.queue.success.swapComplete") || "Swap completed.");
                                       closePanel(true);
                                     }}
                                     onCancel={closePanel}
@@ -962,28 +962,26 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       {pendingCheckIn && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-lg">
-            <h3 className="text-lg font-semibold mb-1">Xác nhận Check-in</h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Kiểm tra thông tin đặt lịch bên dưới trước khi xác nhận check-in.
-            </p>
+            <h3 className="text-lg font-semibold mb-1">{t("staff.queue.modal.confirmTitle")}</h3>
+            <p className="text-xs text-gray-500 mb-4">{t("staff.queue.modal.confirmDesc")}</p>
 
             <div className="grid grid-cols-2 gap-y-2 text-sm">
-              <div className="text-gray-500">Khách</div>
+              <div className="text-gray-500">{t("staff.queue.labels.customer")}</div>
               <div className="font-medium">
                 {getPendingCustomerName()}
               </div>
 
-              <div className="text-gray-500">Xe</div>
+              <div className="text-gray-500">{t("staff.queue.labels.vehicle")}</div>
               <div className="font-medium">
                 {displayVehicleName(pendingCheckIn.detail)}
               </div>
 
-              <div className="text-gray-500">Biển số</div>
+              <div className="text-gray-500">{t("staff.queue.labels.plate")}</div>
               <div className="font-mono">
                 {displayPlate(pendingCheckIn.detail)}
               </div>
 
-              <div className="text-gray-500">Model pin</div>
+              <div className="text-gray-500">{t("staff.queue.labels.model")}</div>
               <div className="font-medium">
                 {pendingCheckIn.detail?.batteryModelName ||
                   pendingCheckIn.detail?.batteryModel?.name ||
@@ -991,7 +989,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                   "—"}
               </div>
 
-              <div className="text-gray-500">Khung giờ</div>
+              <div className="text-gray-500">{t("staff.queue.labels.slot")}</div>
               <div className="font-medium">
                 {(() => {
                   const { start, end } = resolveSlotRange(pendingCheckIn.detail);
@@ -999,14 +997,14 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 })()}
               </div>
 
-              <div className="text-gray-500">Trạng thái hiện tại</div>
+              <div className="text-gray-500">{t("staff.queue.labels.currentStatus")}</div>
               <div>
                 <span
                   className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass(
                     pendingCheckIn.detail?.status
                   )}`}
                 >
-                  {statusToVi(pendingCheckIn.detail?.status)}
+                  {statusToVi(pendingCheckIn.detail?.status, t)}
                 </span>
               </div>
             </div>
@@ -1016,13 +1014,13 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                 className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"
                 onClick={() => setPendingCheckIn(null)}
               >
-                Hủy
+                {t("common.cancel")}
               </button>
               <button
                 className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700"
                 onClick={confirmPendingCheckIn}
               >
-                Xác nhận check-in
+                {t("staff.queue.button.confirmCheckin")}
               </button>
             </div>
           </div>

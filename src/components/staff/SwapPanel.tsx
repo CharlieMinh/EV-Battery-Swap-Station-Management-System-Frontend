@@ -14,6 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 
 type Props = {
   reservation: Reservation;
@@ -33,7 +34,6 @@ const toastOpts = {
 // ✅ Bảo đảm MỖI hành động chỉ hiển thị 1 toast (dùng toastId cố định)
 const TOAST_ID = {
   swap: "swap-action-toast",
-  close: "swap-close-toast",
 };
 
 export default function SwapPanel({
@@ -68,13 +68,15 @@ export default function SwapPanel({
       toast.warn(msg, { ...toastOpts, toastId: TOAST_ID.swap }),
   };
 
+  const { t } = useLanguage();
+
   const handleSwap = async () => {
     // Parse từ chuỗi người dùng nhập
     const parsed = Number(healthInput || "0");
 
     // 🎯 Pin cũ chỉ được 0–99%, 100% là pin mới
     if (!Number.isFinite(parsed) || parsed < 0 || parsed > 99) {
-      oneToast.warn("Vui lòng nhập % pin cũ trong khoảng 0-99.");
+      oneToast.warn(t("staff.swap.warnInvalidHealth"));
       return;
     }
 
@@ -100,21 +102,16 @@ export default function SwapPanel({
       if (res.success) {
         // ✅ Thông báo có luôn thông tin dung lượng pin cũ staff nhập
         oneToast.success(
-          `Đã ghi nhận % pin cũ = ${parsed}%. Thay pin thành công.`
+          t("staff.swap.successWithHealth").replace("{health}", String(parsed))
         );
         setResult(res);
         onSwapped({ swapId: res.swapTransactionId });
       } else {
         const code = res.code;
-        const msg =
-          res.message ||
-          "Đã có lỗi xảy ra khi hoàn tất giao dịch. Vui lòng kiểm tra lại.";
+        const msg = res.message || t("staff.swap.errorGeneric");
 
         if (code === 500 || code === 409 || code === 422) {
-          oneToast.info(
-            "Đã có lỗi khi hoàn tất giao dịch. Hệ thống có thể đã giữ chỗ pin (kho báo Reserved). Vui lòng kiểm tra tab Giao dịch/Doanh thu.",
-            { autoClose: 3500 }
-          );
+          oneToast.info(t("staff.swap.errorReserved"), { autoClose: 3500 });
           onSwapped({});
         } else {
           oneToast.error(msg.startsWith("❌") ? msg : `❌ ${msg}`);
@@ -123,9 +120,7 @@ export default function SwapPanel({
       }
     } catch (err: any) {
       const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Không thể hoàn tất thay pin. Vui lòng thử lại.";
+        err?.response?.data?.message || err?.message || t("staff.swap.errorGeneric");
       oneToast.error(`❌ ${msg}`);
     } finally {
       setLoading(false);
@@ -138,15 +133,12 @@ export default function SwapPanel({
       <section className="rounded-2xl bg-white shadow-lg p-5">
         <header className="mb-3">
           <p className="text-xs text-gray-500">
-            Thay pin — Khách:&nbsp;
-            <b>{reservation.userName || "Khách lẻ"}</b>
+            {t("staff.swap.title")} <b>{reservation.userName || t("staff.swap.customerGuest")}</b>
           </p>
         </header>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            % Pin cũ (0-99)
-          </label>
+          <label className="block text-sm font-medium mb-1">{t("staff.swap.labelOldBattery")}</label>
           <input
             type="text"
             inputMode="numeric"
@@ -160,29 +152,22 @@ export default function SwapPanel({
                 setHealthInput(v);
               }
             }}
-            placeholder="Nhập % pin cũ (ví dụ: 85)"
+            placeholder={t("staff.swap.placeholderHealth")}
           />
-          <p className="mt-2 text-xs text-gray-500">
-            Nhập % dung lượng pin cũ mà staff đo được (0-99%). 100% là pin mới,
-            khách sẽ không cần đi thay.
-          </p>
+          <p className="mt-2 text-xs text-gray-500">{t("staff.swap.helpHealth")}</p>
         </div>
 
         {/* Ghi chú (tùy chọn) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Ghi chú (tuỳ chọn)
-          </label>
+          <label className="block text-sm font-medium mb-1">{t("staff.swap.notesLabel")}</label>
           <textarea
             className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20"
             rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Ví dụ: Pin cũ có dấu hiệu phồng nhẹ, đề nghị kiểm tra thêm."
+            placeholder={t("staff.swap.notesPlaceholder")}
           />
-          <p className="mt-2 text-xs text-gray-500">
-            Nội dung này sẽ được lưu vào trường notes của giao dịch.
-          </p>
+          <p className="mt-2 text-xs text-gray-500">{t("staff.swap.notesHelp")}</p>
         </div>
 
         {message && (
@@ -201,12 +186,12 @@ export default function SwapPanel({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Đang thực hiện…
+                {t("staff.swap.buttonSwapping")}
               </>
             ) : (
               <>
                 <CheckCircle className="h-4 w-4" />
-                Xác nhận thay pin
+                {t("staff.swap.buttonConfirmSwap")}
               </>
             )}
           </button>
@@ -214,25 +199,21 @@ export default function SwapPanel({
             className="rounded-lg border px-4 py-2 hover:bg-gray-50 transition"
             onClick={() => {
               onCancel();
-              toast.info("Đã đóng panel thay pin.", {
-                ...toastOpts,
-                toastId: TOAST_ID.close,
-              });
             }}
             disabled={loading}
           >
-            Đóng
+            {t("staff.swap.buttonClose")}
           </button>
         </div>
       </section>
 
       {/* RIGHT PANEL */}
       <section className="rounded-2xl bg-white shadow-lg p-5">
-        <h4 className="text-sm font-semibold mb-3">Kết quả hệ thống</h4>
+        <h4 className="text-sm font-semibold mb-3">{t("staff.swap.systemResultTitle")}</h4>
 
         {!result ? (
           <div className="rounded-xl border bg-gray-50 p-4 text-sm text-gray-600">
-            Sau khi bấm <b>“Xác nhận thay pin”</b>, pin mới sẽ hiển thị tại đây.
+            {t("staff.swap.waitForConfirm")}
           </div>
         ) : (
           <div className="grid gap-3 text-sm">
@@ -240,7 +221,7 @@ export default function SwapPanel({
             <div className="rounded-xl border p-3">
               <div className="mb-1 flex items-center gap-2 text-xs text-gray-500">
                 <Battery className="h-4 w-4" />
-                Pin cũ
+                {t("staff.swap.oldBattery")}
               </div>
               <div>
                 <b>Serial:</b> {result.oldBattery?.serialNumber || "—"}
@@ -257,7 +238,7 @@ export default function SwapPanel({
             <div className="rounded-xl border p-3 bg-emerald-50/60">
               <div className="mb-1 flex items-center gap-2 text-xs text-emerald-700">
                 <BadgeCheck className="h-4 w-4" />
-                Pin mới
+                {t("staff.swap.newBattery")}
               </div>
               <div>
                 <b>Serial:</b> {result.newBattery?.serialNumber || "—"}
@@ -273,18 +254,16 @@ export default function SwapPanel({
             {/* Thông tin chung */}
             <div className="rounded-xl border p-3 bg-white">
               <div>
-                <b>Mã swap:</b>{" "}
-                {result.swapTransactionId || result.swapId || "—"}
+                <b>{t("staff.swap.swapCode")}:</b> {result.swapTransactionId || result.swapId || "—"}
               </div>
               <div>
-                <b>Thời gian:</b>{" "}
+                <b>{t("staff.swap.time")}:</b>{" "}
                 {result.timestamp
                   ? formatDateTime(result.timestamp as any)
                   : "—"}
               </div>
               <div>
-                <b>Khách hàng:</b>{" "}
-                {result.driverName || reservation.userName || "—"}
+                <b>{t("staff.swap.customer")}:</b> {result.driverName || reservation.userName || "—"}
               </div>
             </div>
           </div>

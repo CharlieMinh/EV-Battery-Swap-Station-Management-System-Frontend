@@ -11,6 +11,7 @@ import {
 } from "../../services/staff/staffApi";
 import { AlertTriangle, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+import { useLanguage } from "../LanguageContext";
 import {
   Select,
   SelectContent,
@@ -32,48 +33,10 @@ import { formatDateTime } from "../../utils/dateTimeUtils";
 type ReqItem = { batteryModelId: string; quantityRequested: number };
 type Props = { stationId: string };
 
-const STATUS_OPTIONS = [
-  { label: "Tất cả", value: "" },
-  { label: "Đầy", value: "Available" },
-  { label: "Đang sử dụng", value: "InUse" },
-  { label: "Đang sạc", value: "Charging" },
-  { label: "Bảo trì", value: "Maintenance" },
-  { label: "Đã đặt trước", value: "Reserved" },
-  { label: "Lỗi", value: "Faulty" },
-  { label: "Hết pin", value: "Depleted" },
-];
+// STATUS_OPTIONS rendered via translations inside component
 
 // ✅ cho modal "Kiểm tra pin": HIỆN TẤT CẢ TRẠNG THÁI
-const CHECK_STATUS_OPTIONS: { label: string; value: BatteryStatusBackend }[] = [
-  {
-    value: "Full",
-    label: STATUS_LABELS_VI.Available || "Đầy",
-  },
-  {
-    value: "Reserved",
-    label: STATUS_LABELS_VI.Reserved || "Đã đặt trước",
-  },
-  {
-    value: "InUse",
-    label: STATUS_LABELS_VI.InUse || "Đang sử dụng",
-  },
-  {
-    value: "Charging",
-    label: STATUS_LABELS_VI.Charging || "Đang sạc",
-  },
-  {
-    value: "Depleted",
-    label: STATUS_LABELS_VI.Depleted || "Hết pin",
-  },
-  {
-    value: "Maintenance",
-    label: STATUS_LABELS_VI.Maintenance || "Bảo trì",
-  },
-  {
-    value: "Faulty",
-    label: STATUS_LABELS_VI.Faulty || "Lỗi",
-  },
-];
+// CHECK_STATUS_OPTIONS rendered via translations inside component
 
 const toastOpts = {
   position: "top-right" as const,
@@ -96,14 +59,18 @@ const normStatus = (s?: string) => {
   return "";
 };
 
-const displayStatusVI = (s?: string) => {
+const displayStatus = (s?: string, t?: (key: string) => string) => {
   const k = normStatus(s);
-  return (
-    STATUS_LABELS_VI[k as keyof typeof STATUS_LABELS_VI] ||
-    (STATUS_LABELS_VI as any)[s || ""] ||
-    s ||
-    "—"
-  );
+  switch (k) {
+    case "Available": return t ? t("staff.inventory.statusAvailable") : "Available";
+    case "InUse": return t ? t("staff.inventory.statusInUse") : "In use";
+    case "Charging": return t ? t("staff.inventory.statusCharging") : "Charging";
+    case "Maintenance": return t ? t("staff.inventory.statusMaintenance") : "Maintenance";
+    case "Reserved": return t ? t("staff.inventory.statusReserved") : "Reserved";
+    case "Faulty": return t ? t("staff.inventory.statusFaulty") : "Faulty";
+    case "Depleted": return t ? t("staff.inventory.statusDepleted") : "Depleted";
+    default: return s || "—";
+  }
 };
 
 const isReservedFlag = (b: BatteryUnit) =>
@@ -127,6 +94,28 @@ function clientStatusToBackend(k: string): BatteryStatusBackend {
 /* ========================================================= */
 
 export default function InventoryManagement({ stationId }: Props) {
+  const { t } = useLanguage();
+
+  const STATUS_OPTIONS = useMemo(() => [
+    { label: t("staff.inventory.statusAll"), value: "" },
+    { label: t("staff.inventory.statusAvailable"), value: "Available" },
+    { label: t("staff.inventory.statusInUse"), value: "InUse" },
+    { label: t("staff.inventory.statusCharging"), value: "Charging" },
+    { label: t("staff.inventory.statusMaintenance"), value: "Maintenance" },
+    { label: t("staff.inventory.statusReserved"), value: "Reserved" },
+    { label: t("staff.inventory.statusFaulty"), value: "Faulty" },
+    { label: t("staff.inventory.statusDepleted"), value: "Depleted" },
+  ], [t]);
+
+  const CHECK_STATUS_OPTIONS: { label: string; value: BatteryStatusBackend }[] = useMemo(() => [
+    { value: "Full", label: t("staff.inventory.statusAvailable") },
+    { value: "Reserved", label: t("staff.inventory.statusReserved") },
+    { value: "InUse", label: t("staff.inventory.statusInUse") },
+    { value: "Charging", label: t("staff.inventory.statusCharging") },
+    { value: "Depleted", label: t("staff.inventory.statusDepleted") },
+    { value: "Maintenance", label: t("staff.inventory.statusMaintenance") },
+    { value: "Faulty", label: t("staff.inventory.statusFaulty") },
+  ], [t]);
   const [stats, setStats] = useState<StationBatteryStats | null>(null);
   const [all, setAll] = useState<BatteryUnit[]>([]);
   const [list, setList] = useState<BatteryUnit[]>([]);
@@ -196,7 +185,7 @@ export default function InventoryManagement({ stationId }: Props) {
         if (user?.stationId) setMyStationId(user.stationId);
 
         const station = await fetchStationById(user.stationId);
-        setMyStationName(station?.name || "Không rõ tên trạm");
+        setMyStationName(station?.name || t("staff.inventory.unknownStationName"));
 
         const batteryModels = await fetchModelBattery();
         setModels(batteryModels);
@@ -303,7 +292,7 @@ export default function InventoryManagement({ stationId }: Props) {
       .filter((x) => x.batteryModelId && x.quantity > 0);
 
     if (items.length === 0) {
-      toast.warning("Thêm ít nhất 1 model và số lượng > 0", {
+      toast.warning(t("staff.inventory.toastValidateItems"), {
         ...toastOpts,
         toastId: "inv-req-validate",
       });
@@ -322,7 +311,7 @@ export default function InventoryManagement({ stationId }: Props) {
         )
       );
 
-      toast.success("Đã gửi tất cả yêu cầu nhập pin.", {
+      toast.success(t("staff.inventory.toastRequestSuccess"), {
         ...toastOpts,
         toastId: "inv-req-success",
       });
@@ -333,9 +322,7 @@ export default function InventoryManagement({ stationId }: Props) {
       fetchInventory();
     } catch (err: any) {
       const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Gửi yêu cầu nhập pin thất bại.";
+        err?.response?.data?.message || err?.message || t("staff.inventory.toastRequestError");
       toast.error(msg, { ...toastOpts, toastId: "inv-req-error" });
     }
   };
@@ -368,7 +355,7 @@ export default function InventoryManagement({ stationId }: Props) {
     if (!selectedBattery) return;
     try {
       await updateBatteryStatus(selectedBattery.batteryId, inspectStatus);
-      toast.success("Đã cập nhật trạng thái pin", {
+      toast.success(t("staff.inventory.updateStatusSuccess"), {
         ...toastOpts,
         toastId: "inv-update-status",
       });
@@ -377,10 +364,7 @@ export default function InventoryManagement({ stationId }: Props) {
       setInspectNote("");
       await fetchInventory();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Cập nhật trạng thái pin thất bại.";
+      const msg = err?.response?.data?.message || err?.message || t("staff.inventory.updateStatusError");
       toast.error(msg, { ...toastOpts, toastId: "inv-update-status-error" });
     }
   };
@@ -392,21 +376,19 @@ export default function InventoryManagement({ stationId }: Props) {
       {/* CARD tổng quan kho */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
         <h2 className="text-2xl font-bold text-orange-600 mb-1">
-          Tổng quan kho
+          {t("staff.inventory.titleOverview")}
         </h2>
-        <p className="text-gray-600 text-sm mb-4">
-          Số lượng pin theo trạng thái
-        </p>
+        <p className="text-gray-600 text-sm mb-4">{t("staff.inventory.subtitleOverview")}</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { label: "Tổng", value: header.total },
-            { label: "Đầy", value: header.available },
-            { label: "Đang sử dụng", value: header.inUse },
-            { label: "Đang sạc", value: header.charging },
-            { label: "Bảo trì", value: header.maintenance },
-            { label: "Đã đặt trước", value: header.reserved },
-          ].map((k) => (
+            {[
+              { label: t("staff.inventory.labelTotal"), value: header.total },
+              { label: t("staff.inventory.statusAvailable"), value: header.available },
+              { label: t("staff.inventory.statusInUse"), value: header.inUse },
+              { label: t("staff.inventory.statusCharging"), value: header.charging },
+              { label: t("staff.inventory.statusMaintenance"), value: header.maintenance },
+              { label: t("staff.inventory.statusReserved"), value: header.reserved },
+            ].map((k) => (
             <div
               key={k.label}
               className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4 text-center shadow-sm"
@@ -420,9 +402,7 @@ export default function InventoryManagement({ stationId }: Props) {
         {lowStock && (
           <div className="mt-4 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-amber-700">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-sm">
-              Tồn kho thấp! Hãy yêu cầu nhập thêm pin.
-            </span>
+            <span className="text-sm">{t("staff.inventory.lowStockWarning")}</span>
           </div>
         )}
       </section>
@@ -430,16 +410,14 @@ export default function InventoryManagement({ stationId }: Props) {
       {/* Danh sách pin */}
       <section className="rounded-2xl bg-white shadow-lg p-6 border border-orange-200">
         {/* Hàng tiêu đề */}
-        <h3 className="text-xl font-semibold text-orange-600 mb-4">
-          Danh sách pin
-        </h3>
+        <h3 className="text-xl font-semibold text-orange-600 mb-4">{t("staff.inventory.titleList")}</h3>
 
         {/* Hàng filter + nút Tạo yêu cầu (cùng một hàng) */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-3">
             <input
               className="h-10 w-56 rounded-lg border-2 border-gray-300 px-3 text-sm focus:ring-2 focus:ring-orange-300"
-              placeholder="Tìm serial..."
+              placeholder={t("staff.inventory.searchSerialPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -453,10 +431,10 @@ export default function InventoryManagement({ stationId }: Props) {
                 }
               >
                 <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
-                  <SelectValue placeholder="Tất cả model" />
+                  <SelectValue placeholder={t("staff.inventory.modelAll")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">Tất cả model</SelectItem>
+                    <SelectItem value="__all__">{t("staff.inventory.modelAll")}</SelectItem>
                   {modelOptions.map((m) => (
                     <SelectItem key={m.value} value={m.value}>
                       {m.label}
@@ -475,7 +453,7 @@ export default function InventoryManagement({ stationId }: Props) {
                 }
               >
                 <SelectTrigger className="h-10 w-full rounded-lg border-2 border-gray-300 px-3 text-sm">
-                  <SelectValue placeholder="Trạng thái" />
+                  <SelectValue placeholder={t("staff.inventory.statusPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((o) => (
@@ -497,7 +475,7 @@ export default function InventoryManagement({ stationId }: Props) {
             className="shrink-0 rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
           >
             <Plus className="w-4 h-4 inline mr-1" />
-            Tạo yêu cầu
+            {t("staff.inventory.buttonCreateRequest")}
           </button>
         </div>
 
@@ -506,12 +484,12 @@ export default function InventoryManagement({ stationId }: Props) {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="px-4 py-3 w-16 text-left">STT</th>
-                <th className="px-4 py-3 w-48 text-left">Serial</th>
-                <th className="px-4 py-3 w-64 text-left">Model</th>
-                <th className="px-4 py-3 w-40 text-left">Trạng thái</th>
-                <th className="px-4 py-3 w-48 text-left">Cập nhật</th>
-                <th className="px-4 py-3 w-40 text-left">Kiểm tra</th>
+                <th className="px-4 py-3 w-16 text-left">{t("staff.inventory.colIndex")}</th>
+                <th className="px-4 py-3 w-48 text-left">{t("staff.inventory.colSerial")}</th>
+                <th className="px-4 py-3 w-64 text-left">{t("staff.inventory.colModel")}</th>
+                <th className="px-4 py-3 w-40 text-left">{t("staff.inventory.colStatus")}</th>
+                <th className="px-4 py-3 w-48 text-left">{t("staff.inventory.colUpdated")}</th>
+                <th className="px-4 py-3 w-40 text-left">{t("staff.inventory.checkButton")}</th>
               </tr>
             </thead>
 
@@ -519,9 +497,9 @@ export default function InventoryManagement({ stationId }: Props) {
               {loading && (
                 <tr>
                   <td colSpan={6} className="text-center py-6 text-gray-500">
-                    <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                      <span>Đang tải…</span>
+                      <span>{t("common.loading")}</span>
                     </div>
                   </td>
                 </tr>
@@ -530,7 +508,7 @@ export default function InventoryManagement({ stationId }: Props) {
               {!loading && list.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center py-6 text-gray-500">
-                    Không có dữ liệu
+                    {t("staff.inventory.noData")}
                   </td>
                 </tr>
               )}
@@ -554,7 +532,7 @@ export default function InventoryManagement({ stationId }: Props) {
                           b
                         )}`}
                       >
-                        {displayStatusVI(b.status)}
+                        {displayStatus(b.status, t)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -567,7 +545,7 @@ export default function InventoryManagement({ stationId }: Props) {
                         onClick={() => openInspectModal(b)}
                         className="px-3 py-1 rounded-full border text-xs hover:bg-gray-100"
                       >
-                        Kiểm tra pin
+                        {t("staff.inventory.inspectButton")}
                       </button>
                     </td>
                   </tr>
@@ -585,11 +563,11 @@ export default function InventoryManagement({ stationId }: Props) {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Trước
+              {t("staff.inventory.prev")}
             </Button>
 
             <div className="flex items-center space-x-1">
-              <span className="text-gray-700 text-sm">Trang</span>
+              <span className="text-gray-700 text-sm">{t("staff.inventory.pageLabel")}</span>
               <Input
                 type="number"
                 min={1}
@@ -613,7 +591,7 @@ export default function InventoryManagement({ stationId }: Props) {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Sau
+              {t("staff.inventory.next")}
             </Button>
           </div>
         )}
@@ -624,9 +602,7 @@ export default function InventoryManagement({ stationId }: Props) {
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-xl rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Tạo yêu cầu nhập pin
-              </h3>
+                <h3 className="text-lg font-semibold text-gray-800">{t("staff.inventory.modalTitle")}</h3>
               <button
                 onClick={() => setCreateOpen(false)}
                 className="p-2 hover:bg-gray-50 rounded-lg"
@@ -637,7 +613,7 @@ export default function InventoryManagement({ stationId }: Props) {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm mb-1">Trạm</label>
+                <label className="block text-sm mb-1">{t("staff.inventory.labelStation")}</label>
                 <input
                   type="text"
                   value={myStationName}
@@ -647,13 +623,13 @@ export default function InventoryManagement({ stationId }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Ghi chú chung</label>
+                <label className="block text-sm mb-1">{t("staff.inventory.labelNote")}</label>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   className="w-full border rounded-lg px-3 py-2"
                   rows={3}
-                  placeholder="VD: Chuẩn bị cho đợt cao điểm"
+                  placeholder={t("staff.inventory.notePlaceholder")}
                 />
               </div>
 
@@ -695,7 +671,7 @@ export default function InventoryManagement({ stationId }: Props) {
                           });
                         }}
                         className="flex-1 border rounded-lg px-3 py-2"
-                        placeholder="Số lượng"
+                        placeholder={t("staff.inventory.placeholderQuantity")}
                       />
                     </div>
                   );
@@ -707,7 +683,7 @@ export default function InventoryManagement({ stationId }: Props) {
                   onClick={submitRequest}
                   className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
                 >
-                  Gửi yêu cầu
+                  {t ? t("staff.inventory.buttonSubmitRequest") : "Submit request"}
                 </button>
               </div>
             </div>
@@ -720,7 +696,7 @@ export default function InventoryManagement({ stationId }: Props) {
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between mb-4">
-              <h3 className="text-lg font-semibold">Kiểm tra pin</h3>
+              <h3 className="text-lg font-semibold">{t("staff.inventory.inspectTitle")}</h3>
               <button
                 onClick={() => setInspectOpen(false)}
                 className="p-2 hover:bg-gray-50 rounded-lg"
@@ -731,25 +707,21 @@ export default function InventoryManagement({ stationId }: Props) {
 
             <div className="space-y-2 mb-4 text-sm">
               <p>
-                <span className="font-semibold">Serial:</span>{" "}
+                <span className="font-semibold">{t("staff.inventory.colSerial")}:</span>{" "}
                 {selectedBattery.serialNumber || "—"}
               </p>
               <p>
-                <span className="font-semibold">Model:</span>{" "}
-                {selectedBattery.batteryModelName ||
-                  selectedBattery.batteryModelId ||
-                  "—"}
+                <span className="font-semibold">{t("staff.inventory.colModel")}:</span>{" "}
+                {selectedBattery.batteryModelName || selectedBattery.batteryModelId || "—"}
               </p>
               <p>
-                <span className="font-semibold">Trạng thái hiện tại:</span>{" "}
-                {displayStatusVI(selectedBattery.status)}
+                <span className="font-semibold">{t("staff.inventory.currentStatusLabel")}:</span>{" "}
+                {displayStatus(selectedBattery.status, t)}
               </p>
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm mb-1">
-                Trạng thái sau kiểm tra
-              </label>
+              <label className="block text-sm mb-1">{t("staff.inventory.inspectAfterStatusLabel")}</label>
               <Select
                 value={inspectStatus}
                 onValueChange={(val) =>
@@ -770,12 +742,12 @@ export default function InventoryManagement({ stationId }: Props) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm mb-1">Ghi chú (tùy chọn)</label>
+              <label className="block text-sm mb-1">{t("staff.inventory.inspectNoteLabel")}</label>
               <input
                 value={inspectNote}
                 onChange={(e) => setInspectNote(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 text-sm"
-                placeholder="Ví dụ: pin nhập từ admin nhưng phát hiện hư hỏng thì chọn Lỗi."
+                placeholder={t("staff.inventory.inspectNotePlaceholder")}
               />
             </div>
 
@@ -784,13 +756,13 @@ export default function InventoryManagement({ stationId }: Props) {
                 onClick={() => setInspectOpen(false)}
                 className="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50"
               >
-                Hủy
+                {t("staff.inventory.inspectCancel")}
               </button>
               <button
                 onClick={handleSaveInspect}
                 className="px-4 py-2 rounded-lg bg-black text-white text-sm hover:bg-gray-800"
               >
-                Lưu trạng thái
+                {t("staff.inventory.inspectSave")}
               </button>
             </div>
           </div>

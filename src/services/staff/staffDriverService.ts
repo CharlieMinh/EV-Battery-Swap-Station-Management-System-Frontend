@@ -1,6 +1,6 @@
 // src/services/staff/staffDriverService.ts
 import api from "@/services/staff/staffApi";
-import type { Customer } from "@/services/admin/customerAdminService";
+import type { Customer, CustomerDetail } from "@/services/admin/customerAdminService";
 
 /** Kết quả phân trang khách hàng (Driver) */
 export interface PaginatedCustomersResponse {
@@ -113,6 +113,18 @@ export async function fetchCustomersByStaff(
     totalPages: raw.totalPages,
     data: mapped,
   };
+}
+
+export async function fetchCustomerDetailByStaff(
+  userId: string
+): Promise<CustomerDetail> {
+  const res = await api.get(`Users/${userId}`, {
+    params: {
+      includeVehicles: true,
+      includeSubscriptions: true,
+    },
+  });
+  return res.data as CustomerDetail;
 }
 
 /**

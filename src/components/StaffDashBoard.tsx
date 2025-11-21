@@ -125,7 +125,6 @@ export default function StaffDashboard({
   // ✅ Mỗi hành động chỉ hiện 1 toast (toastId)
   const TOAST_ID = {
     loadMe: "sd-loadMe",
-    logout: "sd-logout",
     saveOverride: "sd-saveOverride",
     clearOverride: "sd-clearOverride",
     notifFetch: "sd-notifFetch",
@@ -138,11 +137,8 @@ export default function StaffDashboard({
         const { data } = await getMe();
         setMe(data);
       } catch (e: any) {
-        const msg =
-          e?.response?.data?.message ||
-          e?.message ||
-          "Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.";
-        setErr("Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.");
+        const msg = e?.response?.data?.message || e?.message || t("staff.dashboard.toastLoadMeError");
+        setErr(t("staff.dashboard.errLoadMe"));
         toast.error(msg, { ...toastOpts, toastId: TOAST_ID.loadMe });
       } finally {
         setLoading(false);
@@ -156,7 +152,6 @@ export default function StaffDashboard({
     localStorage.removeItem("authToken");
     localStorage.removeItem(STATION_OVERRIDE_KEY);
     onLogout();
-    toast.info("Đã đăng xuất.", { ...toastOpts, toastId: TOAST_ID.logout });
   };
 
   const stationIdFromMe = me?.stationId || null;
@@ -165,29 +160,29 @@ export default function StaffDashboard({
 
   const menu = useMemo(
     () => [
-      { key: "profile", label: "Thông tin cá nhân", icon: UserCircle },
-      { key: "queue", label: "Quản lý hàng chờ", icon: ClipboardList },
+      { key: "profile", label: t("staff.dashboard.menu.profile"), icon: UserCircle },
+      { key: "queue", label: t("staff.dashboard.menu.queue"), icon: ClipboardList },
       // 🔹 TAB TẠO KHÁCH HÀNG (Driver) RIÊNG
       {
         key: "staff-add-driver",
-        label: "Thêm khách hàng",
+        label: t("staff.dashboard.menu.addDriver"),
         icon: UserPlus,
       },
       // 🔹 TAB QUẢN LÝ KHÁCH HÀNG (Driver)
       {
         key: "staff-customers",
-        label: "Danh sách khách hàng",
+        label: t("staff.dashboard.menu.customers"),
         icon: ClipboardList,
       },
       // { key: "transactions", label: "Giao dịch", icon: CreditCard }, // Tạm thời ẩn
-      { key: "inventory", label: "Kho pin", icon: Warehouse },
-      { key: "requests", label: "Yêu cầu nhận pin", icon: Package },
-      { key: "send-requests", label: "Yêu cầu nhập pin", icon: Package },
-      { key: "revenue", label: "Doanh thu", icon: BarChart2 },
-      { key: "approvals", label: "Xác nhận thanh toán", icon: BadgeCheck },
-      { key: "complaint", label: "Khiếu nại và phản hồi", icon: MessageCircle },
+      { key: "inventory", label: t("staff.dashboard.menu.inventory"), icon: Warehouse },
+      { key: "requests", label: t("staff.dashboard.menu.requests"), icon: Package },
+      { key: "send-requests", label: t("staff.dashboard.menu.sendRequests"), icon: Package },
+      { key: "revenue", label: t("staff.dashboard.menu.revenue"), icon: BarChart2 },
+      { key: "approvals", label: t("staff.dashboard.menu.approvals"), icon: BadgeCheck },
+      { key: "complaint", label: t("staff.dashboard.menu.complaint"), icon: MessageCircle },
     ],
-    []
+    [t]
   ) as { key: TabKey; label: string; icon: any }[];
 
   const saveOverride = () => {
