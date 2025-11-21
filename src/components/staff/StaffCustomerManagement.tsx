@@ -26,6 +26,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { useLanguage } from "../LanguageContext";
+import { formatDateTime, formatNumber } from "../../utils/dateTimeUtils";
 
 import type {
   Customer,
@@ -228,7 +229,11 @@ function CustomerDetailModal({
             label: L("Ngày tham gia", "Join date"),
             icon: Calendar,
             value: detail.createdAt
-              ? formatDateTime(detail.createdAt)
+              ? formatDateTime(
+                  detail.createdAt instanceof Date
+                    ? detail.createdAt.toISOString()
+                    : detail.createdAt
+                )
               : L("Chưa cập nhật", "Not updated"),
           },
           {
@@ -236,7 +241,11 @@ function CustomerDetailModal({
             label: t("admin.lastLogin"),
             icon: Clock,
             value: detail.lastLogin
-              ? formatDateTime(detail.lastLogin)
+              ? formatDateTime(
+                  detail.lastLogin instanceof Date
+                    ? detail.lastLogin.toISOString()
+                    : detail.lastLogin
+                )
               : L("Chưa cập nhật", "Not updated"),
           },
         ];
