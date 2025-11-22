@@ -261,6 +261,21 @@ export default function StaffDashboard({
     loadBatteryRequests();
   }, []);
 
+  // Reload battery requests khi mở popover để đảm bảo có dữ liệu mới nhất
+  useEffect(() => {
+    if (notifOpen) {
+      const loadBatteryRequests = async () => {
+        try {
+          const data = await fetchBatteryRequests();
+          setBatteryRequests(data);
+        } catch (error) {
+          console.error("Error reloading battery requests for staff bell:", error);
+        }
+      };
+      loadBatteryRequests();
+    }
+  }, [notifOpen]);
+
   const getNotificationInfo = (n: Notification) => {
     // Đồng bộ kiểu hiển thị giống bên admin (dùng các key admin.* luôn cho tiện)
     if (n.type === 1) {
@@ -489,11 +504,20 @@ export default function StaffDashboard({
                           const isBatteryRequest = n.type === 1 || n.type === 2 || n.type === 3;
                           
                           // Tìm các battery request tương ứng với notification
+                          // Đảm bảo lấy đầy đủ tất cả các loại pin từ relatedIds
                           const relatedRequests = isBatteryRequest
                             ? batteryRequests.filter((br) =>
                                 relatedIds.includes(br.id)
                               )
                             : [];
+
+                          // Debug: Kiểm tra xem có thiếu request nào không
+                          if (isBatteryRequest && relatedIds.length > 0 && relatedRequests.length < relatedIds.length) {
+                            const missingIds = relatedIds.filter(id => !batteryRequests.some(br => br.id === id));
+                            if (missingIds.length > 0) {
+                              console.warn(`Missing battery requests for notification ${n.id}:`, missingIds);
+                            }
+                          }
 
                           // Group theo station
                           const stationGroups = relatedRequests.reduce((acc, req) => {
@@ -532,10 +556,8 @@ export default function StaffDashboard({
                             }
                           }
 
-                          // Title với tên người gửi
-                          const displayTitle = senderName 
-                            ? `${info.title} từ ${senderName}`
-                            : info.title;
+                          // Title chỉ hiển thị tên người gửi (theo yêu cầu)
+                          const displayTitle = senderName || info.title;
 
                           return (
                             <div

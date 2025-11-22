@@ -397,7 +397,7 @@ export function SwapHistory({ }: SwapHistoryProps) {
 
             <div className="space-y-4">
               {transactionsToShow.length === 0 ? (
-                <p className="text-center text-gray-500 py-4">{t("driver.swapHistory.noHistory")}</p>
+                <p className="text-center text-gray-500 py-4">{t("driver.history.noHistory")}</p>
               ) : (
                 transactionsToShow.map((swap) => {
                   const isSubscription = Boolean((swap as any).userSubscriptionId) ||

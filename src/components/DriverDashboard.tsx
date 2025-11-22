@@ -114,6 +114,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehiclesLoaded, setVehiclesLoaded] = useState(false);
   const [subscriptionInfoList, setSubscriptionInfoList] = useState<SubscriptionInfo[]>([]);
   const [stations, setStations] = useState<Station[] | null>(null);
 
@@ -126,6 +127,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
+  const [pendingBookingStationId, setPendingBookingStationId] = useState<string | null>(null);
 
   // Fetch current user data với avatar
   useEffect(() => {
@@ -141,6 +143,22 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   }, []);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
+          withCredentials: true,
+        });
+        setVehicles(res.data);
+        setVehiclesLoaded(true);
+      } catch (err) {
+        console.error("Fetch vehicles failed:", err);
+        setVehiclesLoaded(true);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     const state = location.state as {
       initialSection?: string;
       selectedStation?: string;
@@ -152,10 +170,17 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
 
     if (state?.triggerAction === "setBooking" && state?.selectedStation) {
-      openBookingWizard(state.selectedStation);
+      setPendingBookingStationId(state.selectedStation);
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (pendingBookingStationId && vehiclesLoaded) {
+      openBookingWizard(pendingBookingStationId);
+      setPendingBookingStationId(null);
+    }
+  }, [pendingBookingStationId, vehiclesLoaded]);
 
   useEffect(() => {
     const fetchSubscriptionData = async () => {
@@ -187,19 +212,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get("http://localhost:5194/api/v1/vehicles", {
-          withCredentials: true,
-        });
-        setVehicles(res.data);
-      } catch (err) {
-        console.error("Fetch vehicles failed:", err);
-      }
-    };
-    fetchData();
-  }, []);
+
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -221,8 +234,10 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
         withCredentials: true,
       });
       setVehicles(res.data);
+      setVehiclesLoaded(true);
     } catch (err) {
       console.error("Refresh vehicles failed:", err);
+      setVehiclesLoaded(true);
     }
   };
 
@@ -261,6 +276,15 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   }, [bookingDialog, selectedStation, selectedVehicle, bookingDate]);
 
   const openBookingWizard = (stationId: string) => {
+    if (!vehicles || vehicles.length === 0) {
+      toast.error(t("driver.booking.noVehicleError"), {
+        position: "top-right",
+        autoClose: 5000,
+        toastId: 'no-vehicle-error',
+      });
+      return;
+    }
+
     setSelectedStation(stationId);
     setBookingStep(1);
     setSelectedVehicle(null);
@@ -523,8 +547,8 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     currentUser?.profilePictureUrl
                       ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
                       : user.avatar
-                      ? `${user.avatar}?v=${Date.now()}`
-                      : undefined
+                        ? `${user.avatar}?v=${Date.now()}`
+                        : undefined
                   }
                   alt={currentUser?.name || user.name}
                 />

@@ -357,12 +357,12 @@ export function Homepage({ user, onLogout }: HomepageProps) {
           maxWidth: scrollProgress > 0.5 ? "1280px" : "100%",
           paddingTop: `${1 - scrollProgress * 0.5}rem`, // 1rem -> 0.5rem
           paddingBottom: `${1 - scrollProgress * 0.5}rem`,
-          transition: "all 0.3s ease-out",
+          transition: "all 0.7s ease-out",
           willChange: "max-width, padding, background-color, border-radius",
         }}
       >
         <div
-          className={`mx-auto transition-all duration-300 ease-out ${
+          className={`mx-auto transition-all duration-700 ease-out ${
             isScrolled ? "px-6 max-w-7xl w-full" : "w-full px-4 sm:px-6 lg:px-8"
           }`}
         >
@@ -370,7 +370,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
             className="flex items-center justify-between w-full"
             style={{
               height: `${4 - scrollProgress * 0.5}rem`, // 4rem -> 3.5rem
-              transition: "height 0.3s ease-out",
+              transition: "height 0.7s ease-out",
             }}
           >
             <div className="flex items-center group cursor-pointer flex-shrink-0">
@@ -385,7 +385,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   objectFit: "contain",
                   imageRendering: "auto",
                   transition:
-                    "width 0.3s ease-out, height 0.3s ease-out",
+                    "width 0.7s ease-out, height 0.7s ease-out",
                 }}
               />
               <span
@@ -394,7 +394,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   fontSize: `${1.875 - scrollProgress * 0.625}rem`, // 1.875rem -> 1.25rem
                   lineHeight: `${2.25 - scrollProgress * 0.5}rem`, // 2.25rem -> 1.75rem
                   transition:
-                    "font-size 0.3s ease-out, line-height 0.3s ease-out",
+                    "font-size 0.7s ease-out, line-height 0.7s ease-out",
                   willChange: "font-size, line-height",
                 }}
               >
@@ -411,7 +411,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   marginRight: isScrolled ? "0.5rem" : "1.5rem",
                   fontSize: isScrolled ? "0.95rem" : "1rem",
                   transition:
-                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.features")}
@@ -425,7 +425,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   marginRight: isScrolled ? "0.5rem" : "1.5rem",
                   fontSize: isScrolled ? "0.95rem" : "1rem",
                   transition:
-                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.pricing")}
@@ -439,7 +439,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   marginRight: isScrolled ? "0.5rem" : "1.5rem",
                   fontSize: isScrolled ? "0.95rem" : "1rem",
                   transition:
-                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.stations")}
@@ -453,7 +453,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   marginRight: isScrolled ? "0.5rem" : "1.5rem",
                   fontSize: isScrolled ? "0.95rem" : "1rem",
                   transition:
-                    "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
                 {t("nav.contact")}
@@ -476,7 +476,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       height: isScrolled ? "2.25rem" : "2.5rem",
                       fontSize: isScrolled ? "0.9375rem" : "1rem",
                       transition:
-                        "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     {t("nav.signIn")}
@@ -490,7 +490,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       height: isScrolled ? "2.25rem" : "2.5rem",
                       fontSize: isScrolled ? "0.9375rem" : "1rem",
                       transition:
-                        "margin 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "margin 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1), font-size 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     {t("nav.getStarted")}
@@ -500,7 +500,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                         width: isScrolled ? "0.875rem" : "1rem",
                         height: isScrolled ? "0.875rem" : "1rem",
                         transition:
-                          "width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                          "width 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                     />
                   </Button>
@@ -517,7 +517,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       }}
                       >
                       <Avatar
-                        className="mr-2 transition-all duration-500 ease-out will-change-transform"
+                        className="mr-2 transition-all duration-700 ease-out will-change-transform"
                         style={{
                           width: isScrolled ? "1.5rem" : "2rem",
                           height: isScrolled ? "1.5rem" : "2rem",
@@ -540,7 +540,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                         </AvatarFallback>
                       </Avatar>
                       <span
-                        className="font-medium whitespace-nowrap transition-all duration-500 ease-out"
+                        className="font-medium whitespace-nowrap transition-all duration-700 ease-out"
                         style={{
                           fontSize: isScrolled ? "0.875rem" : "1rem",
                           display: isScrolled ? "none" : "inline",

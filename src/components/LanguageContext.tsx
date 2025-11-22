@@ -389,6 +389,9 @@ const translations = {
     "driver.findStations": "Find Stations",
     "driver.booking.errorFetchReservation": "Could not fetch your reservation:",
     "driver.errorAddCar": "Could not add your car:",
+    "driver.booking.noVehicleError": "You don't have any registered vehicles yet! Please add a vehicle in 'My Car' section before making a reservation.",
+    "driver.booking.noVehicleTitle": "No Vehicles Registered",
+    "driver.booking.noVehicleMessage": "You need to add at least one vehicle before you can make a reservation. Please go to 'My Vehicle' section to register your vehicle.",
     "driver.booking.errorValidation": "Please select all booking details!",
     "driver.booking.success": "Booking successful!",
     "driver.booking.errorConfirm": "Error confirming booking:",
@@ -582,6 +585,8 @@ const translations = {
     "driver.profile.errorUploadFailed": "Cannot upload image!",
     "driver.profile.errorUnknown": "Unknown error",
     "driver.profile.successUpdateInfo": "Information updated successfully!",
+    "driver.profile.successUpdateAll": "Information and profile picture updated successfully!",
+    "driver.profile.imageSelected": "Image selected",
     "driver.profile.errorUpdateFailed": "Cannot update information!",
     "driver.profile.updating": "Updating...",
     "driver.profile.editInfo": "Edit Information",
@@ -1133,7 +1138,7 @@ const translations = {
     "staff.addDriver.emailInvalid": "Please enter a valid email address.",
     "staff.addDriver.passwordRequirement": "Password must be at least 8 characters, include uppercase, lowercase, numbers and a special character.",
     "staff.addDriver.nameRequired": "Full name is required.",
-    "staff.addDriver.phoneInvalid": "Invalid phone number.",
+    "staff.addDriver.phoneInvalid": "Phone number must be 10 or 11 digits.",
 
     // Staff Revenue
     "staff.revenue.title": "Revenue",
@@ -1204,7 +1209,7 @@ const translations = {
     "staff.customers.noEmail": "No email",
     "staff.customers.noPhone": "No phone number",
     "staff.customers.toastUpdateSuccess": "Customer profile updated successfully.",
-    "staff.customers.toastPhoneInvalid": "Invalid phone number. Please enter a valid phone number (e.g., 0123456789 or +84123456789).",
+    "staff.customers.toastPhoneInvalid": "Phone number must be 10 or 11 digits.",
     "staff.customers.toastUpdateError": "Cannot update customer profile.",
     "staff.customers.errorLoadDetail": "Cannot load customer data.",
     "staff.customers.errorLoadList": "Cannot load customer list.",
@@ -1288,7 +1293,7 @@ const translations = {
     "staff.profile.toastSaveWarnName": "Please enter full name.",
     "staff.profile.toastSaveSuccess": "Profile saved ✅",
     "staff.profile.toastSaveError": "Failed to save profile. Please try again!",
-    "staff.profile.toastPhoneInvalid": "Invalid phone number. Please enter a valid phone number (e.g., 0123456789 or +84123456789).",
+    "staff.profile.toastPhoneInvalid": "Phone number must be 10 or 11 digits.",
     "staff.profile.toastPwdWarnOld": "Please enter your current password.",
     "staff.profile.toastPwdWarnNew": "Please enter a new password.",
     "staff.profile.toastPwdWeak": "Password must be at least 8 characters long, including uppercase, lowercase, number and special character.",
@@ -1343,7 +1348,7 @@ const translations = {
     "staff.inventory.toastQuantityMin": "Quantity must be at least 1. Please enter a valid quantity.",
     "staff.inventory.toastQuantityMax": "Quantity cannot exceed 100. Maximum allowed is 100.",
     "staff.inventory.buttonRemove": "Remove",
-    
+
     "staff.inventory.noteMultipleModels": "You can add multiple models.",
     "staff.inventory.toastValidateItems": "Please add at least 1 model with quantity from 1 to 100.",
     "staff.inventory.toastRequestSuccess": "Replenishment request submitted. Awaiting admin approval.",
@@ -1354,7 +1359,7 @@ const translations = {
     "staff.inventory.prev": "Previous",
     "staff.inventory.next": "Next",
     "staff.inventory.pageLabel": "Page",
-      // "staff.inventory.modalTitle": "Battery replenishment request", // Removed duplicate
+    // "staff.inventory.modalTitle": "Battery replenishment request", // Removed duplicate
     "staff.inventory.labelStation": "Station",
     "staff.inventory.labelNote": "Note",
     "staff.inventory.notePlaceholder": "E.g.: prepare for peak period",
@@ -1677,7 +1682,7 @@ const translations = {
     "admin.emailInvalid": "Invalid email.",
     "admin.passwordRequirement": "Password must be at least 8 characters, including uppercase, lowercase, numbers and special characters.",
     "admin.nameRequired": "Full name is required.",
-    "admin.phoneInvalid": "Invalid phone number.",
+    "admin.phoneInvalid": "Phone number must be 10 or 11 digits.",
     "admin.stationRequired": "Please select a station for Staff.",
     "admin.addUserSuccess": "User added successfully!",
     "admin.errorOccurred": "An error occurred.",
@@ -2070,6 +2075,12 @@ const translations = {
     "common.found": "Found",
     "common.yes": "Yes",
     "common.no": "No",
+
+    // Map
+    "map.yourLocation": "Your current location",
+
+    // Driver Booking
+    "driver.booking.bookNow": "Book Now",
   },
   vi: {
     "staff.dashboard.menu.profile": "Thông tin cá nhân",
@@ -2429,6 +2440,9 @@ const translations = {
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
     "driver.booking.errorFetchReservation": "Không thể lấy lịch hẹn của bạn:",
+    "driver.booking.noVehicleError": "Bạn chưa có xe đăng ký nào! Vui lòng thêm xe trong mục 'Xe của tôi' trước khi đặt chỗ.",
+    "driver.booking.noVehicleTitle": "Chưa có xe đăng ký",
+    "driver.booking.noVehicleMessage": "Bạn cần thêm ít nhất một xe trước khi có thể đặt chỗ. Vui lòng vào mục 'Xe của tôi' để đăng ký xe của bạn.",
     "driver.booking.errorValidation": "Vui lòng chọn đầy đủ thông tin đặt chỗ!",
     "driver.booking.success": "Đặt lịch thành công!",
     "driver.booking.errorConfirm": "Lỗi khi xác nhận đặt chỗ:",
@@ -2621,6 +2635,8 @@ const translations = {
     "driver.profile.errorUploadFailed": "Không thể tải ảnh lên!",
     "driver.profile.errorUnknown": "Lỗi không xác định",
     "driver.profile.successUpdateInfo": "Cập nhật thông tin thành công!",
+    "driver.profile.successUpdateAll": "Cập nhật thông tin và ảnh đại diện thành công!",
+    "driver.profile.imageSelected": "Đã chọn ảnh",
     "driver.profile.errorUpdateFailed": "Không thể cập nhật thông tin!",
     "driver.profile.updating": "Đang cập nhật...",
     "driver.profile.editInfo": "Chỉnh sửa thông tin",
@@ -3162,7 +3178,7 @@ const translations = {
     "staff.addDriver.emailInvalid": "Email không hợp lệ.",
     "staff.addDriver.passwordRequirement": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
     "staff.addDriver.nameRequired": "Họ và tên không được để trống.",
-    "staff.addDriver.phoneInvalid": "Số điện thoại không hợp lệ.",
+    "staff.addDriver.phoneInvalid": "Số điện thoại phải có 10 hoặc 11 số.",
 
     // Staff Revenue
     "staff.revenue.title": "Doanh thu",
@@ -3233,7 +3249,7 @@ const translations = {
     "staff.customers.noEmail": "Không có email",
     "staff.customers.noPhone": "Không có số điện thoại",
     "staff.customers.toastUpdateSuccess": "Cập nhật hồ sơ khách hàng thành công.",
-    "staff.customers.toastPhoneInvalid": "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ (ví dụ: 0123456789 hoặc +84123456789).",
+    "staff.customers.toastPhoneInvalid": "Số điện thoại phải có 10 hoặc 11 số.",
     "staff.customers.toastUpdateError": "Không thể cập nhật hồ sơ khách hàng.",
     "staff.customers.errorLoadDetail": "Không thể tải dữ liệu khách hàng.",
     "staff.customers.errorLoadList": "Không thể tải danh sách khách hàng.",
@@ -3317,7 +3333,7 @@ const translations = {
     "staff.profile.toastSaveWarnName": "Vui lòng nhập họ tên.",
     "staff.profile.toastSaveSuccess": "Đã lưu hồ sơ thành công",
     "staff.profile.toastSaveError": "Lưu hồ sơ thất bại. Vui lòng thử lại!",
-    "staff.profile.toastPhoneInvalid": "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ (ví dụ: 0123456789 hoặc +84123456789).",
+    "staff.profile.toastPhoneInvalid": "Số điện thoại phải có 10 hoặc 11 số.",
     "staff.profile.toastPwdWarnOld": "Vui lòng nhập mật khẩu hiện tại.",
     "staff.profile.toastPwdWarnNew": "Vui lòng nhập mật khẩu mới.",
     "staff.profile.toastPwdWeak": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
@@ -3716,7 +3732,7 @@ const translations = {
     "admin.emailInvalid": "Email không hợp lệ.",
     "admin.passwordRequirement": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
     "admin.nameRequired": "Họ và tên không được để trống.",
-    "admin.phoneInvalid": "Số điện thoại không hợp lệ.",
+    "admin.phoneInvalid": "Số điện thoại phải có 10 hoặc 11 số.",
     "admin.stationRequired": "Vui lòng chọn trạm cho nhân viên Staff.",
     "admin.addUserSuccess": "Thêm người dùng thành công!",
     "admin.errorOccurred": "Đã xảy ra lỗi không xác định.",
@@ -4112,6 +4128,12 @@ const translations = {
     "common.found": "Tìm thấy",
     "common.yes": "Có",
     "common.no": "Không",
+
+    // Map
+    "map.yourLocation": "Vị trí hiện tại của bạn",
+
+    // Driver Booking
+    "driver.booking.bookNow": "Đặt lịch ngay",
   },
 };
 
@@ -4126,7 +4148,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const translation = translations[language];
     return (translation as Record<string, string>)[key] || key;
   };
-  
+
 
   const formatCurrency = (amount: number): string => {
     if (language === "en") {

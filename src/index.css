@@ -453,3 +453,29 @@ html {
 .delay-1000 {
   animation-delay: 1000ms;
 }
+
+/* Custom Leaflet Popup Styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 12px !important;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Custom Station Marker Animation */
+.custom-station-marker {
+  transition: transform 0.2s ease;
+}
+
+.custom-station-marker:hover {
+  transform: scale(1.1);
+}

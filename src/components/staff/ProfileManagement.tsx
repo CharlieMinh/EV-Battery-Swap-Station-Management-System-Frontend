@@ -140,10 +140,10 @@ export default function ProfileManagement() {
       return;
     }
     
-    // Phone validation (optional but if provided, must be valid)
+    // Phone validation: phải có 10 hoặc 11 số
     if (form.phone.trim()) {
-      const phoneRegex = /^(0|\+84)\d{9,10}$/;
-      if (!phoneRegex.test(form.phone.trim())) {
+      const phoneDigits = form.phone.replace(/\D/g, "");
+      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
         toast.warn(t("staff.profile.toastPhoneInvalid"), {
           ...toastOpts,
           toastId: TOAST_ID.phoneInvalid,
@@ -397,6 +397,8 @@ export default function ProfileManagement() {
                 {t("staff.profile.labelPhone")}
               </label>
               <input
+                type="tel"
+                maxLength={11}
                 value={form.phone}
                 onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
                 className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-orange-200 focus:outline-none"

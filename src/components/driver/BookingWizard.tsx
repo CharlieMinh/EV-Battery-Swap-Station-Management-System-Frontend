@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Calendar } from '../ui/calendar';
-import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2, Info, CreditCard, Landmark } from 'lucide-react';
+import { CheckCircle, Car, ArrowRight, ArrowLeft, Loader2, Info, CreditCard, Landmark, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { Badge } from '../ui/badge';
 
@@ -227,86 +227,98 @@ export function BookingWizard({
         {bookingStep === 1 && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{t('driver.selectVehicle')}</h3>
-            <div className="max-h-64 overflow-y-auto pr-2 space-y-3">
-              {vehicles.map((vehicle) => {
-                const vehicleSub = subscriptionInfoList.find(
-                  (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
-                );
-                let vehicleSubInfo: { planName: string; usageText: string; remainingText: string; isLimitReached: boolean; batteryModelName: string } | null = null;
-                if (vehicleSub) {
-                  const limit = vehicleSub.swapsLimit ?? vehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
-                  const count = vehicleSub.currentMonthSwapCount;
-                  let isLimitReached = false;
-                  let usageText = "";
-                  let remainingText = "";
-                  if (limit === null) {
-                    usageText = `${t('driver.booking.usedSwaps')} ${count} ${t('driver.booking.swaps')}`;
-                    remainingText = t('driver.booking.unlimited');
-                  } else {
-                    const remaining = limit - count;
+            {vehicles.length === 0 ? (
+              <div className="p-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg text-center">
+                <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
+                <p className="text-lg font-semibold text-yellow-800 mb-2">
+                  {t('driver.booking.noVehicleTitle')}
+                </p>
+                <p className="text-sm text-yellow-700">
+                  {t('driver.booking.noVehicleMessage')}
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto pr-2 space-y-3">
+                {vehicles.map((vehicle) => {
+                  const vehicleSub = subscriptionInfoList.find(
+                    (sub) => sub.isActive && sub.subscriptionPlan?.batteryModelId === vehicle.compatibleBatteryModelId
+                  );
+                  let vehicleSubInfo: { planName: string; usageText: string; remainingText: string; isLimitReached: boolean; batteryModelName: string } | null = null;
+                  if (vehicleSub) {
+                    const limit = vehicleSub.swapsLimit ?? vehicleSub.subscriptionPlan?.maxSwapsPerMonth ?? null;
+                    const count = vehicleSub.currentMonthSwapCount;
+                    let isLimitReached = false;
+                    let usageText = "";
+                    let remainingText = "";
+                    if (limit === null) {
+                      usageText = `${t('driver.booking.usedSwaps')} ${count} ${t('driver.booking.swaps')}`;
+                      remainingText = t('driver.booking.unlimited');
+                    } else {
+                      const remaining = limit - count;
 
-                    remainingText = `${remaining}/${limit} ${t('driver.booking.swaps')}`;
-                    if (count >= limit) isLimitReached = true;
+                      remainingText = `${remaining}/${limit} ${t('driver.booking.swaps')}`;
+                      if (count >= limit) isLimitReached = true;
+                    }
+                    vehicleSubInfo = {
+                      planName: vehicleSub.subscriptionPlan.name,
+                      usageText,
+                      remainingText,
+                      isLimitReached,
+                      batteryModelName: vehicle.compatibleBatteryModelName || "N/A"
+                    };
                   }
-                  vehicleSubInfo = {
-                    planName: vehicleSub.subscriptionPlan.name,
-                    usageText,
-                    remainingText,
-                    isLimitReached,
-                    batteryModelName: vehicle.compatibleBatteryModelName || "N/A"
-                  };
-                }
-                return (
-                  <Card key={vehicle.id}
-                    className={`cursor-pointer transition-all ${selectedVehicle?.id === vehicle.id ? "border-2 border-orange-500 bg-orange-50" : "border-gray-300 bg-white hover:border-orange-400"}`}
-                    onClick={() => handleVehicleSelect(vehicle)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start space-x-3 flex-1 min-w-0">
-                          {vehicle.photoUrl ? (
-                            <img src={vehicle.photoUrl} alt={vehicle.vehicleModelFullName} className="w-14 h-14 object-cover rounded-md flex-shrink-0" />
-                          ) : (
-                            <Car className="w-10 h-10 text-gray-400 flex-shrink-0" />
-                          )}
-                          <div className="space-y-1.5 flex-1 min-w-0">
-                            <p className="font-bold text-sm truncate">{vehicle.vehicleModelFullName || vehicle.brand}</p>
-                            <p className="text-xs text-gray-600">
-                              {t('driver.booking.plateLabel')} <span className="font-semibold">{vehicle.plate}</span>
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {t('driver.booking.pinLabel')} {vehicle.compatibleBatteryModelName}
-                            </p>
-                            <div className="pt-1">
-                              {vehicleSubInfo ? (
-                                vehicleSubInfo.isLimitReached ? (
-                                  <Badge variant="destructive" className="text-xs">
-                                    {t('driver.booking.outOfSwaps')} {vehicleSubInfo.usageText}
-                                  </Badge>
-                                ) : (
-                                  <div className="space-y-1">
-                                    <Badge className="bg-green-600 text-white text-xs whitespace-normal">
-                                      {t('driver.booking.canUsePackage')} {vehicleSubInfo.planName}
+                  return (
+                    <Card key={vehicle.id}
+                      className={`cursor-pointer transition-all ${selectedVehicle?.id === vehicle.id ? "border-2 border-orange-500 bg-orange-50" : "border-gray-300 bg-white hover:border-orange-400"}`}
+                      onClick={() => handleVehicleSelect(vehicle)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start space-x-3 flex-1 min-w-0">
+                            {vehicle.photoUrl ? (
+                              <img src={vehicle.photoUrl} alt={vehicle.vehicleModelFullName} className="w-14 h-14 object-cover rounded-md flex-shrink-0" />
+                            ) : (
+                              <Car className="w-10 h-10 text-gray-400 flex-shrink-0" />
+                            )}
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <p className="font-bold text-sm truncate">{vehicle.vehicleModelFullName || vehicle.brand}</p>
+                              <p className="text-xs text-gray-600">
+                                {t('driver.booking.plateLabel')} <span className="font-semibold">{vehicle.plate}</span>
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {t('driver.booking.pinLabel')} {vehicle.compatibleBatteryModelName}
+                              </p>
+                              <div className="pt-1">
+                                {vehicleSubInfo ? (
+                                  vehicleSubInfo.isLimitReached ? (
+                                    <Badge variant="destructive" className="text-xs">
+                                      {t('driver.booking.outOfSwaps')} {vehicleSubInfo.usageText}
                                     </Badge>
-                                    <p className="text-xs text-green-700">
-                                      {vehicleSubInfo.usageText}
-                                    </p>
-                                  </div>
-                                )
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">{t('driver.booking.payPerSwapOnly')}</Badge>
-                              )}
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <Badge className="bg-green-600 text-white text-xs whitespace-normal">
+                                        {t('driver.booking.canUsePackage')} {vehicleSubInfo.planName}
+                                      </Badge>
+                                      <p className="text-xs text-green-700">
+                                        {vehicleSubInfo.usageText}
+                                      </p>
+                                    </div>
+                                  )
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs">{t('driver.booking.payPerSwapOnly')}</Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          {selectedVehicle?.id === vehicle.id && (
+                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          )}
                         </div>
-                        {selectedVehicle?.id === vehicle.id && (
-                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
             {selectedVehicle && selectedVehicleSub && (
               <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
                 <p className="text-sm font-semibold text-green-800 mb-1">

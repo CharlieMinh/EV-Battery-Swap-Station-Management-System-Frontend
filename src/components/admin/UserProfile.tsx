@@ -124,14 +124,14 @@ export default function UserProfile() {
       return;
     }
 
-    // Validate SĐT: bắt buộc, chỉ 1–11 số
+    // Validate SĐT: bắt buộc, phải có 10 hoặc 11 số
     if (!trimmedPhone) {
       toast.error(t("register.phoneRequired"));
       return;
     }
 
     const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
-    if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+    if (phoneDigitsOnly.length !== 10 && phoneDigitsOnly.length !== 11) {
       toast.error(t("admin.phoneInvalid"));
       return;
     }
@@ -303,6 +303,7 @@ export default function UserProfile() {
                       }))
                     }
                     maxLength={11}
+                    type="tel"
                     className="pl-6 border-b border-gray-400 focus:outline-none w-full"
                   />
                 ) : (
