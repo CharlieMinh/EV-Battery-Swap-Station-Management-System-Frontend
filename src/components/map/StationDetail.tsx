@@ -47,8 +47,10 @@ export function StationDetail({ stationId, onClose }: StationDetailProps) {
   useEffect(() => {
     async function loadBatteryCount() {
       try {
-        // Sử dụng API public mới
-        const count = await countBatteriesByStation(stationId);
+        // Sử dụng API public mới - Chỉ đếm pin có status = "Full" (sẵn sàng)
+        const count = await countBatteriesByStation(stationId, {
+          status: "Full"
+        });
         setBatteryCount(count);
       } catch (error) {
         console.error("Error fetching battery count:", error);
