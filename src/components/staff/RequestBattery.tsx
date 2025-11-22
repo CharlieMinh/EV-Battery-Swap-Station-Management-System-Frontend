@@ -45,6 +45,78 @@ const RequestBattery = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [previousRequestIds, setPreviousRequestIds] = useState<Set<string>>(new Set());
 
+  // Function để làm sạch ghi chú tự động, loại bỏ các phần rỗng
+  // Return null nếu không có message thực sự, return ghi chú đã làm sạch nếu có
+  const cleanAutoNote = (note: string | null | undefined): string | null => {
+    if (!note) return null;
+    
+    const trimmed = note.trim();
+    if (!trimmed || trimmed === ".") return null;
+    
+    // Kiểm tra xem có phải ghi chú tự động không (bắt đầu bằng [Tự động])
+    if (trimmed.startsWith("[Tự động]") || trimmed.includes("[Tự động]")) {
+      // Nếu có chứa "Được tạo từ yêu cầu", đây là ghi chú tự động từ hệ thống
+      if (trimmed.includes("Được tạo từ yêu cầu")) {
+        // Tìm vị trí kết thúc của phần tự động (sau "của Staff xxx.")
+        // Pattern: [Tự động] Được tạo từ yêu cầu #xxx của Staff xxx. [phần còn lại]
+        const staffPattern = /của Staff\s+[^.]*\./;
+        const match = trimmed.match(staffPattern);
+        
+        if (match && match.index !== undefined) {
+          // Lấy phần sau "của Staff xxx."
+          const afterAuto = trimmed.substring(match.index + match[0].length).trim();
+          
+          // Loại bỏ các phần "Ghi chú Staff: ." và "Ghi chú Admin: ." nếu chỉ có dấu chấm
+          let cleaned = afterAuto
+            .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+            .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+            .replace(/\s*\.\s*$/, "")
+            .trim();
+          
+          // Nếu không còn gì sau phần tự động, coi như không có ghi chú
+          if (!cleaned || cleaned === "." || cleaned === "") {
+            return null;
+          }
+          
+          // Nếu có ghi chú thực sự, return phần đó
+          return cleaned;
+        }
+        
+        // Nếu không match được pattern, có thể format khác, nhưng vẫn là tự động
+        // Loại bỏ toàn bộ phần tự động và chỉ giữ lại phần sau
+        let cleaned = trimmed
+          .replace(/\[Tự động\]\s*/, "")
+          .replace(/Được tạo từ yêu cầu[^.]*\.\s*/g, "")
+          .replace(/của Staff[^.]*\.\s*/g, "")
+          .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+          .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+          .replace(/\s*\.\s*$/, "")
+          .trim();
+        
+        if (!cleaned || cleaned === "." || cleaned === "") {
+          return null;
+        }
+        
+        return cleaned;
+      }
+    }
+    
+    // Nếu có "Ghi chú Staff:" hoặc "Ghi chú Admin:" nhưng không phải tự động
+    if (trimmed.includes("Ghi chú Staff:") || trimmed.includes("Ghi chú Admin:")) {
+      // Loại bỏ các phần rỗng
+      let cleaned = trimmed
+        .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+        .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+        .replace(/\s*\.\s*$/, "")
+        .trim();
+      
+      return cleaned.length > 0 ? cleaned : null;
+    }
+    
+    // Nếu không phải ghi chú tự động, return nguyên ghi chú
+    return trimmed;
+  };
+
   // Fetch requests từ API (GIỮ NGUYÊN LUỒNG)
   const fetchRequests = async () => {
     try {
@@ -316,19 +388,35 @@ const RequestBattery = () => {
                   </div>
 
                   {/* Notes nếu đã xử lý (GIỮ LOGIC) */}
-                  {group.requests[0].staffNotes && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">{t("staff.requestBattery.noteLabel")}</span>{" "}
-                        {group.requests[0].staffNotes}
-                      </p>
-                      {group.requests[0].handledByStaffName && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {t("staff.requestBattery.handledByLabel")} {group.requests[0].handledByStaffName}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const cleanedNote = cleanAutoNote(group.requests[0].staffNotes);
+                    const hasHandledBy = group.requests[0].handledByStaffName;
+                    
+                    // Nếu không có ghi chú và không có người xử lý, không hiển thị gì
+                    if (!cleanedNote && !hasHandledBy) return null;
+                    
+                    return (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        {cleanedNote && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-semibold">{t("staff.requestBattery.noteLabel")}</span>{" "}
+                            {cleanedNote}
+                          </p>
+                        )}
+                        {!cleanedNote && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-semibold">{t("staff.requestBattery.noteLabel")}</span>{" "}
+                            {t("admin.noNotes")}
+                          </p>
+                        )}
+                        {hasHandledBy && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {t("staff.requestBattery.handledByLabel")} {group.requests[0].handledByStaffName}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
