@@ -249,6 +249,7 @@ export default function InventoryManagement({ stationId }: Props) {
     charging: n(stats?.charging),
     maintenance: n(stats?.maintenance),
     reserved: n(stats?.reserved),
+    faulty: n(stats?.faulty),
   };
 
   const header = useMemo(() => {
@@ -258,7 +259,8 @@ export default function InventoryManagement({ stationId }: Props) {
       apiTotals.inUse ||
       apiTotals.charging ||
       apiTotals.maintenance ||
-      apiTotals.reserved;
+      apiTotals.reserved ||
+      apiTotals.faulty;
 
     if (hasAny) return apiTotals;
 
@@ -267,7 +269,8 @@ export default function InventoryManagement({ stationId }: Props) {
       inUse = 0,
       charging = 0,
       maintenance = 0,
-      reserved = 0;
+      reserved = 0,
+      faulty = 0;
 
     for (const b of all) {
       const k = normStatus(b.status);
@@ -275,9 +278,10 @@ export default function InventoryManagement({ stationId }: Props) {
       else if (k === "InUse") inUse++;
       else if (k === "Charging") charging++;
       else if (k === "Maintenance") maintenance++;
+      else if (k === "Faulty") faulty++;
       if (isReservedFlag(b)) reserved++;
     }
-    return { total, available, inUse, charging, maintenance, reserved };
+    return { total, available, inUse, charging, maintenance, reserved, faulty };
   }, [apiTotals, all]);
 
   const lowStock = header.available + header.charging < 20;
@@ -409,7 +413,7 @@ export default function InventoryManagement({ stationId }: Props) {
         </h2>
         <p className="text-gray-600 text-sm mb-4">{t("staff.inventory.subtitleOverview")}</p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
             {[
               { label: t("staff.inventory.labelTotal"), value: header.total },
               { label: t("staff.inventory.statusAvailable"), value: header.available },
@@ -417,6 +421,7 @@ export default function InventoryManagement({ stationId }: Props) {
               { label: t("staff.inventory.statusCharging"), value: header.charging },
               { label: t("staff.inventory.statusMaintenance"), value: header.maintenance },
               { label: t("staff.inventory.statusReserved"), value: header.reserved },
+              { label: t("staff.inventory.statusFaulty"), value: header.faulty },
             ].map((k) => (
             <div
               key={k.label}
