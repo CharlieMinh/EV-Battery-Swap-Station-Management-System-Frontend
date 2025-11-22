@@ -255,27 +255,57 @@ export default function MapView() {
     });
   };
 
+  // Tìm trạm có pin gần nhất (hoặc trạm gần nhất nếu không có trạm nào có pin)
   useEffect(() => {
-    setIsLoading(true);
-    setNearestStation(null);
-    setRouteCoords([]);
+    const findAndSetNearestStationWithBattery = () => {
+      // Đợi cả battery counts và distances đã load xong
+      if (!userLocation || stations.length === 0 || isLoadingBatteries || isCalculatingDistances) {
+        return;
+      }
 
-    const findAndSetNearestStation = async () => {
-      if (userLocation && stations.length > 0) {
-        const nearest = await findNearestStation(userLocation, stations);
+      // Tận dụng stationDistances đã tính sẵn
+      const stationsWithBattery: (Station & { distance: number; batteryCount: number })[] = [];
+      const allStationsWithDistance: (Station & { distance: number })[] = [];
 
-        if (nearest) {
-          setNearestStation(nearest);
-          setSelectedStationId(nearest.id as string);
-        } else {
-          setNearestStation(null);
-          setSelectedStationId(null);
+      for (const station of stations) {
+        const distance = stationDistances.get(station.id as string);
+        if (distance === undefined || distance === Infinity) continue;
+
+        const batteryCount = batteryCounts.get(station.id as string) ?? 0;
+        const stationWithDistance = { ...station, distance };
+        
+        allStationsWithDistance.push(stationWithDistance);
+        
+        // Chỉ thêm vào danh sách có pin nếu có pin
+        if (batteryCount > 0) {
+          stationsWithBattery.push({ ...stationWithDistance, batteryCount });
         }
       }
-      setIsLoading(false);
+
+      // Tìm trạm có pin gần nhất
+      let nearest: (Station & { distance: number }) | null = null;
+      
+      if (stationsWithBattery.length > 0) {
+        // Sắp xếp theo khoảng cách và chọn trạm có pin gần nhất
+        stationsWithBattery.sort((a, b) => a.distance - b.distance);
+        nearest = stationsWithBattery[0];
+      } else if (allStationsWithDistance.length > 0) {
+        // Fallback: Nếu không có trạm nào có pin, chọn trạm gần nhất
+        allStationsWithDistance.sort((a, b) => a.distance - b.distance);
+        nearest = allStationsWithDistance[0];
+      }
+
+      if (nearest) {
+        setNearestStation(nearest);
+        setSelectedStationId(nearest.id as string);
+      } else {
+        setNearestStation(null);
+        setSelectedStationId(null);
+      }
     };
-    findAndSetNearestStation();
-  }, [userLocation, stations]);
+
+    findAndSetNearestStationWithBattery();
+  }, [userLocation, stations, batteryCounts, stationDistances, isLoadingBatteries, isCalculatingDistances]);
 
   // Tính khoảng cách cho tất cả trạm (để hiển thị trong danh sách)
   useEffect(() => {
@@ -453,9 +483,10 @@ export default function MapView() {
                 <div className="text-xs mt-2 opacity-90 flex items-center gap-1">
                   {(() => {
                     const nearestBatteryCount = batteryCounts.get(nearestStation.id as string) ?? 0;
-                    return nearestBatteryCount === 0 
-                      ? "⚠️ Trạm gần nhất hết pin"
-                      : ` Gần nhất: ${formatDistance(nearestStation.distance)}`;
+                    if (nearestBatteryCount === 0) {
+                      return "⚠️ Trạm gần nhất (không có trạm nào có pin)";
+                    }
+                    return `📍 Trạm có pin gần nhất: ${formatDistance(nearestStation.distance)}`;
                   })()}
                 </div>
               )}
@@ -570,10 +601,10 @@ export default function MapView() {
                                   isSelected
                                     ? "bg-orange-500 text-white shadow-md cursor-default"
                                     : isOutOfStock
-                                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200 border-2 border-red-300"
                                     : "bg-orange-100 text-orange-700 hover:bg-orange-200"
                                 }`}
-                                title={isOutOfStock ? "Trạm này hết pin" : isSelected ? "Đang chỉ đường đến trạm này" : "Chỉ đường đến trạm này"}
+                                title={isOutOfStock ? "Chỉ đường đến trạm này (Trạm hết pin)" : isSelected ? "Đang chỉ đường đến trạm này" : "Chỉ đường đến trạm này"}
                               >
                                 <Navigation size={16} />
                                 {isSelected ? "Đang chỉ đường" : "Chỉ đường"}
@@ -649,10 +680,8 @@ export default function MapView() {
               eventHandlers={{
                 click: () => {
                   setSelectedStationId(station.id as string);
-                  // Nếu click vào marker và trạm có pin, tự động chọn để chỉ đường
-                  if (batteryCount > 0) {
-                    handleSelectRoute(station);
-                  }
+                  // Tự động chọn để chỉ đường khi click vào marker (dù có pin hay không)
+                  handleSelectRoute(station);
                 },
               }}
             >

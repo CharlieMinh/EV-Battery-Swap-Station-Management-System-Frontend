@@ -294,7 +294,7 @@ export default function UserProfile() {
                 </div>
                 {editMode ? (
                   <input
-                    type="text"
+                    type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -303,7 +303,6 @@ export default function UserProfile() {
                       }))
                     }
                     maxLength={11}
-                    type="tel"
                     className="pl-6 border-b border-gray-400 focus:outline-none w-full"
                   />
                 ) : (

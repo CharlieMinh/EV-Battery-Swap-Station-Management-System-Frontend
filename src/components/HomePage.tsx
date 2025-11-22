@@ -56,7 +56,6 @@ import useGeoLocation from "./map/useGeoLocation";
 import MapPreview from "./map/MapPreview";
 import { fetchStations, Station } from "../services/admin/stationService";
 import type { User } from "../App";
-import { get } from "http";
 import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
 import {
   DropdownMenu,

@@ -401,7 +401,6 @@ const CustomerDetailModal = ({
                     </select>
                   ) : (
                     <input
-                      type="text"
                       value={(formData as any)[item.key] || ""}
                       onChange={(e) =>
                         setFormData({
