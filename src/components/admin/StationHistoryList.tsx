@@ -115,7 +115,7 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                       : null);
                 
                 userCurrentSubsMap[userId] = {
-                  name: activeSubscription.subscriptionPlan?.name || "Unknown Plan",
+                  name: activeSubscription.subscriptionPlan?.name || t("common.unknownPlan"),
                   swapsRemaining: swapsRemaining
                 };
               }
@@ -129,10 +129,10 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                       : null);
                 
                 subscriptionInfoMap[sub.id] = {
-                  name: sub.subscriptionPlan?.name || "Unknown Plan",
+                  name: sub.subscriptionPlan?.name || t("common.unknownPlan"),
                   swapsRemaining: swapsRemaining
                 };
-                subscriptionNameMap[sub.id] = sub.subscriptionPlan?.name || "Unknown Plan";
+                subscriptionNameMap[sub.id] = sub.subscriptionPlan?.name || t("common.unknownPlan");
               });
             }
           } catch (err) {

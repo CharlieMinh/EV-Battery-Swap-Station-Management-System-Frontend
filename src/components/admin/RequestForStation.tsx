@@ -40,7 +40,8 @@ export const RequestForStation: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const [stations, setStations] = useState<{ id: string; name: string }[]>([]);
-  const [selectedStation, setSelectedStation] = useState<string>("Tất cả");
+  const { t } = useLanguage();
+  const [selectedStation, setSelectedStation] = useState<string>(t("admin.all"));
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,7 +78,7 @@ export const RequestForStation: React.FC = () => {
   }, []);
 
   const filteredGroups =
-    selectedStation === "Tất cả"
+    selectedStation === t("admin.all")
       ? groupedRequests
       : groupedRequests.filter((g) => g.stationName === selectedStation);
 
@@ -129,8 +130,6 @@ export const RequestForStation: React.FC = () => {
     setGroupedRequests(groupedArray);
   };
 
-  const { t } = useLanguage();
-
   // Extract only admin note from combined auto-generated notes, if present
   const extractAdminNote = (notes: string | null | undefined): string | null => {
     if (!notes) return null;
@@ -139,7 +138,7 @@ export const RequestForStation: React.FC = () => {
     // Trường hợp BE trả về chỉ "." hoặc chuỗi trống coi như không có ghi chú
     if (!normalized || normalized === ".") return null;
 
-    const marker = "Ghi chú Admin:";
+    const marker = t("admin.adminNotes") + ":";
     const idx = normalized.indexOf(marker);
     if (idx === -1) {
       // Không đúng định dạng tự động, trả nguyên ghi chú (nếu có nội dung)

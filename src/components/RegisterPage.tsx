@@ -188,9 +188,9 @@ export function RegisterPage({
         const data = error.response.data;
 
         if (data.error?.code === "EMAIL_EXISTS") {
-          setErrors({ email: data.error.message || "Email already exists." });
+          setErrors({ email: data.error.message || t("register.emailExists") });
         } else {
-          setErrors({ password: "Registration failed. Please try again." });
+          setErrors({ password: t("register.registrationFailed") });
           console.error("Unexpected error:", error);
         }
       }
@@ -303,7 +303,7 @@ export function RegisterPage({
                         ? "border-red-500 focus:ring-red-200"
                         : "border-gray-300 focus:border-green-500"
                     }`}
-                    placeholder="Nhập 10 hoặc 11 số"
+                    placeholder={t("register.phonePlaceholder")}
                   />
                 </div>
                 {errors.phone && (
@@ -334,7 +334,7 @@ export function RegisterPage({
                         ? "border-red-500 focus:ring-red-200"
                         : "border-gray-300 focus:border-green-500"
                     }`}
-                    placeholder="your@email.com"
+                    placeholder={t("register.emailPlaceholder")}
                   />
                 </div>
                 {errors.email && (

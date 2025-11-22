@@ -24,6 +24,8 @@ import {
   Github,
   Facebook,
   ArrowLeft,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { User as UserType } from "../App";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +49,7 @@ export function LoginPage({ onLogin, onBackToHome }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleLoginSuccess = (response: {
     token: string;
@@ -160,21 +163,21 @@ console.error("Login error details:", error);
           }
           // Invalid credentials 401
           else if (data.error?.code === "INVALID_CREDENTIALS") {
-            setErrorPassword(data.error.message || "Invalid email or password.");
+            setErrorPassword(data.error.message || t("login.invalidCredentials"));
           }
           else {
-            setErrorPassword(data.message || "Login failed. Please try again.");
+            setErrorPassword(data.message || t("login.loginFailed"));
           }
         } else if (error.request) {
           console.error("No response received:", error.request);
-          setErrorPassword("Cannot connect to server. Please check your connection.");
+          setErrorPassword(t("login.connectionError"));
         } else {
           console.error("Request setup error:", error.message);
-          setErrorPassword("Login failed. Please try again.");
+          setErrorPassword(t("login.loginFailed"));
         }
       } else {
         // Lỗi không mong muốn
-        setErrorPassword("Login failed. Please try again.");
+        setErrorPassword(t("login.loginFailed"));
         console.error("Unexpected error:", error);
       }
     } finally {
@@ -251,13 +254,24 @@ console.error("Login error details:", error);
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder={t("login.enterPassword")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                   {errorPassword && (
                     <p style={{ color: "red" }}>{errorPassword}</p>
@@ -293,7 +307,7 @@ console.error("Login error details:", error);
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-muted-foreground">
-                    Đăng nhập với
+                    {t("login.loginWith")}
                   </span>
                 </div>
               </div>

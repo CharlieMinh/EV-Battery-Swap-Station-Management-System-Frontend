@@ -81,6 +81,14 @@ export function AddPinToStation({
       return;
     }
 
+    // Validate số lượng: mỗi item phải từ 1-100
+    for (const item of payload) {
+      if (item.quantity < 1 || item.quantity > 100) {
+        toast.error(t("admin.quantityRangeError"));
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       for (const item of payload) {
