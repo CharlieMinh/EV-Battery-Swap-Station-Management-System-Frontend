@@ -50,12 +50,89 @@ function getAxiosErrorMessage(err: any, t?: (key: string) => string) {
 }
 
 const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
-  const [notes, setNotes] = useState(group.requests[0].staffNotes || "");
+  const { t } = useLanguage();
+
+  // Function để làm sạch ghi chú tự động, loại bỏ các phần rỗng
+  // Return null nếu không có message thực sự, return ghi chú đã làm sạch nếu có
+  const cleanAutoNote = (note: string | null | undefined): string | null => {
+    if (!note) return null;
+    
+    const trimmed = note.trim();
+    if (!trimmed || trimmed === ".") return null;
+    
+    // Kiểm tra xem có phải ghi chú tự động không (bắt đầu bằng [Tự động])
+    if (trimmed.startsWith("[Tự động]") || trimmed.includes("[Tự động]")) {
+      // Nếu có chứa "Được tạo từ yêu cầu", đây là ghi chú tự động từ hệ thống
+      if (trimmed.includes("Được tạo từ yêu cầu")) {
+        // Tìm vị trí kết thúc của phần tự động (sau "của Staff xxx.")
+        // Pattern: [Tự động] Được tạo từ yêu cầu #xxx của Staff xxx. [phần còn lại]
+        const staffPattern = /của Staff\s+[^.]*\./;
+        const match = trimmed.match(staffPattern);
+        
+        if (match && match.index !== undefined) {
+          // Lấy phần sau "của Staff xxx."
+          const afterAuto = trimmed.substring(match.index + match[0].length).trim();
+          
+          // Loại bỏ các phần "Ghi chú Staff: ." và "Ghi chú Admin: ." nếu chỉ có dấu chấm
+          let cleaned = afterAuto
+            .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+            .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+            .replace(/\s*\.\s*$/, "")
+            .trim();
+          
+          // Nếu không còn gì sau phần tự động, coi như không có ghi chú
+          if (!cleaned || cleaned === "." || cleaned === "") {
+            return null;
+          }
+          
+          // Nếu có ghi chú thực sự, return phần đó
+          return cleaned;
+        }
+        
+        // Nếu không match được pattern, có thể format khác, nhưng vẫn là tự động
+        // Loại bỏ toàn bộ phần tự động và chỉ giữ lại phần sau
+        let cleaned = trimmed
+          .replace(/\[Tự động\]\s*/, "")
+          .replace(/Được tạo từ yêu cầu[^.]*\.\s*/g, "")
+          .replace(/của Staff[^.]*\.\s*/g, "")
+          .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+          .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+          .replace(/\s*\.\s*$/, "")
+          .trim();
+        
+        if (!cleaned || cleaned === "." || cleaned === "") {
+          return null;
+        }
+        
+        return cleaned;
+      }
+    }
+    
+    // Nếu có "Ghi chú Staff:" hoặc "Ghi chú Admin:" nhưng không phải tự động
+    if (trimmed.includes("Ghi chú Staff:") || trimmed.includes("Ghi chú Admin:")) {
+      // Loại bỏ các phần rỗng
+      let cleaned = trimmed
+        .replace(/Ghi chú Staff:\s*\.\s*/g, "")
+        .replace(/Ghi chú Admin:\s*\.\s*/g, "")
+        .replace(/\s*\.\s*$/, "")
+        .trim();
+      
+      return cleaned.length > 0 ? cleaned : null;
+    }
+    
+    // Nếu không phải ghi chú tự động, return nguyên ghi chú
+    return trimmed;
+  };
+
+  // Lấy ghi chú ban đầu và làm sạch nếu là ghi chú tự động
+  const initialNote = group.requests[0].staffNotes || "";
+  const cleanedInitialNote = cleanAutoNote(initialNote);
+  
+  const [notes, setNotes] = useState(cleanedInitialNote || "");
   const [loading, setLoading] = useState(false);
   const [actionType, setActionType] = useState<"confirm" | "reject" | null>(
     null
   );
-  const { t } = useLanguage();
 
 
   // Xác nhận tất cả (giữ nguyên luồng)
@@ -278,19 +355,19 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                 {!isEditing && (
                   <label className="text-sm font-medium text-gray-700">{t("staff.checkRequest.labelNotesInput")}</label>
                 )}
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={isEditing ? "" : t("staff.checkRequest.notesPlaceholder")}
-                  className={`w-full p-3 border border-gray-300 rounded-lg ${
-                    isEditing
-                      ? "bg-gray-50 cursor-not-allowed"
-                      : "focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  }`}
-                  rows={4}
-                  disabled={isEditing}
-                  readOnly={isEditing}
-                />
+                {isEditing ? (
+                  <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 min-h-[100px]">
+                    {notes && notes.trim() ? notes : t("admin.noNotes")}
+                  </div>
+                ) : (
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder={t("staff.checkRequest.notesPlaceholder")}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    rows={4}
+                  />
+                )}
                 {!isEditing && !notes.trim() && (
                   <p className="text-xs text-red-500 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />

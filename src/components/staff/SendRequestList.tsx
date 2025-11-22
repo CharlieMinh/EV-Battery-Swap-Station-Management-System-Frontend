@@ -49,6 +49,67 @@ const TOAST_ID = {
 
 const SendRequestList = () => {
   const { t } = useLanguage();
+
+  // Function để làm sạch ghi chú tự động, loại bỏ các phần rỗng
+  // Return null nếu không có message thực sự, return ghi chú đã làm sạch nếu có
+  const cleanAutoNote = (note: string | null | undefined): string | null => {
+    if (!note) return null;
+    
+    const trimmed = note.trim();
+    if (!trimmed || trimmed === ".") return null;
+    
+    // Kiểm tra xem có phải ghi chú tự động không
+    if (trimmed.includes("[Tự động]") || trimmed.includes("Ghi chú Staff:") || trimmed.includes("Ghi chú Admin:")) {
+      // Loại bỏ "Ghi chú Staff: ." hoặc "Ghi chú Staff:." nếu chỉ có dấu chấm
+      let cleaned = trimmed.replace(/Ghi chú Staff:\s*\.\s*/g, "");
+      // Loại bỏ "Ghi chú Admin: ." hoặc "Ghi chú Admin:." nếu chỉ có dấu chấm
+      cleaned = cleaned.replace(/Ghi chú Admin:\s*\.\s*/g, "");
+      // Loại bỏ các khoảng trắng thừa và dấu chấm cuối cùng
+      cleaned = cleaned.replace(/\s*\.\s*$/, "").trim();
+      
+      // Nếu có phần tự động "[Tự động] Được tạo từ yêu cầu..."
+      if (cleaned.includes("[Tự động]") && cleaned.includes("Được tạo từ yêu cầu")) {
+        // Tách phần tự động và phần ghi chú thực sự
+        // Pattern: [Tự động] Được tạo từ yêu cầu #xxx của Staff xxx. [Ghi chú thực sự]
+        // Sử dụng regex để match toàn bộ phần tự động (từ [Tự động] đến hết "của Staff xxx.")
+        const autoPattern = /\[Tự động\]\s*Được tạo từ yêu cầu\s+[^\s]+\s+của Staff\s+[^.]*\.\s*/;
+        let withoutAuto = cleaned.replace(autoPattern, "").trim();
+        
+        // Nếu vẫn còn pattern tự động, thử cách khác - tìm vị trí của "của Staff" và loại bỏ từ đầu đến sau dấu chấm
+        if (cleaned.includes("của Staff")) {
+          const staffIndex = cleaned.indexOf("của Staff");
+          if (staffIndex > 0) {
+            // Tìm dấu chấm sau "của Staff xxx"
+            const afterStaff = cleaned.substring(staffIndex);
+            const dotIndex = afterStaff.indexOf(".");
+            if (dotIndex > 0) {
+              withoutAuto = cleaned.substring(staffIndex + dotIndex + 1).trim();
+            }
+          }
+        }
+        
+        // Loại bỏ các phần "Ghi chú Staff:" và "Ghi chú Admin:" nếu chỉ có dấu chấm
+        withoutAuto = withoutAuto.replace(/Ghi chú Staff:\s*\.\s*/g, "");
+        withoutAuto = withoutAuto.replace(/Ghi chú Admin:\s*\.\s*/g, "");
+        withoutAuto = withoutAuto.replace(/\s*\.\s*$/, "").trim();
+        
+        // Nếu không còn gì ngoài phần tự động, coi như không có ghi chú
+        if (!withoutAuto || withoutAuto === "." || withoutAuto === "") {
+          return null;
+        }
+        
+        // Nếu có ghi chú thực sự, chỉ return phần ghi chú đó (không bao gồm phần tự động)
+        return withoutAuto;
+      }
+      
+      // Nếu có ghi chú Staff hoặc Admin nhưng không phải format tự động, return đã làm sạch
+      return cleaned.length > 0 ? cleaned : null;
+    }
+    
+    // Nếu không phải ghi chú tự động, return nguyên ghi chú
+    return trimmed;
+  };
+
   const [requests, setRequests] = useState<StockRequest[]>([]);
   const [groupedRequests, setGroupedRequests] = useState<GroupedRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -339,14 +400,12 @@ const SendRequestList = () => {
                     </Button>
                   </div>
 
-                  {group.requests[0].staffNote && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">{t("staff.sendRequest.noteLabel")}</span>{" "}
-                        {group.requests[0].staffNote}
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold">{t("staff.sendRequest.noteLabel")}</span>{" "}
+                      {cleanAutoNote(group.requests[0].staffNote) || t("admin.noNotes")}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
