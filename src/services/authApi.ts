@@ -22,6 +22,26 @@ export interface RegisterRequest {
   phoneNumber?: string;
 }
 
+export interface CurrentUserResponse {
+  id?: string;
+  userId?: string;
+  name?: string;
+  fullName?: string;
+  email?: string;
+  role?: string;
+  stationId?: string | number;
+  station?: { id?: string | number; name?: string };
+  phoneNumber?: string;
+  phone?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  profilePicture?: string;
+  profilePictureUrl?: string;
+  status?: string;
+  createdAt?: string;
+  lastLogin?: string;
+}
+
 /**
  * API cho đăng nhập bằng Google
  */
@@ -60,8 +80,8 @@ export const logout = async (): Promise<void> => {
 /**
  * API lấy thông tin user hiện tại
  */
-export const getCurrentUser = async (): Promise<any> => {
-  const response = await axios.get('/api/v1/auth/me');
+export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
+  const response = await axios.get<CurrentUserResponse>('/api/v1/auth/me');
   return response.data;
 };
 
