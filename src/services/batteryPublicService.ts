@@ -159,8 +159,8 @@ export async function countBatteriesForMultipleStations(
         const batteryStatus = String(b.status).trim();
         const filterStatus = String(options.status).trim();
         
-        // Nếu filter là "Full", chấp nhận cả "Full" và "0"
-        if (filterStatus === "Full") {
+        // Nếu filter là "Full" hoặc "0", chấp nhận cả "Full" và "0" (status = 0 = Full)
+        if (filterStatus === "Full" || filterStatus === "0") {
           return batteryStatus === "Full" || batteryStatus === "0";
         }
         
