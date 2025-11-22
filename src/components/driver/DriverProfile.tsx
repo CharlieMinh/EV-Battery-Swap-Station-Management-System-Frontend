@@ -59,7 +59,6 @@ export function DriverProfile() {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = useState<string>("");
@@ -115,43 +114,6 @@ export function DriverProfile() {
     reader.readAsDataURL(file);
   };
 
-  const handleUploadPhoto = async () => {
-    if (!selectedFile || !userData) return;
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('ProfilePicture', selectedFile);
-      formData.append('Name', name);
-      formData.append('PhoneNumber', phoneNumber);
-
-      await axios.put(
-        `http://localhost:5194/api/v1/Users/${userData.id}`,
-        formData,
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      showSuccess(t("driver.profile.successUploadAvatar"));
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      await fetchProfile();
-    } catch (error: any) {
-      const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
-      if (backendErrorMessage) {
-        showError(t("driver.profile.errorUploadFailed"), backendErrorMessage);
-      } else {
-        showError(t("driver.profile.errorUploadFailed"), t("driver.profile.errorUnknown"));
-      }
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleCancelUpload = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -169,6 +131,11 @@ export function DriverProfile() {
       formData.append('Name', name);
       formData.append('PhoneNumber', phoneNumber);
 
+      // Nếu có ảnh được chọn thì thêm vào formData
+      if (selectedFile) {
+        formData.append('ProfilePicture', selectedFile);
+      }
+
       await axios.put(
         `http://localhost:5194/api/v1/Users/${userData.id}`,
         formData,
@@ -180,8 +147,19 @@ export function DriverProfile() {
         }
       );
 
-      showSuccess(t("driver.profile.successUpdateInfo"));
-      fetchProfile();
+      showSuccess(selectedFile
+        ? t("driver.profile.successUpdateAll")
+        : t("driver.profile.successUpdateInfo")
+      );
+
+      // Reset trạng thái ảnh và refresh profile
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setEditMode(false);
+      await fetchProfile();
     } catch (error: any) {
       const backendErrorMessage = error?.response?.data?.error?.message || error?.response?.data?.message;
       if (backendErrorMessage) {
@@ -316,27 +294,17 @@ export function DriverProfile() {
               {editMode && selectedFile && (
                 <div className="flex gap-2 mb-2">
                   <Button
-                    onClick={handleUploadPhoto}
-                    disabled={isUploading}
-                    className="bg-green-600 hover:bg-green-700 text-white text-sm"
-                    size="sm"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-1" />
-                    )}
-                    {isUploading ? t("driver.profile.uploading") : t("driver.profile.uploadAvatar")}
-                  </Button>
-                  <Button
                     onClick={handleCancelUpload}
-                    disabled={isUploading}
                     variant="outline"
                     className="text-sm"
                     size="sm"
                   >
                     {t("driver.profile.cancelUpload")}
                   </Button>
+                  <p className="text-sm text-green-600 flex items-center">
+                    <Camera className="w-4 h-4 mr-1" />
+                    {t("driver.profile.imageSelected")}
+                  </p>
                 </div>
               )}
               <h2 className="text-xl font-bold text-gray-900 mt-2">
@@ -434,6 +402,7 @@ export function DriverProfile() {
                       setEditMode(false);
                       setPhoneNumber(userData.phoneNumber || "");
                       setName(userData.name || "");
+                      handleCancelUpload();
                     }}
                   >
                     {t("driver.profile.cancel")}

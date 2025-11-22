@@ -261,6 +261,15 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   }, [bookingDialog, selectedStation, selectedVehicle, bookingDate]);
 
   const openBookingWizard = (stationId: string) => {
+    // Kiểm tra xem driver có xe chưa
+    if (!vehicles || vehicles.length === 0) {
+      toast.error(t("driver.booking.noVehicleError"), {
+        position: "top-center",
+        autoClose: 5000,
+      });
+      return;
+    }
+
     setSelectedStation(stationId);
     setBookingStep(1);
     setSelectedVehicle(null);
@@ -523,8 +532,8 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
                     currentUser?.profilePictureUrl
                       ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
                       : user.avatar
-                      ? `${user.avatar}?v=${Date.now()}`
-                      : undefined
+                        ? `${user.avatar}?v=${Date.now()}`
+                        : undefined
                   }
                   alt={currentUser?.name || user.name}
                 />
