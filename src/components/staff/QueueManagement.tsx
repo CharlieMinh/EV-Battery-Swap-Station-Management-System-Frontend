@@ -453,12 +453,28 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
       await refreshReservationRow(rid);
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
+      // Kiểm tra nếu lỗi là do chưa thanh toán (cần thu tiền trước khi check-in)
+      const errorData = err?.response?.data;
+      const errorCode = errorData?.error?.code || errorData?.code;
+      const amount = errorData?.amount || errorData?.error?.amount;
+      
+      if (errorCode === "PAYMENT_PENDING_CASH" && amount) {
+        // Hiển thị thông báo về số tiền cần thu
+        const amountText = `${amount.toLocaleString("vi-VN")}₫`;
+        toast.warning(t("staff.queue.info.unpaidAmount").replace("{amount}", amountText), {
+          ...toastOpts,
+          autoClose: 5000,
+        });
+      } else {
+        // Hiển thị lỗi thông thường
+        toast.error(
+          errorData?.error?.message ||
+          errorData?.message ||
           err?.message ||
           t("staff.queue.errors.checkinQr") ||
           "Cannot check-in with QR."
-      );
+        );
+      }
     } finally {
       setPendingCheckIn(null);
     }
@@ -476,6 +492,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         return toast.error(t("staff.queue.errors.missingQr") || "No valid QR code for this reservation.");
       await checkInReservation(reservation.reservationId, qr);
       toast.success(t("staff.queue.success.checkin") || "Check-in successful!");
+
       await refreshReservationRow(reservation.reservationId);
       setSelectedId(reservation.reservationId);
 
@@ -497,13 +514,28 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         setStage("checking");
       }
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        t("staff.queue.errors.checkinFailed") ||
-        "Check-in failed.";
-      toast.error("❌ " + msg);
+      // Kiểm tra nếu lỗi là do chưa thanh toán (cần thu tiền trước khi check-in)
+      const errorData = err?.response?.data;
+      const errorCode = errorData?.error?.code || errorData?.code;
+      const amount = errorData?.amount || errorData?.error?.amount;
+      
+      if (errorCode === "PAYMENT_PENDING_CASH" && amount) {
+        // Hiển thị thông báo về số tiền cần thu
+        const amountText = `${amount.toLocaleString("vi-VN")}₫`;
+        toast.warning(t("staff.queue.info.unpaidAmount").replace("{amount}", amountText), {
+          ...toastOpts,
+          autoClose: 5000,
+        });
+      } else {
+        // Hiển thị lỗi thông thường
+        const msg =
+          errorData?.error?.message ||
+          errorData?.message ||
+          err?.message ||
+          t("staff.queue.errors.checkinFailed") ||
+          "Check-in failed.";
+        toast.error("❌ " + msg);
+      }
     }
   };
 

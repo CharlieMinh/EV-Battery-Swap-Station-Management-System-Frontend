@@ -219,7 +219,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                   <div>
                     <p className="text-sm text-gray-500">{t("staff.checkRequest.labelTotalQuantity")}</p>
                     <p className="font-semibold text-orange-600">
-                      {group.totalItems} pin
+                      {group.totalItems} {t("staff.checkRequest.unitBattery")}
                     </p>
                   </div>
                 </div>
@@ -250,7 +250,7 @@ const CheckRequest: React.FC<CheckRequestProps> = ({ group, onClose }) => {
                           {request.batteryModelName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Model ID: {request.batteryModelId.slice(0, 8)}...
+                          {t("staff.checkRequest.labelModelId")}: {request.batteryModelId.slice(0, 8)}...
                         </p>
                       </div>
                     </div>

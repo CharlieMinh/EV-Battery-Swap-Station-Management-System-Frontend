@@ -29,6 +29,7 @@ import {
   LogOut,
   Zap,
   DollarSign,
+  Coins,
   Package,
   UserCircle,
   MessageCircle,
@@ -331,7 +332,7 @@ export function AdminDashboardPage({
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-orange-100 rounded-2xl text-orange-600">
-                        <DollarSign className="w-5 h-5" />
+                        <Coins className="w-5 h-5" />
                       </div>
                       <Badge className="bg-emerald-100 text-emerald-600">
                         VND

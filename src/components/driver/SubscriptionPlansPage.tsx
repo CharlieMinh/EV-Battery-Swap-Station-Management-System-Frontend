@@ -405,22 +405,22 @@ export function SubscriptionPlansPage() {
   const handleDeletePlan = async (planId: string) => {
     const result = await Swal.fire({
       icon: "warning",
-      title: "Xóa gói",
-      text: "Bạn có chắc chắn muốn xóa gói này? Hành động này không thể hoàn tác.",
+      title: t("admin.deletePlanTitle"),
+      text: t("admin.deletePlanConfirm"),
       showCancelButton: true,
       confirmButtonColor: "#d32f2f",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+      confirmButtonText: t("admin.deletePlan"),
+      cancelButtonText: t("common.cancel"),
     });
 
     if (result.isConfirmed) {
       try {
         await deleteSubscriptionPlan(planId);
-        toast.success("Gói đã được xóa thành công");
+        toast.success(t("admin.planDeletedSuccess"));
         setPlans(plans.filter((p) => p.id !== planId));
       } catch (error: any) {
-        const msg = error.response?.data?.message || "Không thể xóa gói.";
+        const msg = error.response?.data?.message || t("admin.planDeleteError");
         toast.error(msg);
       }
     }
@@ -731,7 +731,7 @@ export function SubscriptionPlansPage() {
                           : "bg-red-100 text-red-700"
                         }`}
                     >
-                      {isActive ? "Hoạt động" : "Ngừng hoạt động"}
+                      {isActive ? t("admin.active") : t("admin.inactive")}
                     </div>
                   );
                 })()}
@@ -789,7 +789,7 @@ export function SubscriptionPlansPage() {
                         onClick={() => handleEditPlan(plan.id)}
                       >
                         <Edit className="w-4 h-4 mr-2" />
-                        Chỉnh sửa
+                        {t("admin.editPlan")}
                       </Button>
                       <Button
                         variant="destructive"
@@ -797,7 +797,7 @@ export function SubscriptionPlansPage() {
                         onClick={() => handleDeletePlan(plan.id)}
                       >
                         <Delete className="w-4 h-4 mr-2" />
-                        Xóa
+                        {t("admin.deletePlan")}
                       </Button>
                     </div>
                   )}
@@ -985,22 +985,21 @@ export function SubscriptionPlansPage() {
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gray-900">
                 {editingPlan
-                  ? "Chỉnh sửa gói thuê pin"
-                  : "Thêm gói thuê pin mới"}
+                  ? t("admin.editPlanTitle")
+                  : t("admin.addPlanTitle")}
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                Nhập thông tin chi tiết về gói thuê pin. Các trường có dấu * là
-                bắt buộc.
+                {t("admin.planFormDescription")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 mt-4">
               <div>
                 <Label>
-                  Tên gói <span className="text-red-500">*</span>
+                  {t("admin.planName")} <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  placeholder="Nhập tên gói..."
+                  placeholder={t("admin.planNamePlaceholder")}
                   value={formData.name}
                   maxLength={100}
                   onChange={(e) => {
@@ -1018,10 +1017,10 @@ export function SubscriptionPlansPage() {
 
               <div>
                 <Label>
-                  Mô tả <span className="text-red-500">*</span>
+                  {t("admin.planDescription")} <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  placeholder="Nhập mô tả..."
+                  placeholder={t("admin.planDescriptionPlaceholder")}
                   value={formData.description}
                   onChange={(e) => {
                     setFormData({ ...formData, description: e.target.value });
@@ -1039,11 +1038,11 @@ export function SubscriptionPlansPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>
-                    Giá thuê hàng tháng <span className="text-red-500">*</span>
+                    {t("admin.monthlyPrice")} <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     type="text"
-                    placeholder="Nhập giá VND"
+                    placeholder={t("admin.monthlyPricePlaceholder")}
                     value={
                       displayMonthlyPrice ||
                       (formData.monthlyPrice
@@ -1078,7 +1077,7 @@ export function SubscriptionPlansPage() {
                 </div>
                 <div>
                   <Label>
-                    Loại gói <span className="text-red-500">*</span>
+                    {t("admin.planType")} <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={isUnlimitedPlan ? "unlimited" : "limited"}
@@ -1117,11 +1116,11 @@ export function SubscriptionPlansPage() {
                         editingPlan ? "bg-gray-100 cursor-not-allowed opacity-80" : ""
                       }`}
                     >
-                      <SelectValue placeholder="Chọn loại gói" />
+                      <SelectValue placeholder={t("admin.planTypePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unlimited">Gói pin không giới hạn lượt đổi</SelectItem>
-                      <SelectItem value="limited">Gói pin có giới hạn lượt đổi</SelectItem>
+                      <SelectItem value="unlimited">{t("admin.unlimitedPlan")}</SelectItem>
+                      <SelectItem value="limited">{t("admin.limitedPlan")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.isUnlimitedPlan && (
@@ -1129,7 +1128,7 @@ export function SubscriptionPlansPage() {
                   )}
                   {editingPlan && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Không thể thay đổi loại gói đối với gói đã tồn tại.
+                      {t("admin.cannotChangePlanType")}
                     </p>
                   )}
                 </div>
@@ -1137,19 +1136,19 @@ export function SubscriptionPlansPage() {
 
               <div>
                 <Label>
-                  Số lượt đổi tối đa / tháng{" "}
+                  {t("admin.maxSwapsPerMonth")}{" "}
                   {isUnlimitedPlan ? (
-                    "(Không giới hạn)"
+                    t("admin.maxSwapsUnlimited")
                   ) : (
                     <span className="text-red-500">*</span>
                   )}
                 </Label>
                 <Input
                   type="text"
-                  placeholder={isUnlimitedPlan ? "Không giới hạn" : "Nhập số lượt (tối thiểu 1)"}
+                  placeholder={isUnlimitedPlan ? t("admin.unlimited") : t("admin.maxSwapsPlaceholder")}
                   value={
                     isUnlimitedPlan
-                      ? "Không giới hạn"
+                      ? t("admin.unlimited")
                       : displayMaxSwaps ||
                       (formData.maxSwapsPerMonth && formData.maxSwapsPerMonth > 0
                         ? formData.maxSwapsPerMonth.toLocaleString("vi-VN")
@@ -1201,11 +1200,11 @@ export function SubscriptionPlansPage() {
               </div>
 
               <div>
-                <Label>Ưu đãi / Lợi ích</Label>
+                <Label>{t("admin.benefits")}</Label>
                 <textarea
                   className="w-full border border-gray-300 rounded-md p-2"
                   rows={3}
-                  placeholder="Nhập mỗi ưu đãi 1 dòng..."
+                  placeholder={t("admin.benefitsPlaceholder")}
                   value={formData.benefits}
                   onChange={(e) =>
                     setFormData({ ...formData, benefits: e.target.value })
@@ -1215,7 +1214,7 @@ export function SubscriptionPlansPage() {
 
               <div>
                 <Label>
-                  Loại pin <span className="text-red-500">*</span>
+                  {t("admin.batteryType")} <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.batteryModelId}
@@ -1227,7 +1226,7 @@ export function SubscriptionPlansPage() {
                   }}
                 >
                   <SelectTrigger className={errors.batteryModelId ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Chọn loại pin" />
+                    <SelectValue placeholder={t("admin.batteryTypePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {batteryOptions.map((b) => {
@@ -1254,7 +1253,7 @@ export function SubscriptionPlansPage() {
               {editingPlan && (
                 <div>
                   <Label>
-                    Trạng thái <span className="text-red-500">*</span>
+                    {t("admin.status")} <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={formIsActive === true ? "active" : "inactive"}
@@ -1268,13 +1267,13 @@ export function SubscriptionPlansPage() {
                     }}
                   >
                     <SelectTrigger className={errors.status ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Chọn trạng thái">
-                        {formIsActive === true ? "Hoạt động" : "Ngừng hoạt động"}
+                      <SelectValue placeholder={t("admin.statusPlaceholder")}>
+                        {formIsActive === true ? t("admin.active") : t("admin.inactive")}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Hoạt động</SelectItem>
-                      <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                      <SelectItem value="active">{t("admin.active")}</SelectItem>
+                      <SelectItem value="inactive">{t("admin.inactive")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.status && (
@@ -1290,7 +1289,7 @@ export function SubscriptionPlansPage() {
                 onClick={() => setIsAddEditModalOpen(false)}
                 disabled={isLoading}
               >
-                Hủy
+                {t("common.cancel")}
               </Button>
               <Button
                 className="bg-orange-500 hover:bg-orange-600 text-white"
@@ -1303,21 +1302,21 @@ export function SubscriptionPlansPage() {
                   const trimmedName = formData.name?.trim() || "";
 
                   if (!trimmedName) {
-                    newErrors.name = "Vui lòng nhập tên gói";
+                    newErrors.name = t("admin.planNameRequired");
                   } else if (trimmedName.length < 1 || trimmedName.length > 100) {
-                    newErrors.name = "Tên gói phải từ 1 đến 100 ký tự";
+                    newErrors.name = t("admin.planNameLength");
                   }
 
                   if (!formData.description || formData.description.trim() === "") {
-                    newErrors.description = "Vui lòng nhập mô tả";
+                    newErrors.description = t("admin.planDescriptionRequired");
                   }
 
                   if (!formData.monthlyPrice || formData.monthlyPrice <= 0) {
-                    newErrors.monthlyPrice = "Vui lòng nhập giá thuê hàng tháng (phải lớn hơn 0)";
+                    newErrors.monthlyPrice = t("admin.monthlyPriceRequired");
                   }
 
                   if (!formData.batteryModelId || formData.batteryModelId.trim() === "") {
-                    newErrors.batteryModelId = "Vui lòng chọn loại pin";
+                    newErrors.batteryModelId = t("admin.batteryTypeRequired");
                   }
 
                   // Validate số lượt đổi tối đa cho gói có giới hạn
@@ -1327,8 +1326,7 @@ export function SubscriptionPlansPage() {
                       formData.maxSwapsPerMonth < 1 ||
                       formData.maxSwapsPerMonth > 100
                     ) {
-                      newErrors.maxSwapsPerMonth =
-                        "Số lượt đổi tối đa phải nằm trong khoảng từ 1 đến 100";
+                      newErrors.maxSwapsPerMonth = t("admin.maxSwapsRange");
                     }
                   }
 
@@ -1364,13 +1362,13 @@ export function SubscriptionPlansPage() {
 
                       // dùng API service update
                       await updateSubscriptionPlan(editingPlan.id, updateData);
-                      toast.success("Cập nhật gói thuê pin thành công!");
+                      toast.success(t("admin.planUpdatedSuccess"));
                     } else {
                       // dùng API service create
                       console.log("Creating plan with data:", submitData);
                       console.log("maxSwapsPerMonth:", submitData.maxSwapsPerMonth, "isUnlimited:", isUnlimitedPlan);
                       await createSubscriptionPlan(submitData);
-                      toast.success("Thêm gói thuê pin mới thành công!");
+                      toast.success(t("admin.planAddedSuccess"));
                     }
 
                     setIsAddEditModalOpen(false);
@@ -1380,7 +1378,7 @@ export function SubscriptionPlansPage() {
                   } catch (err: any) {
                     toast.error(
                       err.response?.data?.message ||
-                      "Có lỗi xảy ra, vui lòng thử lại."
+                      t("admin.planError")
                     );
                   } finally {
                     setIsLoading(false);
@@ -1388,7 +1386,7 @@ export function SubscriptionPlansPage() {
                 }}
               >
                 {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingPlan ? "Lưu thay đổi" : "Thêm mới"}
+                {editingPlan ? t("admin.saveChanges") : t("admin.addNew")}
               </Button>
             </div>
           </DialogContent>

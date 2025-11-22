@@ -405,16 +405,6 @@ export default function ProfileManagement() {
 
             <div className="space-y-1">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                <BadgeCheck className="w-4 h-4" />
-                {t("staff.profile.userId")}
-              </label>
-              <p className="text-gray-900 font-mono text-sm">
-                {me?.userId || me?.id || t("staff.profile.notUpdated")}
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
                 <Building className="w-4 h-4" />
                 {t("staff.station")}
               </label>
