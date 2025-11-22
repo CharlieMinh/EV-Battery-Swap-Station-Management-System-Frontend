@@ -74,8 +74,8 @@ export default function SwapPanel({
     // Parse từ chuỗi người dùng nhập
     const parsed = Number(healthInput || "0");
 
-    // 🎯 Pin cũ chỉ được 0–99%, 100% là pin mới
-    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 99) {
+    // 🎯 Pin cũ chỉ được 1–99%, 100% là pin mới
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 99) {
       oneToast.warn(t("staff.swap.warnInvalidHealth"));
       return;
     }

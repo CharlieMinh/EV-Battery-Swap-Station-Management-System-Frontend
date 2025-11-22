@@ -113,7 +113,8 @@ export async function resolveComplaint(
         resolutionNotes: notes,
       }
     );
-    toast.success("Ra quyết định khiếu nại thành công!");
+    // Bỏ toast ở đây, để component tự quản lý toast
+    // toast.success("Ra quyết định khiếu nại thành công!");
     return res.data;
   } catch (err: any) {
     toast.error(err.response?.data?.message || "Ra quyết định thất bại!");
@@ -134,7 +135,8 @@ export async function finalizeComplaintReswap(
       { returnedBatteryHealth } satisfies CompleteReswapRequest,
       { params: { stationId } }
     );
-    toast.success("Hoàn tất Re-swap thành công!");
+    // Bỏ toast ở đây, để component tự quản lý toast
+    // toast.success("Hoàn tất Re-swap thành công!");
     return res.data;
   } catch (err: any) {
     toast.error(err.response?.data?.message || "Hoàn tất Re-swap thất bại!");

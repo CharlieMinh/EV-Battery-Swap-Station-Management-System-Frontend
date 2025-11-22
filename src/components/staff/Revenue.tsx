@@ -106,13 +106,13 @@ const getStatusLabel = (p: any, t: (key: string) => string): string => {
 
 /* ===================== COMPONENT ===================== */
 export default function Revenue() {
-  const { t, language } = useLanguage();
+  const { t, language, formatCurrency } = useLanguage();
 
   const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   
-  // Format amount: luôn hiển thị VND
+  // Format amount: sử dụng formatCurrency từ LanguageContext để tự động chuyển đổi USD khi tiếng Anh
   const formatAmount = (vndAmount: number): string => {
-    return `${vndAmount.toLocaleString("vi-VN")}₫`;
+    return formatCurrency(vndAmount);
   };
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");

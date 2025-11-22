@@ -37,7 +37,7 @@ const translations = {
     "staff.sendRequest.quantity": "Quantity",
     "staff.sendRequest.title": "Send battery request",
     "staff.sendRequest.subtitle": "List of battery send requests from the station",
-    "staff.sendRequest.batchLabel": "Send batch #",
+    "staff.sendRequest.batchLabel": "Send batch",
     "staff.sendRequest.status.pending": "Pending approval",
     "staff.sendRequest.status.approved": "Approved",
     "staff.sendRequest.status.rejected": "Rejected",
@@ -55,7 +55,7 @@ const translations = {
     "staff.sendRequest.cancelRequest": "Cancel request",
     "staff.requestBattery.title": "Battery replenishment request",
     "staff.requestBattery.subtitle": "List of battery replenishment requests for the station",
-    "staff.requestBattery.batchLabel": "Batch #",
+    "staff.requestBattery.batchLabel": "Batch",
     "staff.requestBattery.status.pending": "Pending",
     "staff.requestBattery.status.approved": "Approved",
     "staff.requestBattery.status.rejected": "Rejected",
@@ -318,7 +318,7 @@ const translations = {
     "staff.dashboard.menu.requests": "Requests",
     "staff.dashboard.menu.sendRequests": "Send Requests",
     "staff.dashboard.menu.revenue": "Revenue",
-    "staff.dashboard.menu.approvals": "Approvals",
+    "staff.dashboard.menu.approvals": "Confirm Payment",
     "staff.dashboard.menu.complaint": "Complaints",
     "staff.dashboard.toastStationIdRequired": "Please enter a valid StationId.",
     "staff.dashboard.toastStationIdSaved": "StationId saved, all tabs will use this value.",
@@ -1095,7 +1095,7 @@ const translations = {
     "staff.swap.errorGeneric": "Cannot complete swap. Please try again.",
     "staff.swap.errorReserved": "There was an issue completing the swap. The system may have reserved the battery. Please check Transactions/Revenue tab.",
     "staff.swap.placeholderHealth": "Enter old battery % (e.g., 85)",
-    "staff.swap.helpHealth": "Enter the remaining old battery capacity (0-99%). 100% is a new battery and no swap is needed.",
+    "staff.swap.helpHealth": "Enter the remaining old battery capacity (1-99%). 100% is a new battery and no swap is needed.",
     "staff.swap.title": "Swap — Customer:",
     "staff.swap.customerGuest": "Guest",
     "staff.swap.labelOldBattery": "% Old Battery (0-99)",
@@ -1434,14 +1434,16 @@ const translations = {
     "staff.queue.labels.noDescription": "No description.",
     "staff.queue.errors.complaintNotFound": "Complaint data not found.",
     "staff.queue.errors.noComplaintId": "Complaint ID not found!",
-    "staff.queue.messages.confirmFault": "Confirming fault, preparing Re-swap.",
-    "staff.queue.success.confirmFault": "Fault confirmed, proceeding to Re-swap...",
-    "staff.queue.success.reswapComplete": "Free Re-swap complete!",
-    "staff.queue.errors.reswapFailed": "Re-swap completion failed!",
-    "staff.queue.button.confirmFault": "Confirm Fault (Re-swap)",
+    "staff.queue.messages.confirmFault": "Confirming fault, preparing...",
+    "staff.queue.success.confirmFault": "Fault confirmed, proceeding...",
+    "staff.queue.success.reswapComplete": "Free swap complete!",
+    "staff.queue.errors.reswapFailed": "Swap completion failed!",
+    "staff.queue.button.confirmFault": "Confirm Fault",
     "staff.queue.prompts.rejectNote": "Enter rejection notes (at least 10 characters):",
     "staff.queue.errors.rejectNoteShort": "Notes must be at least 10 characters!",
     "staff.queue.success.rejectComplaint": "Complaint rejected.",
+    "staff.queue.success.cancelReservation": "Reservation canceled. Customer can book a new appointment.",
+    "staff.queue.warning.cancelReservationFailed": "Unable to automatically cancel reservation. Please cancel manually if needed.",
     "staff.queue.errors.rejectFailed": "Rejecting complaint failed!",
     "staff.queue.button.rejectComplaint": "Reject Complaint",
     "staff.queue.success.swapComplete": "Swap completed.",
@@ -2070,7 +2072,7 @@ const translations = {
     "common.no": "No",
   },
   vi: {
-    "staff.dashboard.menu.profile": "Hồ sơ",
+    "staff.dashboard.menu.profile": "Thông tin cá nhân",
     "staff.dashboard.menu.queue": "Quản lý hàng chờ",
     "staff.dashboard.menu.addDriver": "Thêm tài xế",
     "staff.dashboard.menu.customers": "Quản lý khách hàng",
@@ -2078,7 +2080,7 @@ const translations = {
     "staff.dashboard.menu.requests": "Yêu cầu nhận pin",
     "staff.dashboard.menu.sendRequests": "Yêu cầu nhập pin",
     "staff.dashboard.menu.revenue": "Doanh thu",
-    "staff.dashboard.menu.approvals": "Phê duyệt",
+    "staff.dashboard.menu.approvals": "Xác nhận thanh toán",
     "staff.dashboard.menu.complaint": "Khiếu nại",
     "staff.dashboard.toastStationIdRequired": "Vui lòng nhập StationId hợp lệ.",
     "staff.dashboard.toastStationIdSaved": "Đã lưu StationId, các tab sẽ dùng giá trị này.",
@@ -2101,7 +2103,7 @@ const translations = {
     "staff.sendRequest.quantity": "Số lượng",
     "staff.sendRequest.title": "Yêu cầu gửi pin",
     "staff.sendRequest.subtitle": "Danh sách các yêu cầu gửi pin từ trạm",
-    "staff.sendRequest.batchLabel": "Lô gửi #",
+    "staff.sendRequest.batchLabel": "Lô gửi",
     "staff.sendRequest.status.pending": "Chờ xác nhận",
     "staff.sendRequest.status.approved": "Đã xác nhận",
     "staff.sendRequest.status.rejected": "Đã từ chối",
@@ -2119,7 +2121,7 @@ const translations = {
     "staff.sendRequest.cancelRequest": "Hủy yêu cầu",
     "staff.requestBattery.title": "Yêu cầu bổ sung pin",
     "staff.requestBattery.subtitle": "Danh sách các yêu cầu bổ sung pin cho trạm",
-    "staff.requestBattery.batchLabel": "Lô pin #",
+    "staff.requestBattery.batchLabel": "Lô pin",
     "staff.requestBattery.status.pending": "Đang chờ",
     "staff.requestBattery.status.approved": "Đã duyệt",
     "staff.requestBattery.status.rejected": "Từ chối",
@@ -2469,7 +2471,7 @@ const translations = {
     "driver.subscription.status.active": "Đang hoạt động",
     "driver.subscription.status.expired": "Đã hết hạn",
     "driver.subscription.status.inactive": "Không hoạt động",
-    "driver.profile.title": "Hồ sơ cá nhân",
+    "driver.profile.title": "Thông tin cá nhân",
     "driver.profile.editProfile": "Sửa hồ sơ",
     "driver.mycar": "Xe của tôi",
     "driver.swap": "Thay Pin",
@@ -3121,7 +3123,7 @@ const translations = {
     "staff.swap.errorGeneric": "Không thể hoàn tất thay pin. Vui lòng thử lại.",
     "staff.swap.errorReserved": "Đã có lỗi khi hoàn tất giao dịch. Hệ thống có thể đã giữ chỗ pin (kho báo Reserved). Vui lòng kiểm tra tab Giao dịch/Doanh thu.",
     "staff.swap.placeholderHealth": "Nhập % pin cũ (ví dụ: 85)",
-    "staff.swap.helpHealth": "Nhập % dung lượng pin cũ (0-99%). 100% là pin mới và không cần thay.",
+    "staff.swap.helpHealth": "Nhập % dung lượng pin cũ (1-99%). 100% là pin mới và không cần thay.",
     "staff.swap.title": "Thay pin — Khách:",
     "staff.swap.customerGuest": "Khách lẻ",
     "staff.swap.labelOldBattery": "% Pin cũ (0-99)",
@@ -3439,7 +3441,7 @@ const translations = {
     "staff.queue.status.checkedIn": "Đã check-in",
     "staff.queue.status.investigating": "Đang kiểm tra",
     "staff.queue.status.readyToSwap": "Sẵn sàng đổi pin",
-    "staff.queue.status.rejected": "Từ chối",
+    "staff.queue.status.rejected": "Từ chối khiếu nại",
     "staff.queue.status.resolved": "Hoàn tất",
     "staff.queue.status.completed": "Đã hoàn tất",
     "staff.queue.status.pendingPayment": "Chờ thanh toán",
@@ -3470,16 +3472,18 @@ const translations = {
     "staff.queue.labels.noDescription": "Không có mô tả.",
     "staff.queue.errors.complaintNotFound": "Không tìm thấy dữ liệu khiếu nại.",
     "staff.queue.errors.noComplaintId": "❌ Không tìm thấy complaintId!",
-    "staff.queue.messages.confirmFault": "Xác nhận pin lỗi, chuẩn bị Re-swap.",
-    "staff.queue.success.confirmFault": "✅ Đã xác nhận lỗi, tiến hành Re-swap...",
-    "staff.queue.success.reswapComplete": "⚡ Hoàn tất đổi pin miễn phí (Re-swap)!",
-    "staff.queue.errors.reswapFailed": "Hoàn tất Re-swap thất bại!",
-    "staff.queue.button.confirmFault": "✅ Xác nhận lỗi (Re-swap)",
+    "staff.queue.messages.confirmFault": "Xác nhận pin lỗi, chuẩn bị...",
+    "staff.queue.success.confirmFault": "✅ Đã xác nhận lỗi, tiến hành...",
+    "staff.queue.success.reswapComplete": "⚡ Hoàn tất đổi pin miễn phí!",
+    "staff.queue.errors.reswapFailed": "Hoàn tất đổi pin thất bại!",
+    "staff.queue.button.confirmFault": "Xác nhận lỗi",
     "staff.queue.prompts.rejectNote": "Nhập ghi chú từ chối (ít nhất 10 ký tự):",
     "staff.queue.errors.rejectNoteShort": "Ghi chú phải ít nhất 10 ký tự!",
     "staff.queue.success.rejectComplaint": "🚫 Đã từ chối khiếu nại",
+    "staff.queue.success.cancelReservation": "Đã hủy đặt lịch. Khách hàng có thể đặt lịch mới.",
+    "staff.queue.warning.cancelReservationFailed": "Không thể hủy đặt lịch tự động. Vui lòng hủy thủ công nếu cần.",
     "staff.queue.errors.rejectFailed": "Từ chối khiếu nại thất bại!",
-    "staff.queue.button.rejectComplaint": "❌ Từ chối khiếu nại",
+    "staff.queue.button.rejectComplaint": "Từ chối khiếu nại",
     "staff.queue.success.swapComplete": "✅ Hoàn tất đổi pin.",
     "staff.queue.modal.confirmTitle": "Xác nhận Check-in",
     "staff.queue.modal.confirmDesc": "Kiểm tra thông tin đặt lịch bên dưới trước khi xác nhận check-in.",
@@ -4126,11 +4130,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   const formatCurrency = (amount: number): string => {
     if (language === "en") {
-      return `$${amount.toLocaleString()}`;
+      // Convert VND to USD (1 USD = 25,000 VND)
+      const usdAmount = amount / 25000;
+      // Format theo kiểu Mỹ với 2 chữ số thập phân
+      return `$${usdAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else {
-      // Convert USD to VND (1 USD = 25,000 VND)
-      const vndAmount = amount * 25000;
-      return `${vndAmount.toLocaleString()} VND`;
+      // Amount đã là VND, format số và thêm "VND"
+      // Dùng toLocaleString với minimumFractionDigits: 0 để không có phần thập phân
+      return `${amount.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VND`;
     }
   };
 

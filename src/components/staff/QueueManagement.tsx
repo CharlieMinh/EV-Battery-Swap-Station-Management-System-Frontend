@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   listReservations,
   checkInReservation,
+  cancelReservation,
   type Reservation,
   getUserNamesBatch,
 } from "../../services/staff/staffApi";
@@ -20,6 +21,15 @@ import {
   startComplaintInvestigation,
 } from "@/services/swaps";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Input } from "../ui/input";
 import { formatTimeFromDate } from "../../utils/dateTimeUtils";
 
 const toastOpts = {
@@ -162,6 +172,14 @@ const isCompleted = (r: Reservation) => ((r as any).status || "").toLowerCase() 
 const isCancelled = (r: Reservation) => ((r as any).status || "").toLowerCase() === "cancelled";
 const isFinalState = (r: Reservation) => isRejectedOrResolved(r) || isCompleted(r) || isCancelled(r);
 
+// Helper: Kiểm tra complaint đã đóng (Rejected = 5 hoặc Resolved = 6)
+const isComplaintClosed = (complaintStatus: string | number | undefined): boolean => {
+  if (!complaintStatus) return false;
+  const statusStr = String(complaintStatus).toLowerCase();
+  // Complaint đóng khi status = 5 (Rejected) hoặc 6 (Resolved)
+  return statusStr === "rejected" || statusStr === "5" || statusStr === "resolved" || statusStr === "6";
+};
+
 /* ========= helpers ========= */
 function resolveSlotRange(r: any): { start: Date | null; end: Date | null } {
   const date = r?.slotDate,
@@ -233,6 +251,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
   const [complaintDetail, setComplaintDetail] = useState<any>(null);
   const [isLoadingComplaint, setIsLoadingComplaint] = useState(false);
   const [isProcessingComplaint, setIsProcessingComplaint] = useState(false);
+  const [rejectNoteModalOpen, setRejectNoteModalOpen] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
+  // Lưu complaint status để hiển thị đúng
+  const [complaintStatusMap, setComplaintStatusMap] = useState<Record<string, string>>({});
 
   // ⭐ state mới: thông tin scan QR đang chờ staff xác nhận
   const [pendingCheckIn, setPendingCheckIn] = useState<PendingCheckIn>(null);
@@ -244,6 +266,31 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       const params = { stationId, date, status: status || undefined };
       const { data } = await listReservations(params);
       setList(data || []);
+      
+      // Fetch complaint status cho tất cả reservations có relatedComplaintId
+      const reservationsWithComplaints = (data || []).filter((r: Reservation) => r.relatedComplaintId);
+      if (reservationsWithComplaints.length > 0) {
+        const complaintStatusPromises = reservationsWithComplaints.map(async (r: Reservation) => {
+          if (!r.relatedComplaintId) return null;
+          try {
+            const complaint = await getComplaintById(r.relatedComplaintId);
+            return { complaintId: r.relatedComplaintId, status: complaint?.status };
+          } catch (err) {
+            console.error(`Error fetching complaint ${r.relatedComplaintId}:`, err);
+            return null;
+          }
+        });
+        
+        const complaintStatuses = await Promise.all(complaintStatusPromises);
+        const newComplaintStatusMap: Record<string, string> = {};
+        complaintStatuses.forEach((item) => {
+          if (item && item.complaintId && item.status) {
+            newComplaintStatusMap[item.complaintId] = item.status;
+          }
+        });
+        setComplaintStatusMap((prev) => ({ ...prev, ...newComplaintStatusMap }));
+      }
+      
       // ❌ bỏ toast thành công để không hiện thông báo khi vào màn / làm mới
       // toast.success("Đã tải danh sách lượt đặt.", {
       //   ...toastOpts,
@@ -268,7 +315,16 @@ export default function QueueManagement({ stationId }: { stationId: string | num
       setStage("complaintCheck");
       setIsLoadingComplaint(true);
       getComplaintById(active.relatedComplaintId)
-        .then((c) => setComplaintDetail(c))
+        .then((c) => {
+          setComplaintDetail(c);
+          // Lưu complaint status vào map
+          if (c?.id && c?.status) {
+            setComplaintStatusMap((prev) => ({
+              ...prev,
+              [c.id]: c.status,
+            }));
+          }
+        })
         .finally(() => setIsLoadingComplaint(false));
     }
   }, [list]);
@@ -732,6 +788,24 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       (r.userId && nameMap[r.userId]) ||
                       r.userName ||
                       (r.userId ? t("staff.inspection.guestShort").replace("{id}", String(r.userId).slice(-4)) : "—");
+                    
+                    // Kiểm tra complaint status nếu có relatedComplaintId
+                    let displayStatus = r.status;
+                    let isComplaintClosedState = false;
+                    if (r.relatedComplaintId && complaintStatusMap[r.relatedComplaintId]) {
+                      const complaintStatus = complaintStatusMap[r.relatedComplaintId];
+                      isComplaintClosedState = isComplaintClosed(complaintStatus);
+                      
+                      // Nếu complaint đã bị reject (status = 5), hiển thị "Rejected"
+                      const statusStr = String(complaintStatus).toLowerCase();
+                      if (statusStr === "rejected" || statusStr === "5") {
+                        displayStatus = "Rejected";
+                      }
+                      // Nếu complaint đã resolved (status = 6), hiển thị "Resolved"
+                      else if (statusStr === "resolved" || statusStr === "6") {
+                        displayStatus = "Resolved";
+                      }
+                    }
 
                     return (
                       <React.Fragment key={r.reservationId}>
@@ -752,10 +826,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                             {/* ⭐ badge không xuống dòng */}
                             <span
                               className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass(
-                                r.status
+                                displayStatus
                               )}`}
                             >
-                              {statusToVi(r.status, t)}
+                              {statusToVi(displayStatus, t)}
                             </span>
                           </td>
                           <td className="px-4 py-3 align-middle">
@@ -766,7 +840,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                               {/* KHÔNG hiện nút Check-in nếu đã Confirmed (readyToSwap) */}
                               {!isCheckedIn(r) &&
                                 !isReadyToSwap(r) &&
-                                !isFinalState(r) && (
+                                !isFinalState(r) &&
+                                !isComplaintClosedState && (
                                   <button
                                     onClick={() => doManualCheckIn(r)}
                                     className="inline-flex items-center gap-1 rounded bg-orange-600 px-3 py-1.5 text-sm text-white hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
@@ -779,7 +854,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
                               {isCheckedIn(r) &&
                                 !(isSel && stage === "readyToSwap") &&
-                                !isFinalState(r) && (
+                                !isFinalState({ ...r, status: displayStatus } as Reservation) &&
+                                !isComplaintClosedState && (
                                   <button
                                     onClick={() =>
                                       startChecking(r.reservationId)
@@ -798,7 +874,8 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
                               {(isReadyToSwap(r) ||
                                 (isSel && stage === "readyToSwap")) &&
-                                !isFinalState(r) && (
+                                !isFinalState({ ...r, status: displayStatus } as Reservation) &&
+                                !isComplaintClosedState && (
                                   <button
                                     onClick={() =>
                                       startSwap(r.reservationId)
@@ -844,8 +921,10 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                       <h4 className="font-semibold text-amber-700">
                                         📋 {t("staff.queue.labels.complaintInfo")}
                                       </h4>
-                                      <p className="text-sm text-gray-700 mt-1">
-                                        {complaintDetail.description || t("staff.queue.labels.noDescription")}
+                                      <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
+                                        {complaintDetail.complaintDetails || 
+                                         complaintDetail.description || 
+                                         t("staff.queue.labels.noDescription")}
                                       </p>
                                     </div>
                                   ) : (
@@ -880,17 +959,18 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                                             "Confirmed",
                                             t("staff.queue.messages.confirmFault")
                                           );
-                                          toast.success(
-                                            t("staff.queue.success.confirmFault") || "Fault confirmed, proceeding to Re-swap..."
-                                          );
+                                          // Bỏ toast ở đây, chỉ hiển thị toast cuối cùng
                                           await finalizeComplaintReswap(
                                             complaintDetail.id,
                                             String(stationId),
                                             batteryHealthFromInspection
                                           );
+                                          // Chỉ hiển thị 1 toast cuối cùng
                                           toast.success(
-                                            t("staff.queue.success.reswapComplete") || "Free Re-swap complete!"
+                                            t("staff.queue.success.reswapComplete") || "Hoàn tất đổi pin miễn phí!"
                                           );
+                                          // Refresh toàn bộ danh sách để cập nhật trạng thái
+                                          await fetchList();
                                           if (selectedId)
                                             await refreshReservationRow(
                                               selectedId
@@ -918,46 +998,14 @@ export default function QueueManagement({ stationId }: { stationId: string | num
 
                                     <button
                                       disabled={isProcessingComplaint}
-                                      onClick={async () => {
-                                        try {
-                                          if (!complaintDetail?.id)
-                                            return toast.error(
-                                              t("staff.queue.errors.noComplaintId") || "Complaint ID not found!"
-                                            );
-                                          const notes = prompt(
-                                            t("staff.queue.prompts.rejectNote")
+                                      onClick={() => {
+                                        if (!complaintDetail?.id) {
+                                          return toast.error(
+                                            t("staff.queue.errors.noComplaintId") || "Complaint ID not found!"
                                           );
-                                          if (
-                                            !notes ||
-                                            notes.trim().length < 10
-                                          )
-                                            return toast.error(
-                                              t("staff.queue.errors.rejectNoteShort") || "Notes must be at least 10 characters!"
-                                            );
-                                          setIsProcessingComplaint(true);
-                                          await resolveComplaint(
-                                            complaintDetail.id,
-                                            "Rejected",
-                                            notes.trim()
-                                          );
-                                          toast.success(
-                                            t("staff.queue.success.rejectComplaint") || "Complaint rejected."
-                                          );
-                                          if (selectedId)
-                                            await refreshReservationRow(
-                                              selectedId
-                                            );
-                                          setComplaintDetail(null);
-                                          closePanel(true);
-                                        } catch (err: any) {
-                                          toast.error(
-                                            err?.response?.data?.message ||
-                                              t("staff.queue.errors.rejectFailed") ||
-                                              "Rejecting complaint failed!"
-                                          );
-                                        } finally {
-                                          setIsProcessingComplaint(false);
                                         }
+                                        setRejectNote("");
+                                        setRejectNoteModalOpen(true);
                                       }}
                                       className={`${
                                         isProcessingComplaint
@@ -1016,6 +1064,135 @@ export default function QueueManagement({ stationId }: { stationId: string | num
         onClose={() => setScannerOpen(false)}
         onDetected={doCheckInByQr}
       />
+
+      {/* Modal nhập ghi chú từ chối khiếu nại */}
+      <Dialog open={rejectNoteModalOpen} onOpenChange={setRejectNoteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("staff.queue.prompts.rejectNote")}</DialogTitle>
+            <DialogDescription>
+              {t("staff.queue.errors.rejectNoteShort") || "Notes must be at least 10 characters!"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              placeholder={t("staff.queue.prompts.rejectNote")}
+              className="w-full"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectNoteModalOpen(false);
+                setRejectNote("");
+              }}
+            >
+              {t("common.cancel") || "Hủy"}
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!rejectNote.trim() || rejectNote.trim().length < 10) {
+                  toast.error(
+                    t("staff.queue.errors.rejectNoteShort") || "Notes must be at least 10 characters!"
+                  );
+                  return;
+                }
+                if (!complaintDetail?.id) {
+                  toast.error(
+                    t("staff.queue.errors.noComplaintId") || "Complaint ID not found!"
+                  );
+                  return;
+                }
+                setRejectNoteModalOpen(false);
+                setIsProcessingComplaint(true);
+                try {
+                  await resolveComplaint(
+                    complaintDetail.id,
+                    "Rejected",
+                    rejectNote.trim()
+                  );
+                  toast.success(
+                    t("staff.queue.success.rejectComplaint") || "Complaint rejected."
+                  );
+                  
+                  // Hủy reservation để khách hàng có thể đặt lịch mới
+                  if (selectedId) {
+                    try {
+                      console.log("Attempting to cancel reservation:", selectedId);
+                      const cancelResponse = await cancelReservation(
+                        selectedId,
+                        0, // reason: 0 = Other
+                        `Khiếu nại đã bị từ chối: ${rejectNote.trim()}`
+                      );
+                      console.log("Cancel reservation success:", cancelResponse?.data);
+                      toast.success(
+                        t("staff.queue.success.cancelReservation") || "Đã hủy đặt lịch. Khách hàng có thể đặt lịch mới."
+                      );
+                    } catch (cancelErr: any) {
+                      // Nếu hủy reservation thất bại, vẫn tiếp tục (không block flow)
+                      console.error("Error canceling reservation:", cancelErr);
+                      console.error("Error details:", {
+                        status: cancelErr?.response?.status,
+                        data: cancelErr?.response?.data,
+                        message: cancelErr?.response?.data?.message,
+                      });
+                      toast.warning(
+                        cancelErr?.response?.data?.message || 
+                        t("staff.queue.warning.cancelReservationFailed") || 
+                        "Không thể hủy đặt lịch tự động. Vui lòng hủy thủ công nếu cần."
+                      );
+                    }
+                  }
+                  
+                  // Lưu complaint status vào map để hiển thị đúng
+                  if (complaintDetail?.id) {
+                    setComplaintStatusMap((prev) => ({
+                      ...prev,
+                      [complaintDetail.id]: "Rejected",
+                    }));
+                  }
+                  
+                  // Refresh toàn bộ danh sách để cập nhật trạng thái từ backend
+                  await fetchList();
+                  
+                  // Fetch lại complaint để đảm bảo có status mới nhất
+                  if (complaintDetail?.id) {
+                    try {
+                      const updatedComplaint = await getComplaintById(complaintDetail.id);
+                      setComplaintStatusMap((prev) => ({
+                        ...prev,
+                        [complaintDetail.id]: updatedComplaint?.status || "Rejected",
+                      }));
+                    } catch (err) {
+                      // Nếu không fetch được, vẫn giữ status "Rejected"
+                      console.error("Error fetching updated complaint:", err);
+                    }
+                  }
+                  
+                  setComplaintDetail(null);
+                  closePanel(true);
+                  setRejectNote("");
+                } catch (err: any) {
+                  toast.error(
+                    err?.response?.data?.message ||
+                      t("staff.queue.errors.rejectFailed") ||
+                      "Rejecting complaint failed!"
+                  );
+                } finally {
+                  setIsProcessingComplaint(false);
+                }
+              }}
+              disabled={!rejectNote.trim() || rejectNote.trim().length < 10}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ⭐ Modal xác nhận Check-in sau khi quét QR */}
       {pendingCheckIn && (
