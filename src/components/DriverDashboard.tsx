@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useLanguage } from "../components/LanguageContext";
@@ -33,6 +33,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { User } from "../App";
+import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { StationList } from "../components/driver/StationList";
 import { SubscriptionPlansPage } from "../components/driver/SubscriptionPlansPage";
@@ -107,6 +108,7 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("swap");
+  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
   const [qrDialog, setQrDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -124,6 +126,19 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
+
+  // Fetch current user data với avatar
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const data = await getCurrentUser();
+        setCurrentUser(data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     const state = location.state as {
@@ -503,10 +518,22 @@ export function DriverDashboard({ user, onLogout }: DriverDashboardProps) {
           <SidebarFooter className="px-4 pb-4">
             <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name ? user.name.charAt(0).toUpperCase() : '?'}</AvatarFallback>
+                <AvatarImage
+                  src={
+                    currentUser?.profilePictureUrl
+                      ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
+                      : user.avatar
+                      ? `${user.avatar}?v=${Date.now()}`
+                      : undefined
+                  }
+                  alt={currentUser?.name || user.name}
+                />
+                <AvatarFallback>
+                  {(currentUser?.name || user.name) ? (currentUser?.name || user.name).charAt(0).toUpperCase() : '?'}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate text-slate-900">{user.name || 'User'}</p>
+                <p className="text-sm font-semibold truncate text-slate-900">{currentUser?.name || user.name || 'User'}</p>
                 <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
                   Driver
                 </p>

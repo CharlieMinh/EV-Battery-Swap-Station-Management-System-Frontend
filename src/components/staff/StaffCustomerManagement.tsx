@@ -46,6 +46,14 @@ const toastOpts = {
   closeOnClick: true,
 };
 
+const TOAST_ID = {
+  updateSuccess: "staff-customer-update-success",
+  updateError: "staff-customer-update-error",
+  loadDetailError: "staff-customer-load-detail-error",
+  loadListError: "staff-customer-load-list-error",
+  phoneInvalid: "staff-customer-phone-invalid",
+};
+
 const PAGE_SIZE = 10;
 
 const StatItem: React.FC<{
@@ -109,7 +117,10 @@ function CustomerDetailModal({
           error?.response?.data?.message ||
           error?.message ||
           t("staff.customers.errorLoadDetail");
-        toast.error(msg, toastOpts);
+        toast.error(msg, {
+          ...toastOpts,
+          toastId: TOAST_ID.updateError,
+        });
       } finally {
         setLoadingDetail(false);
       }
@@ -128,18 +139,51 @@ function CustomerDetailModal({
 
   const handleSave = async () => {
     if (!detail) return;
-    if (!form.name.trim()) {
-      toast.warning(t("staff.profile.toastSaveWarnName"), toastOpts);
+
+    // Validation: Tên không được trống, từ 1-100 ký tự
+    const trimmedName = form.name.trim();
+    if (!trimmedName) {
+      toast.error(t("admin.nameRequired"), toastOpts);
       return;
+    }
+    if (trimmedName.length < 1 || trimmedName.length > 100) {
+      toast.error(t("admin.stationNameLengthHint"), toastOpts);
+      return;
+    }
+
+    // Validation: Số điện thoại không được để trống, từ 1-11 số
+    const phoneDigits = form.phoneNumber.replace(/\D/g, ""); // Chỉ lấy số
+    if (!phoneDigits || phoneDigits.length < 1) {
+      toast.error(t("register.phoneRequired"), toastOpts);
+      return;
+    }
+    if (phoneDigits.length > 11) {
+      toast.error(t("admin.phoneInvalid"), toastOpts);
+      return;
+    }
+    
+    // Phone validation (optional but if provided, must be valid)
+    if (form.phoneNumber.trim()) {
+      const phoneRegex = /^(0|\+84)\d{9,10}$/;
+      if (!phoneRegex.test(form.phoneNumber.trim())) {
+        toast.warning(t("staff.customers.toastPhoneInvalid"), {
+          ...toastOpts,
+          toastId: TOAST_ID.phoneInvalid,
+        });
+        return;
+      }
     }
 
     setSaving(true);
     try {
       const updated = await updateDriverByStaff(detail.id || customer.id, {
-        name: form.name.trim(),
-        phoneNumber: form.phoneNumber.trim(),
+        name: trimmedName,
+        phoneNumber: phoneDigits,
       });
-      toast.success(t("staff.customers.toastUpdateSuccess"), toastOpts);
+      toast.success(t("staff.customers.toastUpdateSuccess"), {
+        ...toastOpts,
+        toastId: TOAST_ID.updateSuccess,
+      });
       setDetail((prev: CustomerDetail | null) =>
         prev
           ? {
@@ -349,14 +393,23 @@ function CustomerDetailModal({
                             row.key === "name" ? form.name : form.phoneNumber
                           }
                           placeholder={row.placeholder}
-                          onChange={(e) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              [row.key === "name"
-                                ? "name"
-                                : "phoneNumber"]: e.target.value,
-                            }))
-                          }
+                          maxLength={row.key === "name" ? 100 : 11}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (row.key === "phoneNumber") {
+                              // Chỉ cho phép nhập số và giới hạn 11 ký tự
+                              const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
+                              setForm((prev) => ({
+                                ...prev,
+                                phoneNumber: digitsOnly,
+                              }));
+                            } else {
+                              setForm((prev) => ({
+                                ...prev,
+                                name: value,
+                              }));
+                            }
+                          }}
                           className="mt-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-orange-200 focus:outline-none bg-white"
                         />
                       ) : row.badgeClass ? (
@@ -643,7 +696,10 @@ export default function StaffCustomerManagement() {
         err?.message ||
         t("staff.customers.errorLoadList");
       setError(msg);
-      toast.error(msg, toastOpts);
+      toast.error(msg, {
+        ...toastOpts,
+        toastId: TOAST_ID.loadListError,
+      });
     } finally {
       setIsLoading(false);
     }
