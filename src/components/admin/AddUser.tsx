@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useLanguage } from "../LanguageContext";
 import api from "@/configs/axios";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 interface AccountPayload {
   email: string;
@@ -52,6 +52,7 @@ export function AddUser() {
   const [formData, setFormData] = useState<FormUserData>(initialUserData);
   const [isLoading, setIsLoading] = useState(false);
   const [stations, setStations] = useState<Station[]>([]); // ✅ lưu danh sách trạm
+  const [showPassword, setShowPassword] = useState(false);
 
   // ✅ Lấy danh sách trạm khi role = "1" (Staff)
   useEffect(() => {
@@ -207,15 +208,28 @@ export function AddUser() {
             >
               {t("admin.password")} <span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-lg"
-              placeholder={t("admin.enterPassword")}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 pr-10 border rounded-lg"
+                placeholder={t("admin.enterPassword")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* NAME */}

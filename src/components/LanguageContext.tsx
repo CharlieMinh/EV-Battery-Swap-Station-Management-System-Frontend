@@ -229,6 +229,10 @@ const translations = {
     "login.signUpHere": "Sign up here",
     "login.batterySwapManagement": "Battery Swap Station Management",
     "login.loading": "Logging in",
+    "login.invalidCredentials": "Invalid email or password.",
+    "login.loginFailed": "Login failed. Please try again.",
+    "login.connectionError": "Cannot connect to server. Please check your connection.",
+    "login.loginWith": "Login with",
 
     // Forgot Password
     "forgotPassword.title": "Forgot Password",
@@ -384,6 +388,12 @@ const translations = {
     "register.defaultDriverRoleDesc":
       "You're signing up as an EV Driver. You can request to become a Station Staff later through your profile settings.",
     "register.namePlaceholder": "Enter your name",
+    "register.nameRequired": "Name is required",
+    "register.phonePlaceholder": "Enter 10 or 11 digits",
+    "register.emailPlaceholder": "your@email.com",
+    "register.registrationSuccess": "Registration successful! Please sign in.",
+    "register.registrationFailed": "Registration failed. Please try again.",
+    "register.emailExists": "Email already exists.",
 
     // Driver Portal
     "driver.findStations": "Find Stations",
@@ -762,6 +772,9 @@ const translations = {
 
     // Driver Subscription Plans Page
     "driver.subscription.errorNoVNPayLink": "VNPay payment link not found.",
+    "driver.subscription.errorFetchPlans": "Unable to fetch subscription plans. Please try again later.",
+    "driver.subscription.errorLocation": "Location error",
+    "driver.subscription.errorLocationMessage": "Please check your browser location settings.",
     "driver.subscription.orderCreatedTitle": "Order Created",
     "driver.subscription.orderCreatedMessage": "Please go to the nearest station to pay.",
     "driver.subscription.findNearestStation": "Find nearest station",
@@ -2076,12 +2089,24 @@ const translations = {
     "common.yes": "Yes",
     "common.no": "No",
     "common.address": "Address",
+    "common.unknown": "Unknown",
+    "common.unknownPlan": "Unknown Plan",
 
     // Map
     "map.yourLocation": "Your current location",
+    "map.nearestNoBatteries": "⚠️ Nearest station (no stations have batteries)",
+    "map.noStations": "No stations available",
+    "map.nearestStationLabel": "Nearest station",
 
     // Driver Booking
     "driver.booking.bookNow": "Book Now",
+    
+    // Driver Subscription
+    "driver.subscription.orderCreated": "Order created",
+    "driver.subscription.goToStation": "Go to nearest station",
+    "driver.subscription.later": "Later",
+    "driver.subscription.cannotSelectCash": "Cannot select cash payment method.",
+    "driver.subscription.cannotCreateOrder": "Cannot create order.",
   },
   vi: {
     "staff.dashboard.menu.profile": "Thông tin cá nhân",
@@ -2310,6 +2335,10 @@ const translations = {
     "login.signUpHere": "Đăng ký tại đây",
     "login.batterySwapManagement": "Quản Lý Trạm Thay Pin",
     "login.loading": "Đang đăng nhập",
+    "login.invalidCredentials": "Email hoặc mật khẩu không đúng.",
+    "login.loginFailed": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "login.connectionError": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối của bạn.",
+    "login.loginWith": "Đăng nhập với",
 
     // Forgot Password
     "forgotPassword.title": "Quên Mật Khẩu",
@@ -2386,6 +2415,12 @@ const translations = {
     // Register
     "register.namePlaceholder": "Hãy nhập tên của bạn",
     "register.name": "Tên",
+    "register.nameRequired": "Tên là bắt buộc",
+    "register.phonePlaceholder": "Nhập 10 hoặc 11 số",
+    "register.emailPlaceholder": "your@email.com",
+    "register.registrationSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
+    "register.registrationFailed": "Đăng ký thất bại. Vui lòng thử lại.",
+    "register.emailExists": "Email đã tồn tại.",
     "register.joinEVSwap": "Tham Gia EVSwap",
     "register.createAccount": "Tạo tài khoản của bạn để bắt đầu",
     "register.personalInfo": "Thông Tin Cá Nhân",
@@ -4130,9 +4165,14 @@ const translations = {
     "common.yes": "Có",
     "common.no": "Không",
     "common.address": "Địa chỉ",
+    "common.unknown": "Không xác định",
+    "common.unknownPlan": "Gói không xác định",
 
     // Map
     "map.yourLocation": "Vị trí hiện tại của bạn",
+    "map.nearestNoBatteries": "⚠️ Trạm gần nhất (không có trạm nào có pin)",
+    "map.noStations": "Không có trạm nào",
+    "map.nearestStationLabel": "Trạm gần nhất",
 
     // Driver Booking
     "driver.booking.bookNow": "Đặt lịch ngay",

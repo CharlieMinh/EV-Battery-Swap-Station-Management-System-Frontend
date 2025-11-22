@@ -1141,8 +1141,7 @@ export default function QueueManagement({ stationId }: { stationId: string | num
                       });
                       toast.warning(
                         cancelErr?.response?.data?.message || 
-                        t("staff.queue.warning.cancelReservationFailed") || 
-                        "Không thể hủy đặt lịch tự động. Vui lòng hủy thủ công nếu cần."
+                        t("staff.queue.warning.cancelReservationFailed")
                       );
                     }
                   }

@@ -80,9 +80,9 @@ const ComplaintsOfCustomer: React.FC = () => {
           userIds.map(async (id) => {
             try {
               const user = await fetchCustomerById(id as string);
-              namesMap[id as string] = user.name || "Không rõ";
+              namesMap[id as string] = user.name || t("admin.unknown");
             } catch (err) {
-              namesMap[id as string] = "Không rõ";
+              namesMap[id as string] = t("admin.unknown");
             }
           })
         );

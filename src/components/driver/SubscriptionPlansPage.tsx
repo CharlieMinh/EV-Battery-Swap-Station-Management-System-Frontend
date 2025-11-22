@@ -196,7 +196,7 @@ export function SubscriptionPlansPage() {
       setPlans(sortedData);
     } catch (error) {
       console.error("Error fetching plans:", error);
-      toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
+      toast.error(t("driver.subscription.errorFetchPlans"));
     }
   };
 
@@ -204,7 +204,7 @@ export function SubscriptionPlansPage() {
     if (payment && payment.paymentUrl) {
       window.location.href = decodeURIComponent(payment.paymentUrl);
     } else {
-      toast.error("Không tìm thấy link thanh toán VNPay.");
+      toast.error(t("driver.subscription.errorNoVNPayLink"));
     }
   };
 
@@ -224,13 +224,13 @@ export function SubscriptionPlansPage() {
 
       const result = await Swal.fire({
         icon: "success",
-        title: "Đơn hàng đã được tạo",
-        html: "Hãy đến trạm gần nhất để thanh toán.",
+        title: t("driver.subscription.orderCreatedTitle"),
+        html: t("driver.subscription.orderCreatedMessage"),
         showCancelButton: true,
         confirmButtonColor: "#f97316",
         cancelButtonColor: "#6b7280",
-        confirmButtonText: "Tìm trạm gần nhất",
-        cancelButtonText: "Để sau",
+        confirmButtonText: t("driver.subscription.findNearestStation"),
+        cancelButtonText: t("driver.subscription.later"),
         allowOutsideClick: false,
       });
 
@@ -239,7 +239,7 @@ export function SubscriptionPlansPage() {
       }
     } catch (error: any) {
       const msg =
-        error.response?.data?.message || "Không thể chọn phương thức tiền mặt.";
+        error.response?.data?.message || t("driver.subscription.errorSelectCash");
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -261,7 +261,7 @@ export function SubscriptionPlansPage() {
       setPayment(response.data);
       setIsPaymentModalOpen(true);
     } catch (error: any) {
-      const msg = error.response?.data?.message || "Không thể tạo đơn hàng.";
+      const msg = error.response?.data?.message || t("driver.subscription.errorCreateOrderGeneric");
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -344,7 +344,7 @@ export function SubscriptionPlansPage() {
 
         // Validate: giá trị phải nằm trong khoảng 1 - 100 cho gói có giới hạn
         if (numValue < 1 || numValue > 100) {
-          toast.warning("Số lượt đổi tối đa phải nằm trong khoảng từ 1 đến 100");
+          toast.warning(t("admin.maxSwapsRange"));
           const clamped = Math.min(100, Math.max(1, numValue));
           setFormData({
             ...formData,
@@ -466,7 +466,7 @@ export function SubscriptionPlansPage() {
         setPlans(sortedData);
       } catch (error) {
         console.error("Error fetching plans:", error);
-        toast.error("Không thể lấy gói đăng ký hiện tại, vui lòng thử lại sau");
+        toast.error(t("driver.subscription.errorFetchPlans"));
       }
     };
     getSubscriptionPlans();
@@ -510,8 +510,8 @@ export function SubscriptionPlansPage() {
       setIsWaitingForLocation(false);
       Swal.fire({
         icon: "error",
-        title: "Lỗi xác định vị trí",
-        text: `${location.error.message}. Vui lòng kiểm tra cài đặt vị trí của trình duyệt.`,
+        title: t("driver.subscription.geoErrorTitle"),
+        text: `${location.error.message}. ${t("driver.subscription.geoErrorInstruction")}`,
         confirmButtonColor: "#f97316",
       });
     }

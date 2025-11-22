@@ -127,7 +127,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                           {request.batteryModelName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Model ID: {request.batteryModelId.slice(0, 8)}...
+                          {t("admin.modelId")}: {request.batteryModelId.slice(0, 8)}...
                         </p>
                       </div>
                     </div>

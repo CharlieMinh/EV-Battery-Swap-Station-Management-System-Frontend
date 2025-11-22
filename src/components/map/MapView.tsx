@@ -149,7 +149,8 @@ export default function MapView() {
         });
       }
     } else {
-      alert(state.error.message);
+      // Error is already handled by useGeoLocation hook
+      console.error("Location error:", state.error?.message);
     }
   };
 
@@ -484,9 +485,9 @@ export default function MapView() {
                   {(() => {
                     const nearestBatteryCount = batteryCounts.get(nearestStation.id as string) ?? 0;
                     if (nearestBatteryCount === 0) {
-                      return "⚠️ Trạm gần nhất (không có trạm nào có pin)";
+                      return t("map.nearestNoBatteries");
                     }
-                    return `📍 Trạm có pin gần nhất: ${formatDistance(nearestStation.distance)}`;
+                    return `${t("map.nearestAvailable")}: ${formatDistance(nearestStation.distance)}`;
                   })()}
                 </div>
               )}
@@ -523,7 +524,7 @@ export default function MapView() {
                   {getAllStations().length === 0 ? (
                     <div className="p-8 text-center">
                       <AlertCircle className="mx-auto mb-2 text-gray-400" size={32} />
-                      <p className="text-gray-600">Không có trạm nào</p>
+                      <p className="text-gray-600">{t("map.noStations")}</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-100">
@@ -745,7 +746,7 @@ export default function MapView() {
                     }}>
                       <span style={{ fontSize: "14px" }}>⭐</span>
                       <span style={{ fontSize: "12px", color: "#1e40af", fontWeight: "500" }}>
-                        Trạm gần nhất
+                        {t("map.nearestStationLabel")}
                       </span>
                     </div>
                   )}

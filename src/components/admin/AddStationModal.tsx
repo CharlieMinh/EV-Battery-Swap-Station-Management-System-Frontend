@@ -40,9 +40,27 @@ const AddStationModal: React.FC<AddStationModalProps> = ({
     const address = formData.address.trim();
     const city = formData.city.trim();
 
-    // Validate rỗng
-    if (!name || !address || !city) {
-      toast.error(t("admin.fillAllFields"));
+    // Validate tên trạm: bắt buộc và 1–100 ký tự
+    if (!name || name.length < 1 || name.length > 100) {
+      toast.error(t("admin.stationNameLengthHint"));
+      return;
+    }
+
+    // Validate thành phố: bắt buộc
+    if (!city) {
+      toast.error(t("admin.cityRequired"));
+      return;
+    }
+
+    // Validate địa chỉ & thành phố: giới hạn 1–256 ký tự
+    if (
+      !address ||
+      address.length < 1 ||
+      address.length > 256 ||
+      city.length < 1 ||
+      city.length > 256
+    ) {
+      toast.error(t("admin.addressLengthHint"));
       return;
     }
 
