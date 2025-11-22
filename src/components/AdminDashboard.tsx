@@ -57,6 +57,7 @@ import { getTotalRevenue } from "@/services/admin/payment";
 import UserProfile from "./admin/UserProfile";
 import ComplaintsOfCustomer from "./admin/ComplaintsOfCustomer";
 import { SubscriptionPlansPage } from "./driver/SubscriptionPlansPage";
+import Revenue from "./staff/Revenue";
 
 interface AdminDashboardPageProps {
   user: User;
@@ -116,6 +117,7 @@ export function AdminDashboardPage({
     { id: "staff", label: t("admin.staff"), icon: UserCheck },
     { id: "add-account", label: t("admin.addUser"), icon: Zap },
     { id: "request-history", label: t("admin.requestHistory"), icon: Package },
+    { id: "revenue", label: t("staff.revenue.title"), icon: DollarSign },
     { id: "complaint", label: t("admin.complaints"), icon: MessageCircle },
     { id: "profile", label: t("admin.personalInfo"), icon: UserCircle },
   ];
@@ -307,6 +309,7 @@ export function AdminDashboardPage({
                   {activeSection === "staff" && t("admin.staff")}
                   {activeSection === "add-account" && t("admin.addUser")}
                   {activeSection === "request-history" && t("admin.sendBatteryRequestHistory")}
+                  {activeSection === "revenue" && t("staff.revenue.title")}
                   {activeSection === "complaint" && t("admin.complaints")}
                   {activeSection === "profile" && t("admin.personalInfo")}
                 </h1>
@@ -362,7 +365,7 @@ export function AdminDashboardPage({
                         <Coins className="w-5 h-5" />
                       </div>
                       <Badge className="bg-emerald-100 text-emerald-600">
-                        VND
+                        đ
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -447,6 +450,8 @@ export function AdminDashboardPage({
             {activeSection === "add-account" && <AddUser />}
 
             {activeSection === "request-history" && <RequestForStation />}
+
+            {activeSection === "revenue" && <Revenue role={user.role} stationId={user.stationId} />}
 
             {activeSection === "complaint" && <ComplaintsOfCustomer />}
 

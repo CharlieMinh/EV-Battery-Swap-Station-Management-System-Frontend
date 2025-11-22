@@ -1,6 +1,7 @@
 // src/components/staff/Revenue.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { listAllPayments, type Payment } from "../../services/staff/staffApi";
+import { listAllPayments, type Payment as StaffPayment } from "../../services/staff/staffApi";
+import { getAllPayments, type Payment as AdminPayment } from "../../services/admin/payment";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -9,6 +10,8 @@ import { useLanguage } from "../LanguageContext";
 import { formatDateTime } from "../../utils/dateTimeUtils";
 
 /* ====== GIỮ NGUYÊN CÁC HÀM LOGIC CŨ ====== */
+type Payment = StaffPayment | AdminPayment;
+
 function normalizePayments(payload: any): Payment[] {
   if (Array.isArray(payload)) return payload as Payment[];
 
@@ -33,6 +36,20 @@ function normalizePayments(payload: any): Payment[] {
     if (Array.isArray(payload.records)) return payload.records as Payment[];
   }
   return [];
+}
+
+// Convert AdminPayment to StaffPayment format
+function normalizeAdminPayment(p: AdminPayment): Payment {
+  return {
+    paymentId: p.id,
+    swapId: p.reservationId ?? undefined,
+    amount: p.amount,
+    method: p.method,
+    status: p.status,
+    paidAt: p.completedAt ?? undefined,
+    customer: null,
+    customerName: p.userName ?? undefined,
+  } as Payment;
 }
 
 const toastOpts = {
@@ -105,14 +122,19 @@ const getStatusLabel = (p: any, t: (key: string) => string): string => {
 };
 
 /* ===================== COMPONENT ===================== */
-export default function Revenue() {
-  const { t, language, formatCurrency } = useLanguage();
+interface RevenueProps {
+  role?: "Admin" | "Staff" | "Driver" | null;
+  stationId?: string | number | null;
+}
+
+export default function Revenue({ role, stationId }: RevenueProps = {}) {
+  const { t, language } = useLanguage();
 
   const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   
-  // Format amount: sử dụng formatCurrency từ LanguageContext để tự động chuyển đổi USD khi tiếng Anh
+  // Format amount: chỉ format số và thêm "đ"
   const formatAmount = (vndAmount: number): string => {
-    return formatCurrency(vndAmount);
+    return `${vndAmount.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} đ`;
   };
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
@@ -130,15 +152,42 @@ export default function Revenue() {
     setLoading(true);
     setErr("");
     try {
-      const { data } = await listAllPayments({
-        fromDate: from || undefined,
-        toDate: to || undefined,
-        page: 1,
-        pageSize: 500,
-      });
+      let list: Payment[] = [];
 
-      const list = normalizePayments(data);
-      // GIỮ NGUYÊN LOGIC: chỉ lấy giao dịch đã thanh toán
+      // Nếu là Admin hoặc không có role (fallback), lấy tất cả payments với status = 2
+      if (role === "Admin" || !role) {
+        const adminPayments = await getAllPayments({ 
+          page: 1, 
+          pageSize: 500,
+          status: 2 
+        });
+        list = adminPayments.map(normalizeAdminPayment);
+      } 
+      // Nếu là Staff, lấy payments với status = 2 và filter theo stationId
+      else if (role === "Staff" && stationId) {
+        const allPayments = await getAllPayments({ 
+          page: 1, 
+          pageSize: 500,
+          status: 2 
+        });
+        // Filter theo stationId
+        const stationPayments = allPayments.filter(
+          (p) => String(p.stationId) === String(stationId)
+        );
+        list = stationPayments.map(normalizeAdminPayment);
+      } 
+      // Fallback: dùng API cũ cho Staff không có stationId hoặc các trường hợp khác
+      else {
+        const { data } = await listAllPayments({
+          fromDate: from || undefined,
+          toDate: to || undefined,
+          page: 1,
+          pageSize: 500,
+        });
+        list = normalizePayments(data);
+      }
+
+      // GIỮ NGUYÊN LOGIC: chỉ lấy giao dịch đã thanh toán (status = 2)
       const paidOnly = list.filter((p) => isPaidStatus((p as any).status));
       setPaid(paidOnly);
     } catch (e: any) {
