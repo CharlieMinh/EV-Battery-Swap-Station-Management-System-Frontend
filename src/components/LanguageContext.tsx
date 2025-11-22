@@ -389,6 +389,9 @@ const translations = {
     "driver.findStations": "Find Stations",
     "driver.booking.errorFetchReservation": "Could not fetch your reservation:",
     "driver.errorAddCar": "Could not add your car:",
+    "driver.booking.noVehicleError": "You don't have any registered vehicles yet! Please add a vehicle in 'My Car' section before making a reservation.",
+    "driver.booking.noVehicleTitle": "No Vehicles Registered",
+    "driver.booking.noVehicleMessage": "You need to add at least one vehicle before you can make a reservation. Please go to 'My Vehicle' section to register your vehicle.",
     "driver.booking.errorValidation": "Please select all booking details!",
     "driver.booking.success": "Booking successful!",
     "driver.booking.errorConfirm": "Error confirming booking:",
@@ -582,6 +585,8 @@ const translations = {
     "driver.profile.errorUploadFailed": "Cannot upload image!",
     "driver.profile.errorUnknown": "Unknown error",
     "driver.profile.successUpdateInfo": "Information updated successfully!",
+    "driver.profile.successUpdateAll": "Information and profile picture updated successfully!",
+    "driver.profile.imageSelected": "Image selected",
     "driver.profile.errorUpdateFailed": "Cannot update information!",
     "driver.profile.updating": "Updating...",
     "driver.profile.editInfo": "Edit Information",
@@ -1343,7 +1348,7 @@ const translations = {
     "staff.inventory.toastQuantityMin": "Quantity must be at least 1. Please enter a valid quantity.",
     "staff.inventory.toastQuantityMax": "Quantity cannot exceed 100. Maximum allowed is 100.",
     "staff.inventory.buttonRemove": "Remove",
-    
+
     "staff.inventory.noteMultipleModels": "You can add multiple models.",
     "staff.inventory.toastValidateItems": "Please add at least 1 model with quantity from 1 to 100.",
     "staff.inventory.toastRequestSuccess": "Replenishment request submitted. Awaiting admin approval.",
@@ -1354,7 +1359,7 @@ const translations = {
     "staff.inventory.prev": "Previous",
     "staff.inventory.next": "Next",
     "staff.inventory.pageLabel": "Page",
-      // "staff.inventory.modalTitle": "Battery replenishment request", // Removed duplicate
+    // "staff.inventory.modalTitle": "Battery replenishment request", // Removed duplicate
     "staff.inventory.labelStation": "Station",
     "staff.inventory.labelNote": "Note",
     "staff.inventory.notePlaceholder": "E.g.: prepare for peak period",
@@ -2433,6 +2438,9 @@ const translations = {
     // Driver Portal
     "driver.findStations": "Tìm Trạm",
     "driver.booking.errorFetchReservation": "Không thể lấy lịch hẹn của bạn:",
+    "driver.booking.noVehicleError": "Bạn chưa có xe đăng ký nào! Vui lòng thêm xe trong mục 'Xe của tôi' trước khi đặt chỗ.",
+    "driver.booking.noVehicleTitle": "Chưa có xe đăng ký",
+    "driver.booking.noVehicleMessage": "Bạn cần thêm ít nhất một xe trước khi có thể đặt chỗ. Vui lòng vào mục 'Xe của tôi' để đăng ký xe của bạn.",
     "driver.booking.errorValidation": "Vui lòng chọn đầy đủ thông tin đặt chỗ!",
     "driver.booking.success": "Đặt lịch thành công!",
     "driver.booking.errorConfirm": "Lỗi khi xác nhận đặt chỗ:",
@@ -2625,6 +2633,8 @@ const translations = {
     "driver.profile.errorUploadFailed": "Không thể tải ảnh lên!",
     "driver.profile.errorUnknown": "Lỗi không xác định",
     "driver.profile.successUpdateInfo": "Cập nhật thông tin thành công!",
+    "driver.profile.successUpdateAll": "Cập nhật thông tin và ảnh đại diện thành công!",
+    "driver.profile.imageSelected": "Đã chọn ảnh",
     "driver.profile.errorUpdateFailed": "Không thể cập nhật thông tin!",
     "driver.profile.updating": "Đang cập nhật...",
     "driver.profile.editInfo": "Chỉnh sửa thông tin",
@@ -4134,7 +4144,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const translation = translations[language];
     return (translation as Record<string, string>)[key] || key;
   };
-  
+
 
   const formatCurrency = (amount: number): string => {
     if (language === "en") {
