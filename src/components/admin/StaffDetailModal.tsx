@@ -141,14 +141,14 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
       return;
     }
 
-    // Validate SĐT: chỉ 1–11 số
+    // Validate SĐT: phải có 10 hoặc 11 số
     if (!trimmedPhone) {
       toast.error(t("register.phoneRequired"));
       return;
     }
 
     const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
-    if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+    if (phoneDigitsOnly.length !== 10 && phoneDigitsOnly.length !== 11) {
       toast.error(t("admin.phoneInvalid"));
       return;
     }
@@ -454,6 +454,7 @@ const StaffDetailModal = ({ staff, onClose }: StaffDetailModalProps) => {
                         })
                       }
                       maxLength={item.key === "phoneNumber" ? 11 : 100}
+                      type={item.key === "phoneNumber" ? "tel" : "text"}
                       className="border rounded-md p-1 text-gray-700 w-full"
                     />
                   )

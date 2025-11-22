@@ -103,13 +103,13 @@ export function RegisterPage({
       newErrors.email = t("register.emailInvalid");
     }
 
-    // Validate phone: required & 1-11 digits
+    // Validate phone: required & must be 10 or 11 digits
     const trimmedPhone = formData.phone.trim();
     if (!trimmedPhone) {
       newErrors.phone = t("register.phoneRequired");
     } else {
       const phoneDigitsOnly = trimmedPhone.replace(/\D/g, "");
-      if (phoneDigitsOnly.length < 1 || phoneDigitsOnly.length > 11) {
+      if (phoneDigitsOnly.length !== 10 && phoneDigitsOnly.length !== 11) {
         newErrors.phone = t("admin.phoneInvalid");
       }
     }
@@ -142,7 +142,13 @@ export function RegisterPage({
   };
 
   const handleInputChange = (field: keyof FormData, value: string): void => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Nếu là phone, chỉ cho phép số và giới hạn 11 ký tự
+    if (field === "phone") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
+      setFormData((prev) => ({ ...prev, [field]: digitsOnly }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -289,6 +295,7 @@ export function RegisterPage({
                   <Input
                     id="phone"
                     type="tel"
+                    maxLength={11}
                     value={formData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
                     className={`h-12 pl-12 bg-white border-2 transition-all duration-200 focus:ring-2 focus:ring-green-200 ${
@@ -296,7 +303,7 @@ export function RegisterPage({
                         ? "border-red-500 focus:ring-red-200"
                         : "border-gray-300 focus:border-green-500"
                     }`}
-                    placeholder="+84 (123) 456-7890"
+                    placeholder="Nhập 10 hoặc 11 số"
                   />
                 </div>
                 {errors.phone && (
