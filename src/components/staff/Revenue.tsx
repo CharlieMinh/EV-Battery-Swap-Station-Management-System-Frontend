@@ -1,6 +1,7 @@
 // src/components/staff/Revenue.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { listAllPayments, type Payment } from "../../services/staff/staffApi";
+import { listAllPayments, type Payment as StaffPayment } from "../../services/staff/staffApi";
+import { getAllPayments, type Payment as AdminPayment } from "../../services/admin/payment";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -9,6 +10,8 @@ import { useLanguage } from "../LanguageContext";
 import { formatDateTime } from "../../utils/dateTimeUtils";
 
 /* ====== GIỮ NGUYÊN CÁC HÀM LOGIC CŨ ====== */
+type Payment = StaffPayment | AdminPayment;
+
 function normalizePayments(payload: any): Payment[] {
   if (Array.isArray(payload)) return payload as Payment[];
 
@@ -33,6 +36,20 @@ function normalizePayments(payload: any): Payment[] {
     if (Array.isArray(payload.records)) return payload.records as Payment[];
   }
   return [];
+}
+
+// Convert AdminPayment to StaffPayment format
+function normalizeAdminPayment(p: AdminPayment): Payment {
+  return {
+    paymentId: p.id,
+    swapId: p.reservationId ?? undefined,
+    amount: p.amount,
+    method: p.method,
+    status: p.status,
+    paidAt: p.completedAt ?? undefined,
+    customer: null,
+    customerName: p.userName ?? undefined,
+  } as Payment;
 }
 
 const toastOpts = {
@@ -105,14 +122,19 @@ const getStatusLabel = (p: any, t: (key: string) => string): string => {
 };
 
 /* ===================== COMPONENT ===================== */
-export default function Revenue() {
-  const { t, language, formatCurrency } = useLanguage();
+interface RevenueProps {
+  role?: "Admin" | "Staff" | "Driver" | null;
+  stationId?: string | number | null;
+}
+
+export default function Revenue({ role, stationId }: RevenueProps = {}) {
+  const { t, language } = useLanguage();
 
   const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   
-  // Format amount: sử dụng formatCurrency từ LanguageContext để tự động chuyển đổi USD khi tiếng Anh
+  // Format amount: chỉ format số và thêm "đ"
   const formatAmount = (vndAmount: number): string => {
-    return formatCurrency(vndAmount);
+    return `${vndAmount.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} đ`;
   };
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
@@ -130,15 +152,42 @@ export default function Revenue() {
     setLoading(true);
     setErr("");
     try {
-      const { data } = await listAllPayments({
-        fromDate: from || undefined,
-        toDate: to || undefined,
-        page: 1,
-        pageSize: 500,
-      });
+      let list: Payment[] = [];
 
-      const list = normalizePayments(data);
-      // GIỮ NGUYÊN LOGIC: chỉ lấy giao dịch đã thanh toán
+      // Nếu là Admin hoặc không có role (fallback), lấy tất cả payments với status = 2
+      if (role === "Admin" || !role) {
+        const adminPayments = await getAllPayments({ 
+          page: 1, 
+          pageSize: 500,
+          status: 2 
+        });
+        list = adminPayments.map(normalizeAdminPayment);
+      } 
+      // Nếu là Staff, lấy payments với status = 2 và filter theo stationId
+      else if (role === "Staff" && stationId) {
+        const allPayments = await getAllPayments({ 
+          page: 1, 
+          pageSize: 500,
+          status: 2 
+        });
+        // Filter theo stationId
+        const stationPayments = allPayments.filter(
+          (p) => String(p.stationId) === String(stationId)
+        );
+        list = stationPayments.map(normalizeAdminPayment);
+      } 
+      // Fallback: dùng API cũ cho Staff không có stationId hoặc các trường hợp khác
+      else {
+        const { data } = await listAllPayments({
+          fromDate: from || undefined,
+          toDate: to || undefined,
+          page: 1,
+          pageSize: 500,
+        });
+        list = normalizePayments(data);
+      }
+
+      // GIỮ NGUYÊN LOGIC: chỉ lấy giao dịch đã thanh toán (status = 2)
       const paidOnly = list.filter((p) => isPaidStatus((p as any).status));
       setPaid(paidOnly);
     } catch (e: any) {
@@ -311,19 +360,21 @@ export default function Revenue() {
                 </select>
               </div>
 
-              {/* Filter hình thức */}
-              <div>
-                <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.methodLabel")}</label>
-                <select
-                  className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
-                  value={methodFilter}
-                  onChange={(e) => setMethodFilter(e.target.value)}
-                >
-                  <option value="">{t("staff.revenue.filterAll")}</option>
-                  <option value="cash">{t("staff.revenue.methodCash")}</option>
-                  <option value="vnpay">VNPay</option>
-                </select>
-              </div>
+              {/* Filter hình thức - chỉ hiện khi không phải Staff */}
+              {role !== "Staff" && (
+                <div>
+                  <label className="text-xs block text-gray-500 mb-1">{t("staff.revenue.methodLabel")}</label>
+                  <select
+                    className="h-10 w-40 rounded-lg border-2 border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition-colors"
+                    value={methodFilter}
+                    onChange={(e) => setMethodFilter(e.target.value)}
+                  >
+                    <option value="">{t("staff.revenue.filterAll")}</option>
+                    <option value="cash">{t("staff.revenue.methodCash")}</option>
+                    <option value="vnpay">VNPay</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             <Button
@@ -350,7 +401,7 @@ export default function Revenue() {
       <Card className="rounded-2xl shadow-lg border border-orange-200">
         <CardContent className="pt-6">
           {/* KPIs – CHỈ PHỤ THUỘC SEARCH (filteredPaid) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className={`grid grid-cols-2 ${role === "Staff" ? "md:grid-cols-2" : "md:grid-cols-4"} gap-4 mb-6`}>
             <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalRevenue")}</div>
               <div className="text-2xl font-bold text-orange-600">
@@ -361,19 +412,24 @@ export default function Revenue() {
               <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalTransactions")}</div>
               <div className="text-2xl font-bold">{filteredPaid.length}</div>
             </div>
-            <div className="rounded-2xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.cashRate")}</div>
-              <div className="text-2xl font-bold">
-                {filteredPaid.length
-                  ? Math.round((filteredCashCount * 100) / filteredPaid.length)
-                  : 0}
-                %
-              </div>
-            </div>
-            <div className="rounded-2xl border border-orange-200 p-4 text-center">
-              <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.vnpayRate")}</div>
-              <div className="text-2xl font-bold">{vnpayRate}%</div>
-            </div>
+            {/* Chỉ hiện 2 card tỉ lệ khi không phải Staff */}
+            {role !== "Staff" && (
+              <>
+                <div className="rounded-2xl border border-orange-200 p-4 text-center">
+                  <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.cashRate")}</div>
+                  <div className="text-2xl font-bold">
+                    {filteredPaid.length
+                      ? Math.round((filteredCashCount * 100) / filteredPaid.length)
+                      : 0}
+                    %
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-orange-200 p-4 text-center">
+                  <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.vnpayRate")}</div>
+                  <div className="text-2xl font-bold">{vnpayRate}%</div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Bảng */}

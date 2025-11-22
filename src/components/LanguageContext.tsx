@@ -4197,9 +4197,9 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
       // Format theo kiểu Mỹ với 2 chữ số thập phân
       return `$${usdAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else {
-      // Amount đã là VND, format số và thêm "VND"
+      // Amount đã là VND, format số và thêm "đ"
       // Dùng toLocaleString với minimumFractionDigits: 0 để không có phần thập phân
-      return `${amount.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VND`;
+      return `${amount.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} đ`;
     }
   };
 

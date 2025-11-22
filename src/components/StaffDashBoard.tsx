@@ -40,7 +40,6 @@ import ProfileManagement from "./staff/ProfileManagement";
 import QueueManagement from "./staff/QueueManagement";
 import Transactions from "./staff/Transactions";
 import InventoryManagement from "./staff/InventoryManagement";
-import Revenue from "./staff/Revenue";
 import CashPaymentManagement from "./staff/CashPaymentManagement";
 import RequestBattery from "../components/staff/RequestBattery";
 import SendRequestList from "./staff/SendRequestList";
@@ -50,6 +49,7 @@ import SendRequestList from "./staff/SendRequestList";
 // - StaffCustomerManagement: màn quản lý khách hàng của trạm
 import StaffAddDriver from "./staff/StaffAddDriver";
 import StaffCustomerManagement from "./staff/StaffCustomerManagement";
+import Revenue from "./staff/Revenue";
 
 import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
@@ -77,13 +77,14 @@ type TabKey =
   | "inventory"
   | "requests"
   | "send-requests"
-  | "revenue"
   | "approvals"
   | "complaint"
   // 🔹 TAB TẠO KHÁCH HÀNG (Driver)
   | "staff-add-driver"
   // 🔹 TAB QUẢN LÝ KHÁCH HÀNG (Driver)
-  | "staff-customers";
+  | "staff-customers"
+  // 🔹 TAB DOANH THU
+  | "revenue";
 
 const STATION_OVERRIDE_KEY = "staffStationIdOverride";
 
@@ -192,8 +193,8 @@ export default function StaffDashboard({
       { key: "inventory", label: t("staff.dashboard.menu.inventory"), icon: Warehouse },
       { key: "requests", label: t("staff.dashboard.menu.requests"), icon: Package },
       { key: "send-requests", label: t("staff.dashboard.menu.sendRequests"), icon: Package },
-      { key: "revenue", label: t("staff.dashboard.menu.revenue"), icon: BarChart2 },
       { key: "approvals", label: t("staff.dashboard.menu.approvals"), icon: BadgeCheck },
+      { key: "revenue", label: t("staff.revenue.title"), icon: BarChart2 },
       { key: "complaint", label: t("staff.dashboard.menu.complaint"), icon: MessageCircle },
       { key: "profile", label: t("staff.dashboard.menu.profile"), icon: UserCircle },
     ],
@@ -708,8 +709,8 @@ export default function StaffDashboard({
                 )}
                 {active === "requests" && <RequestBattery />}
                 {active === "send-requests" && <SendRequestList />}
-                {active === "revenue" && <Revenue />}
                 {active === "approvals" && <CashPaymentManagement />}
+                {active === "revenue" && <Revenue role="Staff" stationId={stationId} />}
                 {active === "complaint" && <ComplaintsOfCustomer />}
                 {/* 🔹 TAB TẠO KHÁCH HÀNG (Driver) RIÊNG */}
                 {active === "staff-add-driver" && <StaffAddDriver />}
