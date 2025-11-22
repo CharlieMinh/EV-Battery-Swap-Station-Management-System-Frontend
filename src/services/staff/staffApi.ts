@@ -323,6 +323,20 @@ export const listReservations = async (params: {
 export const checkInReservation = (reservationId: string, qrCodeData: string) =>
   api.post(`slot-reservations/${reservationId}/check-in`, { qrCodeData });
 
+export const cancelReservation = async (reservationId: string, reason: number = 0, note: string = "") => {
+  try {
+    const response = await api.delete(`slot-reservations/${reservationId}`, {
+      data: { reason, note },
+    });
+    console.log("Cancel reservation response:", response.data);
+    return response;
+  } catch (error: any) {
+    console.error("Error canceling reservation:", error);
+    console.error("Error response:", error?.response?.data);
+    throw error;
+  }
+};
+
 /* =========================
  *  Swap APIs
  * ========================= */

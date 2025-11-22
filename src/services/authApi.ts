@@ -58,25 +58,10 @@ export const logout = async (): Promise<void> => {
 };
 
 /**
- * Interface cho response của getCurrentUser
- */
-export interface CurrentUserResponse {
-  id: string;
-  email: string;
-  name: string;
-  phoneNumber: string;
-  profilePictureUrl: string;
-  role: string;
-  stationId: string;
-  createdAt: string;
-  lastLogin: string;
-}
-
-/**
  * API lấy thông tin user hiện tại
  */
-export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
-  const response = await axios.get<CurrentUserResponse>('/api/v1/auth/me');
+export const getCurrentUser = async (): Promise<any> => {
+  const response = await axios.get('/api/v1/auth/me');
   return response.data;
 };
 

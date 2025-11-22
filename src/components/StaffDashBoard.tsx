@@ -53,7 +53,7 @@ import StaffCustomerManagement from "./staff/StaffCustomerManagement";
 
 import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
-import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
+import { getCurrentUser } from "../services/authApi";
 import {
   fetchNotifications,
   getUnreadCount,
@@ -107,7 +107,7 @@ export default function StaffDashboard({
     }
   }, [location.state]);
   const [me, setMe] = useState<UserMe | null>(null);
-  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -175,7 +175,6 @@ export default function StaffDashboard({
 
   const menu = useMemo(
     () => [
-      { key: "profile", label: t("staff.dashboard.menu.profile"), icon: UserCircle },
       { key: "queue", label: t("staff.dashboard.menu.queue"), icon: ClipboardList },
       // 🔹 TAB TẠO KHÁCH HÀNG (Driver) RIÊNG
       {
@@ -196,6 +195,7 @@ export default function StaffDashboard({
       { key: "revenue", label: t("staff.dashboard.menu.revenue"), icon: BarChart2 },
       { key: "approvals", label: t("staff.dashboard.menu.approvals"), icon: BadgeCheck },
       { key: "complaint", label: t("staff.dashboard.menu.complaint"), icon: MessageCircle },
+      { key: "profile", label: t("staff.dashboard.menu.profile"), icon: UserCircle },
     ],
     [t]
   ) as { key: TabKey; label: string; icon: any }[];
