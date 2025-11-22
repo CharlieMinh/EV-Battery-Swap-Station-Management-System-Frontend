@@ -2068,6 +2068,12 @@ const translations = {
     "common.found": "Found",
     "common.yes": "Yes",
     "common.no": "No",
+
+    // Map
+    "map.yourLocation": "Your current location",
+
+    // Driver Booking
+    "driver.booking.bookNow": "Book Now",
   },
   vi: {
     "staff.dashboard.menu.profile": "Hồ sơ",
@@ -4108,6 +4114,12 @@ const translations = {
     "common.found": "Tìm thấy",
     "common.yes": "Có",
     "common.no": "Không",
+
+    // Map
+    "map.yourLocation": "Vị trí hiện tại của bạn",
+
+    // Driver Booking
+    "driver.booking.bookNow": "Đặt lịch ngay",
   },
 };
 
