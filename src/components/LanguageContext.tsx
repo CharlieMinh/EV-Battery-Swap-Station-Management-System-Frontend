@@ -827,7 +827,6 @@ const translations = {
     // Subscription errors
     "driver.subscription.errorSelectCash": "Cannot select cash method.",
     "driver.subscription.errorCreateOrderGeneric": "Cannot create order.",
-    "driver.subscription.errorFetchPlans": "Cannot load subscription plans. Please try again later.",
     "driver.subscription.errorCashPayment": "Cannot select cash payment method.",
     "driver.subscription.errorLoadCurrentPlan": "Cannot load current subscription plan, please try again later",
     "driver.subscription.errorLocationTitle": "Location Error",
@@ -2100,13 +2099,6 @@ const translations = {
 
     // Driver Booking
     "driver.booking.bookNow": "Book Now",
-    
-    // Driver Subscription
-    "driver.subscription.orderCreated": "Order created",
-    "driver.subscription.goToStation": "Go to nearest station",
-    "driver.subscription.later": "Later",
-    "driver.subscription.cannotSelectCash": "Cannot select cash payment method.",
-    "driver.subscription.cannotCreateOrder": "Cannot create order.",
   },
   vi: {
     "staff.dashboard.menu.profile": "Thông tin cá nhân",
