@@ -414,14 +414,14 @@ export default function MapView() {
       {/* Nút Back */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-5 left-5 z-[9999] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+        className="absolute top-5 left-5 z-[10000] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
         title={t("common.back")}
       >
         <ArrowLeft size={20} />
       </button>
 
-      {/* Station Detail và Panel chọn trạm - Bên trái */}
-      <div className="absolute top-5 left-5 z-[9999] flex flex-col gap-3">
+      {/* Station Detail và Panel chọn trạm - Bên trái, đẩy xuống dưới nút back */}
+      <div className="absolute top-20 left-5 z-[9998] flex flex-col gap-3">
         {selectedStationId && (
           <StationDetail
             stationId={selectedStationId}
@@ -726,46 +726,49 @@ export default function MapView() {
           );
         })}
 
-        {/* Zoom Controls - Bottom Left */}
-        <div className="absolute bottom-5 left-5 z-[9999] flex flex-col gap-2">
+        {/* Zoom Controls và Current Location Button - Bottom Right */}
+        <div className="absolute bottom-5 right-5 z-[9999] flex flex-col gap-2 items-end">
+          {/* Zoom Controls */}
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => {
+                if (mapRef.current) {
+                  const currentZoom = mapRef.current.getZoom();
+                  mapRef.current.setZoom(currentZoom + 1);
+                }
+              }}
+              className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+              title="Zoom In"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => {
+                if (mapRef.current) {
+                  const currentZoom = mapRef.current.getZoom();
+                  mapRef.current.setZoom(currentZoom - 1);
+                }
+              }}
+              className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
+              title="Zoom Out"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+          
+          {/* Current Location Button */}
           <button
-            onClick={() => {
-              if (mapRef.current) {
-                const currentZoom = mapRef.current.getZoom();
-                mapRef.current.setZoom(currentZoom + 1);
-              }
-            }}
+            onClick={showCurrentLocation}
             className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
-            title="Zoom In"
+            title="Hiện vị trí của tôi"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => {
-              if (mapRef.current) {
-                const currentZoom = mapRef.current.getZoom();
-                mapRef.current.setZoom(currentZoom - 1);
-              }
-            }}
-            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
-            title="Zoom Out"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14"/>
-            </svg>
+            <FaCrosshairs size={20} />
           </button>
         </div>
-
-        {/* Current Location Button - Bottom Right */}
-        <button
-          onClick={showCurrentLocation}
-          className="absolute bottom-5 right-5 z-[9999] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-200"
-          title="Hiện vị trí của tôi"
-        >
-          <FaCrosshairs size={20} />
-        </button>
 
         {routeCoords.length > 0 && (
           <Polyline
