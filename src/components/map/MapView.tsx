@@ -357,7 +357,10 @@ export default function MapView() {
       try {
         setIsLoadingBatteries(true);
         const stationIds = stations.map((s) => s.id as string);
-        const counts = await countBatteriesForMultipleStations(stationIds);
+        // Chỉ đếm pin có status = 0 (Full - sẵn sàng)
+        const counts = await countBatteriesForMultipleStations(stationIds, {
+          status: "Full"
+        });
         setBatteryCounts(counts);
       } catch (error) {
         console.error("Error fetching battery counts:", error);

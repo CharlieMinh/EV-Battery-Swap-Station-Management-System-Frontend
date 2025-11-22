@@ -152,9 +152,21 @@ export async function countBatteriesForMultipleStations(
     const allBatteries = await fetchAllPublicBatteries();
 
     // Filter theo status nếu có
+    // Hỗ trợ cả status = 0 (number) và status = "Full" (string)
     let filteredBatteries = allBatteries;
     if (options?.status) {
-      filteredBatteries = allBatteries.filter((b) => b.status === options.status);
+      filteredBatteries = allBatteries.filter((b) => {
+        const batteryStatus = String(b.status).trim();
+        const filterStatus = String(options.status).trim();
+        
+        // Nếu filter là "Full", chấp nhận cả "Full" và "0"
+        if (filterStatus === "Full") {
+          return batteryStatus === "Full" || batteryStatus === "0";
+        }
+        
+        // So sánh bình thường
+        return batteryStatus === filterStatus;
+      });
     }
 
     // Đếm theo từng stationId
