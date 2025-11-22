@@ -17,7 +17,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -53,6 +53,7 @@ import StaffCustomerManagement from "./staff/StaffCustomerManagement";
 
 import logo from "../assets/LogoEV2.png";
 import { getMe, type UserMe } from "../services/staff/staffApi";
+import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
 import {
   fetchNotifications,
   getUnreadCount,
@@ -106,6 +107,7 @@ export default function StaffDashboard({
     }
   }, [location.state]);
   const [me, setMe] = useState<UserMe | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -145,6 +147,19 @@ export default function StaffDashboard({
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch current user data với avatar từ auth/me
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const data = await getCurrentUser();
+        setCurrentUser(data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
   }, []);
 
   const logout = () => {
@@ -248,6 +263,30 @@ export default function StaffDashboard({
 
   const getNotificationInfo = (n: Notification) => {
     // Đồng bộ kiểu hiển thị giống bên admin (dùng các key admin.* luôn cho tiện)
+    if (n.type === 1) {
+      // BulkRequestCreated (Admin tạo yêu cầu gửi pin cho staff)
+      return {
+        icon: Package,
+        title: t("admin.bulkRequestCreated"),
+        color: "text-blue-600",
+      };
+    }
+    if (n.type === 2) {
+      // BulkRequestConfirmed (Admin xác nhận và gửi pin cho staff)
+      return {
+        icon: CheckCircle,
+        title: t("admin.bulkRequestConfirmed"),
+        color: "text-green-600",
+      };
+    }
+    if (n.type === 3) {
+      // BulkRequestRejected (Admin từ chối yêu cầu)
+      return {
+        icon: XCircle,
+        title: t("admin.bulkRequestRejected"),
+        color: "text-red-600",
+      };
+    }
     if (n.type === 4) {
       // StockRequestCreated (staff gửi yêu cầu nhập pin)
       return {
@@ -361,6 +400,16 @@ export default function StaffDashboard({
           <SidebarFooter className="px-4 pb-4">
             <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
+                <AvatarImage
+                  src={
+                    currentUser?.profilePictureUrl
+                      ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
+                      : me?.avatarUrl || me?.profilePictureUrl
+                      ? `${me.avatarUrl || me.profilePictureUrl}?v=${Date.now()}`
+                      : undefined
+                  }
+                  alt={currentUser?.name || user.name || user.email}
+                />
                 <AvatarFallback>
                   {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                 </AvatarFallback>
@@ -433,10 +482,33 @@ export default function StaffDashboard({
                               ? [n.relatedEntityId]
                               : [];
 
+                          // Xác định loại request dựa vào notification type
+                          // Type 1 = BulkRequestCreated (Admin tạo yêu cầu gửi pin cho staff)
+                          // Type 2, 3 = BulkRequestConfirmed/Rejected (Admin xác nhận/từ chối)
+                          // Type 4 = StockRequest (Staff gửi yêu cầu nhập pin)
+                          const isBatteryRequest = n.type === 1 || n.type === 2 || n.type === 3;
+                          
                           // Tìm các battery request tương ứng với notification
-                          const relatedRequests = batteryRequests.filter((br) =>
-                            relatedIds.includes(br.id)
-                          );
+                          const relatedRequests = isBatteryRequest
+                            ? batteryRequests.filter((br) =>
+                                relatedIds.includes(br.id)
+                              )
+                            : [];
+
+                          // Group theo station
+                          const stationGroups = relatedRequests.reduce((acc, req) => {
+                            const stationId = req.stationId;
+                            const stationName = req.stationName;
+                            
+                            if (!acc[stationId]) {
+                              acc[stationId] = {
+                                stationName,
+                                requests: [],
+                              };
+                            }
+                            acc[stationId].requests.push(req);
+                            return acc;
+                          }, {} as Record<string, { stationName: string; requests: BatteryRequest[] }>);
 
                           const totalQuantity = relatedRequests.reduce(
                             (sum, req) => sum + req.quantity,
@@ -444,68 +516,100 @@ export default function StaffDashboard({
                           );
                           const totalTypes = relatedRequests.length;
 
+                          // Lấy tên người gửi (lấy từ request đầu tiên, vì cùng một admin gửi)
+                          // Nếu không có request, parse từ message
+                          let senderName: string | null = null;
+                          if (relatedRequests.length > 0) {
+                            senderName = relatedRequests[0].requestedByAdminName;
+                          } else {
+                            // Parse từ message: 
+                            // "✅ Admin EVBSS Admin 1 đã duyệt..." 
+                            // "New bulk create request for 4 batteries from admin EVBSS Admin 1 is awaiting confirmation."
+                            const adminMatch = n.message.match(/Admin\s+([^đã\s]+(?:\s+[^đã\s]+)*)/i) || 
+                                              n.message.match(/from admin\s+([^is]+?)(?:\s+is|\s+đã|$)/i);
+                            if (adminMatch && adminMatch[1]) {
+                              senderName = adminMatch[1].trim();
+                            }
+                          }
+
+                          // Title với tên người gửi
+                          const displayTitle = senderName 
+                            ? `${info.title} từ ${senderName}`
+                            : info.title;
+
                           return (
                             <div
                               key={n.id}
                               onClick={() => handleMarkAsRead(n)}
-                              className={`p-2 rounded-lg cursor-pointer mb-1 ${
+                              className={`p-3 rounded-lg cursor-pointer mb-2 border transition-colors ${
                                 n.isRead
-                                  ? "bg-gray-100 hover:bg-gray-200"
-                                  : "bg-orange-100 hover:bg-orange-200"
+                                  ? "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                                  : "bg-orange-50 hover:bg-orange-100 border-orange-200"
                               }`}
                             >
-                              <div className="flex items-start gap-2">
-                                <Icon
-                                  className={`w-4 h-4 mt-0.5 ${info.color}`}
-                                />
+                              <div className="flex items-start gap-3">
+                                <div className="mt-0.5 shrink-0">
+                                  <Icon
+                                    className={`w-5 h-5 ${info.color}`}
+                                  />
+                                </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {info.title}
-                                  </p>
-
-                                  {/* Tổng số lượng + số loại giống admin bell */}
-                                  {relatedRequests.length > 0 && (
-                                    <p className="text-xs text-gray-600 mb-1">
-                                      {totalQuantity} {t("admin.batteryUnit")} (
-                                      {totalTypes} {t("admin.types")})
-                                    </p>
-                                  )}
-
-                                  {/* Chi tiết theo trạm + từng loại pin */}
-                                  {relatedRequests.length > 0 && (
-                                    <>
-                                      <p className="text-xs text-gray-700 mb-1">
-                                        📍 {relatedRequests[0].stationName}
+                                  {/* Title với tên người gửi */}
+                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-gray-900 mb-0.5">
+                                        {displayTitle}
                                       </p>
-                                      <div className="flex flex-wrap gap-1.5 mb-1">
-                                        {relatedRequests.map((req) => (
-                                          <div
-                                            key={req.id}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-orange-50 text-orange-700 border-orange-200"
-                                          >
-                                            <span className="truncate max-w-[90px]">
-                                              {req.batteryModelName
-                                                .replace("Battery Pack", "")
-                                                .trim()}
-                                            </span>
-                                            <span className="font-semibold">
-                                              ×{req.quantity}
-                                            </span>
+                                      {relatedRequests.length > 0 && (
+                                        <p className="text-xs text-gray-600">
+                                          {totalQuantity} {t("admin.batteryUnit")} ({totalTypes} {t("admin.types")})
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                                      {formatRelativeTime(n.createdAt)}
+                                    </span>
+                                  </div>
+
+                                  {/* Chi tiết từng loại pin - group theo station giống bên admin */}
+                                  {relatedRequests.length > 0 && (
+                                    <div className="space-y-2 mt-2">
+                                      {Object.values(stationGroups).map((group, idx) => (
+                                        <div key={idx} className="mb-2 last:mb-0">
+                                          <p className="text-xs text-gray-600 mb-1.5 flex items-center gap-1">
+                                            <span className="font-medium">📍 {group.stationName}</span>
+                                          </p>
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {group.requests.map((req) => (
+                                              <div
+                                                key={req.id}
+                                                className="flex items-center gap-2 px-2.5 py-1.5 bg-white rounded-md border border-gray-200 hover:border-orange-300 transition-colors"
+                                              >
+                                                <Package className="w-4 h-4 text-orange-500 shrink-0" />
+                                                <div className="flex items-center gap-1.5">
+                                                  <span className="text-xs font-semibold text-gray-900">
+                                                    {req.batteryModelName
+                                                      .replace("Battery Pack", "")
+                                                      .trim()}
+                                                  </span>
+                                                  <span className="text-xs font-bold text-orange-600">
+                                                    ×{req.quantity}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
                                           </div>
-                                        ))}
-                                      </div>
-                                    </>
+                                        </div>
+                                      ))}
+                                    </div>
                                   )}
 
-                                  {/* Fallback: nếu không map được stock request thì hiển thị message gốc */}
+                                  {/* Fallback: nếu không map được battery request thì hiển thị message gốc */}
                                   {relatedRequests.length === 0 && (
                                     <p className="text-xs text-gray-600 line-clamp-2">
                                       {n.message}
                                     </p>
                                   )}
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {formatRelativeTime(n.createdAt)}
-                                  </p>
                                 </div>
                               </div>
                             </div>

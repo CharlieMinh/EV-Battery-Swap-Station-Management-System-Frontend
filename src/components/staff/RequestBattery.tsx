@@ -42,12 +42,41 @@ const RequestBattery = () => {
     null
   );
   const [showCheckModal, setShowCheckModal] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [previousRequestIds, setPreviousRequestIds] = useState<Set<string>>(new Set());
 
   // Fetch requests từ API (GIỮ NGUYÊN LUỒNG)
   const fetchRequests = async () => {
     try {
       setLoading(true);
       const data = await fetchBatteryRequests();
+      
+      // Kiểm tra yêu cầu mới từ admin (chỉ sau lần load đầu tiên)
+      if (!isFirstLoad) {
+        const currentRequestIds = new Set(data.map(req => req.id));
+        const newRequests = data.filter(req => !previousRequestIds.has(req.id));
+        
+        // Chỉ hiển thị thông báo cho yêu cầu mới có status = 0 (Pending)
+        const pendingNewRequests = newRequests.filter(req => req.status === 0);
+        if (pendingNewRequests.length > 0) {
+          const totalQuantity = pendingNewRequests.reduce((sum, req) => sum + req.quantity, 0);
+          toast.info(
+            t("staff.requestBattery.toastNewRequest").replace("{count}", String(pendingNewRequests.length)).replace("{quantity}", String(totalQuantity)),
+            {
+              ...toastOpts,
+              toastId: "request-battery-new-batch",
+            }
+          );
+        }
+        
+        setPreviousRequestIds(currentRequestIds);
+      } else {
+        setIsFirstLoad(false);
+        // Lưu request IDs cho lần đầu
+        const initialIds = new Set(data.map(req => req.id));
+        setPreviousRequestIds(initialIds);
+      }
+      
       setRequests(data);
       groupRequestsByCreatedAt(data);
     } catch (error: any) {
@@ -64,6 +93,11 @@ const RequestBattery = () => {
 
   useEffect(() => {
     fetchRequests();
+    // Auto-refresh mỗi 30 giây để check status changes
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Gộp các requests có cùng createdAt (±3s), cùng admin & station (GIỮ NGUYÊN THUẬT TOÁN)
@@ -162,6 +196,8 @@ const RequestBattery = () => {
 
   const handleCloseModal = () => {
     setShowCheckModal(false);
+    // Refresh ngay sau khi đóng modal
+    fetchRequests();
     setSelectedGroup(null);
     fetchRequests(); // Refresh danh sách sau khi xong (giữ nguyên ý định)
   };

@@ -3,6 +3,7 @@ import { X, Package, User, Calendar, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { fetchStaffById } from "@/services/admin/staffAdminService";
+import { getMe } from "@/services/staff/staffApi";
 import { useLanguage } from "../LanguageContext";
 import { formatDateTimeShort } from "../../utils/dateTimeUtils";
 
@@ -29,24 +30,85 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
   const { t } = useLanguage();
 
   const [note, setNote] = useState(group.staffNote || "");
-  const [staffName, setStaffName] = useState(group.staffName || "");
+  const [staffName, setStaffName] = useState(group.staffName || t("staff.sendRequest.unknown"));
+  const [adminName, setAdminName] = useState(group.adminName || t("staff.sendRequest.notApproved"));
   const [loadingStaff, setLoadingStaff] = useState(false);
 
   // Fetch tên staff
   useEffect(() => {
     const staffId = group.requests[0]?.requestedByStaffId;
-    if (!staffId) return;
+    
+    // Nếu đã có tên từ group và không rỗng, dùng luôn (tối ưu)
+    if (group.staffName && group.staffName.trim()) {
+      setStaffName(group.staffName);
+      return;
+    }
 
+    // Nếu có staffId, fetch từ API
+    if (staffId) {
+      setLoadingStaff(true);
+      fetchStaffById(staffId)
+        .then((staff) => {
+          if (staff && staff.name) {
+            setStaffName(staff.name);
+          } else {
+            // Nếu fetch không được, thử lấy từ user hiện tại
+            getMe()
+              .then(({ data }) => {
+                if (data && data.name) {
+                  setStaffName(data.name);
+                } else {
+                  setStaffName(group.staffName || t("staff.sendRequest.unknown"));
+                }
+              })
+              .catch(() => {
+                setStaffName(group.staffName || t("staff.sendRequest.unknown"));
+              });
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching staff:", error);
+          // Nếu fetch không được, thử lấy từ user hiện tại
+          getMe()
+            .then(({ data }) => {
+              if (data && data.name) {
+                setStaffName(data.name);
+              } else {
+                setStaffName(group.staffName || t("staff.sendRequest.unknown"));
+              }
+            })
+            .catch(() => {
+              setStaffName(group.staffName || t("staff.sendRequest.unknown"));
+            });
+        })
+        .finally(() => setLoadingStaff(false));
+      return;
+    }
+
+    // Nếu không có staffId, thử lấy từ user hiện tại (có thể là request của chính staff đó)
     setLoadingStaff(true);
-    fetchStaffById(staffId)
-      .then((staff) => {
-        setStaffName(staff.name || group.staffName || t("staff.sendRequest.unknown"));
+    getMe()
+      .then(({ data }) => {
+        if (data && data.name) {
+          setStaffName(data.name);
+        } else {
+          setStaffName(group.staffName || t("staff.sendRequest.unknown"));
+        }
       })
       .catch(() => {
         setStaffName(group.staffName || t("staff.sendRequest.unknown"));
       })
       .finally(() => setLoadingStaff(false));
   }, [group.requests, group.staffName, t]);
+
+  // Cập nhật adminName từ group
+  useEffect(() => {
+    if (group.adminName) {
+      setAdminName(group.adminName);
+    } else {
+      setAdminName(t("staff.sendRequest.notApproved"));
+    }
+  }, [group.adminName, t]);
 
   const isEditable = group.status === "PendingAdminReview";
 
@@ -101,7 +163,7 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5 text-gray-500" />
                   <span>
-                    {group.adminName || t("staff.sendRequest.notApproved")}
+                    {adminName}
                   </span>
                 </div>
 
@@ -121,7 +183,7 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
                 <div className="flex items-center gap-2">
                   <Package className="w-5 h-5 text-gray-500" />
                   <span>
-                    {t("staff.sendRequest.totalItems")}: {group.totalItems}{" "}
+                    {t("staff.sendRequest.totalItems")} {group.totalItems}{" "}
                     {t("staff.sendRequest.batteryUnit")}
                   </span>
                 </div>
@@ -154,7 +216,7 @@ const CheckSendRequest: React.FC<CheckSendRequestProps> = ({
                           {request.batteryModelName || request.batteryModelId}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {t("staff.sendRequest.modelId")}:{" "}
+                          {t("staff.sendRequest.modelId")}{" "}
                           {request.batteryModelId.slice(0, 8)}...
                         </p>
                       </div>

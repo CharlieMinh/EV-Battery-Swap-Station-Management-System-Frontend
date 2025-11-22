@@ -6,7 +6,7 @@ import {
   completeSwap,
   type Payment,
 } from "../../services/staff/staffApi";
-import { RefreshCw, Check, Loader2 } from "lucide-react";
+import { RefreshCw, Check, Loader2, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";

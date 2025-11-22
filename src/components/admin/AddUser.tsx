@@ -80,10 +80,19 @@ export function AddUser() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    // Nếu là phoneNumber, chỉ cho phép nhập số và giới hạn 11 ký tự
+    if (id === "phoneNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
+      setFormData((prev) => ({
+        ...prev,
+        [id]: digitsOnly,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    }
   };
 
   // ✅ Kiểm tra dữ liệu frontend
@@ -91,7 +100,6 @@ export function AddUser() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-    const phoneRegex = /^(0|\+84)\d{9,10}$/;
 
     if (!formData.email.trim() || !emailRegex.test(formData.email)) {
       return t("admin.emailInvalid");
@@ -105,8 +113,12 @@ export function AddUser() {
       return t("admin.nameRequired");
     }
 
-    if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      return t("admin.phoneInvalid");
+    // Kiểm tra số điện thoại: chỉ chứa số, độ dài từ 1-11
+    if (formData.phoneNumber && formData.phoneNumber.trim()) {
+      const phoneDigits = formData.phoneNumber.replace(/\D/g, ""); // Chỉ lấy số
+      if (phoneDigits.length < 1 || phoneDigits.length > 11) {
+        return t("admin.phoneInvalid");
+      }
     }
 
     if (formData.role === "1" && !formData.stationId) {
@@ -235,6 +247,7 @@ export function AddUser() {
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
+              maxLength={11}
               className="w-full px-4 py-2 border rounded-lg"
               placeholder={t("admin.enterPhone")}
             />

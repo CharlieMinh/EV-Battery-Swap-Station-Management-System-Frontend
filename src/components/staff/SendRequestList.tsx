@@ -20,6 +20,7 @@ interface StockRequest {
   requestedByStaffId: string;
   requestedByStaffName: string | null;
   requestedByAdminName?: string | null; // nếu có admin duyệt
+  adminReviewerName?: string | null; // tên admin từ API
   requestDate: string;
   status: string; // string từ API
   staffNote?: string | null;
@@ -55,11 +56,54 @@ const SendRequestList = () => {
     null
   );
   const [showCheckModal, setShowCheckModal] = useState(false);
+  const [previousStatusMap, setPreviousStatusMap] = useState<Record<string, string>>({});
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
       const data = await getMyStockRequests();
+      
+      // Kiểm tra status thay đổi và hiển thị thông báo (chỉ sau lần load đầu tiên)
+      if (!isFirstLoad) {
+        let approvedCount = 0;
+        let rejectedCount = 0;
+        
+        data.forEach((req) => {
+          const prevStatus = previousStatusMap[req.id];
+          if (prevStatus && prevStatus !== req.status) {
+            if (prevStatus === "PendingAdminReview" && req.status === "Approved") {
+              approvedCount++;
+            } else if (prevStatus === "PendingAdminReview" && req.status === "Rejected") {
+              rejectedCount++;
+            }
+          }
+        });
+        
+        // Chỉ hiển thị 1 toast tổng hợp thay vì nhiều toast riêng lẻ
+        if (approvedCount > 0) {
+          toast.success(t("staff.sendRequest.toastApproved"), {
+            ...toastOpts,
+            toastId: "send-request-approved-batch",
+          });
+        }
+        if (rejectedCount > 0) {
+          toast.error(t("staff.sendRequest.toastRejected"), {
+            ...toastOpts,
+            toastId: "send-request-rejected-batch",
+          });
+        }
+      } else {
+        setIsFirstLoad(false);
+      }
+      
+      // Cập nhật previous status map
+      const newStatusMap: Record<string, string> = {};
+      data.forEach((req) => {
+        newStatusMap[req.id] = req.status;
+      });
+      setPreviousStatusMap(newStatusMap);
+      
       setRequests(data);
       groupRequestsByCreatedAt(data);
     } catch (error: any) {
@@ -73,6 +117,11 @@ const SendRequestList = () => {
 
   useEffect(() => {
     fetchRequests();
+    // Auto-refresh mỗi 30 giây để check status changes
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Gộp các request ±5s cùng staff & station
@@ -123,8 +172,8 @@ const SendRequestList = () => {
         return {
           createdAt: items[0].requestDate,
           requests: items,
-          staffName: items[0].requestedByStaffName,
-          adminName: items[0].requestedByAdminName ?? null,
+          staffName: items[0].requestedByStaffName || null,
+          adminName: (items[0] as any).adminReviewerName ?? items[0].requestedByAdminName ?? null,
           stationName: items[0].stationName,
           totalItems,
           status: allSameStatus ? items[0].status : "PendingAdminReview",

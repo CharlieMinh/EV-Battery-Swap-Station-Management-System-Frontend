@@ -6,6 +6,8 @@ import {
   createDriverByStaff,
   type CreateDriverPayload,
 } from "@/services/staff/staffDriverService";
+import { Loader2 } from "lucide-react";
+import axios from "axios";
 
 interface FormDriverData {
   email: string;
@@ -33,10 +35,19 @@ export default function StaffAddDriver() {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    // Nếu là phoneNumber, chỉ cho phép nhập số và giới hạn 11 ký tự
+    if (id === "phoneNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
+      setFormData((prev) => ({
+        ...prev,
+        [id]: digitsOnly,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    }
   };
 
   // =========================
@@ -46,22 +57,25 @@ export default function StaffAddDriver() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-    const phoneRegex = /^(0|\+84)\d{9,10}$/;
 
     if (!formData.email.trim() || !emailRegex.test(formData.email)) {
-        return t("staff.addDriver.emailInvalid");
+      return t("admin.emailInvalid");
     }
 
     if (!passwordRegex.test(formData.password)) {
-      return t("staff.addDriver.passwordRequirement");
+      return t("admin.passwordRequirement");
     }
 
     if (!formData.name.trim()) {
-      return t("staff.addDriver.nameRequired");
+      return t("admin.nameRequired");
     }
 
-    if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      return t("staff.addDriver.phoneInvalid");
+    // Kiểm tra số điện thoại: chỉ chứa số, độ dài từ 1-11
+    if (formData.phoneNumber && formData.phoneNumber.trim()) {
+      const phoneDigits = formData.phoneNumber.replace(/\D/g, ""); // Chỉ lấy số
+      if (phoneDigits.length < 1 || phoneDigits.length > 11) {
+        return t("admin.phoneInvalid");
+      }
     }
 
     return null;
@@ -94,15 +108,16 @@ export default function StaffAddDriver() {
 
     try {
       await createDriverByStaff(payload);
-      toast.success(t("staff.addDriver.successAdded"));
+      toast.success(t("admin.addUserSuccess"));
       setFormData(initialForm);
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        t("staff.addDriver.errorCreate");
-      toast.error(msg);
+    } catch (error) {
+      let errorMessage = t("admin.errorOccurred");
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 409)
+          errorMessage = error.response?.data?.message || errorMessage;
+      }
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -110,16 +125,24 @@ export default function StaffAddDriver() {
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
-      <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl">
+      <div className="max-w-xl mx-auto bg-white p-8 shadow-2xl rounded-xl relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+              <p className="text-gray-600 text-sm">{t("admin.processing")}</p>
+            </div>
+          </div>
+        )}
         <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center">
-          {t("staff.addDriver.title")}
+          {t("admin.addUserTitle")}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EMAIL */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              {t("staff.addDriver.emailLabel")} <span className="text-red-500">*</span>
+              {t("admin.email")} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -128,7 +151,7 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder={t("staff.addDriver.placeholderEmail")}
+              placeholder={t("admin.enterEmail")}
             />
           </div>
 
@@ -138,7 +161,7 @@ export default function StaffAddDriver() {
               htmlFor="password"
               className="block text-sm font-medium mb-1"
             >
-              {t("staff.addDriver.passwordLabel")} <span className="text-red-500">*</span>
+              {t("admin.password")} <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -147,14 +170,14 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder={t("staff.addDriver.placeholderPassword")}
+              placeholder={t("admin.enterPassword")}
             />
           </div>
 
           {/* NAME */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
-              {t("staff.addDriver.nameLabel")} <span className="text-red-500">*</span>
+              {t("admin.fullName")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -163,7 +186,7 @@ export default function StaffAddDriver() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder={t("staff.addDriver.placeholderName")}
+              placeholder={t("admin.enterName")}
             />
           </div>
 
@@ -173,39 +196,42 @@ export default function StaffAddDriver() {
               htmlFor="phoneNumber"
               className="block text-sm font-medium mb-1"
             >
-              {t("staff.addDriver.phoneLabel")}
+              {t("admin.phone")}
             </label>
             <input
               type="text"
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
+              maxLength={11}
               className="w-full px-4 py-2 border rounded-lg"
-              placeholder={t("staff.addDriver.placeholderPhone")}
+              placeholder={t("admin.enterPhone")}
             />
           </div>
 
-          {/* ROLE – hiển thị readonly cho rõ là Khách hàng */}
+          {/* ROLE */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {t("staff.addDriver.roleLabel")}
+            <label htmlFor="role" className="block text-sm font-medium mb-1">
+              {t("admin.roleLabel")}
             </label>
             <input
               type="text"
-              value={t("staff.addDriver.roleValue")}
+              id="role"
+              value="Driver"
               readOnly
               className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
           </div>
 
-          {/* STATUS – luôn Active */}
+          {/* STATUS */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {t("staff.addDriver.statusLabel")}
+            <label htmlFor="status" className="block text-sm font-medium mb-1">
+              {t("admin.statusLabel")}
             </label>
             <input
               type="text"
-              value={t("staff.addDriver.statusValue")}
+              id="status"
+              value={t("admin.activeStatus")}
               readOnly
               className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
             />
@@ -221,7 +247,7 @@ export default function StaffAddDriver() {
                 : "bg-orange-500 hover:bg-orange-600"
             }`}
           >
-            {isLoading ? t("staff.addDriver.processing") : t("staff.addDriver.submit")}
+            {isLoading ? t("admin.processing") : t("admin.addUserTitle")}
           </button>
         </form>
       </div>

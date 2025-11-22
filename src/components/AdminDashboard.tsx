@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
@@ -29,11 +29,13 @@ import {
   LogOut,
   Zap,
   DollarSign,
+  Coins,
   Package,
   UserCircle,
   MessageCircle,
 } from "lucide-react";
 import { User } from "../App";
+import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
 
 // Import admin components
 import { AdminOverview } from "../components/admin/AdminOverview";
@@ -79,6 +81,20 @@ export function AdminDashboardPage({
   const location = useLocation();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("overview");
+  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
+  
+  // Fetch current user data với avatar
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const data = await getCurrentUser();
+        setCurrentUser(data);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
   
   // Set active section từ navigation state
   useEffect(() => {
@@ -242,11 +258,23 @@ export function AdminDashboardPage({
           <SidebarFooter className="px-4 pb-4">
             <div className="flex items-center p-3 space-x-3 min-w-0 bg-white rounded-2xl border border-white shadow-sm">
               <Avatar className="shrink-0">
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage
+                  src={
+                    currentUser?.profilePictureUrl
+                      ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
+                      : user.avatar
+                      ? `${user.avatar}?v=${Date.now()}`
+                      : undefined
+                  }
+                  alt={currentUser?.name || user.name}
+                />
+                <AvatarFallback>
+                  {(currentUser?.name || user.name)?.charAt(0)?.toUpperCase() || "A"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate text-slate-900">
-                  {user.name}
+                  {currentUser?.name || user.name}
                 </p>
                 <p className="text-xs text-slate-500 truncate uppercase tracking-wide">
                   {t("role.admin")}
@@ -331,7 +359,7 @@ export function AdminDashboardPage({
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-orange-100 rounded-2xl text-orange-600">
-                        <DollarSign className="w-5 h-5" />
+                        <Coins className="w-5 h-5" />
                       </div>
                       <Badge className="bg-emerald-100 text-emerald-600">
                         VND
