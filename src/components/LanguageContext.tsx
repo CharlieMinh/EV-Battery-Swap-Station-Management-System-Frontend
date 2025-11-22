@@ -87,6 +87,7 @@ const translations = {
     "home.hero.subtitle":
       "Skip the wait, swap the battery. Get back on the road in under 30 minutes with our revolutionary battery swap technology.",
     "home.hero.findStation": "Find Station",
+    "home.hero.bookNow": "Book Now",
     "home.hero.watchDemo": "Watch Demo",
     "home.hero.avgSwapTime": "30 min",
     "home.hero.avgSwapTimeLabel": "Average swap time",
@@ -1645,6 +1646,7 @@ const translations = {
     "admin.noNotifications": "No notifications",
     "admin.mergedNotifications": "Merged {count} notifications",
     "admin.stockRequestCreated": "New stock request from staff",
+    "admin.bulkRequestCreated": "Battery request created",
     "admin.bulkRequestConfirmed": "Battery request confirmed",
     "admin.bulkRequestRejected": "Battery request rejected",
     "admin.dashboardTitle": "Admin Dashboard",
@@ -2148,6 +2150,7 @@ const translations = {
     "home.hero.subtitle":
       "Bỏ qua thời gian chờ, thay pin ngay. Quay lại đường trong vòng chưa đầy 30 phút với công nghệ thay pin cách mạng của chúng tôi.",
     "home.hero.findStation": "Tìm Trạm",
+    "home.hero.bookNow": "Đặt lịch",
     "home.hero.watchDemo": "Xem Demo",
     "home.hero.avgSwapTime": "30 phút",
     "home.hero.avgSwapTimeLabel": "Thời gian thay trung bình",
@@ -3681,6 +3684,7 @@ const translations = {
     "admin.noNotifications": "Không có thông báo nào",
     "admin.mergedNotifications": "Gộp {count} thông báo",
     "admin.stockRequestCreated": "Yêu cầu nhập pin từ nhân viên",
+    "admin.bulkRequestCreated": "Yêu cầu nhận pin",
     "admin.bulkRequestConfirmed": "Yêu cầu pin đã được xác nhận",
     "admin.bulkRequestRejected": "Yêu cầu pin đã bị từ chối",
     "admin.dashboardTitle": "Bảng điều khiển admin",
