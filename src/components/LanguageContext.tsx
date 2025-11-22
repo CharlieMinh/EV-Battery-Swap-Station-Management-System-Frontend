@@ -2075,6 +2075,7 @@ const translations = {
     "common.found": "Found",
     "common.yes": "Yes",
     "common.no": "No",
+    "common.address": "Address",
 
     // Map
     "map.yourLocation": "Your current location",
@@ -4128,6 +4129,7 @@ const translations = {
     "common.found": "Tìm thấy",
     "common.yes": "Có",
     "common.no": "Không",
+    "common.address": "Địa chỉ",
 
     // Map
     "map.yourLocation": "Vị trí hiện tại của bạn",
