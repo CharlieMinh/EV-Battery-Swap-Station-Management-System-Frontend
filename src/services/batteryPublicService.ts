@@ -126,8 +126,24 @@ export async function countBatteriesByStation(
     }
 
     // Filter theo status nếu có
+    // Chỉ lấy pin sẵn sàng: status = "Full" và không bị reserved
     if (options?.status) {
-      batteries = batteries.filter((b) => b.status === options.status);
+      batteries = batteries.filter((b) => {
+        const statusMatch = String(b.status).trim().toLowerCase() === String(options.status).trim().toLowerCase();
+        
+        // Nếu filter là "Full", chỉ lấy pin không bị reserved
+        if (String(options.status).trim().toLowerCase() === "full") {
+          return statusMatch && !b.isReserved;
+        }
+        
+        return statusMatch;
+      });
+    } else {
+      // Mặc định chỉ lấy pin sẵn sàng (Full và không reserved)
+      batteries = batteries.filter((b) => {
+        const batteryStatus = String(b.status).trim().toLowerCase();
+        return batteryStatus === "full" && !b.isReserved;
+      });
     }
 
     return batteries.length;
@@ -152,20 +168,29 @@ export async function countBatteriesForMultipleStations(
     const allBatteries = await fetchAllPublicBatteries();
 
     // Filter theo status nếu có
-    // Hỗ trợ cả status = 0 (number) và status = "Full" (string)
+    // Chỉ lấy pin sẵn sàng: status = "Full" và không bị reserved
     let filteredBatteries = allBatteries;
     if (options?.status) {
       filteredBatteries = allBatteries.filter((b) => {
         const batteryStatus = String(b.status).trim();
         const filterStatus = String(options.status).trim();
         
-        // Nếu filter là "Full" hoặc "0", chấp nhận cả "Full" và "0" (status = 0 = Full)
-        if (filterStatus === "Full" || filterStatus === "0") {
-          return batteryStatus === "Full" || batteryStatus === "0";
+        // So sánh status (case-insensitive)
+        const statusMatch = batteryStatus.toLowerCase() === filterStatus.toLowerCase();
+        
+        // Nếu filter là "Full", chỉ lấy pin có status = "Full" và không bị reserved
+        if (filterStatus.toLowerCase() === "full") {
+          return statusMatch && !b.isReserved;
         }
         
-        // So sánh bình thường
-        return batteryStatus === filterStatus;
+        // Các status khác: chỉ so sánh status
+        return statusMatch;
+      });
+    } else {
+      // Nếu không có filter status, mặc định chỉ lấy pin sẵn sàng (Full và không reserved)
+      filteredBatteries = allBatteries.filter((b) => {
+        const batteryStatus = String(b.status).trim().toLowerCase();
+        return batteryStatus === "full" && !b.isReserved;
       });
     }
 
