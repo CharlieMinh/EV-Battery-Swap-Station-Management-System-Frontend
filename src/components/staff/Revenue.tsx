@@ -110,19 +110,9 @@ export default function Revenue() {
 
   const L = (vi: string, en: string) => (language === "vi" ? vi : en);
   
-  // Format amount: VND for Vietnamese, USD for English (1 USD = 25,000 VND)
-  const formatAmount = (vndAmount: number): { amount: number; unit: string } => {
-    if (language === "en") {
-      return {
-        amount: Math.round(vndAmount / 25000 * 100) / 100, // Round to 2 decimals
-        unit: "$"
-      };
-    } else {
-      return {
-        amount: vndAmount,
-        unit: "VND"
-      };
-    }
+  // Format amount: luôn hiển thị VND
+  const formatAmount = (vndAmount: number): string => {
+    return `${vndAmount.toLocaleString("vi-VN")}₫`;
   };
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
@@ -364,10 +354,7 @@ export default function Revenue() {
             <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 text-center">
               <div className="text-sm text-gray-600 mb-1">{t("staff.revenue.kpi.totalRevenue")}</div>
               <div className="text-2xl font-bold text-orange-600">
-                {(() => {
-                  const { amount, unit } = formatAmount(filteredRevenue);
-                  return `${amount.toLocaleString()} ${unit}`;
-                })()}
+                {formatAmount(filteredRevenue)}
               </div>
             </div>
             <div className="rounded-2xl border border-orange-200 p-4 text-center">
@@ -447,11 +434,7 @@ export default function Revenue() {
                     <td className="px-4 py-3">{getCustomerName(p)}</td>
                     <td className="px-4 py-3">{getStatusLabel(p, t)}</td>
                     <td className="px-4 py-3 font-medium">
-                      {(() => {
-                        const vndAmount = Number((p as any).amount) || 0;
-                        const { amount, unit } = formatAmount(vndAmount);
-                        return `${amount.toLocaleString()} ${unit}`;
-                      })()}
+                      {formatAmount(Number((p as any).amount) || 0)}
                     </td>
                     <td className="px-4 py-3">
                       {displayMethod((p as any).method)}

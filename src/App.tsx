@@ -58,8 +58,8 @@ function App() {
           email: response.data.email || '',
           role: response.data.role || null,
           avatar:
-            response.data.avatarUrl ||
             response.data.profilePictureUrl ||
+            response.data.avatarUrl ||
             response.data.profilePicture ||
             undefined,
           stationId: response.data.stationId,

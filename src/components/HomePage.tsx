@@ -57,6 +57,7 @@ import MapPreview from "./map/MapPreview";
 import { fetchStations, Station } from "../services/admin/stationService";
 import type { User } from "../App";
 import { get } from "http";
+import { getCurrentUser, CurrentUserResponse } from "../services/authApi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +76,22 @@ interface HomepageProps {
 export function Homepage({ user, onLogout }: HomepageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
+
+  // Fetch current user data với avatar
+  useEffect(() => {
+    if (user) {
+      const fetchCurrentUser = async () => {
+        try {
+          const data = await getCurrentUser();
+          setCurrentUser(data);
+        } catch (error) {
+          console.error("Error fetching current user:", error);
+        }
+      };
+      fetchCurrentUser();
+    }
+  }, [user]);
   const handleNavigateToDashboard = (section: string) => {
     if (user?.role === "Driver") {
       navigate("/driver", { state: { initialSection: section } });
@@ -508,18 +525,18 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                       >
                         <AvatarImage
                           src={
-                            user.avatar
+                            currentUser?.profilePictureUrl
+                              ? `${currentUser.profilePictureUrl}?v=${Date.now()}`
+                              : user.avatar
                               ? `${user.avatar}?v=${Date.now()}`
-                              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                                  user.name || "User"
-                                )}`
+                              : undefined
                           }
-                          alt={user.name}
+                          alt={currentUser?.name || user.name}
                         />
                         <AvatarFallback
                           style={{ fontSize: isScrolled ? "0.75rem" : "1rem" }}
                         >
-                          {user.name.charAt(0)}
+                          {(currentUser?.name || user.name)?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <span
@@ -529,14 +546,14 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                           display: isScrolled ? "none" : "inline",
                         }}
                       >
-                        {user.name}
+                        {currentUser?.name || user.name}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <p className="text-sm font-medium leading-none">
-                        {user.name}
+                        {currentUser?.name || user.name}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {user.role === "Driver" && "Tài xế"}
@@ -622,7 +639,7 @@ export function Homepage({ user, onLogout }: HomepageProps) {
                   className="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
                 >
                   <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                  {"Đặt lịch"}
+                  {t("home.hero.bookNow")}
                 </Button>
               </div>
 
