@@ -113,10 +113,10 @@ export function AddUser() {
       return t("admin.nameRequired");
     }
 
-    // Kiểm tra số điện thoại: chỉ chứa số, độ dài từ 1-11
+    // Kiểm tra số điện thoại: phải có 10 hoặc 11 số
     if (formData.phoneNumber && formData.phoneNumber.trim()) {
       const phoneDigits = formData.phoneNumber.replace(/\D/g, ""); // Chỉ lấy số
-      if (phoneDigits.length < 1 || phoneDigits.length > 11) {
+      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
         return t("admin.phoneInvalid");
       }
     }
@@ -243,7 +243,7 @@ export function AddUser() {
               {t("admin.phone")}
             </label>
             <input
-              type="text"
+              type="tel"
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}

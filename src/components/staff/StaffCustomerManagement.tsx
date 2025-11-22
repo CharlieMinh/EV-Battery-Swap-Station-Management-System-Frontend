@@ -151,27 +151,18 @@ function CustomerDetailModal({
       return;
     }
 
-    // Validation: Số điện thoại không được để trống, từ 1-11 số
+    // Validation: Số điện thoại phải có 10 hoặc 11 số
     const phoneDigits = form.phoneNumber.replace(/\D/g, ""); // Chỉ lấy số
-    if (!phoneDigits || phoneDigits.length < 1) {
+    if (!phoneDigits || phoneDigits.length === 0) {
       toast.error(t("register.phoneRequired"), toastOpts);
       return;
     }
-    if (phoneDigits.length > 11) {
-      toast.error(t("admin.phoneInvalid"), toastOpts);
+    if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+      toast.error(t("staff.customers.toastPhoneInvalid"), {
+        ...toastOpts,
+        toastId: TOAST_ID.phoneInvalid,
+      });
       return;
-    }
-    
-    // Phone validation (optional but if provided, must be valid)
-    if (form.phoneNumber.trim()) {
-      const phoneRegex = /^(0|\+84)\d{9,10}$/;
-      if (!phoneRegex.test(form.phoneNumber.trim())) {
-        toast.warning(t("staff.customers.toastPhoneInvalid"), {
-          ...toastOpts,
-          toastId: TOAST_ID.phoneInvalid,
-        });
-        return;
-      }
     }
 
     setSaving(true);

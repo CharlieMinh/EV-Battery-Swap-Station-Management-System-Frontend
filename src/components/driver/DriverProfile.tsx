@@ -125,11 +125,21 @@ export function DriverProfile() {
   const handleUpdateProfile = async () => {
     if (!userData) return;
 
+    // Validate số điện thoại: phải có 10 hoặc 11 số
+    if (phoneNumber && phoneNumber.trim()) {
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+        toast.error(t("admin.phoneInvalid"));
+        return;
+      }
+    }
+
     setIsUpdating(true);
     try {
       const formData = new FormData();
       formData.append('Name', name);
-      formData.append('PhoneNumber', phoneNumber);
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      formData.append('PhoneNumber', phoneDigits);
 
       // Nếu có ảnh được chọn thì thêm vào formData
       if (selectedFile) {
@@ -355,9 +365,13 @@ export function DriverProfile() {
                 </div>
                 {editMode ? (
                   <input
-                    type="text"
+                    type="tel"
+                    maxLength={11}
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      setPhoneNumber(digitsOnly);
+                    }}
                     className="pl-6 border-b border-gray-400 focus:outline-none w-full"
                   />
                 ) : (
