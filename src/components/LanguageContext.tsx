@@ -13,13 +13,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined
 );
 
-export function useLanguage() {
+export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (context === undefined) {
     throw new Error("useLanguage must be used within a LanguageProvider");
   }
   return context;
-}
+};
 
 // Translation dictionary
 const translations = {
@@ -1965,6 +1965,9 @@ const translations = {
     "admin.lastUpdate": "Last Update",
     "admin.quantity": "Quantity",
     "admin.modelId": "Model ID",
+    "admin.cashPayment": "Cash",
+    "admin.vnpayPayment": "VNPay",
+    "admin.cardPayment": "Card",
     "admin.batteryDetails": "Battery Details",
     "admin.staffNotes": "Staff Notes",
     "admin.adminNotes": "Admin Notes",
@@ -4039,6 +4042,9 @@ const translations = {
     "admin.lastUpdate": "Cập nhật gần nhất",
     "admin.quantity": "Số lượng",
     "admin.modelId": "Mã model",
+    "admin.cashPayment": "Tiền mặt",
+    "admin.vnpayPayment": "VNPay",
+    "admin.cardPayment": "Thẻ",
     "admin.batteryDetails": "Chi Tiết Pin",
     "admin.staffNotes": "Ghi chú từ nhân viên",
     "admin.adminNotes": "Ghi chú của admin",
@@ -4175,7 +4181,7 @@ interface LanguageProviderProps {
   children: React.ReactNode;
 }
 
-export function LanguageProvider({ children }: LanguageProviderProps) {
+export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   const [language, setLanguage] = useState<Language>("vi");
 
   const t = (key: string): string => {
@@ -4204,4 +4210,4 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       {children}
     </LanguageContext.Provider>
   );
-}
+};

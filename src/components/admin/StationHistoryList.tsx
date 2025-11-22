@@ -26,6 +26,23 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
   stationId,
 }) => {
   const { t } = useLanguage();
+  
+  // Helper function to format payment method
+  const formatPaymentMethod = (method: string | undefined): string => {
+    if (!method) return t("admin.unknown");
+    const methodLower = method.toLowerCase();
+    if (methodLower === "cash" || methodLower === "tiền mặt") {
+      return t("admin.cashPayment");
+    }
+    if (methodLower === "vnpay" || methodLower.includes("vnpay")) {
+      return t("admin.vnpayPayment");
+    }
+    if (methodLower === "card" || methodLower === "thẻ") {
+      return t("admin.cardPayment");
+    }
+    return method;
+  };
+  
   const [payments, setPayments] = useState<Payment[]>([]);
   const [swapTransactions, setSwapTransactions] = useState<SwapTransaction[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -262,7 +279,7 @@ export const StationHistoryList: React.FC<StationHistoryListProps> = ({
                         {formatCurrency(tx.amount)}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {tx.method}
+                        {formatPaymentMethod(tx.method)}
                       </p>
                     </div>
                   </div>
