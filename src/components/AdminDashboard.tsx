@@ -365,14 +365,14 @@ export function AdminDashboardPage({
                         <Coins className="w-5 h-5" />
                       </div>
                       <Badge className="bg-emerald-100 text-emerald-600">
-                        đ
+                        VND
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-500">
                       {t("admin.totalRevenue")}
                     </p>
                     <p className="text-3xl font-semibold mt-2">
-                      {totalRevenue?.toLocaleString("vi-VN")}₫
+                      {totalRevenue?.toLocaleString("vi-VN")}đ
                     </p>
                   </CardContent>
                 </Card>
