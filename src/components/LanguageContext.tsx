@@ -1716,6 +1716,7 @@ const translations = {
     "admin.noRequestsCreated": "No battery requests created yet",
     "admin.shipmentNumber": "Shipment #",
     "admin.totalQuantity": "Total quantity:",
+    "admin.total": "Total",
     "admin.batteries": "Batteries",
     "admin.viewDetails": "View Details",
     "admin.notes": "Notes:",
@@ -2097,6 +2098,7 @@ const translations = {
     // Map
     "map.yourLocation": "Your current location",
     "map.nearestNoBatteries": "⚠️ Nearest station (no stations have batteries)",
+    "map.nearestAvailable": "Nearest station with batteries",
     "map.noStations": "No stations available",
     "map.nearestStationLabel": "Nearest station",
 
@@ -3785,6 +3787,7 @@ const translations = {
     "admin.noRequestsCreated": "Chưa có yêu cầu gửi pin nào được tạo",
     "admin.shipmentNumber": "Lô hàng #",
     "admin.totalQuantity": "Tổng số lượng:",
+    "admin.total": "Tổng",
     "admin.batteries": "Pin",
     "admin.viewDetails": "Xem chi tiết",
     "admin.notes": "Ghi chú:",
@@ -4169,6 +4172,7 @@ const translations = {
     // Map
     "map.yourLocation": "Vị trí hiện tại của bạn",
     "map.nearestNoBatteries": "⚠️ Trạm gần nhất (không có trạm nào có pin)",
+    "map.nearestAvailable": "Trạm gần nhất có pin",
     "map.noStations": "Không có trạm nào",
     "map.nearestStationLabel": "Trạm gần nhất",
 
