@@ -451,8 +451,8 @@ export default function MapView() {
         <ArrowLeft size={20} />
       </button>
 
-      {/* Station Detail và Panel chọn trạm - Bên trái, đẩy xuống dưới nút back */}
-      <div className="absolute top-20 left-5 z-[9998] flex flex-col gap-3">
+      {/* Station Detail và Panel chọn trạm - Bên phải, trên cùng */}
+      <div className="absolute top-5 right-5 z-[9998] flex flex-col gap-3">
         {selectedStationId && (
           <StationDetail
             stationId={selectedStationId}
@@ -756,8 +756,8 @@ export default function MapView() {
           );
         })}
 
-        {/* Zoom Controls và Current Location Button - Bottom Right */}
-        <div className="absolute bottom-5 right-5 z-[9999] flex flex-col gap-2 items-end">
+        {/* Zoom Controls và Current Location Button - Bottom Left */}
+        <div className="absolute bottom-5 left-5 z-[9999] flex flex-col gap-2 items-start">
           {/* Zoom Controls */}
           <div className="flex flex-col gap-2">
             <button
